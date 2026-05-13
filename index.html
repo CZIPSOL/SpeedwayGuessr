@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speedway Guessr</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+</head>
+<body>
+
+    <div id="winOverlay" class="win-overlay" style="display: none;">
+        <canvas id="confettiCanvas"></canvas>
+        <div class="win-message">
+            <h1>BRAWO!</h1>
+            <p>Odgadłeś zawodnika!</p>
+            <div class="win-buttons">
+                <button id="btnShareWin" onclick="shareResult()" class="btn-share">UDOSTĘPNIJ 📋</button>
+                <button id="btnPlayAgain" onclick="resetBoardAndPlay()" class="btn-reset">ZAGRAJ PONOWNIE</button>
+                <button onclick="showResultsOnly()" class="btn-close">POKAŻ WYNIKI</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loseOverlay" class="win-overlay" style="display: none;">
+        <div class="win-message">
+            <h1 style="color: var(--red-neon);">KONIEC PRÓB</h1>
+            <p>Niestety, nie udało Ci się odgadnąć w 10 próbach.</p>
+            <div class="win-buttons">
+                <button onclick="revealTargetPlayer()" class="btn-close">POKAŻ ZAWODNIKA</button>
+                <button onclick="resetBoardAndPlay()" class="btn-reset">GRAJ W ENDLESS</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="statsOverlay" class="win-overlay" style="display: none;">
+        <div class="stats-modal">
+            <h2>STATYSTYKI</h2>
+            <div class="stats-grid">
+                <div class="stat-box"><span id="statPlayed" class="stat-num">0</span><span class="stat-label">Rozegrane</span></div>
+                <div class="stat-box"><span id="statWon" class="stat-num">0</span><span class="stat-label">Wygrane</span></div>
+                <div class="stat-box"><span id="statStreak" class="stat-num">0</span><span class="stat-label">Aktualna Seria</span></div>
+                <div class="stat-box"><span id="statMaxStreak" class="stat-num">0</span><span class="stat-label">Najlepsza Seria</span></div>
+            </div>
+            <button onclick="closeStats()" class="btn-close" style="margin-top: 20px;">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <div id="mainMenuContainer" class="menu-container">
+        <h1 class="game-title">🏁 Speedway Guessr</h1>
+        <h2 class="menu-subtitle">Edycja Żużlowa</h2>
+        <div class="menu-modes">
+            <button class="menu-btn" onclick="startDailyGame()">
+                <span class="btn-icon">📅</span>
+                <span class="btn-text">Daily Guessr</span>
+            </button>
+            <button class="menu-btn endless" onclick="startEndlessGame()">
+                <span class="btn-icon">🔄</span>
+                <span class="btn-text">Endless Guessr</span>
+            </button>
+            <button class="menu-btn soon" disabled>
+                <span class="btn-icon">❌</span>
+                <span class="btn-text">Kółko i Krzyżyk <small>(SOON)</small></span>
+            </button>
+        </div>
+    </div>
+
+    <div id="gameContainer" style="display: none;">
+        <header class="game-header">
+            <div style="position: absolute; right: 20px; top: 20px;">
+                <button onclick="showStats()" class="icon-btn" title="Statystyki">📊</button>
+            </div>
+            <h1 class="game-title-small">🏁 Speedway Guessr</h1>
+            <h3 id="gameModeDisplay"></h3>
+            <p id="guessCounterDisplay" style="color: var(--text-dim); font-size: 12px; margin-top: 5px; font-weight: 600; display: none;"></p>
+        </header>
+
+        <div class="input-section">
+            <div class="search-box">
+                <div class="input-wrapper">
+                    <input type="text" id="guessInput" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
+                </div>
+                <button onclick="makeGuess()">Zgadnij</button>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <div class="header-section">
+                <div class="photo-container" id="photoWrapper">
+                    <span id="mysteryPlaceholder">?</span>
+                    <img id="mysteryPhoto" src="" alt="Sylwetka zawodnika" style="display: none;">
+                </div>
+                <div class="info-container">
+                    <h2 id="mysteryName">???</h2>
+                    <div class="team-path">
+                        <span class="path-label">Drużyny:</span>
+                        <div id="pathBoxes" class="path-boxes"></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="table-headers">
+                <div class="col-name">Zawodnik</div>
+                <div class="col-attr tooltip" data-tip="Kraj pochodzenia">Kraj</div>
+                <div class="col-attr tooltip" data-tip="Rok urodzenia">Rok ur.</div>
+                <div class="col-attr tooltip" data-tip="Czy kiedykolwiek jeździł w GrandPrix?">GP</div>
+                <div class="col-attr tooltip" data-tip="Łączna suma medali Drużynowych Mistrzostw Polski.">Medale DMP</div>
+                <div class="col-attr tooltip" data-tip="Obecny status zawodnika">Status</div>
+                <div class="col-clubs-header tooltip" data-tip="Jakie kluby reprezentował">Historia Klubów</div>
+            </div>
+
+            <div id="results" class="results-container"></div>
+        </div>
+    </div>
+
+    <footer class="game-footer">
+        <div class="footer-content">
+            <div class="theme-switcher">
+                <label>Motyw:</label>
+                <button onclick="setTheme('light')" class="theme-btn light">Jasny</button>
+                <button onclick="setTheme('dark')" class="theme-btn dark">Ciemny</button>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2026 Speedway Guessr. Wszelkie prawa zastrzeżone.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="postGameActions" class="post-game-actions" style="display: none;">
+        <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset">ZAGRAJ PONOWNIE</button>
+    </div>
+
+    <script src="db.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
