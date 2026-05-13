@@ -41,8 +41,8 @@ const clubAbbreviations = {
     "zawieszenie": "ZAW"
 };
 
-// Statystyki
-let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0 };
+// Statystyki i Historia
+let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, lastDailyDate: "", gameHistory: [] };
 
 const countryToCode = {
     "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", "Australia": "au",
@@ -55,15 +55,72 @@ const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
 // --- INICJALIZACJA I STATYSTYKI ---
 window.onload = function() {
     loadStats();
+    checkDailyStatus();
+    renderLastGames();
 };
 
 function loadStats() {
     let saved = localStorage.getItem('speedwayStats');
-    if(saved) userStats = JSON.parse(saved);
+    if(saved) {
+        userStats = JSON.parse(saved);
+        // Zapewnienie kompatybilności ze starymi zapisami przeglądarki
+        if (!userStats.gameHistory) userStats.gameHistory = [];
+        if (!userStats.lastDailyDate) userStats.lastDailyDate = "";
+    }
 }
 
 function saveStats() {
     localStorage.setItem('speedwayStats', JSON.stringify(userStats));
+}
+
+// Sprawdza, czy dzisiejsze Daily zostało już rozegrane
+function checkDailyStatus() {
+    const today = new Date().toISOString().split('T')[0];
+    const btn = document.getElementById('btnDailyMode');
+    const txt = document.getElementById('dailyBtnText');
+
+    if (btn && txt && userStats.lastDailyDate === today) {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+        txt.innerText = "Daily ukończone ✅";
+    }
+}
+
+// Dodaje grę do historii (maksymalnie 5 wpisów)
+function addGameToHistory(player, won, attempts) {
+    const newEntry = {
+        name: player.name,
+        won: won,
+        attempts: attempts,
+        mode: gameMode,
+        date: new Date().toLocaleDateString()
+    };
+    
+    userStats.gameHistory.unshift(newEntry);
+    if (userStats.gameHistory.length > 5) {
+        userStats.gameHistory.pop();
+    }
+    saveStats();
+}
+
+function renderLastGames() {
+    const container = document.getElementById('lastGamesContainer');
+    const list = document.getElementById('lastGamesList');
+    
+    if (container && list && userStats.gameHistory && userStats.gameHistory.length > 0) {
+        container.style.display = 'block';
+        list.innerHTML = '';
+        
+        userStats.gameHistory.forEach(game => {
+            const item = document.createElement('div');
+            item.className = `history-item ${game.won ? 'win' : 'loss'}`;
+            item.innerHTML = `
+                <span>${game.name}</span>
+                <span>${game.won ? '✅' : '❌'} (${game.attempts})</span>
+            `;
+            list.appendChild(item);
+        });
+    }
 }
 
 function updateStatsOnWin() {
@@ -73,6 +130,12 @@ function updateStatsOnWin() {
     userStats.won++;
     userStats.currentStreak++;
     if(userStats.currentStreak > userStats.maxStreak) userStats.maxStreak = userStats.currentStreak;
+    
+    if (gameMode === 'daily') {
+        userStats.lastDailyDate = new Date().toISOString().split('T')[0];
+    }
+    
+    addGameToHistory(targetPlayer, true, guessCount);
     saveStats();
 }
 
@@ -81,6 +144,12 @@ function updateStatsOnLoss() {
     hasLost = true;
     userStats.played++;
     userStats.currentStreak = 0; 
+    
+    if (gameMode === 'daily') {
+        userStats.lastDailyDate = new Date().toISOString().split('T')[0];
+    }
+
+    addGameToHistory(targetPlayer, false, guessCount);
     saveStats();
 }
 

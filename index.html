@@ -51,11 +51,17 @@
 
     <div id="mainMenuContainer" class="menu-container">
         <h1 class="game-title">🏁 Speedway Guessr</h1>
-        <h2 class="menu-subtitle">Edycja Żużlowa</h2>
+        <p class="alpha-tag">Alpha ver. 0.1</p> <h2 class="menu-subtitle">Edycja Żużlowa</h2>
+        
+        <div id="lastGamesContainer" class="last-games-container" style="display: none;">
+            <p class="last-games-title">Ostatnie 5 gier:</p>
+            <div id="lastGamesList" class="last-games-list"></div>
+        </div>
+
         <div class="menu-modes">
-            <button class="menu-btn" onclick="startDailyGame()">
+            <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
                 <span class="btn-icon">📅</span>
-                <span class="btn-text">Daily Guessr</span>
+                <span id="dailyBtnText" class="btn-text">Daily Guessr</span>
             </button>
             <button class="menu-btn endless" onclick="startEndlessGame()">
                 <span class="btn-icon">🔄</span>
