@@ -17,11 +17,6 @@
         <div class="win-message">
             <h1>BRAWO!</h1>
             <p>Odgadłeś zawodnika!</p>
-            <div class="win-buttons">
-                <button id="btnShareWin" onclick="shareResult()" class="btn-share">UDOSTĘPNIJ 📋</button>
-                <button id="btnPlayAgain" onclick="resetBoardAndPlay()" class="btn-reset">ZAGRAJ PONOWNIE</button>
-                <button onclick="showResultsOnly()" class="btn-close">POKAŻ WYNIKI</button>
-            </div>
         </div>
     </div>
 
@@ -29,10 +24,6 @@
         <div class="win-message">
             <h1 style="color: var(--red-neon);">KONIEC PRÓB</h1>
             <p>Niestety, nie udało Ci się odgadnąć w 10 próbach.</p>
-            <div class="win-buttons">
-                <button onclick="revealTargetPlayer()" class="btn-close">POKAŻ ZAWODNIKA</button>
-                <button onclick="resetBoardAndPlay()" class="btn-reset">GRAJ W ENDLESS</button>
-            </div>
         </div>
     </div>
 
@@ -51,7 +42,8 @@
 
     <div id="mainMenuContainer" class="menu-container">
         <h1 class="game-title">🏁 Speedway Guessr</h1>
-        <p class="alpha-tag">Alpha ver. 0.1</p> <h2 class="menu-subtitle">Edycja Żużlowa</h2>
+        <p class="alpha-tag">Alpha ver. 0.1</p>
+        <h2 class="menu-subtitle">Edycja Żużlowa</h2>
         
         <div id="lastGamesContainer" class="last-games-container" style="display: none;">
             <p class="last-games-title">Ostatnie 5 gier:</p>
@@ -113,8 +105,8 @@
             <div class="table-headers">
                 <div class="col-name">Zawodnik</div>
                 <div class="col-attr tooltip" data-tip="Kraj pochodzenia">Kraj</div>
-                <div class="col-attr tooltip" data-tip="Rok urodzenia">Rok ur.</div>
-                <div class="col-attr tooltip" data-tip="Czy kiedykolwiek jeździł w GrandPrix?">GP</div>
+                <div class="col-attr tooltip" data-tip="Rok urodzenia (⬆️ cel jest młodszy, ⬇️ cel jest starszy)">Rok ur.</div>
+                <div class="col-attr tooltip" data-tip="Czy kiedykolwiek był stałym uczestnikiem cyklu Grand Prix?">Był stałym uczestnikiem?</div>
                 <div class="col-attr tooltip" data-tip="Łączna suma medali Drużynowych Mistrzostw Polski.">Medale DMP</div>
                 <div class="col-attr tooltip" data-tip="Obecny status zawodnika">Status</div>
                 <div class="col-clubs-header tooltip" data-tip="Jakie kluby reprezentował">Historia Klubów</div>
@@ -138,7 +130,9 @@
     </footer>
 
     <div id="postGameActions" class="post-game-actions" style="display: none;">
+        <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;">UDOSTĘPNIJ 📋</button>
         <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset">ZAGRAJ PONOWNIE</button>
+        <button onclick="window.location.reload()" class="btn-close">MENU GŁÓWNE</button>
     </div>
 
     <script src="db.js"></script>

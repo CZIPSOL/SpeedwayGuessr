@@ -8,40 +8,17 @@ let hasLost = false;
 
 const DAILY_LIMIT = 10;
 
-// Słownik skrótów dla klubów i przerw w startach
 const clubAbbreviations = {
-    "unia leszno": "LES",
-    "falubaz zielona góra": "ZIE",
-    "stal gorzów wielkopolski": "GOR",
-    "stal gorzów": "GOR",
-    "motor lublin": "LUB",
-    "sparta wrocław": "WRO",
-    "apator toruń": "TOR",
-    "włókniarz częstochowa": "CZE",
-    "gkm grudziądz": "GRU",
-    "unia tarnów": "TAR",
-    "polonia bydgoszcz": "BYD",
-    "wybrzeże gdańsk": "GDA",
-    "ostrovia ostrów wielkopolski": "OST",
-    "ostrovia ostrów": "OST",
-    "stal rzeszów": "RZE",
-    "row rybnik": "RYB",
-    "psż poznań": "POZ",
-    "kolejarz opole": "OPO",
-    "orzeł łódź": "LOD",
-    "polonia piła": "PIŁ",
-    "start gniezno": "GNI",
-    "kolejarz rawicz": "RAW",
-    "landshut devils": "LAN",
-    "wilki krosno": "KRO",
-    "lokomotiv daugavpils": "DAU",
-    // Wyjątki
-    "brak klubu": "BK",
-    "brak": "BK",
-    "zawieszenie": "ZAW"
+    "unia leszno": "LES", "falubaz zielona góra": "ZIE", "stal gorzów wielkopolski": "GOR",
+    "stal gorzów": "GOR", "motor lublin": "LUB", "sparta wrocław": "WRO", "apator toruń": "TOR",
+    "włókniarz częstochowa": "CZE", "gkm grudziądz": "GRU", "unia tarnów": "TAR",
+    "polonia bydgoszcz": "BYD", "wybrzeże gdańsk": "GDA", "ostrovia ostrów wielkopolski": "OST",
+    "ostrovia ostrów": "OST", "stal rzeszów": "RZE", "row rybnik": "RYB", "psż poznań": "POZ",
+    "kolejarz opole": "OPO", "orzeł łódź": "LOD", "polonia piła": "PIŁ", "start gniezno": "GNI",
+    "kolejarz rawicz": "RAW", "landshut devils": "LAN", "wilki krosno": "KRO", "lokomotiv daugavpils": "DAU",
+    "brak klubu": "BK", "brak": "BK", "zawieszenie": "ZAW"
 };
 
-// Statystyki i Historia
 let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, lastDailyDate: "", gameHistory: [] };
 
 const countryToCode = {
@@ -52,7 +29,6 @@ const countryToCode = {
 
 const DAILY_START_DATE = new Date('2026-05-12T00:00:00'); 
 
-// --- INICJALIZACJA I STATYSTYKI ---
 window.onload = function() {
     loadStats();
     checkDailyStatus();
@@ -63,7 +39,6 @@ function loadStats() {
     let saved = localStorage.getItem('speedwayStats');
     if(saved) {
         userStats = JSON.parse(saved);
-        // Zapewnienie kompatybilności ze starymi zapisami przeglądarki
         if (!userStats.gameHistory) userStats.gameHistory = [];
         if (!userStats.lastDailyDate) userStats.lastDailyDate = "";
     }
@@ -73,7 +48,6 @@ function saveStats() {
     localStorage.setItem('speedwayStats', JSON.stringify(userStats));
 }
 
-// Sprawdza, czy dzisiejsze Daily zostało już rozegrane
 function checkDailyStatus() {
     const today = new Date().toISOString().split('T')[0];
     const btn = document.getElementById('btnDailyMode');
@@ -86,7 +60,6 @@ function checkDailyStatus() {
     }
 }
 
-// Dodaje grę do historii (maksymalnie 5 wpisów)
 function addGameToHistory(player, won, attempts) {
     const newEntry = {
         name: player.name,
@@ -97,9 +70,7 @@ function addGameToHistory(player, won, attempts) {
     };
     
     userStats.gameHistory.unshift(newEntry);
-    if (userStats.gameHistory.length > 5) {
-        userStats.gameHistory.pop();
-    }
+    if (userStats.gameHistory.length > 5) userStats.gameHistory.pop();
     saveStats();
 }
 
@@ -131,9 +102,7 @@ function updateStatsOnWin() {
     userStats.currentStreak++;
     if(userStats.currentStreak > userStats.maxStreak) userStats.maxStreak = userStats.currentStreak;
     
-    if (gameMode === 'daily') {
-        userStats.lastDailyDate = new Date().toISOString().split('T')[0];
-    }
+    if (gameMode === 'daily') userStats.lastDailyDate = new Date().toISOString().split('T')[0];
     
     addGameToHistory(targetPlayer, true, guessCount);
     saveStats();
@@ -145,9 +114,7 @@ function updateStatsOnLoss() {
     userStats.played++;
     userStats.currentStreak = 0; 
     
-    if (gameMode === 'daily') {
-        userStats.lastDailyDate = new Date().toISOString().split('T')[0];
-    }
+    if (gameMode === 'daily') userStats.lastDailyDate = new Date().toISOString().split('T')[0];
 
     addGameToHistory(targetPlayer, false, guessCount);
     saveStats();
@@ -167,7 +134,6 @@ function closeStats() {
     setTimeout(() => { document.getElementById('statsOverlay').style.display = 'none'; }, 500);
 }
 
-// --- FUNKCJE MENU ---
 function startDailyGame() {
     gameMode = 'daily';
     document.getElementById('mainMenuContainer').style.display = 'none';
@@ -184,19 +150,15 @@ function startEndlessGame() {
 
 function updateCounterDisplay() {
     const counterDisplay = document.getElementById('guessCounterDisplay');
-    if (gameMode === 'daily') {
-        counterDisplay.style.display = 'block';
-        counterDisplay.innerText = `Próba: ${guessCount}/${DAILY_LIMIT}`;
-    } else {
-        counterDisplay.style.display = 'none';
-    }
+    counterDisplay.style.display = 'block';
+    counterDisplay.innerText = `Próba: ${guessCount}/${DAILY_LIMIT}`;
 }
 
 function resetBoardAndPlay() {
-    closeWinOverlay();
-    
-    document.getElementById('loseOverlay').style.opacity = '0';
-    setTimeout(() => { document.getElementById('loseOverlay').style.display = 'none'; }, 500);
+    const overlayW = document.getElementById('winOverlay');
+    const overlayL = document.getElementById('loseOverlay');
+    overlayW.style.opacity = '0'; overlayL.style.opacity = '0';
+    setTimeout(() => { overlayW.style.display = 'none'; overlayL.style.display = 'none'; }, 300);
     
     guessCount = 0;
     guessHistory = [];
@@ -249,7 +211,6 @@ function initGame() {
     updateCounterDisplay();
 }
 
-// --- FUNKCJE POMOCNICZE ---
 function removePolishAccents(str) {
     const accents = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ';
     const noAccents = 'acelnoszzACELNOSZZ';
@@ -266,20 +227,12 @@ function getCleanClubName(clubName) {
 function getClubAbbr(clubName) {
     if (!clubName) return "---";
     let cleanName = getCleanClubName(clubName).toLowerCase();
-    
-    // Sprawdzenie w słowniku
-    if (clubAbbreviations[cleanName]) {
-        return clubAbbreviations[cleanName];
-    }
-    
-    // Fallback awaryjny (np. "ŻKS Ostrovia" -> "OST")
+    if (clubAbbreviations[cleanName]) return clubAbbreviations[cleanName];
     let words = cleanName.split(' ');
     let lastWord = words[words.length - 1];
-    let abbr = removePolishAccents(lastWord.substring(0, 3)).toUpperCase();
-    return abbr;
+    return removePolishAccents(lastWord.substring(0, 3)).toUpperCase();
 }
 
-// --- AUTOCOMPLETE ---
 function setupAutocomplete() {
     const input = document.getElementById('guessInput');
     input.replaceWith(input.cloneNode(true));
@@ -325,7 +278,6 @@ function setupAutocomplete() {
     }
 }
 
-// --- LOGIKA KARTY I ZGADYWANIA ---
 function buildTeamPath() {
     const pathContainer = document.getElementById('pathBoxes');
     pathContainer.innerHTML = ''; 
@@ -378,9 +330,9 @@ function makeGuess() {
     document.getElementById('guessInput').value = "";
 
     if (guessedPlayer.name !== targetPlayer.name) {
-        if (gameMode === 'daily' && guessCount >= DAILY_LIMIT) {
+        if (guessCount >= DAILY_LIMIT) {
             updateStatsOnLoss();
-            setTimeout(handleLoss, 1200);
+            setTimeout(handleLoss, 400);
         }
     }
 }
@@ -461,11 +413,13 @@ function renderGuess(player) {
         } else if (attr.type === 'year') {
             cls = (player.year === targetPlayer.year) ? "green" : "red";
             content = `<span class="val-num">${player.year}</span>`;
-            if (player.year > targetPlayer.year) content += `<span class="val-arrow">⬇️</span>`;
-            else if (player.year < targetPlayer.year) content += `<span class="val-arrow">⬆️</span>`;
+            if (player.year > targetPlayer.year) content += `<span class="val-arrow" title="Cel jest starszy (wcześniejszy rok urodzenia)">⬇️</span>`;
+            else if (player.year < targetPlayer.year) content += `<span class="val-arrow" title="Cel jest młodszy (późniejszy rok urodzenia)">⬆️</span>`;
         } else if (attr.type === 'gp') {
-            cls = (player.gp === targetPlayer.gp) ? "green" : "red";
-            content = `<span class="val-num">${player.gp}</span>`;
+            const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak";
+            const isGuessGP = player.gp === true || player.gp === "Tak";
+            cls = (isGuessGP === isTargetGP) ? "green" : "red";
+            content = `<span class="status-icon">${isGuessGP ? "✅" : "❌"}</span>`;
         } else if (attr.type === 'dmp') {
             cls = (player.dmp === targetPlayer.dmp) ? "green" : "red";
             content = `<span class="val-num">${player.dmp}</span>`;
@@ -513,46 +467,63 @@ function renderGuess(player) {
 
     if (player.name === targetPlayer.name) {
         updateStatsOnWin();
-        setTimeout(handleWin, 1200);
+        setTimeout(handleWin, 400);
     }
 }
 
-// --- FUNKCJE WYGRANEJ / PRZEGRANEJ I SHARE ---
 function handleWin() {
     revealTargetInfoUI();
     
-    const btnShare = document.getElementById('btnShareWin');
-    const btnPlayAgain = document.getElementById('btnPlayAgain');
+    const overlay = document.getElementById('winOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => { overlay.style.opacity = '1'; }, 10);
+    launchConfetti();
+
+    const btnShare = document.getElementById('btnSharePost');
     const btnPlayAgainPost = document.getElementById('btnPlayAgainPost');
     
     if (gameMode === 'daily') {
         btnShare.style.display = 'inline-block';
-        btnPlayAgain.innerText = "GRAJ W TRYB ENDLESS";
         btnPlayAgainPost.innerText = "GRAJ W TRYB ENDLESS";
     } else {
         btnShare.style.display = 'none'; 
-        btnPlayAgain.innerText = "ZAGRAJ PONOWNIE";
         btnPlayAgainPost.innerText = "ZAGRAJ PONOWNIE";
     }
 
-    launchConfetti();
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => { 
+            overlay.style.display = 'none'; 
+            document.getElementById('postGameActions').style.display = 'flex';
+        }, 300);
+    }, 2500); 
 }
 
 function handleLoss() {
-    const loseOverlay = document.getElementById('loseOverlay');
-    loseOverlay.style.display = 'block';
-    setTimeout(() => { loseOverlay.style.opacity = '1'; }, 10);
-}
-
-function revealTargetPlayer() {
-    document.getElementById('loseOverlay').style.opacity = '0';
-    setTimeout(() => { document.getElementById('loseOverlay').style.display = 'none'; }, 500);
-
     revealTargetInfoUI();
+
+    const overlay = document.getElementById('loseOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => { overlay.style.opacity = '1'; }, 10);
+
+    const btnShare = document.getElementById('btnSharePost');
+    const btnPlayAgainPost = document.getElementById('btnPlayAgainPost');
     
-    document.getElementById('mysteryName').style.color = "var(--red-neon)";
-    document.getElementById('postGameActions').style.display = 'flex';
-    document.getElementById('btnPlayAgainPost').innerText = "GRAJ W TRYB ENDLESS";
+    btnShare.style.display = 'none';
+    
+    if (gameMode === 'daily') {
+        btnPlayAgainPost.innerText = "GRAJ W TRYB ENDLESS";
+    } else {
+        btnPlayAgainPost.innerText = "ZAGRAJ PONOWNIE";
+    }
+
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => { 
+            overlay.style.display = 'none'; 
+            document.getElementById('postGameActions').style.display = 'flex';
+        }, 300);
+    }, 2500); 
 }
 
 function revealTargetInfoUI() {
@@ -566,6 +537,9 @@ function revealTargetInfoUI() {
     photoWrapper.classList.add('revealed'); 
 
     document.getElementById('mysteryName').innerText = targetPlayer.name;
+    if (hasLost) {
+        document.getElementById('mysteryName').style.color = "var(--red-neon)";
+    }
     
     const boxes = document.querySelectorAll('.path-box');
     boxes.forEach(box => {
@@ -594,9 +568,7 @@ function revealTargetInfoUI() {
 
 function shareResult() {
     let textToShare = `🏁 Speedway Guessr (Daily #${dailyNumberGlobal})\nLiczba prób: ${guessCount}/${DAILY_LIMIT}\n\n`;
-    
     guessHistory.forEach(row => { textToShare += row + '\n'; });
-    
     navigator.clipboard.writeText(textToShare).then(() => {
         alert("Wynik skopiowany do schowka! Możesz go wkleić znajomym.");
     }).catch(err => {
@@ -604,28 +576,12 @@ function shareResult() {
     });
 }
 
-function closeWinOverlay() {
-     document.getElementById('winOverlay').style.opacity = '0';
-    setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; }, 500);
-}
-
-function showResultsOnly() { 
-    closeWinOverlay();
-    const postActions = document.getElementById('postGameActions');
-    if (postActions) postActions.style.display = 'flex';
-}
-
-// --- OBSŁUGA MOTYWÓW ---
 function setTheme(themeName) {
     document.documentElement.setAttribute('data-theme', themeName);
     localStorage.setItem('theme', themeName);
 }
 
-// --- KONFETTI ---
 function launchConfetti() {
-    const overlay = document.getElementById('winOverlay');
-    overlay.style.display = 'block';
-    setTimeout(() => { overlay.style.opacity = '1'; }, 10);
     const canvas = document.getElementById('confettiCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth; canvas.height = window.innerHeight;
