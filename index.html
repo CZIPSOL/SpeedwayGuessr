@@ -42,19 +42,27 @@
 
     <div id="mainMenuContainer" class="menu-container">
         <h1 class="game-title">🏁 Speedway Guessr</h1>
-        <p class="alpha-tag">Alpha ver. 0.1</p>
+        <p class="alpha-tag">Alpha ver. 0.1.4</p>
         <h2 class="menu-subtitle">Edycja Żużlowa</h2>
         
         <div id="lastGamesContainer" class="last-games-container" style="display: none;">
-            <p class="last-games-title">Ostatnie 5 gier:</p>
-            <div id="lastGamesList" class="last-games-list"></div>
+            <p class="last-games-title">Ostatnie gry Daily:</p>
+            <div id="lastGamesList" class="daily-tiles-container"></div>
         </div>
 
         <div class="menu-modes">
-            <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
-                <span class="btn-icon">📅</span>
-                <span id="dailyBtnText" class="btn-text">Daily Guessr</span>
-            </button>
+            <div class="daily-mode-wrapper">
+                <div class="daily-selector">
+                    <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1)">◀</button>
+                    <span id="dailyDayDisplay" style="font-weight: 900;">Daily ...</span>
+                    <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1)">▶</button>
+                </div>
+                <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
+                    <span class="btn-icon">📅</span>
+                    <span id="dailyBtnText" class="btn-text">Graj Daily</span>
+                </button>
+            </div>
+
             <button class="menu-btn endless" onclick="startEndlessGame()">
                 <span class="btn-icon">🔄</span>
                 <span class="btn-text">Endless Guessr</span>
@@ -124,7 +132,7 @@
                 <button onclick="setTheme('dark')" class="theme-btn dark">Ciemny</button>
             </div>
             <div class="copyright">
-                <p>&copy; 2026 Speedway Guessr. Wszelkie prawa zastrzeżone.</p>
+                <p>&copy; 2026 Speedway Guessr by: CZIPSOL. Wszelkie prawa zastrzeżone.</p>
             </div>
         </div>
     </footer>
