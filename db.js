@@ -177,7 +177,7 @@ const playersDB = [
     dmp: 11,
     currentClub: "ROW Rybnik",
     pastClubs: ["Unia Leszno", "Start Gniezno", "WTS Wrocław", "Wybrzeże Gdańsk", "Włókniarz Częstochowa", "Falubaz Zielona Góra", "Unia Tarnów", "Ponia Bydgoszcz", "Unia Tarnów", "Stal Rzeszów", "Apator Toruń", "Stal Rzeszów", "Row Rybnik (zakonczyl sezon przed rozpoczeciem rozgrywek)"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 16,
@@ -189,7 +189,7 @@ const playersDB = [
     dmp: 0,
     currentClub: "Landshut Devils",
     pastClubs: ["Sparta Wrocław", "Włókniarz Częstochowa", "ROW Rybnik", "Polonia Bydgoszcz", "ROW Rybnik", "Start Gniezno", "Orzeł Łódź", "Lokomotiv Daugavpils", "GKM Grudziądz", "Falubaz Zielona Góra", "Start Gniezno", "PSŻ Poznań", "Landshut Devils"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 17,
@@ -201,7 +201,7 @@ const playersDB = [
     dmp: 7,
     currentClub: "Unia Tarnów",
     pastClubs: ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkoposlki", "Falubaz Zielona Góra", "Unia Tarnów", "Stal Gorzów Wielkopolski", "Wybrzeże Gdańsk", "Apator Toruń", "Unia Tarnów"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 18,
@@ -213,7 +213,7 @@ const playersDB = [
     dmp: 0,
     currentClub: "Falubaz Zielona Góra",
     pastClubs: ["ROW Rybnik", "Stal Gorzów Wielkopolski", "GKM Grudziądz", "Falubaz Zielona Góra", "GKM Grudziądz", "Falubaz Zielona Góra"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 19,
@@ -225,7 +225,7 @@ const playersDB = [
     dmp: 6,
     currentClub: "Stal Rzeszów",
     pastClubs: ["Stal Gorzów Wielkopolski", "Sparta Wrocław", "Stal Gorzów Wielkopolski", "Falubaz Zielona Góra", "Sparta Wrocław", "Stal Gorzów Wielkopolski", "Polonia Piła", "Apator Toruń", "Sparta Wrocław", "Stal Rzeszów"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 20,
@@ -249,7 +249,7 @@ const playersDB = [
     dmp: 7,
     currentClub: "Motor Lublin",
     pastClubs: ["Stal Gorzów Wielkopolski", "Apator Toruń", "Włókniarz Częstochowa", "Polonia Bydgoszcz", "Falubaz Zielona Góra", "ROW Rybnik", "Włókniarz Częstochowa", "Motor Lublin"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 22,
@@ -273,7 +273,7 @@ const playersDB = [
     dmp: 15,
     currentClub: "Falubaz Zielona Góra",
     pastClubs: ["Polonia Piła", "Sparta Wrocław", "Unia Leszno", "Falubaz Zielona Góra", "Unia Leszno", "Motor Lublin", "Falubaz Zielona Góra"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 24,
@@ -333,7 +333,7 @@ const playersDB = [
     dmp: 4,
     currentClub: "Falubaz Zielona Góra",
     pastClubs: ["Apator Toruń", "Wybrzeże Gdańsk (W)", "Apator Toruń", "Falubaz Zielona Góra"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 29,
@@ -537,7 +537,7 @@ const playersDB = [
     dmp: 2,
     currentClub: "Włókniarz Częstochowa",
     pastClubs: ["Włókniarz Częstochowa", "Wilki Krosno", "Stal Rzeszów", "PSŻ Poznań (W)", "Włókniarz Częstochowa"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 46,
@@ -669,7 +669,7 @@ const playersDB = [
     dmp: 2,
     currentClub: "Włókniarz Częstochowa",
     pastClubs: ["Włókniarz Częstochowa"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 57,
@@ -705,7 +705,7 @@ const playersDB = [
     dmp: 11,
     currentClub: "Polonia Bydgoszcz",
     pastClubs: ["Apator Toruń", "Włókniarz Częstochowa", "Apator Toruń", "Polonia Bydgoszcz", "Unia Leszno (W)", "Polonia Bydgoszcz"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 60,
@@ -729,7 +729,7 @@ const playersDB = [
     dmp: 2,
     currentClub: "Kolejarz Rawicz",
     pastClubs: ["Start Gniezno", "Kolejarz Opole", "Stal Gorzów Wielkopolski", "Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "GKM Grudziądz", "Polonia Bydgoszcz", "Orzeł Łódź", "Kolejarz Rawicz"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 62,
@@ -753,7 +753,7 @@ const playersDB = [
     dmp: 5,
     currentClub: "Polonia Piła",
     pastClubs: ["Motor Lublin", "Polonia Piła"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 64,
@@ -765,7 +765,7 @@ const playersDB = [
     dmp: 3,
     currentClub: "Sparta Wrocław",
     pastClubs: ["Sparta Wrocław"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 65,
@@ -777,7 +777,7 @@ const playersDB = [
     dmp: 0,
     currentClub: "Włókniarz Częstochowa",
     pastClubs: ["PSŻ Poznań", "Stal Rzeszów", "Unia Leszno", "Sparta Wrocław", "Włókniarz Częstochowa"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 66,
@@ -789,7 +789,7 @@ const playersDB = [
     dmp: 2,
     currentClub: "Kolejarz Opole",
     pastClubs: ["Kolejarz Opole", "Apator Toruń", "Kolejarz Rawicz", "Orzeł Łódź", "Wybrzeże Gdańsk", "Apator Toruń", "Wybrzeże Gdańsk", "Unia Tarnów", "Start Gniezno", "Polonia Piła", "Motor Lublin", "Ostrovia Ostrów Wielkopolski", "Kolejarz Opole"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 67,
@@ -849,7 +849,7 @@ const playersDB = [
     dmp: 4,
     currentClub: "ROW Rybnik (W)",
     pastClubs: ["Włókniarz Częstochowa", "Polonia Piła", "Kolejarz Opole", "Sparta Wrocław", "Unia Tarnów", "Włólniarz Częstochowa", "ROW Rybnik (W)"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 72,
@@ -873,7 +873,7 @@ const playersDB = [
     dmp: 0,
     currentClub: "Wilki Krosno",
     pastClubs: ["Apator Toruń", "Orzeł Łódź (W)", "Orzeł Łódź", "Apator Toruń", "GKM Grudziądz (W)", "GKM Grudziądz", "Apator Toruń", "GKM Grudziądz", "Start Gniezno", "Motor Lublin", "Polonia Piła", "Kolejarz Rawicz", "Orzeł Łódź", "Krosno"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 74,
@@ -885,7 +885,7 @@ const playersDB = [
     dmp: 7,
     currentClub: "Polonia Piła",
     pastClubs: ["Apator Toruń", "Stal Gorzów Wielkopolski", "Apator Toruń", "Wybrzeże Gdańsk", "GKM Grudziądz", "Apator Toruń", "Lokomotiv Daugavpils (W)", "Speedway Miszkolc (W)", "Wilki Krosno (W)", "Polonia Piła"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 75,
@@ -897,7 +897,7 @@ const playersDB = [
     dmp: 1,
     currentClub: "Brak Klubu",
     pastClubs: ["Unia Tarnów", "Start Gniezno (W)", "Orzeł Łódź", "Kaskad Równe", "Unia Tarnów", "Speedway Kraków (W)", "Kolejarz Opole", "Orzeł Łódź", "Speedway Kraków", "Motor Lublin", "Wilki Krosno", "Brak klubu"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 75,
@@ -909,7 +909,7 @@ const playersDB = [
     dmp: 6,
     currentClub: "Sparta Wrocław",
     pastClubs: ["Apator Toruń", "GKM Grudziądz", "Sparta Wrocław", "GKM Grudziądz", "Kolejarz Opole", "Sparta Wrocław"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 76,
@@ -921,7 +921,7 @@ const playersDB = [
     dmp: 9,
     currentClub: "Falubaz Zielona Góra",
     pastClubs: ["Polonia Piła", "Unia Leszno", "Stal Rzeszów", "Falubaz Zielona Góra"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 77,
@@ -933,7 +933,7 @@ const playersDB = [
     dmp: 5,
     currentClub: "Ostrovia Ostrów Wielkopolski",
     pastClubs: ["Polonia Piła", "Stal Gorzów Wielkopolski", "Unia Leszno", "Falubaz Zielona Góra", "Polonia Bydgoszcz", "Stal Gorzów Wielkopolski", "Stal Rzeszów", "GKM Grudziądz", "Polonia Piła", "Orzeł Łódź", "Ostrovia Ostrów Wielkopolski"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 78,
@@ -945,7 +945,7 @@ const playersDB = [
     dmp: 8,
     currentClub: "Gwardia Warszawa",
     pastClubs: ["Unia Leszno", "Gwardia Warszwa"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 79,
@@ -957,7 +957,7 @@ const playersDB = [
     dmp: 2,
     currentClub: "Unia Leszno",
     pastClubs: ["Unia Leszno", "Włókniarz Częstochowa", "Kolejarz Rawicz", "Start Gniezno", "Unia Leszno", "PSŻ Poznań", "Wybrzeże Gdańsk", "PSŻ Poznań", "Unia Leszno", "Start Gniezno", "Ostrovia Ostrów Wielkopolski", "Start Gniezno", "Unia Leszno"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 80,
@@ -969,7 +969,7 @@ const playersDB = [
     dmp: 8,
     currentClub: "Kolejarz Opole",
     pastClubs: ["Włókniarz Częstochowa", "Wybrzeże Gdańsk", "Sparta Wrocław", "Unia Leszno", "Włókniarz Częstochowa", "Unia Tarnów", "Sparta Wrocław", "Start Gniezno", "GKM Grudziądz", "ROW Rybnik", "Włókniarz Częstochowa", "Kolejarz Opole"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 81,
@@ -981,7 +981,7 @@ const playersDB = [
     dmp: 6,
     currentClub: "Ostrovia Ostrów Wielkopolski",
     pastClubs: ["Falubaz Zielona Góra", "Włókniarz Częstochowa", "Falubaz Zielona Góra", "Polonia Bydgoszcz", "Stal Rzeszów", "Włókniarz Częstochowa (W)", "Falubaz Zielona Góra", "Apator Toruń", "Speedway Kraków (W)", "Apator Toruń", "Stal Gorzów (W)", "Ostrovia Ostrów Wielkopolski", "ROW Rybnik", "Ostrovia Ostrów Wielkopolski"],
-    status: "Koniec Kariery"
+    status: "Koniec kariery"
   },
   {
     id: 82,
@@ -992,8 +992,8 @@ const playersDB = [
     gp: false,
     dmp: 11,
     currentClub: "Polonia Bydgoszcz",
-    pastClubs: ["Polonia Bydgoszcz", "Polonia Piła", "Polonia Bydgoszcz", "Unia Tarnów", "Polonia Bydgoszcz", "Stal Gorzów Wielkopolski", "Koniec Kariery", "Polonia Piła", "Koniec Kariery", "Polonia Bydgoszcz"],
-    status: "Koniec Kariery"
+    pastClubs: ["Polonia Bydgoszcz", "Polonia Piła", "Polonia Bydgoszcz", "Unia Tarnów", "Polonia Bydgoszcz", "Stal Gorzów Wielkopolski", "Koniec kariery", "Polonia Piła", "Koniec kariery", "Polonia Bydgoszcz"],
+    status: "Koniec kariery"
   },
   {
     id: 83,
