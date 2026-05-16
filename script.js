@@ -397,22 +397,21 @@ function renderGuess(player, isRestore = false) {
     if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Cel ma mniej medali DMP">⬇️</span>`;
     else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Cel ma więcej medali DMP">⬆️</span>`;
 
-    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = targetPlayer.country.split("/").map(c => c.trim());
+    // --- NOWA LOGIKA FLAGI (50% na 50%) ---
+    const pCountries = player.country.split("/").map(c => c.trim()); 
+    const tCountries = targetPlayer.country.split("/").map(c => c.trim());
+    
     let countryCls = "red";
-    if (player.country === targetPlayer.country) countryCls = "green";
-    else if (pCountries.some(c => tCountries.includes(c)) || player.region === targetPlayer.region) countryCls = "yellow";
+    if (player.country === targetPlayer.country) {
+        countryCls = "green"; // W pełni identyczne obywaltelstwo
+    } else if (pCountries.some(c => tCountries.includes(c))) {
+        countryCls = "half"; // Częściowe obywatelstwo (np. Polska pasuje do Polska/Rosja)
+    } else if (player.region === targetPlayer.region) {
+        countryCls = "yellow"; // Tylko ten sam region
+    }
 
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
-
-    // Budujemy poprawne HTML dla klubów ze znaczkiem W
-    let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
-    let clubsHTML = player.pastClubs.map(c => {
-        let isLoan = c.includes("(W)");
-        let isMatch = targetCleanClubs.includes(getCleanClubName(c));
-        let matchClass = isMatch ? 'club-match' : 'club-dim';
-        return `<div class="club-logo-wrapper"><div class="club-abbr-box ${matchClass}" title="${c}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge" title="Wypożyczenie">W</div>' : ''}</div>`;
-    }).join('<div class="club-divider"></div>');
 
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
@@ -421,7 +420,7 @@ function renderGuess(player, isRestore = false) {
         <div class="col-attr"><div class="attr-box ${gpCls}" style="font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls}">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'}">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs"><div class="clubs-path-container">${clubsHTML}</div></div>
+        <div class="col-clubs"><div class="clubs-path-container">${player.pastClubs.map(c => `<div class="club-logo-wrapper"><div class="club-abbr-box ${targetPlayer.pastClubs.map(getCleanClubName).includes(getCleanClubName(c)) ? 'club-match' : 'club-dim'}">${getClubAbbr(c)}</div></div>`).join('<div class="club-divider"></div>')}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
@@ -432,7 +431,9 @@ function renderGuess(player, isRestore = false) {
         else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green";
         else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green";
         else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
-        rowEmojis += c === "green" ? "🟩" : c === "yellow" ? "🟨" : "🟥";
+        
+        // Zapis do emoji ze schowka (half jest traktowane jako zółty)
+        rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥"; 
     });
     guessHistory.push(rowEmojis);
     
