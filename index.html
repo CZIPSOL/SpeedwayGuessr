@@ -40,9 +40,29 @@
         </div>
     </div>
 
+    <div id="calendarOverlay" class="win-overlay" style="display: none;">
+        <div class="stats-modal" style="max-width: 450px; padding: 30px;">
+            <h2>ARCHIWUM DAILY</h2>
+            
+            <div class="calendar-header">
+                <button id="calBtnPrev" class="icon-btn-small" onclick="changeCalendarMonth(-1)">◀</button>
+                <h3 id="calendarMonthDisplay" style="margin: 0;">Maj 2026</h3>
+                <button id="calBtnNext" class="icon-btn-small" onclick="changeCalendarMonth(1)">▶</button>
+            </div>
+            
+            <div class="calendar-weekdays">
+                <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>Sb</div><div>Nd</div>
+            </div>
+            
+            <div id="calendarGrid" class="calendar-grid-real"></div>
+            
+            <button onclick="closeCalendar()" class="btn-close" style="margin-top: 25px;">ZAMKNIJ</button>
+        </div>
+    </div>
+
     <div id="mainMenuContainer" class="menu-container">
         <h1 class="game-title">🏁 Speedway Guessr</h1>
-        <p class="alpha-tag">Alpha ver. 0.1.4</p>
+        <p class="alpha-tag">Alpha ver. 0.1.6</p>
         <h2 class="menu-subtitle">Edycja Żużlowa</h2>
         
         <div id="lastGamesContainer" class="last-games-container" style="display: none;">
@@ -56,9 +76,10 @@
                     <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1)">◀</button>
                     <span id="dailyDayDisplay" style="font-weight: 900;">Daily ...</span>
                     <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1)">▶</button>
+                    <button class="icon-btn-small" onclick="openCalendar()" title="Otwórz kalendarz" style="margin-left: 10px;">📅</button>
                 </div>
                 <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
-                    <span class="btn-icon">📅</span>
+                    <span class="btn-icon">🏁</span>
                     <span id="dailyBtnText" class="btn-text">Graj Daily</span>
                 </button>
             </div>
