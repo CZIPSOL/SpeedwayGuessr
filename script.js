@@ -20,7 +20,7 @@ const clubAbbreviations = {
     "brak klubu": "BK", "brak": "BK", "zawieszenie": "ZAW", "kontuzja": "KON", "koniec kariery": "KON"
 };
 
-let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [] };
+let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [], dailyGuesses: {} };
 
 const countryToCode = {
     "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", "Australia": "au", "Szwecja": "se", 
@@ -37,6 +37,8 @@ function loadStats() {
         userStats = JSON.parse(saved);
         if (!userStats.dailyResults) userStats.dailyResults = {};
         if (!userStats.dailyHistory) userStats.dailyHistory = [];
+        if (!userStats.dailyGuesses) userStats.dailyGuesses = {};
+        
         if (userStats.completedDailies && Array.isArray(userStats.completedDailies)) {
             userStats.completedDailies.forEach(day => { if (!userStats.dailyResults[day]) userStats.dailyResults[day] = 'win'; });
             delete userStats.completedDailies; saveStats();
@@ -68,18 +70,31 @@ function changeDaily(dir) {
     updateDailyMenu();
 }
 
+function changeDailyInGame(dir) {
+    changeDaily(dir);
+    document.getElementById('winOverlay').style.display = 'none'; 
+    document.getElementById('loseOverlay').style.display = 'none';
+    clearGameBoard();
+    initGame();
+}
+
 function updateDailyMenu() {
     document.getElementById('dailyDayDisplay').innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
     document.getElementById('btnPrevDaily').style.visibility = (selectedDailyDay <= 1) ? 'hidden' : 'visible';
     document.getElementById('btnNextDaily').style.visibility = (selectedDailyDay >= currentDailyDay) ? 'hidden' : 'visible';
     
+    const inGamePrev = document.getElementById('inGamePrevBtn');
+    const inGameNext = document.getElementById('inGameNextBtn');
+    if(inGamePrev) inGamePrev.style.visibility = (selectedDailyDay <= 1) ? 'hidden' : 'visible';
+    if(inGameNext) inGameNext.style.visibility = (selectedDailyDay >= currentDailyDay) ? 'hidden' : 'visible';
+
     const btn = document.getElementById('btnDailyMode');
     const txt = document.getElementById('dailyBtnText');
     if (userStats.dailyResults[selectedDailyDay]) {
-        btn.disabled = true; btn.classList.add('disabled');
-        txt.innerText = userStats.dailyResults[selectedDailyDay] === 'win' ? "Odgadnięty ✅" : "Porażka ❌";
+        btn.classList.remove('disabled');
+        txt.innerText = "Przejrzyj grę"; 
     } else {
-        btn.disabled = false; btn.classList.remove('disabled'); txt.innerText = "Graj Daily";
+        btn.classList.remove('disabled'); txt.innerText = "Graj Daily";
     }
 }
 
@@ -129,7 +144,8 @@ function renderCalendar() {
             box.title = `Daily #${dailyNum}`;
             if (userStats.dailyResults[dailyNum] === 'win') { box.classList.add('win'); box.title += " (Odgadnięty)"; }
             else if (userStats.dailyResults[dailyNum] === 'loss') { box.classList.add('loss'); box.title += " (Porażka)"; }
-            else { box.classList.add('playable'); box.onclick = () => { selectDayFromCalendar(dailyNum); }; }
+            else { box.classList.add('playable'); }
+            box.onclick = () => { selectDayFromCalendar(dailyNum); };
             if (dailyNum === selectedDailyDay) box.style.border = "2px solid var(--accent)";
         }
         grid.appendChild(box);
@@ -139,7 +155,14 @@ function renderCalendar() {
     document.getElementById('calBtnNext').style.visibility = (calRenderYear >= now.getFullYear() && calRenderMonth >= now.getMonth()) ? 'hidden' : 'visible';
 }
 
-function selectDayFromCalendar(dayNum) { selectedDailyDay = dayNum; updateDailyMenu(); closeCalendar(); }
+function selectDayFromCalendar(dayNum) { 
+    selectedDailyDay = dayNum; 
+    updateDailyMenu(); 
+    closeCalendar(); 
+    if(document.getElementById('gameContainer').style.display === 'block') {
+        changeDailyInGame(0);
+    }
+}
 
 function renderLastGames() {
     const container = document.getElementById('lastGamesContainer'); const list = document.getElementById('lastGamesList');
@@ -177,14 +200,18 @@ function startEndlessGame() { gameMode = 'endless'; document.getElementById('mai
 
 function updateCounterDisplay() { document.getElementById('guessCounterDisplay').style.display = 'block'; document.getElementById('guessCounterDisplay').innerText = `Próba: ${guessCount}/${GUESS_LIMIT}`; }
 
-function resetBoardAndPlay() {
-    document.getElementById('winOverlay').style.opacity = '0'; document.getElementById('loseOverlay').style.opacity = '0';
-    setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; document.getElementById('loseOverlay').style.display = 'none'; }, 200);
+function clearGameBoard() {
     guessCount = 0; guessHistory = []; guessedPlayersNames = []; hasWon = false; hasLost = false;
     document.getElementById('results').innerHTML = ''; document.getElementById('guessInput').value = '';
     document.getElementById('mysteryPhoto').style.display = 'none'; document.getElementById('mysteryPlaceholder').style.display = 'block';
     document.getElementById('photoWrapper').classList.remove('revealed'); document.getElementById('mysteryName').innerText = '???';
     document.getElementById('mysteryName').style.color = 'var(--text-main)'; document.getElementById('postGameActions').style.display = 'none';
+}
+
+function resetBoardAndPlay() {
+    document.getElementById('winOverlay').style.opacity = '0'; document.getElementById('loseOverlay').style.opacity = '0';
+    setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; document.getElementById('loseOverlay').style.display = 'none'; }, 200);
+    clearGameBoard();
     gameMode = 'endless'; initGame();
 }
 
@@ -193,17 +220,59 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 function initGame() {
     let randomIndex;
     const modeDisplay = document.getElementById('gameModeDisplay');
+    const controls = document.getElementById('gameDailyControls');
+    const inputSec = document.querySelector('.input-section');
+    
     if (gameMode === 'daily') {
+        controls.style.display = 'flex';
         dailyNumberGlobal = getDailyDateString(selectedDailyDay);
         randomIndex = Math.floor(seededRandom(selectedDailyDay * 9999) * playersDB.length);
         targetPlayer = playersDB[randomIndex];
         modeDisplay.innerText = `Tryb: Daily ${dailyNumberGlobal}`;
+        
+        if (userStats.dailyResults[selectedDailyDay]) {
+            inputSec.style.display = 'none';
+            restorePlayedGame(); 
+        } else {
+            inputSec.style.display = 'block';
+        }
     } else {
+        controls.style.display = 'none';
+        inputSec.style.display = 'block';
         randomIndex = Math.floor(Math.random() * playersDB.length);
         targetPlayer = playersDB[randomIndex];
         modeDisplay.innerText = `Tryb: Endless`;
     }
-    buildTeamPath(); setupAutocomplete(); updateCounterDisplay();
+    
+    if(inputSec.style.display !== 'none') {
+        buildTeamPath(); setupAutocomplete(); updateCounterDisplay();
+    }
+}
+
+function restorePlayedGame() {
+    buildTeamPath();
+    const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
+    
+    if (pastGuesses.length === 0) {
+        document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Historia zgadywania z tego dnia nie została zapisana (starsza wersja gry).</div>`;
+    } else {
+        pastGuesses.forEach(pName => {
+            const p = playersDB.find(x => x.name === pName);
+            if(p) {
+                guessCount++; guessedPlayersNames.push(p.name);
+                renderGuess(p, true); revealClubsOnPath(p);
+            }
+        });
+    }
+    
+    updateCounterDisplay();
+    hasWon = userStats.dailyResults[selectedDailyDay] === 'win';
+    hasLost = userStats.dailyResults[selectedDailyDay] === 'loss';
+    revealTargetInfoUI();
+    
+    document.getElementById('btnSharePost').style.display = 'inline-block';
+    document.getElementById('btnPlayAgainPost').innerText = "GRAJ W TRYB ENDLESS";
+    document.getElementById('postGameActions').style.display = 'flex';
 }
 
 function removePolishAccents(str) {
@@ -217,24 +286,47 @@ function getClubAbbr(clubName) {
     let words = cleanName.split(' '); return removePolishAccents(words[words.length - 1].substring(0, 3)).toUpperCase();
 }
 
+document.addEventListener("click", function (e) {
+    if (e.target.id !== "guessInput") {
+        closeAllLists();
+    }
+});
+
+function closeAllLists() {
+    let items = document.getElementsByClassName("autocomplete-items");
+    while (items.length > 0) {
+        items[0].parentNode.removeChild(items[0]);
+    }
+}
+
 function setupAutocomplete() {
-    const input = document.getElementById('guessInput'); input.replaceWith(input.cloneNode(true));
-    const newInput = document.getElementById('guessInput');
+    const oldInput = document.getElementById('guessInput');
+    const newInput = oldInput.cloneNode(true);
+    oldInput.replaceWith(newInput); 
+    
     newInput.addEventListener('input', function() {
-        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
-        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
+        let val = this.value; 
+        closeAllLists(); 
+        if (!val || val.length < 2) return;
+        
+        let listContainer = document.createElement("DIV"); 
+        listContainer.setAttribute("class", "autocomplete-items"); 
+        this.parentNode.appendChild(listContainer);
+        
         let valClean = removePolishAccents(val.toLowerCase());
         playersDB.forEach(player => {
             if (guessedPlayersNames.includes(player.name)) return;
             if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
-                let item = document.createElement("DIV"); item.innerHTML = player.name;
-                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); });
+                let item = document.createElement("DIV"); 
+                item.innerHTML = player.name;
+                item.addEventListener("click", () => { 
+                    newInput.value = player.name; 
+                    closeAllLists(); 
+                });
                 listContainer.appendChild(item);
             }
         });
     });
-    function closeAllLists() { let x = document.getElementsByClassName("autocomplete-items"); for (let i = 0; i < x.length; i++) x[i].remove(); }
-    document.addEventListener("click", closeAllLists);
 }
 
 function buildTeamPath() {
@@ -260,6 +352,13 @@ function makeGuess() {
     if (guessedPlayersNames.includes(guessedPlayer.name)) { alert("Już wpisałeś tego zawodnika!"); return; }
     
     guessedPlayersNames.push(guessedPlayer.name); 
+    
+    if (gameMode === 'daily') {
+        if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = [];
+        userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name);
+        saveStats();
+    }
+    
     guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer);
     document.getElementById('guessInput').value = "";
     if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 200); }
@@ -280,17 +379,23 @@ function revealClubsOnPath(guessedPlayer) {
     }
 }
 
-function renderGuess(player) {
+function renderGuess(player, isRestore = false) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row';
     let rowEmojis = "";
+    
     const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; 
     const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
-    const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
     
+    const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
     let yearContent = `<span>${player.year}</span>`;
     if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="Cel jest starszy (wcześniejszy rok urodzenia)">⬇️</span>`;
     else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="Cel jest młodszy (późniejszy rok urodzenia)">⬆️</span>`;
+
+    const dmpCls = (player.dmp === targetPlayer.dmp) ? "green" : "red";
+    let dmpContent = `<span>${player.dmp}</span>`;
+    if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Cel ma mniej medali DMP">⬇️</span>`;
+    else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Cel ma więcej medali DMP">⬆️</span>`;
 
     const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = targetPlayer.country.split("/").map(c => c.trim());
     let countryCls = "red";
@@ -300,14 +405,23 @@ function renderGuess(player) {
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
+    // Budujemy poprawne HTML dla klubów ze znaczkiem W
+    let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
+    let clubsHTML = player.pastClubs.map(c => {
+        let isLoan = c.includes("(W)");
+        let isMatch = targetCleanClubs.includes(getCleanClubName(c));
+        let matchClass = isMatch ? 'club-match' : 'club-dim';
+        return `<div class="club-logo-wrapper"><div class="club-abbr-box ${matchClass}" title="${c}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge" title="Wypożyczenie">W</div>' : ''}</div>`;
+    }).join('<div class="club-divider"></div>');
+
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
         <div class="col-attr"><div class="attr-box ${countryCls}">${countryContent}</div></div>
         <div class="col-attr"><div class="attr-box ${yearCls}">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls}" style="font-size: 24px;">${gpIcon}</div></div>
-        <div class="col-attr"><div class="attr-box ${player.dmp === targetPlayer.dmp ? 'green' : 'red'}">${player.dmp}</div></div>
+        <div class="col-attr"><div class="attr-box ${dmpCls}">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'}">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs"><div class="clubs-path-container">${player.pastClubs.map(c => `<div class="club-logo-wrapper"><div class="club-abbr-box ${targetPlayer.pastClubs.map(getCleanClubName).includes(getCleanClubName(c)) ? 'club-match' : 'club-dim'}">${getClubAbbr(c)}</div></div>`).join('<div class="club-divider"></div>')}</div></div>
+        <div class="col-clubs"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
@@ -321,7 +435,8 @@ function renderGuess(player) {
         rowEmojis += c === "green" ? "🟩" : c === "yellow" ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
-    if (player.name === targetPlayer.name) { updateStatsOnWin(); setTimeout(handleWin, 200); }
+    
+    if (!isRestore && player.name === targetPlayer.name) { updateStatsOnWin(); setTimeout(handleWin, 200); }
 }
 
 function handleWin() {
