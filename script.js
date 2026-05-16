@@ -20,7 +20,7 @@ const clubAbbreviations = {
     "brak klubu": "BK", "brak": "BK", "zawieszenie": "ZAW", "kontuzja": "KON", "koniec kariery": "KON"
 };
 
-let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [], dailyGuesses: {} };
+let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [] };
 
 const countryToCode = {
     "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", "Australia": "au", "Szwecja": "se", 
@@ -38,6 +38,7 @@ function loadStats() {
         if (!userStats.dailyResults) userStats.dailyResults = {};
         if (!userStats.dailyHistory) userStats.dailyHistory = [];
         if (!userStats.dailyGuesses) userStats.dailyGuesses = {};
+        if (!userStats.recentEndless) userStats.recentEndless = [];
         
         if (userStats.completedDailies && Array.isArray(userStats.completedDailies)) {
             userStats.completedDailies.forEach(day => { if (!userStats.dailyResults[day]) userStats.dailyResults[day] = 'win'; });
@@ -237,10 +238,30 @@ function initGame() {
             inputSec.style.display = 'block';
         }
     } else {
+        // --- INTELIGENTNE TASOWANIE ENDLESS ---
         controls.style.display = 'none';
         inputSec.style.display = 'block';
-        randomIndex = Math.floor(Math.random() * playersDB.length);
-        targetPlayer = playersDB[randomIndex];
+        
+        // Filtrujemy zawodników, usuwając tych z "recentEndless" (max 60 z 104)
+        let availablePlayers = playersDB.filter(p => !userStats.recentEndless.includes(p.id));
+        
+        // Zabezpieczenie: Jeśli pula spadnie poniżej 15 zawodników, odświeżamy worek
+        if (availablePlayers.length < 15) {
+            userStats.recentEndless = [];
+            availablePlayers = playersDB;
+        }
+        
+        // Losujemy z dostępnych zawodników
+        randomIndex = Math.floor(Math.random() * availablePlayers.length);
+        targetPlayer = availablePlayers[randomIndex];
+        
+        // Dodajemy wylosowanego zawodnika do "Pamięci worka"
+        userStats.recentEndless.push(targetPlayer.id);
+        if (userStats.recentEndless.length > 60) {
+            userStats.recentEndless.shift(); // Usuwamy najstarszego, by zrobić miejsce
+        }
+        saveStats(); // Zapisujemy "Worek"
+
         modeDisplay.innerText = `Tryb: Endless`;
     }
     
@@ -397,18 +418,11 @@ function renderGuess(player, isRestore = false) {
     if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Cel ma mniej medali DMP">⬇️</span>`;
     else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Cel ma więcej medali DMP">⬆️</span>`;
 
-    // --- NOWA LOGIKA FLAGI (50% na 50%) ---
-    const pCountries = player.country.split("/").map(c => c.trim()); 
-    const tCountries = targetPlayer.country.split("/").map(c => c.trim());
-    
+    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = targetPlayer.country.split("/").map(c => c.trim());
     let countryCls = "red";
-    if (player.country === targetPlayer.country) {
-        countryCls = "green"; // W pełni identyczne obywaltelstwo
-    } else if (pCountries.some(c => tCountries.includes(c))) {
-        countryCls = "half"; // Częściowe obywatelstwo (np. Polska pasuje do Polska/Rosja)
-    } else if (player.region === targetPlayer.region) {
-        countryCls = "yellow"; // Tylko ten sam region
-    }
+    if (player.country === targetPlayer.country) countryCls = "green";
+    else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half";
+    else if (player.region === targetPlayer.region) countryCls = "yellow";
 
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
@@ -431,9 +445,7 @@ function renderGuess(player, isRestore = false) {
         else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green";
         else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green";
         else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
-        
-        // Zapis do emoji ze schowka (half jest traktowane jako zółty)
-        rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥"; 
+        rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
     
