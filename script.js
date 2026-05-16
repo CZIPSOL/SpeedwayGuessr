@@ -83,7 +83,7 @@ function updateDailyMenu() {
     }
 }
 
-// --- PRAWDZIWY KALENDARZ ---
+// --- KALENDARZ ---
 function openCalendar() {
     calRenderMonth = new Date().getMonth(); calRenderYear = new Date().getFullYear();
     renderCalendar();
@@ -122,8 +122,8 @@ function renderCalendar() {
         const box = document.createElement('div'); box.className = 'cal-day'; box.innerText = i;
         const cellUTC = Date.UTC(calRenderYear, calRenderMonth, i);
         
-        if (cellUTC < startUTC) { box.classList.add('disabled'); } // Przed startem
-        else if (cellUTC > todayUTC) { box.classList.add('disabled', 'future'); } // Przyszłość
+        if (cellUTC < startUTC) { box.classList.add('disabled'); } 
+        else if (cellUTC > todayUTC) { box.classList.add('disabled', 'future'); } 
         else {
             const dailyNum = Math.floor((cellUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
             box.title = `Daily #${dailyNum}`;
@@ -135,8 +135,7 @@ function renderCalendar() {
         grid.appendChild(box);
     }
     
-    // Blokady strzałek miesięcy
-    document.getElementById('calBtnPrev').style.visibility = (calRenderYear <= 2026 && calRenderMonth <= 4) ? 'hidden' : 'visible';
+    document.getElementById('calBtnPrev').style.visibility = (calRenderYear <= DAILY_START_DATE.getFullYear() && calRenderMonth <= DAILY_START_DATE.getMonth()) ? 'hidden' : 'visible';
     document.getElementById('calBtnNext').style.visibility = (calRenderYear >= now.getFullYear() && calRenderMonth >= now.getMonth()) ? 'hidden' : 'visible';
 }
 
@@ -284,9 +283,11 @@ function revealClubsOnPath(guessedPlayer) {
 function renderGuess(player) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row';
     let rowEmojis = "";
-    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak"; const isGuessGP = player.gp === true || player.gp === "Tak";
+    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; 
+    const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
+    
     let yearContent = `<span>${player.year}</span>`;
     if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="Cel jest starszy (wcześniejszy rok urodzenia)">⬇️</span>`;
     else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="Cel jest młodszy (późniejszy rok urodzenia)">⬆️</span>`;
@@ -296,7 +297,8 @@ function renderGuess(player) {
     if (player.country === targetPlayer.country) countryCls = "green";
     else if (pCountries.some(c => tCountries.includes(c)) || player.region === targetPlayer.region) countryCls = "yellow";
 
-    let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[0]] || 'pl'}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${countryToCode[player.country.split('/')[0]] || 'pl'}.png" class="tile-flag" title="${player.country}">`;
+    let c1 = countryToCode[pCountries[0]] || 'pl';
+    let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
