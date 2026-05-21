@@ -605,10 +605,11 @@ async function shareResult() {
     const gridWidth = (5 * boxSize) + (4 * gap); const startX = (1080 - gridWidth) / 2;
     const colorMap = { "🟩": "#00ff66", "🟨": "#ffcc00", "🟥": "#ff3333" };
 
+    const attemptColumnX = 120;
     ctx.fillStyle = "#8e8e93";
     ctx.font = "700 24px Montserrat, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("Próba", 48, 635);
+    ctx.fillText("Próba", attemptColumnX, 635);
     const headerLabels = ["Kraj", "Rok", "GP", "DMP", "Status"];
     headerLabels.forEach((label, index) => {
         const x = startX + index * (boxSize + gap) + boxSize / 2;
@@ -622,7 +623,7 @@ async function shareResult() {
 
         ctx.fillStyle = "#1b1b1f";
         ctx.beginPath();
-        ctx.arc(48, rowY + boxSize / 2, 28, 0, Math.PI * 2);
+        ctx.arc(attemptColumnX, rowY + boxSize / 2, 28, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "#3a3a3f";
         ctx.lineWidth = 2;
@@ -630,7 +631,7 @@ async function shareResult() {
         ctx.fillStyle = "#ffffff";
         ctx.font = "900 30px Montserrat, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(String(attemptNumber), 48, rowY + boxSize / 2 + 11);
+        ctx.fillText(String(attemptNumber), attemptColumnX, rowY + boxSize / 2 + 11);
 
         const rowEmojis = Array.from(rowString).filter(char => char in colorMap);
         rowEmojis.forEach((emoji, colIndex) => {
@@ -640,7 +641,7 @@ async function shareResult() {
         });
     });
 
-    ctx.fillStyle = "#8e8e93"; ctx.font = "400 30px Montserrat, sans-serif"; ctx.fillText("speedway-guessr.github.io", 540, 1850);
+    ctx.fillStyle = "#8e8e93"; ctx.font = "400 30px Montserrat, sans-serif"; ctx.fillText("SpeedwayGuessr by CZIPSOL", 540, 1850);
 
     try {
         const isMobileShareTarget = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
