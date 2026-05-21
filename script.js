@@ -601,15 +601,41 @@ async function shareResult() {
     const scoreText = hasWon ? `${guessCount}/${GUESS_LIMIT}` : `X/${GUESS_LIMIT}`;
     ctx.fillText(scoreText, 540, 450);
 
-    const startY = 600; const boxSize = 100; const gap = 20;
+    const startY = 690; const boxSize = 100; const gap = 20;
     const gridWidth = (5 * boxSize) + (4 * gap); const startX = (1080 - gridWidth) / 2;
     const colorMap = { "🟩": "#00ff66", "🟨": "#ffcc00", "🟥": "#ff3333" };
 
+    ctx.fillStyle = "#8e8e93";
+    ctx.font = "700 24px Montserrat, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("Próba", 100, 635);
+    const headerLabels = ["Kraj", "Rok", "GP", "DMP", "Status"];
+    headerLabels.forEach((label, index) => {
+        const x = startX + index * (boxSize + gap) + boxSize / 2;
+        ctx.textAlign = "center";
+        ctx.fillText(label, x, 635);
+    });
+
     guessHistory.forEach((rowString, rowIndex) => {
+        const attemptNumber = rowIndex + 1;
+        const rowY = startY + rowIndex * (boxSize + gap);
+
+        ctx.fillStyle = "#1b1b1f";
+        ctx.beginPath();
+        ctx.arc(48, rowY + boxSize / 2, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#3a3a3f";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 30px Montserrat, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(attemptNumber), 48, rowY + boxSize / 2 + 11);
+
         const rowEmojis = Array.from(rowString).filter(char => char in colorMap);
         rowEmojis.forEach((emoji, colIndex) => {
             ctx.fillStyle = colorMap[emoji];
-            const x = startX + colIndex * (boxSize + gap); const y = startY + rowIndex * (boxSize + gap); const radius = 20;
+            const x = startX + colIndex * (boxSize + gap); const y = rowY; const radius = 20;
             ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + boxSize - radius, y); ctx.quadraticCurveTo(x + boxSize, y, x + boxSize, y + radius); ctx.lineTo(x + boxSize, y + boxSize - radius); ctx.quadraticCurveTo(x + boxSize, y + boxSize, x + boxSize - radius, y + boxSize); ctx.lineTo(x + radius, y + boxSize); ctx.quadraticCurveTo(x, y + boxSize, x, y + boxSize - radius); ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); ctx.fill();
         });
     });
