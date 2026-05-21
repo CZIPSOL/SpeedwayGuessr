@@ -1,7 +1,7 @@
 let targetPlayer; let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
 let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
-let hasWon = false; let hasLost = false;
+let hasWon = false; let hasLost = false; let isRestoring = false;
 
 let calRenderMonth = new Date().getMonth();
 let calRenderYear = new Date().getFullYear();
@@ -9,6 +9,7 @@ let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10;
 const DAILY_START_DATE = new Date('2026-05-12T00:00:00'); 
 
+// NOWE: Zamieniłem brzydkie skróty na bardzo czyste emotikony symbolizujące status!
 const clubAbbreviations = {
     "unia leszno": "LES", "falubaz zielona góra": "ZIE", "stal gorzów wielkopolski": "GOR",
     "stal gorzów": "GOR", "motor lublin": "LUB", "sparta wrocław": "WRO", "apator toruń": "TOR",
@@ -17,7 +18,7 @@ const clubAbbreviations = {
     "ostrovia ostrów": "OST", "stal rzeszów": "RZE", "row rybnik": "RYB", "psż poznań": "POZ",
     "kolejarz opole": "OPO", "orzeł łódź": "LOD", "polonia piła": "PIŁ", "start gniezno": "GNI",
     "kolejarz rawicz": "RAW", "landshut devils": "LAN", "wilki krosno": "KRO", "lokomotiv daugavpils": "DAU",
-    "brak klubu": "BK", "brak": "BK", "zawieszenie": "ZAW", "kontuzja": "KON", "koniec kariery": "KON"
+    "brak klubu": "🚫", "brak": "🚫", "zawieszenie": "⛔", "kontuzja": "🚑", "koniec kariery": "🛑"
 };
 
 let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [] };
@@ -29,7 +30,52 @@ const countryToCode = {
     "Czechy": "cz", "Włochy": "it", "Hiszpania": "es",
 };
 
-window.onload = function() { loadStats(); initDailyMenu(); renderLastGames(); };
+// --- SILNIK DŹWIĘKOWY ---
+let audioCtx = null;
+
+function playSound(type) {
+    if (!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const now = audioCtx.currentTime;
+
+    if (type === 'guess') {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+        gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.1);
+    } else if (type === 'flip') {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+        gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.05);
+    } else if (type === 'error') {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, now); osc.frequency.setValueAtTime(100, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.2);
+    } else if (type === 'win') {
+        const freqs = [523.25, 659.25, 783.99, 1046.50]; 
+        freqs.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.type = 'sine'; osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, now + i * 0.08); gain.gain.linearRampToValueAtTime(0.3, now + i * 0.08 + 0.02); gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.4);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now + i * 0.08); osc.stop(now + i * 0.08 + 0.45);
+        });
+    } else if (type === 'lose') {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); const filter = audioCtx.createBiquadFilter();
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.5);
+        filter.type = 'lowpass'; filter.frequency.value = 600; 
+        gain.gain.setValueAtTime(0.4, now); gain.gain.linearRampToValueAtTime(0, now + 0.5);
+        osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.5);
+    }
+}
+// -------------------------------------------------------------------------
+
+window.onload = function() { loadStats(); initDailyMenu(); renderLastGames(); preloadHelmetImage(); };
+
+const helmetImgObj = new Image();
+function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
 
 function loadStats() {
     let saved = localStorage.getItem('speedwayStats');
@@ -199,10 +245,32 @@ function updateStatsOnLoss() {
 function startDailyGame() { gameMode = 'daily'; document.getElementById('mainMenuContainer').style.display = 'none'; document.getElementById('gameContainer').style.display = 'block'; initGame(); }
 function startEndlessGame() { gameMode = 'endless'; document.getElementById('mainMenuContainer').style.display = 'none'; document.getElementById('gameContainer').style.display = 'block'; initGame(); }
 
-function updateCounterDisplay() { document.getElementById('guessCounterDisplay').style.display = 'block'; document.getElementById('guessCounterDisplay').innerText = `Próba: ${guessCount}/${GUESS_LIMIT}`; }
+function triggerErrorShake() {
+    const inputWrapper = document.querySelector('.input-wrapper');
+    inputWrapper.classList.add('shake-error');
+    playSound('error');
+    setTimeout(() => { inputWrapper.classList.remove('shake-error'); }, 400);
+}
+
+function updateCounterDisplay() { 
+    const container = document.getElementById('livesContainer');
+    container.style.display = 'flex';
+    container.innerHTML = '';
+    
+    for (let i = 0; i < GUESS_LIMIT; i++) {
+        const isLost = i < guessCount;
+        const isJustLost = (i === guessCount - 1) && !isRestoring && !hasWon; 
+        
+        let cls = "helmet-icon";
+        if (isJustLost) cls += " life-lost-anim";
+        else if (isLost) cls += " helmet-lost"; 
+        
+        container.innerHTML += `<img src="kask-zycie.png" class="${cls}" alt="Kask życia">`;
+    }
+}
 
 function clearGameBoard() {
-    guessCount = 0; guessHistory = []; guessedPlayersNames = []; hasWon = false; hasLost = false;
+    guessCount = 0; guessHistory = []; guessedPlayersNames = []; hasWon = false; hasLost = false; isRestoring = false;
     document.getElementById('results').innerHTML = ''; document.getElementById('guessInput').value = '';
     document.getElementById('mysteryPhoto').style.display = 'none'; document.getElementById('mysteryPlaceholder').style.display = 'block';
     document.getElementById('photoWrapper').classList.remove('revealed'); document.getElementById('mysteryName').innerText = '???';
@@ -238,29 +306,20 @@ function initGame() {
             inputSec.style.display = 'block';
         }
     } else {
-        // --- INTELIGENTNE TASOWANIE ENDLESS ---
         controls.style.display = 'none';
         inputSec.style.display = 'block';
         
-        // Filtrujemy zawodników, usuwając tych z "recentEndless" (max 60 z 104)
         let availablePlayers = playersDB.filter(p => !userStats.recentEndless.includes(p.id));
-        
-        // Zabezpieczenie: Jeśli pula spadnie poniżej 15 zawodników, odświeżamy worek
         if (availablePlayers.length < 15) {
             userStats.recentEndless = [];
             availablePlayers = playersDB;
         }
-        
-        // Losujemy z dostępnych zawodników
         randomIndex = Math.floor(Math.random() * availablePlayers.length);
         targetPlayer = availablePlayers[randomIndex];
         
-        // Dodajemy wylosowanego zawodnika do "Pamięci worka"
         userStats.recentEndless.push(targetPlayer.id);
-        if (userStats.recentEndless.length > 60) {
-            userStats.recentEndless.shift(); // Usuwamy najstarszego, by zrobić miejsce
-        }
-        saveStats(); // Zapisujemy "Worek"
+        if (userStats.recentEndless.length > 60) userStats.recentEndless.shift();
+        saveStats();
 
         modeDisplay.innerText = `Tryb: Endless`;
     }
@@ -271,6 +330,7 @@ function initGame() {
 }
 
 function restorePlayedGame() {
+    isRestoring = true;
     buildTeamPath();
     const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
@@ -294,6 +354,7 @@ function restorePlayedGame() {
     document.getElementById('btnSharePost').style.display = 'inline-block';
     document.getElementById('btnPlayAgainPost').innerText = "GRAJ W TRYB ENDLESS";
     document.getElementById('postGameActions').style.display = 'flex';
+    isRestoring = false;
 }
 
 function removePolishAccents(str) {
@@ -308,16 +369,12 @@ function getClubAbbr(clubName) {
 }
 
 document.addEventListener("click", function (e) {
-    if (e.target.id !== "guessInput") {
-        closeAllLists();
-    }
+    if (e.target.id !== "guessInput") { closeAllLists(); }
 });
 
 function closeAllLists() {
     let items = document.getElementsByClassName("autocomplete-items");
-    while (items.length > 0) {
-        items[0].parentNode.removeChild(items[0]);
-    }
+    while (items.length > 0) { items[0].parentNode.removeChild(items[0]); }
 }
 
 function setupAutocomplete() {
@@ -340,10 +397,7 @@ function setupAutocomplete() {
             if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
                 let item = document.createElement("DIV"); 
                 item.innerHTML = player.name;
-                item.addEventListener("click", () => { 
-                    newInput.value = player.name; 
-                    closeAllLists(); 
-                });
+                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); });
                 listContainer.appendChild(item);
             }
         });
@@ -368,11 +422,16 @@ function buildTeamPath() {
 function makeGuess() {
     if(hasWon || hasLost) return;
     const input = document.getElementById('guessInput').value.trim();
+    if (!input) { triggerErrorShake(); return; }
     const guessedPlayer = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
-    if (!guessedPlayer) { alert("Brak zawodnika w bazie!"); return; }
-    if (guessedPlayersNames.includes(guessedPlayer.name)) { alert("Już wpisałeś tego zawodnika!"); return; }
+    
+    if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer?.name)) { 
+        triggerErrorShake();
+        return; 
+    }
     
     guessedPlayersNames.push(guessedPlayer.name); 
+    playSound('guess');
     
     if (gameMode === 'daily') {
         if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = [];
@@ -382,7 +441,7 @@ function makeGuess() {
     
     guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer);
     document.getElementById('guessInput').value = "";
-    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 200); }
+    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
 
 function revealClubsOnPath(guessedPlayer) {
@@ -390,6 +449,13 @@ function revealClubsOnPath(guessedPlayer) {
     boxes.forEach(box => {
         if (!box.dataset.club) return;
         if (guessedClubs.includes(getCleanClubName(box.dataset.club)) && box.innerText === '?') {
+            
+            // Logika dodania klasy "specjalnej" gdy klub jest odsłonięty na górnej ścieżce
+            let cleanC = getCleanClubName(box.dataset.club).toLowerCase();
+            if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) {
+                box.classList.add('club-special');
+            }
+            
             box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`;
             box.classList.add('found');
         }
@@ -427,16 +493,45 @@ function renderGuess(player, isRestore = false) {
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
+    let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
+    let clubsHTML = player.pastClubs.map(c => {
+        let isLoan = c.includes("(W)"); let isMatch = targetCleanClubs.includes(getCleanClubName(c));
+        let matchClass = isMatch ? 'club-match' : 'club-dim';
+        
+        // NOWE: Logika dodająca przerywaną ramkę dla brakujących klubów!
+        let cleanC = getCleanClubName(c).toLowerCase();
+        let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC);
+        let specialClass = isSpecial ? ' club-special' : '';
+        
+        return `<div class="club-logo-wrapper"><div class="club-abbr-box ${matchClass}${specialClass}" title="${c}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge" title="Wypożyczenie">W</div>' : ''}</div>`;
+    }).join('<div class="club-divider"></div>');
+
+    let d1 = isRestore ? 0 : 0.1;
+    let d2 = isRestore ? 0 : 0.3;
+    let d3 = isRestore ? 0 : 0.5;
+    let d4 = isRestore ? 0 : 0.7;
+    let d5 = isRestore ? 0 : 0.9;
+    let d6 = isRestore ? 0 : 1.1;
+
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
-        <div class="col-attr"><div class="attr-box ${countryCls}">${countryContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${yearCls}">${yearContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${gpCls}" style="font-size: 24px;">${gpIcon}</div></div>
-        <div class="col-attr"><div class="attr-box ${dmpCls}">${dmpContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'}">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs"><div class="clubs-path-container">${player.pastClubs.map(c => `<div class="club-logo-wrapper"><div class="club-abbr-box ${targetPlayer.pastClubs.map(getCleanClubName).includes(getCleanClubName(c)) ? 'club-match' : 'club-dim'}">${getClubAbbr(c)}</div></div>`).join('<div class="club-divider"></div>')}</div></div>
+        <div class="col-attr"><div class="attr-box ${countryCls} flip-anim" style="animation-delay: ${d1}s">${countryContent}</div></div>
+        <div class="col-attr"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
+        <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
+        <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
+        <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
+        <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
+    
+    if (!isRestore) {
+        setTimeout(() => playSound('flip'), 100);
+        setTimeout(() => playSound('flip'), 300);
+        setTimeout(() => playSound('flip'), 500);
+        setTimeout(() => playSound('flip'), 700);
+        setTimeout(() => playSound('flip'), 900);
+        setTimeout(() => playSound('flip'), 1100);
+    }
     
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
@@ -449,24 +544,26 @@ function renderGuess(player, isRestore = false) {
     });
     guessHistory.push(rowEmojis);
     
-    if (!isRestore && player.name === targetPlayer.name) { updateStatsOnWin(); setTimeout(handleWin, 200); }
+    if (!isRestore && player.name === targetPlayer.name) { updateStatsOnWin(); setTimeout(handleWin, 1400); }
 }
 
 function handleWin() {
+    playSound('win');
     revealTargetInfoUI(); launchConfetti();
     const overlay = document.getElementById('winOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
     const btnPlayAgainPost = document.getElementById('btnPlayAgainPost');
     if (gameMode === 'daily') { document.getElementById('btnSharePost').style.display = 'inline-block'; btnPlayAgainPost.innerText = "GRAJ W TRYB ENDLESS"; } 
     else { document.getElementById('btnSharePost').style.display = 'none'; btnPlayAgainPost.innerText = "ZAGRAJ PONOWNIE"; }
-    setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; document.getElementById('postGameActions').style.display = 'flex'; }, 200); }, 1200);
+    setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; document.getElementById('postGameActions').style.display = 'flex'; }, 200); }, 1500);
 }
 
 function handleLoss() {
+    playSound('lose');
     revealTargetInfoUI();
     const overlay = document.getElementById('loseOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
     document.getElementById('btnSharePost').style.display = 'none';
     document.getElementById('btnPlayAgainPost').innerText = gameMode === 'daily' ? "GRAJ W TRYB ENDLESS" : "ZAGRAJ PONOWNIE";
-    setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; document.getElementById('postGameActions').style.display = 'flex'; }, 200); }, 1200);
+    setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; document.getElementById('postGameActions').style.display = 'flex'; }, 200); }, 1500);
 }
 
 function revealTargetInfoUI() {
@@ -478,16 +575,54 @@ function revealTargetInfoUI() {
     
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.club) return;
+        let cleanC = getCleanClubName(box.dataset.club).toLowerCase();
+        if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) {
+            box.classList.add('club-special');
+        }
         box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`; box.classList.add('found');
     });
     const endBox = document.getElementById('pathBox-retired');
     if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
 }
 
-function shareResult() {
-    let modeText = gameMode === 'daily' ? `Daily ${dailyNumberGlobal}` : `Endless`;
-    let text = `🏁 Speedway Guessr (${modeText})\nPróba: ${guessCount}/${GUESS_LIMIT}\n\n`;
-    guessHistory.forEach(row => { text += row + '\n'; }); navigator.clipboard.writeText(text).then(() => alert("Wynik skopiowany do schowka!"));
+async function shareResult() {
+    if (gameMode !== 'daily') return;
+    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+    canvas.width = 1080; canvas.height = 1920;
+    const grd = ctx.createRadialGradient(540, 0, 0, 540, 0, 1920);
+    grd.addColorStop(0, "#1e1e22"); grd.addColorStop(1, "#0a0a0c");
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#ffffff"; ctx.font = "900 80px Montserrat, sans-serif"; ctx.textAlign = "center"; ctx.fillText("🏁 SPEEDWAY GUESSR", 540, 200);
+    ctx.fillStyle = "#f1c40f"; ctx.font = "700 50px Montserrat, sans-serif"; ctx.fillText(`DAILY ${dailyNumberGlobal}`, 540, 280);
+    ctx.fillStyle = "#ffffff"; ctx.font = "900 120px Montserrat, sans-serif";
+    const scoreText = hasWon ? `${guessCount}/${GUESS_LIMIT}` : `X/${GUESS_LIMIT}`;
+    ctx.fillText(scoreText, 540, 450);
+
+    const startY = 600; const boxSize = 100; const gap = 20;
+    const gridWidth = (5 * boxSize) + (4 * gap); const startX = (1080 - gridWidth) / 2;
+    const colorMap = { "🟩": "#00ff66", "🟨": "#ffcc00", "🟥": "#ff3333" };
+
+    guessHistory.forEach((rowString, rowIndex) => {
+        const rowEmojis = Array.from(rowString).filter(char => char in colorMap);
+        rowEmojis.forEach((emoji, colIndex) => {
+            ctx.fillStyle = colorMap[emoji];
+            const x = startX + colIndex * (boxSize + gap); const y = startY + rowIndex * (boxSize + gap); const radius = 20;
+            ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + boxSize - radius, y); ctx.quadraticCurveTo(x + boxSize, y, x + boxSize, y + radius); ctx.lineTo(x + boxSize, y + boxSize - radius); ctx.quadraticCurveTo(x + boxSize, y + boxSize, x + boxSize - radius, y + boxSize); ctx.lineTo(x + radius, y + boxSize); ctx.quadraticCurveTo(x, y + boxSize, x, y + boxSize - radius); ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); ctx.fill();
+        });
+    });
+
+    ctx.fillStyle = "#8e8e93"; ctx.font = "400 30px Montserrat, sans-serif"; ctx.fillText("speedway-guessr.github.io", 540, 1850);
+
+    try {
+        canvas.toBlob(async (blob) => {
+            if (!blob) { alert("Błąd generowania obrazu."); return; }
+            const file = new File([blob], `speedway-guessr-${dailyNumberGlobal}.png`, { type: "image/png" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: `Speedway Guessr Daily ${dailyNumberGlobal}`, text: `🏁 Moje podsumowanie Speedway Guessr Daily! Dasz radę lepiej? #SpeedwayGuessr`, });
+            } else { alert("Niestety Twoja przeglądarka nie obsługuje bezpośredniego udostępniania obrazów (funkcja działa najlepiej na telefonach). \n\nZrób zrzut ekranu, aby podzielić się wynikiem na Instagramie!"); }
+        }, "image/png");
+    } catch (error) { console.error("Error sharing:", error); alert("Wystąpił nieoczekiwany błąd podczas udostępniania."); }
 }
 
 function showStats() {
