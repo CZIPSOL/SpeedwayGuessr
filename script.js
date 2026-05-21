@@ -469,6 +469,7 @@ function revealClubsOnPath(guessedPlayer) {
 function renderGuess(player, isRestore = false) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row';
     let rowEmojis = "";
+    const attemptNumber = guessCount;
     
     const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; 
     const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
@@ -514,6 +515,7 @@ function renderGuess(player, isRestore = false) {
     let d6 = isRestore ? 0 : 1.1;
 
     row.innerHTML = `
+        <div class="col-attempt-row"><div class="attempt-badge" title="Próba nr ${attemptNumber}">${attemptNumber}</div></div>
         <div class="col-name">${player.name}</div>
         <div class="col-attr"><div class="attr-box ${countryCls} flip-anim" style="animation-delay: ${d1}s">${countryContent}</div></div>
         <div class="col-attr"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
