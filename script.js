@@ -607,8 +607,8 @@ async function shareResult() {
 
     ctx.fillStyle = "#8e8e93";
     ctx.font = "700 24px Montserrat, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText("Próba", 100, 635);
+    ctx.textAlign = "center";
+    ctx.fillText("Próba", 48, 635);
     const headerLabels = ["Kraj", "Rok", "GP", "DMP", "Status"];
     headerLabels.forEach((label, index) => {
         const x = startX + index * (boxSize + gap) + boxSize / 2;
