@@ -615,11 +615,12 @@ async function shareResult() {
     ctx.fillStyle = "#8e8e93"; ctx.font = "400 30px Montserrat, sans-serif"; ctx.fillText("speedway-guessr.github.io", 540, 1850);
 
     try {
+        const isMobileShareTarget = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1;
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
         if (!blob) { alert("Błąd generowania obrazu."); return; }
 
         const file = new File([blob], `speedway-guessr-${dailyNumberGlobal}.png`, { type: "image/png" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (isMobileShareTarget && navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({ files: [file], title: `Speedway Guessr Daily ${dailyNumberGlobal}`, text: `🏁 Moje podsumowanie Speedway Guessr Daily! Dasz radę lepiej? #SpeedwayGuessr`, });
             return;
         }
