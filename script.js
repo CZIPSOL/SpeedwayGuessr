@@ -615,13 +615,28 @@ async function shareResult() {
     ctx.fillStyle = "#8e8e93"; ctx.font = "400 30px Montserrat, sans-serif"; ctx.fillText("speedway-guessr.github.io", 540, 1850);
 
     try {
-        canvas.toBlob(async (blob) => {
-            if (!blob) { alert("Błąd generowania obrazu."); return; }
-            const file = new File([blob], `speedway-guessr-${dailyNumberGlobal}.png`, { type: "image/png" });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({ files: [file], title: `Speedway Guessr Daily ${dailyNumberGlobal}`, text: `🏁 Moje podsumowanie Speedway Guessr Daily! Dasz radę lepiej? #SpeedwayGuessr`, });
-            } else { alert("Niestety Twoja przeglądarka nie obsługuje bezpośredniego udostępniania obrazów (funkcja działa najlepiej na telefonach). \n\nZrób zrzut ekranu, aby podzielić się wynikiem na Instagramie!"); }
-        }, "image/png");
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+        if (!blob) { alert("Błąd generowania obrazu."); return; }
+
+        const file = new File([blob], `speedway-guessr-${dailyNumberGlobal}.png`, { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: `Speedway Guessr Daily ${dailyNumberGlobal}`, text: `🏁 Moje podsumowanie Speedway Guessr Daily! Dasz radę lepiej? #SpeedwayGuessr`, });
+            return;
+        }
+
+        if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+            alert("Podsumowanie zostało skopiowane do schowka.");
+            return;
+        }
+
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `speedway-guessr-${dailyNumberGlobal}.png`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        alert("Twoja przeglądarka nie obsługuje udostępniania ani kopiowania obrazu, więc plik został pobrany.");
     } catch (error) { console.error("Error sharing:", error); alert("Wystąpił nieoczekiwany błąd podczas udostępniania."); }
 }
 
