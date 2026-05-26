@@ -184,7 +184,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .info-container { flex: 1; min-width: 0; }
 .info-container h2 { margin: 0 0 10px 0; font-size: 32px; font-weight: 900; transition: color 0.3s; }
 
-/* FIX: Zablokowane powiększanie się górnych klubów */
 .team-path { display: flex; align-items: center; gap: 15px; font-size: 13px; color: var(--text-dim); text-transform: uppercase; width: 100%; min-width: 0; }
 .path-label { flex-shrink: 0; }
 .path-boxes { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 5px; }
@@ -287,12 +286,12 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .btn-share { background: var(--green-neon); color: #000; padding: 16px 32px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; transition: transform 0.2s; }
 .btn-share:hover { transform: scale(1.05); }
 
-/* --- RWD MOBILE --- */
+/* --- RWD MOBILE (Karty na telefonach, PANCERNY GRID) --- */
 @media (max-width: 768px) {
-    body { padding: 15px 5px; }
-    .menu-container { padding: 30px 15px; width: 100%; margin-top: 10px; border-radius: 20px; }
+    body { padding: 15px 5px; overflow-x: hidden; }
+    .menu-container { padding: 30px 15px; width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
     
-    .game-header { width: 100%; max-width: 100%; padding: 0 10px; }
+    .game-header { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
     .game-header .stats-btn-wrapper { position: absolute; top: 0px; right: 10px; }
     
     .game-title { font-size: 28px; }
@@ -301,18 +300,23 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .search-box { flex-direction: column; width: 100%; }
     .search-box button { width: 100%; } 
     
-    .main-card { padding: 15px; border-radius: 20px; width: 100%; }
+    /* GŁÓWNA KARTA - overflow: hidden zapobiega wywalaniu strony w prawo */
+    .main-card { 
+        padding: 15px; 
+        border-radius: 20px; 
+        width: 100%; 
+        box-sizing: border-box; 
+        overflow: hidden; 
+    }
     
-    /* Zabezpieczenie siatki przed powiększeniem - kluczowa linia minmax(0, 1fr) */
+    /* GÓRNY PASEK KLUBÓW (Target) */
     .header-section {
         display: grid;
         grid-template-columns: 90px minmax(0, 1fr);
-        grid-template-rows: auto auto;
         gap: 10px 15px;
         align-items: center;
         margin-bottom: 20px;
         width: 100%;
-        max-width: 100%;
     }
     
     .photo-container {
@@ -334,25 +338,26 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         align-self: flex-end;
     }
     
-    /* GÓRNY PASEK KLUBÓW - Własny suwak na telefonie i blokada Blowoutu */
     .team-path {
         grid-column: 2;
         grid-row: 2;
-        justify-content: flex-start;
-        margin: 0;
-        align-self: flex-start;
         width: 100%;
         min-width: 0; 
+        display: flex;
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
+        margin: 0;
     }
     .path-label { font-size: 11px; }
     .path-boxes {
         width: 100%;
         min-width: 0;
         overflow-x: auto;
-        padding-bottom: 4px;
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
     }
 
     .post-game-actions { flex-direction: column; bottom: 20px; width: 90%; }
@@ -361,34 +366,69 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .cal-day { font-size: 12px; }
 
     .table-headers { display: none; }
-    .table-wrapper { overflow-x: hidden; width: 100%; max-width: 100%; }
+    .table-wrapper { width: 100%; max-width: 100%; }
 
+    /* WNĘTRZE KARTY ZGADYWANIA - CSS GRID (PANCERNE ROZWIĄZANIE) */
     .guess-row {
-        flex-direction: row;
-        flex-wrap: wrap;
-        padding: 15px 10px;
-        gap: 12px 0; 
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px 0; 
         width: 100%;
         max-width: 100%;
+        padding: 15px 10px;
+        box-sizing: border-box;
+        border-radius: 20px;
+        background: rgba(128, 128, 128, 0.05);
+        border: 1px solid var(--border-color);
+        margin-bottom: 12px;
     }
     
-    .col-name { width: 100%; text-align: center; order: 1; padding: 0; font-size: 16px; font-weight: 900; }
-    .col-attr { width: 20%; order: 2; padding: 0; display: flex; justify-content: center; }
-    .attr-box { width: 90%; max-width: 55px; height: auto; aspect-ratio: 1; border-radius: 12px; }
+    .col-name {
+        grid-column: 1 / -1; /* Zajmuje całą szerokość (Rząd 1) */
+        width: 100%;
+        text-align: center;
+        padding: 0;
+        font-size: 16px;
+        font-weight: 900;
+    }
+
+    .col-attr {
+        /* Automatycznie ułożą się w 5 kolumnach (Rząd 2) */
+        width: 100%; 
+        padding: 0;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .attr-box {
+        width: 90%;
+        max-width: 50px;
+        height: auto;
+        aspect-ratio: 1;
+        border-radius: 12px;
+    }
+
     .val-num { font-size: 16px; }
     .status-icon { font-size: 20px; }
 
+    /* KLUBY W KARTACH WYNIKÓW - Lądują pod atrybutami! */
     .col-clubs {
+        grid-column: 1 / -1; /* Zajmuje całą szerokość (Rząd 3) */
         width: 100%;
         max-width: 100%;
-        min-width: 0; 
-        order: 3; 
-        padding-left: 0;
+        min-width: 0; /* Kluczowe dla paska przewijania w Grid! */
+        padding: 0;
         margin-top: 5px;
     }
+
     .clubs-path-container {
         width: 100%;
         max-width: 100%;
-        overflow-x: auto;
+        overflow-x: auto; /* Włącza suwak poziomy */
+        -webkit-overflow-scrolling: touch; /* Płynne przewijanie na iOS */
+        display: flex;
+        flex-wrap: nowrap;
+        padding: 5px 10px;
+        box-sizing: border-box;
     }
 }
