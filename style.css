@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
 
+/* GLOBALNY FIX NA ROZJEŻDŻANIE SIĘ STRONY */
 * { box-sizing: border-box; }
 
 :root {
@@ -68,10 +69,7 @@ body {
     0% { transform: rotateX(-90deg); opacity: 0; }
     100% { transform: rotateX(0); opacity: 1; }
 }
-.flip-anim {
-    animation: flipIn 0.4s ease forwards;
-    opacity: 0; 
-}
+.flip-anim { animation: flipIn 0.4s ease forwards; opacity: 0; }
 
 @keyframes shake {
     0% { transform: translateX(0); }
@@ -83,15 +81,15 @@ body {
 .shake-error { animation: shake 0.4s; }
 .shake-error input { border-color: var(--red-neon) !important; background: rgba(255, 51, 51, 0.1); }
 
+/* --- KASKI (Życia) --- */
 .lives-container { display: flex; gap: 4px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
-.helmet-icon { width: 26px; height: auto; transition: all 0.3s ease; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.7)); }
-.helmet-lost { filter: grayscale(1) opacity(0.3) !important; transform: scale(0.9); }
+.helmet-icon { width: 30px; height: 30px; transition: all 0.3s ease; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.7)); }
+.helmet-lost { color: #444 !important; filter: none; transform: scale(0.9); }
 @keyframes crackHelmet {
     0% { transform: scale(1); }
-    20% { transform: scale(1.3) rotate(-15deg); }
-    40% { transform: scale(1.3) rotate(15deg); }
-    60% { transform: scale(1.3) rotate(-15deg); }
-    100% { transform: scale(1) rotate(0); filter: grayscale(1) opacity(0.3); }
+    25% { transform: scale(1.2) rotate(-10deg); color: #888; }
+    50% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1) rotate(0); color: #444; }
 }
 .life-lost-anim { animation: crackHelmet 0.6s ease-out forwards; }
 
@@ -160,8 +158,8 @@ body {
 [data-theme="light"] .game-title { background: linear-gradient(to bottom, #000 0%, #666 100%); -webkit-background-clip: text; }
 
 .search-box { display: flex; gap: 12px; justify-content: center; width: 100%; }
-.input-wrapper { position: relative; flex: 1; transition: 0.3s; }
-input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s;}
+.input-wrapper { position: relative; flex: 1; transition: 0.3s; width: 100%; max-width: 100%; box-sizing: border-box; }
+input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
 button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; }
 .btn-reset { background: var(--accent); color: #000; padding: 16px 32px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; }
@@ -177,7 +175,8 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 .main-card { background: var(--card-bg); width: 1150px; max-width: 100%; border-radius: 32px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); backdrop-filter: blur(10px); }
 
-.header-section { display: flex; align-items: center; gap: 30px; margin-bottom: 25px; }
+/* Wersja na komputer: Zdjęcie i info obok siebie */
+.header-section { display: flex; align-items: center; gap: 30px; margin-bottom: 25px; width: 100%; }
 .photo-container { width: 120px; height: 140px; flex-shrink: 0; border: 2px solid rgba(128,128,128,0.3); border-radius: 20px; display: flex; justify-content: center; align-items: center; background: var(--photo-bg-gradient); overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-size: 80px; font-weight: 900; color: var(--photo-text-color); transition: background 0.3s ease; }
 .photo-container.revealed { background: #ffffff; border-color: #cacaca; }
 .photo-container img { width: 100%; height: 100%; object-fit: contain; }
@@ -185,12 +184,17 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .info-container { flex: 1; min-width: 0; }
 .info-container h2 { margin: 0 0 10px 0; font-size: 32px; font-weight: 900; transition: color 0.3s; }
 
-.team-path { display: flex; align-items: center; gap: 15px; font-size: 13px; color: var(--text-dim); text-transform: uppercase; flex-wrap: wrap;}
-.path-boxes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.path-box { position: relative; width: 40px; height: 40px; background: var(--path-box-bg); border: 1px solid var(--path-box-border); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: 900; transition: 0.3s; color: var(--text-main); }
+/* FIX: Zablokowane powiększanie się górnych klubów */
+.team-path { display: flex; align-items: center; gap: 15px; font-size: 13px; color: var(--text-dim); text-transform: uppercase; width: 100%; min-width: 0; }
+.path-label { flex-shrink: 0; }
+.path-boxes { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; overflow-x: auto; flex: 1; min-width: 0; padding-bottom: 5px; }
+.path-boxes::-webkit-scrollbar { height: 4px; }
+.path-boxes::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.4); border-radius: 4px; }
+
+.path-box { position: relative; width: 40px; height: 40px; background: var(--path-box-bg); border: 1px solid var(--path-box-border); border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 13px; font-weight: 900; transition: 0.3s; color: var(--text-main); flex-shrink: 0; }
 .path-box.found { background-color: #25252a; border: 1px solid #f1c40f; color: #fff; }
 [data-theme="light"] .path-box.found { background-color: #e0e0e5; border-color: #f1c40f; color: #000; }
-.path-arrow { font-size: 16px; color: var(--path-box-border); }
+.path-arrow { font-size: 16px; color: var(--path-box-border); flex-shrink: 0; }
 .divider { border: none; border-top: 1px solid var(--divider-color); margin: 25px 0; }
 
 /* --- TABELA I WYNIKI --- */
@@ -236,8 +240,9 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     padding: 0 10px; 
     gap: 4px; 
     overflow-x: auto; 
+    flex-wrap: nowrap;
 }
-.clubs-path-container::-webkit-scrollbar { height: 6px; }
+.clubs-path-container::-webkit-scrollbar { height: 4px; }
 .clubs-path-container::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.4); border-radius: 4px; }
 
 .club-logo-wrapper { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -248,20 +253,9 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .club-dim { background: rgba(128,128,128,0.1); border: 1px solid #444; color: var(--text-dim); opacity: 0.5; }
 [data-theme="light"] .club-dim { background: rgba(0,0,0,0.05); border-color: #ccc; }
 
-/* --- NOWE KLASY DLA BRAKU KLUBU / KONTUZJI --- */
-.club-special {
-    border-style: dashed !important;
-    font-size: 18px !important; 
-    background: rgba(128,128,128,0.05) !important;
-}
-.club-match.club-special, .path-box.found.club-special {
-    border-color: var(--green-neon) !important;
-    background: rgba(0, 255, 102, 0.05) !important;
-    box-shadow: none !important;
-}
-[data-theme="light"] .club-special {
-    background: rgba(0,0,0,0.02) !important;
-}
+.club-special { border-style: dashed !important; font-size: 18px !important; background: rgba(128,128,128,0.05) !important; }
+.club-match.club-special, .path-box.found.club-special { border-color: var(--green-neon) !important; background: rgba(0, 255, 102, 0.05) !important; box-shadow: none !important; }
+[data-theme="light"] .club-special { background: rgba(0,0,0,0.02) !important; }
 
 .loan-badge { position: absolute; top: -4px; right: -4px; background: #666; color: white; font-size: 9px; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #222; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 5; }
 
@@ -309,20 +303,23 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     .main-card { padding: 15px; border-radius: 20px; width: 100%; }
     
+    /* Zabezpieczenie siatki przed powiększeniem - kluczowa linia minmax(0, 1fr) */
     .header-section {
         display: grid;
-        grid-template-columns: 100px 1fr;
+        grid-template-columns: 90px minmax(0, 1fr);
         grid-template-rows: auto auto;
         gap: 10px 15px;
         align-items: center;
         margin-bottom: 20px;
+        width: 100%;
+        max-width: 100%;
     }
     
     .photo-container {
         grid-column: 1;
         grid-row: 1 / span 2;
-        width: 100px;
-        height: 120px;
+        width: 90px;
+        height: 110px;
         margin: 0;
     }
     
@@ -337,12 +334,25 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         align-self: flex-end;
     }
     
+    /* GÓRNY PASEK KLUBÓW - Własny suwak na telefonie i blokada Blowoutu */
     .team-path {
         grid-column: 2;
         grid-row: 2;
         justify-content: flex-start;
         margin: 0;
         align-self: flex-start;
+        width: 100%;
+        min-width: 0; 
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    .path-label { font-size: 11px; }
+    .path-boxes {
+        width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        padding-bottom: 4px;
     }
 
     .post-game-actions { flex-direction: column; bottom: 20px; width: 90%; }
@@ -362,31 +372,9 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         max-width: 100%;
     }
     
-    .col-name {
-        width: 100%;
-        text-align: center;
-        order: 1; 
-        padding: 0;
-        font-size: 16px;
-        font-weight: 900;
-    }
-
-    .col-attr {
-        width: 20%; 
-        order: 2; 
-        padding: 0;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .attr-box {
-        width: 90%;
-        max-width: 55px;
-        height: auto;
-        aspect-ratio: 1;
-        border-radius: 12px;
-    }
-
+    .col-name { width: 100%; text-align: center; order: 1; padding: 0; font-size: 16px; font-weight: 900; }
+    .col-attr { width: 20%; order: 2; padding: 0; display: flex; justify-content: center; }
+    .attr-box { width: 90%; max-width: 55px; height: auto; aspect-ratio: 1; border-radius: 12px; }
     .val-num { font-size: 16px; }
     .status-icon { font-size: 20px; }
 
@@ -398,7 +386,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         padding-left: 0;
         margin-top: 5px;
     }
-
     .clubs-path-container {
         width: 100%;
         max-width: 100%;
