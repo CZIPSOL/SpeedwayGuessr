@@ -104,6 +104,7 @@ body {
 .shake-error { animation: shake 0.4s; }
 .shake-error input { border-color: var(--red-neon) !important; background: rgba(255, 51, 51, 0.1); }
 
+/* --- KASKI (Życia) --- */
 .lives-container {
     display: flex;
     align-items: center;
@@ -363,14 +364,15 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .btn-share { background: var(--green-neon); color: #000; padding: 16px 32px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; transition: transform 0.2s; }
 .btn-share:hover { transform: scale(1.05); }
 
-/* --- RWD MOBILE --- */
+
+/* --- RWD MOBILE (PANCERNY GRID) --- */
 @media (max-width: 768px) {
-    body { padding: 15px 5px; }
+    body { padding: 15px 5px; overflow-x: hidden; }
     .top-actions { top: 10px; right: 10px; }
     .top-icon-btn { width: 42px; height: 42px; }
-    .menu-container { padding: 30px 15px; width: 100%; margin-top: 10px; border-radius: 20px; }
+    .menu-container { padding: 30px 15px; width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
     
-    .game-header { width: 100%; max-width: 100%; padding: 0 10px; }
+    .game-header { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
     .game-header .stats-btn-wrapper { position: absolute; top: 0px; left: 10px; right: auto; }
     .settings-group { flex-direction: column; align-items: stretch; gap: 10px; }
     .segmented-control { width: 100%; }
@@ -386,37 +388,31 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         gap: 3px;
     }
 
-    .helmet-icon {
-        width: 22px;
-    }
-
-    .helmet-icon.helmet-lost {
-        display: none;
-    }
-
-    .helmet-icon.life-lost-anim {
-        animation: crackHelmetOut 0.45s ease-out forwards;
-    }
+    .helmet-icon { width: 22px; }
+    .helmet-icon.helmet-lost { display: none; }
+    .helmet-icon.life-lost-anim { animation: crackHelmetOut 0.45s ease-out forwards; }
     
     .search-box { flex-direction: column; width: 100%; }
     .search-box button { width: 100%; } 
     
-    .main-card { padding: 15px; border-radius: 20px; width: 100%; }
+    .main-card { padding: 15px; border-radius: 20px; width: 100%; box-sizing: border-box; overflow: hidden; }
     
+    /* GÓRNY PASEK KLUBÓW (Target) - Zmieniony na Grid Spanning 100% pod zdjęciem! */
     .header-section {
         display: grid;
-        grid-template-columns: 100px 1fr;
+        grid-template-columns: 90px minmax(0, 1fr);
         grid-template-rows: auto auto;
         gap: 10px 15px;
         align-items: center;
         margin-bottom: 20px;
+        width: 100%;
     }
     
     .photo-container {
         grid-column: 1;
-        grid-row: 1 / span 2;
-        width: 100px;
-        height: 120px;
+        grid-row: 1;
+        width: 90px;
+        height: 110px;
         margin: 0;
     }
     
@@ -428,15 +424,30 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         font-size: 20px;
         text-align: left;
         margin: 0;
-        align-self: flex-end;
+        align-self: center;
     }
     
+    /* Kluby lądują pod imieniem i zdjęciem, na max szerokość i z suwakiem */
     .team-path {
-        grid-column: 2;
+        grid-column: 1 / -1; 
         grid-row: 2;
-        justify-content: flex-start;
-        margin: 0;
-        align-self: flex-start;
+        width: 100%;
+        min-width: 0; 
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+        margin-top: 5px;
+    }
+    .path-label { font-size: 11px; }
+    .path-boxes {
+        width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 5px;
+        -webkit-overflow-scrolling: touch;
     }
 
     .post-game-actions { flex-direction: column; bottom: 20px; width: 90%; }
@@ -446,42 +457,41 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
     .table-help { font-size: 10px; line-height: 1.4; }
     .table-headers { display: none; }
-    .table-wrapper { overflow-x: hidden; width: 100%; max-width: 100%; }
+    .table-wrapper { width: 100%; max-width: 100%; overflow-x: hidden; }
 
+    /* WNĘTRZE KARTY ZGADYWANIA - CSS GRID (PANCERNE ROZWIĄZANIE PRZECIWKO WYWALANIU) */
     .guess-row {
-        flex-direction: row;
-        flex-wrap: wrap;
-        padding: 15px 10px;
-        gap: 12px 0; 
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px 0; 
         width: 100%;
         max-width: 100%;
-    }
-
-    .col-attempt-row {
-        width: 100%;
-        order: 0;
-        padding-right: 0;
-        margin-bottom: 2px;
-    }
-
-    .attempt-badge {
-        width: 30px;
-        height: 30px;
-        font-size: 13px;
+        padding: 15px 10px;
+        box-sizing: border-box;
+        border-radius: 20px;
+        background: rgba(128, 128, 128, 0.05);
+        border: 1px solid var(--border-color);
+        margin-bottom: 12px;
     }
     
+    .col-attempt-row {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+
     .col-name {
+        grid-column: 1 / -1; 
         width: 100%;
         text-align: center;
-        order: 1; 
         padding: 0;
         font-size: 16px;
         font-weight: 900;
     }
 
     .col-attr {
-        width: 20%; 
-        order: 2; 
+        width: 100%; 
         padding: 0;
         display: flex;
         justify-content: center;
@@ -489,7 +499,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     .attr-box {
         width: 90%;
-        max-width: 55px;
+        max-width: 50px;
         height: auto;
         aspect-ratio: 1;
         border-radius: 12px;
@@ -498,18 +508,24 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .val-num { font-size: 16px; }
     .status-icon { font-size: 20px; }
 
+    /* KLUBY W KARTACH WYNIKÓW - Lądują pod atrybutami! */
     .col-clubs {
+        grid-column: 1 / -1; 
         width: 100%;
         max-width: 100%;
         min-width: 0; 
-        order: 3; 
-        padding-left: 0;
+        padding: 0;
         margin-top: 5px;
     }
 
     .clubs-path-container {
         width: 100%;
         max-width: 100%;
-        overflow-x: auto;
+        overflow-x: auto; 
+        -webkit-overflow-scrolling: touch; 
+        display: flex;
+        flex-wrap: nowrap;
+        padding: 5px 0;
+        box-sizing: border-box;
     }
 }
