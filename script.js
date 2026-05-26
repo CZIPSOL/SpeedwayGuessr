@@ -68,7 +68,10 @@ function playSound(type) {
     }
 }
 
-window.onload = function() { loadStats(); initDailyMenu(); renderLastGames(); };
+const helmetImgObj = new Image();
+function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
+
+window.onload = function() { loadStats(); initDailyMenu(); renderLastGames(); preloadHelmetImage(); };
 
 function loadStats() {
     let saved = localStorage.getItem('speedwayStats');
@@ -138,7 +141,6 @@ function updateDailyMenu() {
     }
 }
 
-// --- KALENDARZ ---
 function openCalendar() {
     calRenderMonth = new Date().getMonth(); calRenderYear = new Date().getFullYear();
     renderCalendar();
@@ -245,7 +247,7 @@ function triggerErrorShake() {
     setTimeout(() => { inputWrapper.classList.remove('shake-error'); }, 400);
 }
 
-// --- NAPRAWIONA LOGIKA WYŚWIETLANIA ŻYĆ (KASKÓW) ---
+// --- ZAKTUALIZOWANE KASKI Z OBRAZKA (Gwarancja szarego na Mobile) ---
 function updateCounterDisplay() { 
     const container = document.getElementById('livesContainer');
     container.style.display = 'flex';
@@ -255,16 +257,11 @@ function updateCounterDisplay() {
         const isLost = i < guessCount;
         const isJustLost = (i === guessCount - 1) && !isRestoring && !hasWon; 
         
-        let stateClass = "helmet-active";
-        if (isJustLost) stateClass = "helmet-animating-loss";
-        else if (isLost) stateClass = "helmet-lost"; 
+        let cls = "helmet-icon";
+        if (isJustLost) cls += " life-lost-anim";
+        else if (isLost) cls += " helmet-lost"; 
         
-        container.innerHTML += `<div class="helmet-wrapper ${stateClass}">
-            <svg viewBox="0 0 24 24" width="28" height="28">
-                <path fill="currentColor" d="M12,2C8.69,2,6,4.69,6,8v6c0,2.21,1.79,4,4,4h4c2.21,0,4-1.79,4-4V8C18,4.69,15.31,2,12,2z M17,14c0,1.1-0.9,2-2,2H9c-1.1,0-2-0.9-2-2V8c0-1.1,0.9-2,2-2h6c1.1,0,2,0.9,2,2V14z"/>
-                <path fill="currentColor" d="M14,10H10v2h4V10z"/>
-            </svg>
-        </div>`;
+        container.innerHTML += `<img src="kask-zycie.png" class="${cls}" alt="Kask">`;
     }
 }
 
