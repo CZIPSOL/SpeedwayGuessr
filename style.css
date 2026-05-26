@@ -81,17 +81,20 @@ body {
 .shake-error { animation: shake 0.4s; }
 .shake-error input { border-color: var(--red-neon) !important; background: rgba(255, 51, 51, 0.1); }
 
-/* --- KASKI (Życia) --- */
+/* --- NOWE KASKI (Życia po czystym CSS) --- */
 .lives-container { display: flex; gap: 4px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
-.helmet-icon { width: 30px; height: 30px; transition: all 0.3s ease; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.7)); }
-.helmet-lost { color: #444 !important; filter: none; transform: scale(0.9); }
+.helmet-wrapper { display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+
+.helmet-active { color: var(--red-neon); filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.7)); }
+.helmet-lost { color: #444; filter: none; transform: scale(0.85); opacity: 0.5; }
+
 @keyframes crackHelmet {
-    0% { transform: scale(1); }
-    25% { transform: scale(1.2) rotate(-10deg); color: #888; }
+    0% { transform: scale(1); color: var(--red-neon); filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.7)); opacity: 1; }
+    25% { transform: scale(1.2) rotate(-10deg); color: #888; filter: none; }
     50% { transform: scale(1.2) rotate(10deg); }
-    100% { transform: scale(1) rotate(0); color: #444; }
+    100% { transform: scale(0.85) rotate(0); color: #444; opacity: 0.5; filter: none; }
 }
-.life-lost-anim { animation: crackHelmet 0.6s ease-out forwards; }
+.helmet-animating-loss { animation: crackHelmet 0.6s ease-out forwards; }
 
 /* --- MENU GŁÓWNE --- */
 .menu-container {
@@ -309,10 +312,11 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         overflow: hidden; 
     }
     
-    /* GÓRNY PASEK KLUBÓW (Target) */
+    /* GÓRNY PASEK KLUBÓW (Target) - Zmieniony na Grid Spanning 100% pod zdjęciem! */
     .header-section {
         display: grid;
         grid-template-columns: 90px minmax(0, 1fr);
+        grid-template-rows: auto auto;
         gap: 10px 15px;
         align-items: center;
         margin-bottom: 20px;
@@ -321,13 +325,11 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     .photo-container {
         grid-column: 1;
-        grid-row: 1 / span 2;
+        grid-row: 1;
         width: 90px;
         height: 110px;
         margin: 0;
     }
-    
-    .info-container { display: contents; }
     
     #mysteryName {
         grid-column: 2;
@@ -335,11 +337,12 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         font-size: 20px;
         text-align: left;
         margin: 0;
-        align-self: flex-end;
+        align-self: center;
     }
     
+    /* Kluby lądują pod imieniem i zdjęciem, na max szerokość i z suwakiem */
     .team-path {
-        grid-column: 2;
+        grid-column: 1 / -1; 
         grid-row: 2;
         width: 100%;
         min-width: 0; 
@@ -347,7 +350,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         flex-direction: column;
         align-items: flex-start;
         gap: 5px;
-        margin: 0;
+        margin-top: 5px;
     }
     .path-label { font-size: 11px; }
     .path-boxes {
@@ -428,7 +431,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         -webkit-overflow-scrolling: touch; /* Płynne przewijanie na iOS */
         display: flex;
         flex-wrap: nowrap;
-        padding: 5px 10px;
+        padding: 5px 0;
         box-sizing: border-box;
     }
 }
