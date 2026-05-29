@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
 
+/* GLOBALNY FIX NA ROZJEŻDŻANIE SIĘ STRONY */
 * { box-sizing: border-box; }
 
 :root {
@@ -71,11 +72,16 @@ body {
 .shake-error { animation: shake 0.4s; }
 .shake-error input { border-color: var(--red-neon) !important; background: rgba(255, 51, 51, 0.1); }
 
-/* --- KASKI --- */
+/* --- KASKI (Życia z PNG) --- */
 .lives-container { display: flex; gap: 6px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
 .helmet-icon { width: 28px; height: auto; transition: all 0.3s ease; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); -webkit-filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); }
-.helmet-lost { opacity: 0.25 !important; filter: grayscale(100%) !important; transform: scale(0.85); }
-@keyframes crackHelmetPNG { 0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); } 25% { transform: scale(1.3) rotate(-15deg); opacity: 0.8; filter: none; } 50% { transform: scale(1.3) rotate(15deg); } 100% { transform: scale(0.85) rotate(0); opacity: 0.25; filter: grayscale(100%); } }
+.helmet-lost { opacity: 0.25 !important; filter: grayscale(100%) !important; -webkit-filter: grayscale(100%) !important; transform: scale(0.85); }
+@keyframes crackHelmetPNG { 
+    0% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); -webkit-filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); } 
+    25% { transform: scale(1.3) rotate(-15deg); opacity: 0.8; filter: none; -webkit-filter: none; } 
+    50% { transform: scale(1.3) rotate(15deg); } 
+    100% { transform: scale(0.85) rotate(0); opacity: 0.25; filter: grayscale(100%); -webkit-filter: grayscale(100%); } 
+}
 .life-lost-anim { animation: crackHelmetPNG 0.6s ease-out forwards; }
 
 /* --- PRZYCISKI W PRAWYM GÓRNYM ROGU --- */
@@ -83,7 +89,7 @@ body {
 
 /* --- MENU GŁÓWNE --- */
 .menu-container {
-    position: relative; /* Wymagane dla top-right-buttons */
+    position: relative;
     background: var(--card-bg); width: 800px; max-width: 90%; border-radius: 32px; padding: 50px 30px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); backdrop-filter: blur(10px);
     text-align: center; margin-top: 40px; display: flex; flex-direction: column; align-items: center;
@@ -275,6 +281,81 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .btn-share { background: var(--green-neon); color: #000; padding: 16px 32px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; text-transform: uppercase; transition: transform 0.2s; }
 .btn-share:hover { transform: scale(1.05); }
 
+/* --- TABELA RANKINGOWA --- */
+.ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--text-main);
+    text-align: center;
+}
+.ranking-table th {
+    color: var(--accent);
+    padding: 12px 5px;
+    border-bottom: 2px solid var(--border-color);
+    text-transform: uppercase;
+    font-weight: 900;
+}
+.ranking-table td {
+    padding: 12px 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-weight: 600;
+}
+.ranking-table tr:hover td {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+.rank-1 { color: #f1c40f; font-weight: 900; font-size: 16px; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
+.rank-2 { color: #bdc3c7; font-weight: 900; font-size: 15px; }
+.rank-3 { color: #cd7f32; font-weight: 900; font-size: 14px; }
+.rank-nick { text-transform: uppercase; text-align: left; }
+.rank-won { color: var(--green-neon); font-weight: 900; }
+.rank-lost { color: var(--red-neon); font-weight: 900; }
+
+/* --- ZAKŁADKI RANKINGOWE --- */
+.rank-tab {
+    flex: 1;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    padding: 8px 5px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+.rank-tab:hover {
+    color: var(--text-main);
+}
+.rank-tab.active {
+    background: var(--accent);
+    color: #000;
+}
+
+/* --- GOOGLE LOGIN --- */
+.btn-google {
+    background: #4285F4;
+    color: white;
+    border: none;
+    font-weight: 900;
+    padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: 0.2s;
+    font-size: 13px;
+}
+.btn-google:hover {
+    background: #357ae8;
+    transform: scale(1.02);
+}
+
+
 /* ========================================= */
 /* --- RWD MOBILE (Karty na telefonach) --- */
 /* ========================================= */
@@ -344,10 +425,11 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .table-headers { display: none; }
     .table-wrapper { width: 100%; max-width: 100%; }
 
-    /* WNĘTRZE KARTY ZGADYWANIA - FLEXBOX PANCERNY (3 Rzędy) */
+    /* WNĘTRZE KARTY ZGADYWANIA - TWARDY CSS GRID! */
     .guess-row {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px 5px; 
         width: 100%;
         max-width: 100%;
         padding: 15px 10px;
@@ -360,43 +442,47 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     /* RZĄD 1: Imię */
     .col-name {
+        grid-column: 1 / -1; 
         width: 100%;
-        order: 1; 
         text-align: center;
         padding: 0;
         font-size: 16px;
         font-weight: 900;
-        margin-bottom: 10px;
     }
 
     /* RZĄD 2: 5 atrybutów */
     .col-attr {
-        width: 20%; 
-        order: 2; 
+        width: 100%; 
         padding: 0;
         display: flex;
         justify-content: center;
     }
     
     .attr-box {
-        width: 90%;
-        max-width: 50px;
+        width: 100%;
+        max-width: 55px;
         height: auto;
         aspect-ratio: 1;
-        border-radius: 12px;
+        border-radius: 10px;
+        padding: 2px;
     }
 
-    .val-num { font-size: 16px; }
-    .status-icon { font-size: 20px; }
+    .val-num { font-size: 14px; }
+    .status-icon { font-size: 18px; }
+
+    .tile-flag, .tile-flag-dual {
+        width: 80%;
+        height: 80%;
+    }
 
     /* RZĄD 3: Kluby z włączonym suwakiem */
     .col-clubs {
+        grid-column: 1 / -1; 
         width: 100%;
         max-width: 100%;
-        min-width: 0;
-        order: 3; 
+        min-width: 0; /* Gwarancja blokady rozszerzania */
         padding: 0;
-        margin-top: 10px;
+        overflow: hidden; /* Odcina próbę rozpychania! */
     }
 
     .clubs-path-container {
@@ -409,106 +495,4 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         padding: 5px 0;
         box-sizing: border-box;
     }
-}
-/* --- TABELA RANKINGOWA --- */
-.ranking-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--text-main);
-    text-align: center;
-}
-.ranking-table th {
-    color: var(--accent);
-    padding: 12px 5px;
-    border-bottom: 2px solid var(--border-color);
-    text-transform: uppercase;
-    font-weight: 900;
-}
-.ranking-table td {
-    padding: 12px 5px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-weight: 600;
-}
-.ranking-table tr:hover td {
-    background-color: rgba(255, 255, 255, 0.02);
-}
-.rank-1 { color: #f1c40f; font-weight: 900; font-size: 16px; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
-.rank-2 { color: #bdc3c7; font-weight: 900; font-size: 15px; }
-.rank-3 { color: #cd7f32; font-weight: 900; font-size: 14px; }
-.rank-nick { text-transform: uppercase; text-align: left; }
-.rank-won { color: var(--green-neon); font-weight: 900; }
-.rank-lost { color: var(--red-neon); font-weight: 900; }/* --- TABELA RANKINGOWA --- */
-.ranking-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 13px;
-    color: var(--text-main);
-    text-align: center;
-}
-.ranking-table th {
-    color: var(--accent);
-    padding: 12px 5px;
-    border-bottom: 2px solid var(--border-color);
-    text-transform: uppercase;
-    font-weight: 900;
-}
-.ranking-table td {
-    padding: 12px 5px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    font-weight: 600;
-}
-.ranking-table tr:hover td {
-    background-color: rgba(255, 255, 255, 0.02);
-}
-.rank-1 { color: #f1c40f; font-weight: 900; font-size: 16px; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
-.rank-2 { color: #bdc3c7; font-weight: 900; font-size: 15px; }
-.rank-3 { color: #cd7f32; font-weight: 900; font-size: 14px; }
-.rank-nick { text-transform: uppercase; text-align: left; }
-.rank-won { color: var(--green-neon); font-weight: 900; }
-
-/* --- ZAKŁADKI RANKINGOWE --- */
-.rank-tab {
-    flex: 1;
-    background: transparent;
-    color: var(--text-dim);
-    border: none;
-    padding: 8px 5px;
-    font-size: 10px;
-    font-weight: 700;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: 0.3s;
-}
-.rank-tab:hover {
-    color: var(--text-main);
-}
-.rank-tab.active {
-    background: var(--accent);
-    color: #000;
-}
-.rank-lost { color: var(--red-neon); font-weight: 900; }
-
-/* --- GOOGLE LOGIN --- */
-.btn-google {
-    background: #4285F4;
-    color: white;
-    border: none;
-    font-weight: 900;
-    padding: 12px 20px;
-    border-radius: 12px;
-    cursor: pointer;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: 0.2s;
-    font-size: 13px;
-}
-.btn-google:hover {
-    background: #357ae8;
-    transform: scale(1.02);
 }
