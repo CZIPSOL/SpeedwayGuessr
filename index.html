@@ -29,10 +29,17 @@
 
     <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
         <div class="stats-modal" style="max-width: 400px;">
-            <h2 style="margin-bottom: 10px; color: var(--accent);">TWÓJ NICK</h2>
-            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;">Podaj swój pseudonim, aby brać udział w światowym rankingu Daily!</p>
-            <input type="text" id="nickInput" placeholder="Wpisz nick (max 12 znaków)" maxlength="12" style="margin-bottom: 20px; text-align: center; text-transform: uppercase; font-weight: 900;">
-            <button onclick="saveNick()" class="btn-reset" style="width: 100%;">ZAPISZ I GRAJ</button>
+            <h2 style="margin-bottom: 10px; color: var(--accent);" data-i18n="account">TWÓJ PROFIL</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;" data-i18n="loginDesc">Zaloguj się przez Google, aby zsynchronizować postęp i wejść do światowego rankingu, lub graj jako Gość!</p>
+            
+            <button onclick="signInWithGooglePrompt()" class="btn-google" style="width: 100%; margin-bottom: 15px;" data-i18n="btnLoginGoogle">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" height="20" alt="G"> ZALOGUJ PRZEZ GOOGLE
+            </button>
+            
+            <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px;" data-i18n="orGuest">LUB PODAJ NICK GOŚCIA</div>
+            
+            <input type="text" id="nickInput" data-i18n="guestPlaceholder" placeholder="Wpisz nick (max 12 znaków)" maxlength="12" style="margin-bottom: 15px; text-align: center; text-transform: uppercase; font-weight: 900;">
+            <button onclick="saveNick()" class="btn-reset" style="width: 100%;" data-i18n="btnSavePlay">ZAPISZ I GRAJ</button>
         </div>
     </div>
 
@@ -66,8 +73,8 @@
                         <tr>
                             <th>Poz.</th>
                             <th style="text-align: left;">Nick</th>
-                            <th id="rankHeaderWon">Wygrane (Dziś)</th>
-                            <th>Próby</th>
+                            <th id="rankHeaderWon">Wygrane</th>
+                            <th data-i18n="rankGuesses">Próby</th>
                         </tr>
                     </thead>
                     <tbody id="rankingTableBody">
@@ -98,6 +105,14 @@
         <div class="stats-modal" style="max-width: 350px;">
             <h2 data-i18n="settingsTitle" style="margin-bottom: 25px;">USTAWIENIA</h2>
             
+            <div class="setting-block" style="margin-bottom: 20px;">
+                <label data-i18n="account">Konto:</label>
+                <button id="btnSettingsLogin" onclick="signInWithGoogle()" class="btn-google" style="margin-top: 5px; width: 100%;" data-i18n="btnLoginGoogle">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
+                </button>
+                <div id="userInfoDisplay" style="display:none; font-size: 12px; color: var(--green-neon); margin-top: 8px; font-weight: 700;"></div>
+            </div>
+
             <div class="setting-block" style="margin-bottom: 20px;">
                 <label data-i18n="sound">Dźwięk:</label>
                 <button id="btnSoundToggle" onclick="toggleSound()" class="theme-btn light" style="margin-top: 5px; font-size: 14px; padding: 10px 20px;">Włączony 🔊</button>
@@ -132,7 +147,7 @@
         </div>
 
         <h1 class="game-title">🏁 Speedway Guessr</h1>
-        <p class="alpha-tag">Alpha ver. 0.1.9</p>
+        <p class="alpha-tag">Alpha ver. 1.0.0</p>
         <h2 class="menu-subtitle" data-i18n="subtitle">Edycja Żużlowa</h2>
         
         <div id="lastGamesContainer" class="last-games-container" style="display: none;">
@@ -243,6 +258,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
     <script src="db.js"></script>
     <script src="script.js"></script>
