@@ -21,12 +21,93 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
 
-// Generator ID Gracza
 let playerId = localStorage.getItem('speedwayUserId');
 if (!playerId) {
-    playerId = 'player_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('speedwayUserId', playerId);
+}
+
+// --- GOOGLE AUTHENTICATION & SYNC ---
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        playerId = user.uid;
+        playerNickname = user.displayName;
+        localStorage.setItem('speedwayNickname', playerNickname);
+        localStorage.setItem('speedwayUserId', playerId);
+        updateAuthUI(user);
+        syncStatsFromFirebase();
+    } else {
+        updateAuthUI(null);
+    }
+});
+
+function signInWithGoogle() {
+    auth.signInWithPopup(provider).then((result) => {
+        // Zalogowano z sukcesem
+    }).catch((error) => console.error("Login failed", error));
+}
+
+function signInWithGooglePrompt() {
+    auth.signInWithPopup(provider).then((result) => {
+        const overlay = document.getElementById('nickOverlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+        if (window.nickCallback) {
+            window.nickCallback();
+            window.nickCallback = null;
+        }
+    }).catch((err) => console.error(err));
+}
+
+function logOut() { auth.signOut(); }
+
+function updateAuthUI(user) {
+    const btn = document.getElementById('btnSettingsLogin');
+    const info = document.getElementById('userInfoDisplay');
+    if (user) {
+        btn.innerHTML = i18n[currentLang].btnLogout || "WYLOGUJ SIĘ";
+        btn.onclick = logOut;
+        btn.style.background = "#e74c3c";
+        info.innerText = `Zalogowano: ${user.displayName}`;
+        info.style.display = 'block';
+    } else {
+        btn.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ` + (i18n[currentLang].btnLoginGoogle || "ZALOGUJ PRZEZ GOOGLE");
+        btn.onclick = signInWithGoogle;
+        btn.style.background = "#4285F4";
+        info.style.display = 'none';
+    }
+}
+
+async function syncStatsFromFirebase() {
+    if (!auth.currentUser) return;
+    try {
+        const docRef = await db.collection('users').doc(auth.currentUser.uid).get();
+        if (docRef.exists && docRef.data().stats) {
+            let cloudStats = JSON.parse(docRef.data().stats);
+            // Wybieramy nowszą instancję (np. ta z większą ilością zagranych gier)
+            if (cloudStats.played > userStats.played) {
+                userStats = cloudStats;
+                localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
+            } else {
+                syncStatsToFirebase(); // Wyślij nasze dane do góry
+            }
+        } else {
+            syncStatsToFirebase(); // Jeśli chmura jest pusta
+        }
+    } catch (e) { console.error("Cloud Sync Load Error:", e); }
+}
+
+async function syncStatsToFirebase() {
+    if (!auth.currentUser) return;
+    try {
+        await db.collection('users').doc(auth.currentUser.uid).set({
+            stats: JSON.stringify(userStats),
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    } catch (e) { console.error("Cloud Sync Save Error:", e); }
 }
 
 const clubAbbreviations = {
@@ -45,6 +126,7 @@ const countryToCode = { "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", 
 // --- SYSTEM TŁUMACZEŃ (I18N) ---
 const i18n = {
     pl: {
+        account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby zsynchronizować postęp i wejść do rankingu, lub graj jako Gość!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick...", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ",
         settingsTitle: "USTAWIENIA", sound: "Dźwięk:", soundOn: "Włączony 🔊", soundOff: "Wyłączony 🔇",
         subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry Daily:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", btnTic: "Kółko i Krzyżyk <small>(WKRÓTCE)</small>", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ",
         teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "W GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów",
@@ -52,10 +134,11 @@ const i18n = {
         stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Obecna Seria", statMax: "Najlepsza Seria", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY",
         winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
         shareText: "Moje podsumowanie Speedway Guessr Daily! Dasz radę lepiej?",
-        tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane (Dziś)", rankTotalWins: "Wygrane",
+        tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane", rankTotalWins: "Suma Wygranych", rankGuesses: "Próby",
         months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"]
     },
     en: {
+        account: "YOUR PROFILE", loginDesc: "Log in with Google to sync progress and enter the leaderboard, or play as a Guest!", btnLoginGoogle: "LOGIN WITH GOOGLE", orGuest: "OR ENTER GUEST NICK", guestPlaceholder: "Enter nick...", btnSavePlay: "SAVE & PLAY", btnLogout: "LOGOUT",
         settingsTitle: "SETTINGS", sound: "Sound:", soundOn: "On 🔊", soundOff: "Off 🔇",
         subtitle: "Speedway Edition", lastGames: "Recent Daily games:", btnDaily: "Play Daily", btnReview: "Review game", btnEndless: "Endless Guessr", btnTic: "Tic Tac Toe <small>(SOON)</small>", searchPlaceholder: "Enter rider's name...", btnGuess: "GUESS",
         teams: "Teams:", colName: "Rider", colCountry: "Country", colYear: "Born", colGP: "SGP?", colDMP: "Team Medals", colStatus: "Status", colClubs: "Clubs History",
@@ -63,10 +146,11 @@ const i18n = {
         stats: "STATISTICS", statPlayed: "Played", statWon: "Won", statStreak: "Current Streak", statMax: "Max Streak", btnClose: "CLOSE", archive: "DAILY ARCHIVE",
         winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", theme: "Theme:", themeLight: "Light", themeDark: "Dark", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
         shareText: "My Speedway Guessr Daily summary! Can you beat it?",
-        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins (Today)", rankTotalWins: "Total Wins",
+        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
     },
     sv: {
+        account: "DIN PROFIL", loginDesc: "Logga in med Google för att synkronisera framsteg och delta i rankningen, eller spela som gäst!", btnLoginGoogle: "LOGGA IN MED GOOGLE", orGuest: "ELLER ANGE GÄSTNICK", guestPlaceholder: "Ange nick...", btnSavePlay: "SPARA & SPELA", btnLogout: "LOGGA UT",
         settingsTitle: "INSTÄLLNINGAR", sound: "Ljud:", soundOn: "På 🔊", soundOff: "Av 🔇",
         subtitle: "Speedway Edition", lastGames: "Senaste Daily:", btnDaily: "Spela Daily", btnReview: "Granska spel", btnEndless: "Endless Guessr", btnTic: "Luffarschack <small>(SNART)</small>", searchPlaceholder: "Ange förarens namn...", btnGuess: "GISSA",
         teams: "Klubbar:", colName: "Förare", colCountry: "Land", colYear: "Född", colGP: "SGP?", colDMP: "Lagmedaljer", colStatus: "Status", colClubs: "Klubbhistorik",
@@ -74,10 +158,11 @@ const i18n = {
         stats: "STATISTIK", statPlayed: "Spelade", statWon: "Vunna", statStreak: "Aktuell Svit", statMax: "Bästa Svit", btnClose: "STÄNG", archive: "DAILY ARKIV",
         winTitle: "BRAVO!", winSub: "Du gissade föraren!", loseTitle: "INGA FÖRSÖK", loseSub: "Tyvärr, du gissade inte föraren.", btnShare: "DELA 📋", btnPlayEndless: "SPELA ENDLESS", btnPlayAgain: "SPELA IGEN", btnMenu: "HUVUDMENY", theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
         shareText: "Min Speedway Guessr Daily! Kan du slå det?",
-        tabDaily: "DAGLIG", tabWeekly: "VECKA", tabMonthly: "MÅNAD", tabAllTime: "ALLMÄN", rankWonToday: "Vinster (Idag)", rankTotalWins: "Totala Vinster",
+        tabDaily: "DAGLIG", tabWeekly: "VECKA", tabMonthly: "MÅNAD", tabAllTime: "ALLMÄN", rankWonToday: "Vinster", rankTotalWins: "Totala Vinster", rankGuesses: "Gissningar",
         months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"], weekdays: ["Må", "Ti", "On", "To", "Fr", "Lö", "Sö"]
     },
     da: {
+        account: "DIN PROFIL", loginDesc: "Log ind med Google for at synkronisere fremskridt og deltage i ranglisten, eller spil som gæst!", btnLoginGoogle: "LOG IND MED GOOGLE", orGuest: "ELLER INDTAST GÆSTENICK", guestPlaceholder: "Indtast nick...", btnSavePlay: "GEM & SPIL", btnLogout: "LOG UD",
         settingsTitle: "INDSTILLINGER", sound: "Lyd:", soundOn: "Til 🔊", soundOff: "Fra 🔇",
         subtitle: "Speedway Edition", lastGames: "Seneste Daily:", btnDaily: "Spil Daily", btnReview: "Gennemse spil", btnEndless: "Endless Guessr", btnTic: "Kryds og Bolle <small>(SNART)</small>", searchPlaceholder: "Indtast kørers navn...", btnGuess: "GÆT",
         teams: "Hold:", colName: "Kører", colCountry: "Land", colYear: "Født", colGP: "SGP?", colDMP: "Holdmedaljer", colStatus: "Status", colClubs: "Klubhistorik",
@@ -85,7 +170,7 @@ const i18n = {
         stats: "STATISTIK", statPlayed: "Spillet", statWon: "Vundet", statStreak: "Nuværende Stime", statMax: "Bedste Stime", btnClose: "LUK", archive: "DAILY ARKIV",
         winTitle: "BRAVO!", winSub: "Du gættede køreren!", loseTitle: "INGEN FORSØG", loseSub: "Desværre gættede du ikke køreren.", btnShare: "DEL 📋", btnPlayEndless: "SPIL ENDLESS", btnPlayAgain: "SPIL IGEN", btnMenu: "HOVEDMENU", theme: "Tema:", themeLight: "Lyst", themeDark: "Mørkt", lang: "Sprog:", modeDaily: "Tilstand: Daily", modeEndless: "Tilstand: Endless",
         shareText: "Mit Speedway Guessr Daily resultat! Kan du slå det?",
-        tabDaily: "DAGLIG", tabWeekly: "UGE", tabMonthly: "MÅNED", tabAllTime: "GENEREL", rankWonToday: "Sejre (I dag)", rankTotalWins: "Samlede Sejre",
+        tabDaily: "DAGLIG", tabWeekly: "UGE", tabMonthly: "MÅNED", tabAllTime: "GENEREL", rankWonToday: "Sejre", rankTotalWins: "Samlede Sejre", rankGuesses: "Gæt",
         months: ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"], weekdays: ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"]
     }
 };
@@ -115,6 +200,7 @@ function setLang(lang) {
     
     updateDailyMenu();
     updateSoundBtn();
+    updateAuthUI(auth.currentUser);
     if(document.getElementById('calendarOverlay').style.display === 'block') renderCalendar();
     
     const modeDisplay = document.getElementById('gameModeDisplay');
@@ -122,10 +208,8 @@ function setLang(lang) {
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
 
-// --- SILNIK DŹWIĘKOWY (Naprawiono ReferenceError audioCtx) ---
-let audioCtx = null;
+// --- SILNIK DŹWIĘKOWY ---
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
-
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
 function updateSoundBtn() {
     const btn = document.getElementById('btnSoundToggle');
@@ -186,7 +270,10 @@ function loadStats() {
         if (!userStats.recentEndless) userStats.recentEndless = [];
     }
 }
-function saveStats() { localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); }
+function saveStats() { 
+    localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); 
+    syncStatsToFirebase(); // Sync w tle
+}
 
 function getDailyDateString(dayNumber) {
     const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
@@ -194,15 +281,11 @@ function getDailyDateString(dayNumber) {
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-// Funkcje pomocnicze do dat w Rankingu
 function getCurrentMonthStr() {
-    const d = new Date();
-    return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0');
+    const d = new Date(); return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0');
 }
 function getCurrentWeekStr() {
-    let date = new Date();
-    let dayNum = date.getUTCDay() || 7;
-    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    let date = new Date(); let dayNum = date.getUTCDay() || 7; date.setUTCDate(date.getUTCDate() + 4 - dayNum);
     let yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
     let weekNo = Math.ceil((((date - yearStart) / 86400000) + 1)/7);
     return date.getUTCFullYear() + "_W" + weekNo.toString().padStart(2, '0');
@@ -361,38 +444,31 @@ function renderLastGames() {
     }
 }
 
-// --- NOWA, POTĘŻNA AGREGACJA BAZY DANYCH (FIREBASE) ---
+// --- BAZA DANYCH FIREBASE ---
 async function sendScoreToDatabase(isWin, attempts) {
     if (selectedDailyDay !== currentDailyDay) return;
     if (!playerNickname) return;
 
     try {
         const batch = db.batch();
+        const ts = firebase.firestore.FieldValue.serverTimestamp();
         
-        // 1. Zapis z dnia dzisiejszego (pojedyncza gra)
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: playerNickname, won: isWin ? 1 : 0, guesses: attempts, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+        batch.set(dailyRef, { nick: playerNickname, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
 
-        // Dodawanie sumy do generalnych rankingów tylko w przypadku WYGRANEJ!
         const increment = firebase.firestore.FieldValue.increment;
         
-        // 2. Ranking Tygodniowy
         const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-        batch.set(weeklyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        batch.set(weeklyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
-        // 3. Ranking Miesięczny
         const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-        batch.set(monthlyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        batch.set(monthlyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
-        // 4. Ranking Ogólny
         const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-        batch.set(alltimeRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        batch.set(alltimeRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
         await batch.commit();
-        console.log("Twój wynik został wprowadzony na wszystkie tabele!");
-    } catch (e) {
-        console.error("Błąd zapisu do Firebase:", e);
-    }
+    } catch (e) { console.error("DB Error:", e); }
 }
 
 function updateStatsOnWin() {
@@ -519,7 +595,7 @@ function restorePlayedGame() {
     const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
     if (pastGuesses.length === 0) {
-        document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Brak zapisu dla tego dnia.</div>`;
+        document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Brak zapisu.</div>`;
     } else {
         pastGuesses.forEach(pName => {
             const p = playersDB.find(x => x.name === pName);
@@ -816,12 +892,11 @@ function closeSettings() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-// --- NOWY SYSTEM ZAKŁADEK RANKINGU ---
 function openRanking() {
     promptForNick(() => {
         const overlay = document.getElementById('rankingOverlay');
         overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-        loadRanking('daily'); // Domyślnie otwiera Dzienny
+        loadRanking('daily');
     });
 }
 
@@ -833,25 +908,25 @@ async function loadRanking(type) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
     
     let headerWon = document.getElementById('rankHeaderWon');
-    if(type === 'daily') headerWon.innerText = i18n[currentLang].rankWonToday || "Wygrana";
-    else headerWon.innerText = i18n[currentLang].rankTotalWins || "Suma Wygranych";
+    
+    // Ukrywanie kolumny "Wygrane" dla Daily
+    if(type === 'daily') {
+        headerWon.style.display = 'none';
+    } else {
+        headerWon.style.display = '';
+        headerWon.innerText = i18n[currentLang].rankTotalWins || "Suma Wygranych";
+    }
 
     try {
         let snapshot;
-        if (type === 'daily') {
-            snapshot = await db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").get();
-        } else if (type === 'weekly') {
-            snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").get();
-        } else if (type === 'monthly') {
-            snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").get();
-        } else if (type === 'alltime') {
-            snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").get();
-        }
+        if (type === 'daily') snapshot = await db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").get();
+        else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").get();
+        else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").get();
+        else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").get();
         
         let scores = [];
         snapshot.forEach(doc => { scores.push(doc.data()); });
 
-        // Sortowanie potrójne: 1. Suma Wygranych, 2. Ilość prób (mniej = lepiej), 3. Kto szybciej zagrał
         scores.sort((a, b) => {
             let winsA = a.won !== undefined ? a.won : (a.wins || 0);
             let winsB = b.won !== undefined ? b.won : (b.wins || 0);
@@ -864,7 +939,8 @@ async function loadRanking(type) {
         tbody.innerHTML = '';
         
         if (scores.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>';
+            let colspan = type === 'daily' ? "3" : "4";
+            tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>`;
             return;
         }
 
@@ -874,15 +950,20 @@ async function loadRanking(type) {
             else if (index === 1) rankClass = "rank-2";
             else if (index === 2) rankClass = "rank-3";
             
-            let winsAmount = row.won !== undefined ? row.won : (row.wins || 0);
-            let wonText = winsAmount > 0 ? `<span class="rank-won">${winsAmount}</span>` : `<span class="rank-lost">0</span>`;
+            let wonCol = '';
+            if (type !== 'daily') {
+                let winsAmount = row.won !== undefined ? row.won : (row.wins || 0);
+                let wonText = winsAmount > 0 ? `<span class="rank-won">${winsAmount}</span>` : `<span class="rank-lost">0</span>`;
+                wonCol = `<td>${wonText}</td>`;
+            }
+            
             let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
 
             tbody.innerHTML += `
                 <tr ${isMe}>
                     <td class="${rankClass}">${index + 1}</td>
                     <td class="rank-nick ${rankClass}">${row.nick}</td>
-                    <td>${wonText}</td>
+                    ${wonCol}
                     <td>${row.guesses}</td>
                 </tr>
             `;
@@ -890,7 +971,8 @@ async function loadRanking(type) {
 
     } catch (e) {
         console.error("Błąd ładowania rankingu:", e);
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>';
+        let colspan = type === 'daily' ? "3" : "4";
+        tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>`;
     }
 }
 
