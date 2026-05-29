@@ -7,99 +7,131 @@
     <link rel="stylesheet" href="style.css">
     <script>
         const savedTheme = localStorage.getItem('theme') || 'dark';
-        const savedLanguage = localStorage.getItem('language') || 'pl';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        document.documentElement.setAttribute('data-language', savedLanguage);
-        document.documentElement.lang = savedLanguage;
     </script>
 </head>
 <body>
-    <div class="top-actions">
-        <button id="settingsButton" class="icon-btn top-icon-btn" onclick="openSettings()" title="Ustawienia" data-i18n-title="settingsButtonTitle">⚙️</button>
-    </div>
 
     <div id="winOverlay" class="win-overlay" style="display: none;">
         <canvas id="confettiCanvas"></canvas>
         <div class="win-message">
             <h1 data-i18n="winTitle">BRAWO!</h1>
-            <p data-i18n="winMessage">Odgadłeś zawodnika!</p>
+            <p data-i18n="winSub">Odgadłeś zawodnika!</p>
         </div>
     </div>
 
     <div id="loseOverlay" class="win-overlay" style="display: none;">
         <div class="win-message">
-            <h1 class="danger-title" data-i18n="loseTitle">KONIEC PRÓB</h1>
-            <p data-i18n="loseMessage">Niestety, nie udało Ci się odgadnąć w 10 próbach.</p>
+            <h1 style="color: var(--red-neon);" data-i18n="loseTitle">KONIEC PRÓB</h1>
+            <p data-i18n="loseSub">Niestety, nie udało Ci się odgadnąć.</p>
         </div>
     </div>
 
-    <div id="settingsOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal settings-modal">
-            <div class="settings-header">
-                <h2 data-i18n="settingsTitle">USTAWIENIA</h2>
-                <button class="icon-btn-small settings-close-icon" onclick="closeSettings()" title="Zamknij" data-i18n-title="close">×</button>
-            </div>
-
-            <div class="settings-group">
-                <span class="settings-label" data-i18n="themeLabel">Motyw</span>
-                <div class="segmented-control">
-                    <button id="themeLightBtn" class="settings-choice" onclick="setTheme('light')" data-i18n="themeLight">Jasny</button>
-                    <button id="themeDarkBtn" class="settings-choice" onclick="setTheme('dark')" data-i18n="themeDark">Ciemny</button>
-                </div>
-            </div>
-
-            <div class="settings-group">
-                <span class="settings-label" data-i18n="languageLabel">Język</span>
-                <div class="segmented-control">
-                    <button id="languagePlBtn" class="settings-choice" onclick="setLanguage('pl')">PL</button>
-                    <button id="languageEnBtn" class="settings-choice" onclick="setLanguage('en')">EN</button>
-                </div>
-            </div>
-
-            <button onclick="closeSettings()" class="btn-close modal-close-button" data-i18n="close">ZAMKNIJ</button>
+    <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
+        <div class="stats-modal" style="max-width: 400px;">
+            <h2 style="margin-bottom: 10px; color: var(--accent);">TWÓJ NICK</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;">Podaj swój pseudonim, aby brać udział w światowym rankingu Daily!</p>
+            <input type="text" id="nickInput" placeholder="Wpisz nick (max 12 znaków)" maxlength="12" style="margin-bottom: 20px; text-align: center; text-transform: uppercase; font-weight: 900;">
+            <button onclick="saveNick()" class="btn-reset" style="width: 100%;">ZAPISZ I GRAJ</button>
         </div>
     </div>
 
     <div id="statsOverlay" class="win-overlay" style="display: none;">
         <div class="stats-modal">
-            <h2 data-i18n="statsTitle">STATYSTYKI</h2>
+            <h2 data-i18n="stats">STATYSTYKI</h2>
             <div class="stats-grid">
                 <div class="stat-box"><span id="statPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
                 <div class="stat-box"><span id="statWon" class="stat-num">0</span><span class="stat-label" data-i18n="statWon">Wygrane</span></div>
                 <div class="stat-box"><span id="statStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statStreak">Aktualna Seria</span></div>
-                <div class="stat-box"><span id="statMaxStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statMaxStreak">Najlepsza Seria</span></div>
+                <div class="stat-box"><span id="statMaxStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza Seria</span></div>
             </div>
-            <button onclick="closeStats()" class="btn-close modal-close-button" data-i18n="close">ZAMKNIJ</button>
+            <button onclick="closeStats()" class="btn-close" style="margin-top: 20px;" data-i18n="btnClose">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <div id="rankingOverlay" class="win-overlay" style="display: none;">
+        <div class="stats-modal" style="max-width: 500px; padding: 30px 15px;">
+            <h2 style="color: var(--accent); margin-bottom: 5px;">RANKING DAILY</h2>
+            <p id="rankingDateDisplay" style="font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 20px;"></p>
+            
+            <div style="overflow-x: auto; width: 100%;">
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th>Poz.</th>
+                            <th style="text-align: left;">Nick</th>
+                            <th>Wygrane (Dziś)</th>
+                            <th>Próby</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rankingTableBody">
+                        </tbody>
+                </table>
+            </div>
+            <p style="font-size: 10px; color: var(--text-dim); margin-top: 15px;">*Do rankingu wliczane są tylko gry rozegrane w dniu premiery danego wyzwania Daily.</p>
+            <button onclick="closeRanking()" class="btn-close" style="margin-top: 15px; width: 80%;" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
     <div id="calendarOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal calendar-modal">
-            <h2 data-i18n="calendarTitle">ARCHIWUM DAILY</h2>
-            
+        <div class="stats-modal" style="max-width: 450px; padding: 30px;">
+            <h2 data-i18n="archive">ARCHIWUM DAILY</h2>
             <div class="calendar-header">
                 <button id="calBtnPrev" class="icon-btn-small" onclick="changeCalendarMonth(-1)">◀</button>
-                <h3 id="calendarMonthDisplay" class="calendar-title">Maj 2026</h3>
+                <h3 id="calendarMonthDisplay" style="margin: 0;">Maj 2026</h3>
                 <button id="calBtnNext" class="icon-btn-small" onclick="changeCalendarMonth(1)">▶</button>
             </div>
-            
-            <div class="calendar-weekdays">
-                <div data-i18n="weekdayMon">Pn</div><div data-i18n="weekdayTue">Wt</div><div data-i18n="weekdayWed">Śr</div><div data-i18n="weekdayThu">Cz</div><div data-i18n="weekdayFri">Pt</div><div data-i18n="weekdaySat">Sb</div><div data-i18n="weekdaySun">Nd</div>
+            <div class="calendar-weekdays" id="calendarWeekdays">
+                <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>Sb</div><div>Nd</div>
             </div>
-            
             <div id="calendarGrid" class="calendar-grid-real"></div>
+            <button onclick="closeCalendar()" class="btn-close" style="margin-top: 25px;" data-i18n="btnClose">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <div id="settingsOverlay" class="win-overlay" style="display: none;">
+        <div class="stats-modal" style="max-width: 350px;">
+            <h2 data-i18n="settingsTitle" style="margin-bottom: 25px;">USTAWIENIA</h2>
             
-            <button onclick="closeCalendar()" class="btn-close modal-close-button" data-i18n="close">ZAMKNIJ</button>
+            <div class="setting-block" style="margin-bottom: 20px;">
+                <label data-i18n="sound">Dźwięk:</label>
+                <button id="btnSoundToggle" onclick="toggleSound()" class="theme-btn light" style="margin-top: 5px; font-size: 14px; padding: 10px 20px;">Włączony 🔊</button>
+            </div>
+
+            <div class="setting-block" style="margin-bottom: 20px;">
+                <label data-i18n="theme">Motyw:</label>
+                <div class="btn-group" style="justify-content: center; margin-top: 5px;">
+                    <button onclick="setTheme('light')" class="theme-btn light" data-i18n="themeLight">Jasny</button>
+                    <button onclick="setTheme('dark')" class="theme-btn dark" data-i18n="themeDark">Ciemny</button>
+                </div>
+            </div>
+
+            <div class="setting-block" style="margin-bottom: 25px;">
+                <label data-i18n="lang">Język:</label>
+                <div class="flag-group" style="justify-content: center; margin-top: 5px;">
+                    <img src="https://flagcdn.com/w40/pl.png" onclick="setLang('pl')" class="lang-flag" id="flag-pl" alt="PL" title="Polski">
+                    <img src="https://flagcdn.com/w40/gb.png" onclick="setLang('en')" class="lang-flag" id="flag-en" alt="EN" title="English">
+                    <img src="https://flagcdn.com/w40/se.png" onclick="setLang('sv')" class="lang-flag" id="flag-sv" alt="SV" title="Svenska">
+                    <img src="https://flagcdn.com/w40/dk.png" onclick="setLang('da')" class="lang-flag" id="flag-da" alt="DA" title="Dansk">
+                </div>
+            </div>
+
+            <button onclick="closeSettings()" class="btn-close" data-i18n="btnClose" style="width: 100%;">ZAMKNIJ</button>
         </div>
     </div>
 
     <div id="mainMenuContainer" class="menu-container">
+        <div class="top-right-buttons">
+            <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+            <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
+        </div>
+
         <h1 class="game-title">🏁 Speedway Guessr</h1>
-        <p class="alpha-tag">Alpha ver. 0.1.7</p>
-        <h2 class="menu-subtitle" data-i18n="menuSubtitle">Edycja Żużlowa</h2>
+        <p class="alpha-tag">Alpha ver. 0.1.8</p>
+        <h2 class="menu-subtitle" data-i18n="subtitle">Edycja Żużlowa</h2>
         
         <div id="lastGamesContainer" class="last-games-container" style="display: none;">
-            <p class="last-games-title" data-i18n="lastGamesTitle">Ostatnie gry Daily:</p>
+            <p class="last-games-title" data-i18n="lastGames">Ostatnie gry Daily:</p>
             <div id="lastGamesList" class="daily-tiles-container"></div>
         </div>
 
@@ -109,36 +141,39 @@
                     <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1)">◀</button>
                     <span id="dailyDayDisplay" style="font-weight: 900;">Daily ...</span>
                     <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1)">▶</button>
-                    <button class="icon-btn-small daily-calendar-button" onclick="openCalendar()" title="Otwórz kalendarz" data-i18n-title="calendarButtonTitle">📅</button>
+                    <button class="icon-btn-small" onclick="openCalendar()" title="Kalendarz" style="margin-left: 10px;">📅</button>
                 </div>
                 <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
                     <span class="btn-icon">🏁</span>
-                    <span id="dailyBtnText" class="btn-text" data-i18n="playDaily">Graj Daily</span>
+                    <span id="dailyBtnText" class="btn-text" data-i18n="btnDaily">Graj Daily</span>
                 </button>
             </div>
 
             <button class="menu-btn endless" onclick="startEndlessGame()">
                 <span class="btn-icon">🔄</span>
-                <span class="btn-text" data-i18n="endlessMode">Endless Guessr</span>
+                <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
             </button>
             <button class="menu-btn soon" disabled>
                 <span class="btn-icon">❌</span>
-                <span class="btn-text" data-i18n="soonMode">Kółko i Krzyżyk (SOON)</span>
+                <span class="btn-text" data-i18n="btnTic">Kółko i Krzyżyk <small>(SOON)</small></span>
             </button>
         </div>
     </div>
 
     <div id="gameContainer" style="display: none;">
         <header class="game-header">
-            <div class="stats-btn-wrapper">
-                <button onclick="showStats()" class="icon-btn" title="Statystyki" data-i18n-title="statsButtonTitle">📊</button>
+            <div class="top-right-buttons">
+                <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+                <button onclick="showStats()" class="icon-btn" title="Statystyki">📊</button>
+                <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
             </div>
+            
             <h1 class="game-title-small">🏁 Speedway Guessr</h1>
             <h3 id="gameModeDisplay"></h3>
             
             <div id="gameDailyControls" class="game-daily-controls" style="display: none;">
                 <button id="inGamePrevBtn" class="icon-btn-small" onclick="changeDailyInGame(-1)">◀</button>
-                <button class="icon-btn-small" onclick="openCalendar()" title="Otwórz kalendarz" data-i18n-title="calendarButtonTitle">📅</button>
+                <button class="icon-btn-small" onclick="openCalendar()">📅</button>
                 <button id="inGameNextBtn" class="icon-btn-small" onclick="changeDailyInGame(1)">▶</button>
             </div>
             
@@ -148,9 +183,9 @@
         <div class="input-section">
             <div class="search-box">
                 <div class="input-wrapper">
-                    <input type="text" id="guessInput" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off" data-i18n-placeholder="guessPlaceholder">
+                    <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
                 </div>
-                <button onclick="makeGuess()" data-i18n="guessButton">Zgadnij</button>
+                <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
             </div>
         </div>
 
@@ -158,12 +193,12 @@
             <div class="header-section">
                 <div class="photo-container" id="photoWrapper">
                     <span id="mysteryPlaceholder">?</span>
-                    <img id="mysteryPhoto" src="" alt="Sylwetka zawodnika" style="display: none;" data-i18n-alt="mysteryPhotoAlt">
+                    <img id="mysteryPhoto" src="" alt="Photo" style="display: none;">
                 </div>
                 <div class="info-container">
                     <h2 id="mysteryName">???</h2>
                     <div class="team-path">
-                        <span class="path-label" data-i18n="teamsLabel">Drużyny:</span>
+                        <span class="path-label" data-i18n="teams">Drużyny:</span>
                         <div id="pathBoxes" class="path-boxes"></div>
                     </div>
                 </div>
@@ -172,16 +207,14 @@
             <hr class="divider">
 
             <div class="table-wrapper">
-                <div class="table-help" data-i18n="tableHelp">Próba = kolejność zgadywania. Kolory i ikony pokazują zgodność z celem.</div>
                 <div class="table-headers">
-                    <div class="col-attempt" data-i18n="attemptHeader">Próba</div>
-                    <div class="col-name" data-i18n="riderHeader">Zawodnik</div>
-                    <div class="col-attr tooltip" data-tip="Kraj pochodzenia" data-i18n="countryHeader" data-i18n-tip="countryTip">Kraj</div>
-                    <div class="col-attr tooltip" data-tip="Rok urodzenia (⬆️ cel jest młodszy, ⬇️ cel jest starszy)" data-i18n="birthYearHeader" data-i18n-tip="birthYearTip">Rok ur.</div>
-                    <div class="col-attr tooltip" data-tip="Czy kiedykolwiek był stałym uczestnikiem cyklu Grand Prix?" data-i18n="gpHeader" data-i18n-tip="gpTip">Czy był stałym uczestnikiem GP?</div>
-                    <div class="col-attr tooltip" data-tip="Łączna suma medali Drużynowych Mistrzostw Polski." data-i18n="dmpHeader" data-i18n-tip="dmpTip">Medale DMP</div>
-                    <div class="col-attr tooltip" data-tip="Obecny status zawodnika" data-i18n="statusHeader" data-i18n-tip="statusTip">Czy nadal jeździ?</div>
-                    <div class="col-clubs-header tooltip" data-tip="Jakie kluby reprezentował" data-i18n="clubsHeader" data-i18n-tip="clubsTip">Historia Klubów</div>
+                    <div class="col-name" data-i18n="colName">Zawodnik</div>
+                    <div class="col-attr tooltip" data-i18n="colCountry" data-i18n-tip="tipCountry" data-tip="Kraj pochodzenia">Kraj</div>
+                    <div class="col-attr tooltip" data-i18n="colYear" data-i18n-tip="tipYear" data-tip="Rok urodzenia">Rok ur.</div>
+                    <div class="col-attr tooltip" data-i18n="colGP" data-i18n-tip="tipGP" data-tip="Czy był w GP?">GP?</div>
+                    <div class="col-attr tooltip" data-i18n="colDMP" data-i18n-tip="tipDMP" data-tip="Medale DMP">Medale DMP</div>
+                    <div class="col-attr tooltip" data-i18n="colStatus" data-i18n-tip="tipStatus" data-tip="Status">Status</div>
+                    <div class="col-clubs-header tooltip" data-i18n="colClubs" data-i18n-tip="tipClubs" data-tip="Historia">Historia Klubów</div>
                 </div>
 
                 <div id="results" class="results-container"></div>
@@ -192,18 +225,21 @@
     <footer class="game-footer">
         <div class="footer-content">
             <div class="copyright">
-                <p data-i18n="copyright">&copy; 2026 Speedway Guessr by: CZIPSOL. Wszelkie prawa zastrzeżone.</p>
+                <p>&copy; 2026 Speedway Guessr.</p>
             </div>
         </div>
     </footer>
 
     <div id="postGameActions" class="post-game-actions" style="display: none;">
-        <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="shareButton">UDOSTĘPNIJ 📋</button>
-        <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset" data-i18n="playAgainButton">ZAGRAJ PONOWNIE</button>
-        <button onclick="window.location.reload()" class="btn-close" data-i18n="mainMenuButton">MENU GŁÓWNE</button>
+        <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="btnShare">UDOSTĘPNIJ 📋</button>
+        <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset" data-i18n="btnPlayEndless">GRAJ W TRYB ENDLESS</button>
+        <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
     </div>
 
-    <script src="db.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+
+    <script src="db_cleaned.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
