@@ -5,29 +5,19 @@ let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; const DAILY_START_DATE = new Date('2026-05-12T00:00:00'); 
 
-// Zmieniony klucz - resetujemy ludziom statystyki!
 let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [] };
 let playerNickname = localStorage.getItem('speedwayNickname') || null;
 
-// --- FIREBASE CONFIG ---
-// TUTAJ WKLEJ SKOPIOWANY W KROKU 1 KOD FIREBASECONFIG!
+// --- FIREBASE CONFIG (Z Prawdziwym Kluczem!) ---
 const firebaseConfig = {
-
     apiKey: "AIzaSyBslQyJYGbjNszn3TS_6BQ2tXw7kd9iznw",
-
     authDomain: "speedwayguessr.firebaseapp.com",
-
     projectId: "speedwayguessr",
-
     storageBucket: "speedwayguessr.firebasestorage.app",
-
     messagingSenderId: "195534808018",
-
     appId: "1:195534808018:web:f033e0eb0943d3a9dbde0b",
-
     measurementId: "G-QSWL3N5CHG"
-
-  };
+};
 
 // Inicjalizacja Firebase
 firebase.initializeApp(firebaseConfig);
@@ -130,7 +120,6 @@ function setLang(lang) {
 }
 
 // --- SILNIK DŹWIĘKOWY ---
-let audioCtx = null;
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
 
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
@@ -184,7 +173,7 @@ function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
 window.onload = function() { loadStats(); initDailyMenu(); renderLastGames(); preloadHelmetImage(); setLang(currentLang); updateSoundBtn(); };
 
 function loadStats() {
-    let saved = localStorage.getItem('speedwayStatsV2'); // Zmiana klucza - reset wszystkich graczy
+    let saved = localStorage.getItem('speedwayStatsV2'); 
     if(saved) {
         userStats = JSON.parse(saved);
         if (!userStats.dailyResults) userStats.dailyResults = {};
@@ -246,13 +235,15 @@ function updateDailyMenu() {
     }
 }
 
-// --- LOGIKA NICKÓW ---
+// --- NAPRAWIONE: Upewnienie się, że okno z Nickiem traci przezroczystość ---
 function promptForNick(callback) {
     if (playerNickname) {
         callback();
     } else {
-        document.getElementById('nickOverlay').style.display = 'block';
-        window.nickCallback = callback; // Zapisz callback
+        const overlay = document.getElementById('nickOverlay');
+        overlay.style.display = 'block';
+        setTimeout(() => overlay.style.opacity = '1', 10); // FIX: Animacja pojawiania się tarczy
+        window.nickCallback = callback; 
     }
 }
 
@@ -264,14 +255,17 @@ function saveNick() {
     }
     playerNickname = input;
     localStorage.setItem('speedwayNickname', playerNickname);
-    document.getElementById('nickOverlay').style.display = 'none';
+    
+    const overlay = document.getElementById('nickOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300); // FIX: Animacja chowania tarczy
+    
     if (window.nickCallback) {
         window.nickCallback();
         window.nickCallback = null;
     }
 }
 
-// --- KALENDARZ ---
 function openCalendar() {
     calRenderMonth = new Date().getMonth(); calRenderYear = new Date().getFullYear();
     renderCalendar();
@@ -352,7 +346,6 @@ function renderLastGames() {
 
 // --- OBSŁUGA BAZY DANYCH (FIREBASE) ---
 async function sendScoreToDatabase(isWin, attempts) {
-    // Wysyłamy tylko jeśli gra toczy się o DZISIEJSZE Daily
     if (selectedDailyDay !== currentDailyDay) return;
     if (!playerNickname) return;
 
@@ -362,78 +355,12 @@ async function sendScoreToDatabase(isWin, attempts) {
             nick: playerNickname,
             won: isWin ? 1 : 0,
             guesses: attempts,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp() // Zapisuje dokładny czas ukończenia
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
         });
         console.log("Wynik zapisany w chmurze!");
     } catch (e) {
         console.error("Błąd zapisu do Firebase:", e);
     }
-}
-
-// ... reszta kodu (updateStatsOnWin itd.) ...
-
-// --- RANKING MODAL (POBIERANIE NA ŻYWO Z BAZY) ---
-function openRanking() {
-    promptForNick(async () => {
-        document.getElementById('rankingDateDisplay').innerText = `Wyniki z: ${getDailyDateString(currentDailyDay)}`;
-        
-        const tbody = document.getElementById('rankingTableBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
-        
-        const overlay = document.getElementById('rankingOverlay');
-        overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-
-        try {
-            // Pobieranie dzisiejszych wyników z bazy
-            const snapshot = await db.collection("rankings").doc(currentDailyDay.toString())
-                                     .collection("scores").get();
-            
-            let scores = [];
-            snapshot.forEach(doc => { scores.push(doc.data()); });
-
-            // Magia Rankingu! Sortujemy: 
-            // 1. Kto wygrał (1 przed 0)
-            // 2. Kto zgadł w mniejszej ilości prób (rosnąco)
-            // 3. Kto zrobił to pierwszy (kto wcześniej wstał!)
-            scores.sort((a, b) => {
-                if (b.won !== a.won) return b.won - a.won;
-                if (a.guesses !== b.guesses) return a.guesses - b.guesses;
-                return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0);
-            });
-
-            tbody.innerHTML = '';
-            
-            if (scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak wyników na dziś. Bądź pierwszy! 🏆</td></tr>';
-                return;
-            }
-
-            scores.forEach((row, index) => {
-                let rankClass = "";
-                if (index === 0) rankClass = "rank-1";
-                else if (index === 1) rankClass = "rank-2";
-                else if (index === 2) rankClass = "rank-3";
-                
-                let wonText = row.won ? `<span class="rank-won">1</span>` : `<span class="rank-lost">0</span>`;
-                
-                // Gra automatycznie podświetli Twój wynik!
-                let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
-
-                tbody.innerHTML += `
-                    <tr ${isMe}>
-                        <td class="${rankClass}">${index + 1}</td>
-                        <td class="rank-nick ${rankClass}">${row.nick}</td>
-                        <td>${wonText}</td>
-                        <td>${row.guesses}</td>
-                    </tr>
-                `;
-            });
-
-        } catch (e) {
-            console.error("Błąd ładowania rankingu:", e);
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>';
-        }
-    });
 }
 
 function updateStatsOnWin() {
@@ -443,7 +370,7 @@ function updateStatsOnWin() {
     if (gameMode === 'daily') {
         userStats.dailyResults[selectedDailyDay] = 'win'; userStats.dailyHistory.push(true);
         if (userStats.dailyHistory.length > 5) userStats.dailyHistory.shift(); 
-        sendScoreToDatabase(true, guessCount); // Zapis do rankingu
+        sendScoreToDatabase(true, guessCount);
     }
     saveStats();
 }
@@ -454,13 +381,12 @@ function updateStatsOnLoss() {
     if (gameMode === 'daily') {
         userStats.dailyResults[selectedDailyDay] = 'loss'; userStats.dailyHistory.push(false);
         if (userStats.dailyHistory.length > 5) userStats.dailyHistory.shift();
-        sendScoreToDatabase(false, guessCount); // Zapis do rankingu
+        sendScoreToDatabase(false, guessCount);
     }
     saveStats();
 }
 
 function startDailyGame() { 
-    // Wymuszenie podania Nicku przed grą Daily
     promptForNick(() => {
         gameMode = 'daily'; 
         document.getElementById('mainMenuContainer').style.display = 'none'; 
@@ -682,7 +608,7 @@ function revealClubsOnPath(guessedPlayer) {
             box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`;
             
             box.classList.add('found', 'tooltip');
-            box.setAttribute('data-tip', box.dataset.club); // Tooltip dla odkrytego klubu
+            box.setAttribute('data-tip', box.dataset.club);
         }
     });
     if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.")) {
@@ -858,57 +784,60 @@ function closeSettings() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-// --- RANKING MODAL ---
+// --- RANKING MODAL (Na żywo z Firebase) ---
 function openRanking() {
-    promptForNick(() => {
+    promptForNick(async () => {
         document.getElementById('rankingDateDisplay').innerText = `Wyniki z: ${getDailyDateString(currentDailyDay)}`;
         
-        // MOCKOWE DANE - Znikną, gdy podłączymy Firebase!
-        const mockData = [
-            { nick: "BARTOSZ95", won: 1, guesses: 3 },
-            { nick: "SPEEDFAN", won: 1, guesses: 6 },
-            { nick: "WROCLOVE", won: 1, guesses: 9 },
-            { nick: "JANUSZ", won: 0, guesses: 10 },
-            { nick: "TOMASZ71", won: 0, guesses: 10 }
-        ];
-        
-        // Zastrzyk obecnego gracza (dla testów)
-        if (selectedDailyDay === currentDailyDay && (hasWon || hasLost)) {
-            mockData.push({ nick: playerNickname, won: hasWon ? 1 : 0, guesses: guessCount });
-        }
-        
-        // Sortowanie: Najpierw wygrane (1 > 0), potem ilość prób (rosnąco)
-        mockData.sort((a, b) => {
-            if (b.won !== a.won) return b.won - a.won;
-            return a.guesses - b.guesses;
-        });
-
         const tbody = document.getElementById('rankingTableBody');
-        tbody.innerHTML = '';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
         
-        mockData.forEach((row, index) => {
-            let rankClass = "";
-            if (index === 0) rankClass = "rank-1";
-            else if (index === 1) rankClass = "rank-2";
-            else if (index === 2) rankClass = "rank-3";
-            
-            let wonText = row.won ? `<span class="rank-won">1</span>` : `<span class="rank-lost">0</span>`;
-            
-            // Podświetl wiersz aktualnego gracza
-            let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
-
-            tbody.innerHTML += `
-                <tr ${isMe}>
-                    <td class="${rankClass}">${index + 1}</td>
-                    <td class="rank-nick ${rankClass}">${row.nick}</td>
-                    <td>${wonText}</td>
-                    <td>${row.guesses}</td>
-                </tr>
-            `;
-        });
-
         const overlay = document.getElementById('rankingOverlay');
         overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+
+        try {
+            const snapshot = await db.collection("rankings").doc(currentDailyDay.toString())
+                                     .collection("scores").get();
+            
+            let scores = [];
+            snapshot.forEach(doc => { scores.push(doc.data()); });
+
+            scores.sort((a, b) => {
+                if (b.won !== a.won) return b.won - a.won;
+                if (a.guesses !== b.guesses) return a.guesses - b.guesses;
+                return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0);
+            });
+
+            tbody.innerHTML = '';
+            
+            if (scores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak wyników na dziś. Bądź pierwszy! 🏆</td></tr>';
+                return;
+            }
+
+            scores.forEach((row, index) => {
+                let rankClass = "";
+                if (index === 0) rankClass = "rank-1";
+                else if (index === 1) rankClass = "rank-2";
+                else if (index === 2) rankClass = "rank-3";
+                
+                let wonText = row.won ? `<span class="rank-won">1</span>` : `<span class="rank-lost">0</span>`;
+                let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td class="${rankClass}">${index + 1}</td>
+                        <td class="rank-nick ${rankClass}">${row.nick}</td>
+                        <td>${wonText}</td>
+                        <td>${row.guesses}</td>
+                    </tr>
+                `;
+            });
+
+        } catch (e) {
+            console.error("Błąd ładowania rankingu:", e);
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>';
+        }
     });
 }
 
