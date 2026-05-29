@@ -19,11 +19,10 @@ const firebaseConfig = {
     measurementId: "G-QSWL3N5CHG"
 };
 
-// Inicjalizacja Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Generator ID Gracza (Blokada multikont)
+// Generator ID Gracza
 let playerId = localStorage.getItem('speedwayUserId');
 if (!playerId) {
     playerId = 'player_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
@@ -53,6 +52,7 @@ const i18n = {
         stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Obecna Seria", statMax: "Najlepsza Seria", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY",
         winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
         shareText: "Moje podsumowanie Speedway Guessr Daily! Dasz radę lepiej?",
+        tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane (Dziś)", rankTotalWins: "Wygrane",
         months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"]
     },
     en: {
@@ -63,6 +63,7 @@ const i18n = {
         stats: "STATISTICS", statPlayed: "Played", statWon: "Won", statStreak: "Current Streak", statMax: "Max Streak", btnClose: "CLOSE", archive: "DAILY ARCHIVE",
         winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", theme: "Theme:", themeLight: "Light", themeDark: "Dark", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
         shareText: "My Speedway Guessr Daily summary! Can you beat it?",
+        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins (Today)", rankTotalWins: "Total Wins",
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
     },
     sv: {
@@ -73,6 +74,7 @@ const i18n = {
         stats: "STATISTIK", statPlayed: "Spelade", statWon: "Vunna", statStreak: "Aktuell Svit", statMax: "Bästa Svit", btnClose: "STÄNG", archive: "DAILY ARKIV",
         winTitle: "BRAVO!", winSub: "Du gissade föraren!", loseTitle: "INGA FÖRSÖK", loseSub: "Tyvärr, du gissade inte föraren.", btnShare: "DELA 📋", btnPlayEndless: "SPELA ENDLESS", btnPlayAgain: "SPELA IGEN", btnMenu: "HUVUDMENY", theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
         shareText: "Min Speedway Guessr Daily! Kan du slå det?",
+        tabDaily: "DAGLIG", tabWeekly: "VECKA", tabMonthly: "MÅNAD", tabAllTime: "ALLMÄN", rankWonToday: "Vinster (Idag)", rankTotalWins: "Totala Vinster",
         months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"], weekdays: ["Må", "Ti", "On", "To", "Fr", "Lö", "Sö"]
     },
     da: {
@@ -83,6 +85,7 @@ const i18n = {
         stats: "STATISTIK", statPlayed: "Spillet", statWon: "Vundet", statStreak: "Nuværende Stime", statMax: "Bedste Stime", btnClose: "LUK", archive: "DAILY ARKIV",
         winTitle: "BRAVO!", winSub: "Du gættede køreren!", loseTitle: "INGEN FORSØG", loseSub: "Desværre gættede du ikke køreren.", btnShare: "DEL 📋", btnPlayEndless: "SPIL ENDLESS", btnPlayAgain: "SPIL IGEN", btnMenu: "HOVEDMENU", theme: "Tema:", themeLight: "Lyst", themeDark: "Mørkt", lang: "Sprog:", modeDaily: "Tilstand: Daily", modeEndless: "Tilstand: Endless",
         shareText: "Mit Speedway Guessr Daily resultat! Kan du slå det?",
+        tabDaily: "DAGLIG", tabWeekly: "UGE", tabMonthly: "MÅNED", tabAllTime: "GENEREL", rankWonToday: "Sejre (I dag)", rankTotalWins: "Samlede Sejre",
         months: ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"], weekdays: ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"]
     }
 };
@@ -119,7 +122,8 @@ function setLang(lang) {
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
 
-// --- SILNIK DŹWIĘKOWY ---
+// --- SILNIK DŹWIĘKOWY (Naprawiono ReferenceError audioCtx) ---
+let audioCtx = null;
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
 
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
@@ -190,6 +194,20 @@ function getDailyDateString(dayNumber) {
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+// Funkcje pomocnicze do dat w Rankingu
+function getCurrentMonthStr() {
+    const d = new Date();
+    return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0');
+}
+function getCurrentWeekStr() {
+    let date = new Date();
+    let dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    let yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+    let weekNo = Math.ceil((((date - yearStart) / 86400000) + 1)/7);
+    return date.getUTCFullYear() + "_W" + weekNo.toString().padStart(2, '0');
+}
+
 function initDailyMenu() {
     const now = new Date();
     const nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
@@ -235,14 +253,13 @@ function updateDailyMenu() {
     }
 }
 
-// --- NAPRAWIONA ANIMACJA NICKU! ---
 function promptForNick(callback) {
     if (playerNickname) {
         callback();
     } else {
         const overlay = document.getElementById('nickOverlay');
         overlay.style.display = 'block';
-        setTimeout(() => overlay.style.opacity = '1', 10); // Ta linijka naprawia znikający ekran!
+        setTimeout(() => overlay.style.opacity = '1', 10); 
         window.nickCallback = callback; 
     }
 }
@@ -258,7 +275,7 @@ function saveNick() {
     
     const overlay = document.getElementById('nickOverlay');
     overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 300); // Eleganckie znikanie
+    setTimeout(() => overlay.style.display = 'none', 300);
     
     if (window.nickCallback) {
         window.nickCallback();
@@ -344,20 +361,35 @@ function renderLastGames() {
     }
 }
 
-// --- OBSŁUGA BAZY DANYCH (FIREBASE) ---
+// --- NOWA, POTĘŻNA AGREGACJA BAZY DANYCH (FIREBASE) ---
 async function sendScoreToDatabase(isWin, attempts) {
     if (selectedDailyDay !== currentDailyDay) return;
     if (!playerNickname) return;
 
     try {
-        await db.collection("rankings").doc(currentDailyDay.toString())
-                .collection("scores").doc(playerId).set({
-            nick: playerNickname,
-            won: isWin ? 1 : 0,
-            guesses: attempts,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-        });
-        console.log("Wynik zapisany w chmurze!");
+        const batch = db.batch();
+        
+        // 1. Zapis z dnia dzisiejszego (pojedyncza gra)
+        const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
+        batch.set(dailyRef, { nick: playerNickname, won: isWin ? 1 : 0, guesses: attempts, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+
+        // Dodawanie sumy do generalnych rankingów tylko w przypadku WYGRANEJ!
+        const increment = firebase.firestore.FieldValue.increment;
+        
+        // 2. Ranking Tygodniowy
+        const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
+        batch.set(weeklyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+        // 3. Ranking Miesięczny
+        const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
+        batch.set(monthlyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+        // 4. Ranking Ogólny
+        const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
+        batch.set(alltimeRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+        await batch.commit();
+        console.log("Twój wynik został wprowadzony na wszystkie tabele!");
     } catch (e) {
         console.error("Błąd zapisu do Firebase:", e);
     }
@@ -784,60 +816,82 @@ function closeSettings() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+// --- NOWY SYSTEM ZAKŁADEK RANKINGU ---
 function openRanking() {
-    promptForNick(async () => {
-        document.getElementById('rankingDateDisplay').innerText = `Wyniki z: ${getDailyDateString(currentDailyDay)}`;
-        
-        const tbody = document.getElementById('rankingTableBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
-        
+    promptForNick(() => {
         const overlay = document.getElementById('rankingOverlay');
         overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-
-        try {
-            const snapshot = await db.collection("rankings").doc(currentDailyDay.toString())
-                                     .collection("scores").get();
-            
-            let scores = [];
-            snapshot.forEach(doc => { scores.push(doc.data()); });
-
-            scores.sort((a, b) => {
-                if (b.won !== a.won) return b.won - a.won;
-                if (a.guesses !== b.guesses) return a.guesses - b.guesses;
-                return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0);
-            });
-
-            tbody.innerHTML = '';
-            
-            if (scores.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak wyników na dziś. Bądź pierwszy! 🏆</td></tr>';
-                return;
-            }
-
-            scores.forEach((row, index) => {
-                let rankClass = "";
-                if (index === 0) rankClass = "rank-1";
-                else if (index === 1) rankClass = "rank-2";
-                else if (index === 2) rankClass = "rank-3";
-                
-                let wonText = row.won ? `<span class="rank-won">1</span>` : `<span class="rank-lost">0</span>`;
-                let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
-
-                tbody.innerHTML += `
-                    <tr ${isMe}>
-                        <td class="${rankClass}">${index + 1}</td>
-                        <td class="rank-nick ${rankClass}">${row.nick}</td>
-                        <td>${wonText}</td>
-                        <td>${row.guesses}</td>
-                    </tr>
-                `;
-            });
-
-        } catch (e) {
-            console.error("Błąd ładowania rankingu:", e);
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>';
-        }
+        loadRanking('daily'); // Domyślnie otwiera Dzienny
     });
+}
+
+async function loadRanking(type) {
+    document.querySelectorAll('.rank-tab').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`tab-${type}`).classList.add('active');
+
+    const tbody = document.getElementById('rankingTableBody');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
+    
+    let headerWon = document.getElementById('rankHeaderWon');
+    if(type === 'daily') headerWon.innerText = i18n[currentLang].rankWonToday || "Wygrana";
+    else headerWon.innerText = i18n[currentLang].rankTotalWins || "Suma Wygranych";
+
+    try {
+        let snapshot;
+        if (type === 'daily') {
+            snapshot = await db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").get();
+        } else if (type === 'weekly') {
+            snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").get();
+        } else if (type === 'monthly') {
+            snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").get();
+        } else if (type === 'alltime') {
+            snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").get();
+        }
+        
+        let scores = [];
+        snapshot.forEach(doc => { scores.push(doc.data()); });
+
+        // Sortowanie potrójne: 1. Suma Wygranych, 2. Ilość prób (mniej = lepiej), 3. Kto szybciej zagrał
+        scores.sort((a, b) => {
+            let winsA = a.won !== undefined ? a.won : (a.wins || 0);
+            let winsB = b.won !== undefined ? b.won : (b.wins || 0);
+            
+            if (winsB !== winsA) return winsB - winsA; 
+            if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
+            return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
+        });
+
+        tbody.innerHTML = '';
+        
+        if (scores.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>';
+            return;
+        }
+
+        scores.forEach((row, index) => {
+            let rankClass = "";
+            if (index === 0) rankClass = "rank-1";
+            else if (index === 1) rankClass = "rank-2";
+            else if (index === 2) rankClass = "rank-3";
+            
+            let winsAmount = row.won !== undefined ? row.won : (row.wins || 0);
+            let wonText = winsAmount > 0 ? `<span class="rank-won">${winsAmount}</span>` : `<span class="rank-lost">0</span>`;
+            let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+
+            tbody.innerHTML += `
+                <tr ${isMe}>
+                    <td class="${rankClass}">${index + 1}</td>
+                    <td class="rank-nick ${rankClass}">${row.nick}</td>
+                    <td>${wonText}</td>
+                    <td>${row.guesses}</td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error("Błąd ładowania rankingu:", e);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>';
+    }
 }
 
 function closeRanking() {
