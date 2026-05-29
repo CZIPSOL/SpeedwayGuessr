@@ -8,7 +8,7 @@ const GUESS_LIMIT = 10; const DAILY_START_DATE = new Date('2026-05-12T00:00:00')
 let userStats = { played: 0, won: 0, currentStreak: 0, maxStreak: 0, dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [] };
 let playerNickname = localStorage.getItem('speedwayNickname') || null;
 
-// --- FIREBASE CONFIG (Z Prawdziwym Kluczem!) ---
+// --- FIREBASE CONFIG ---
 const firebaseConfig = {
     apiKey: "AIzaSyBslQyJYGbjNszn3TS_6BQ2tXw7kd9iznw",
     authDomain: "speedwayguessr.firebaseapp.com",
@@ -235,14 +235,14 @@ function updateDailyMenu() {
     }
 }
 
-// --- NAPRAWIONE: Upewnienie się, że okno z Nickiem traci przezroczystość ---
+// --- NAPRAWIONA ANIMACJA NICKU! ---
 function promptForNick(callback) {
     if (playerNickname) {
         callback();
     } else {
         const overlay = document.getElementById('nickOverlay');
         overlay.style.display = 'block';
-        setTimeout(() => overlay.style.opacity = '1', 10); // FIX: Animacja pojawiania się tarczy
+        setTimeout(() => overlay.style.opacity = '1', 10); // Ta linijka naprawia znikający ekran!
         window.nickCallback = callback; 
     }
 }
@@ -258,7 +258,7 @@ function saveNick() {
     
     const overlay = document.getElementById('nickOverlay');
     overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 300); // FIX: Animacja chowania tarczy
+    setTimeout(() => overlay.style.display = 'none', 300); // Eleganckie znikanie
     
     if (window.nickCallback) {
         window.nickCallback();
@@ -784,7 +784,6 @@ function closeSettings() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-// --- RANKING MODAL (Na żywo z Firebase) ---
 function openRanking() {
     promptForNick(async () => {
         document.getElementById('rankingDateDisplay').innerText = `Wyniki z: ${getDailyDateString(currentDailyDay)}`;
