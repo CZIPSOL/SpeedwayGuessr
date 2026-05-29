@@ -34,7 +34,7 @@ if (!playerId) {
 auth.onAuthStateChanged((user) => {
     if (user) {
         playerId = user.uid;
-        playerNickname = user.displayName;
+        playerNickname = user.displayName || "GoogleUser";
         localStorage.setItem('speedwayNickname', playerNickname);
         localStorage.setItem('speedwayUserId', playerId);
         updateAuthUI(user);
@@ -46,20 +46,24 @@ auth.onAuthStateChanged((user) => {
 
 function signInWithGoogle() {
     auth.signInWithPopup(provider).then((result) => {
-        // Zalogowano z sukcesem
+        console.log("Zalogowano pomyślnie z poziomu ustawień:", result.user.displayName);
     }).catch((error) => console.error("Login failed", error));
 }
 
 function signInWithGooglePrompt() {
+    document.getElementById('nickOverlay').style.display = 'none';
+    document.getElementById('nickOverlay').style.opacity = '0';
+    
     auth.signInWithPopup(provider).then((result) => {
-        const overlay = document.getElementById('nickOverlay');
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.style.display = 'none', 300);
+        console.log("Zalogowano pomyślnie przed grą:", result.user.displayName);
         if (window.nickCallback) {
             window.nickCallback();
             window.nickCallback = null;
         }
-    }).catch((err) => console.error(err));
+    }).catch((err) => {
+        console.error("Błąd podczas logowania:", err);
+        alert("Logowanie anulowane lub wystąpił błąd. Spróbuj ponownie lub zagraj jako Gość.");
+    });
 }
 
 function logOut() { auth.signOut(); }
@@ -67,6 +71,8 @@ function logOut() { auth.signOut(); }
 function updateAuthUI(user) {
     const btn = document.getElementById('btnSettingsLogin');
     const info = document.getElementById('userInfoDisplay');
+    if (!btn || !info) return; 
+    
     if (user) {
         btn.innerHTML = i18n[currentLang].btnLogout || "WYLOGUJ SIĘ";
         btn.onclick = logOut;
@@ -87,15 +93,14 @@ async function syncStatsFromFirebase() {
         const docRef = await db.collection('users').doc(auth.currentUser.uid).get();
         if (docRef.exists && docRef.data().stats) {
             let cloudStats = JSON.parse(docRef.data().stats);
-            // Wybieramy nowszą instancję (np. ta z większą ilością zagranych gier)
             if (cloudStats.played > userStats.played) {
                 userStats = cloudStats;
                 localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
             } else {
-                syncStatsToFirebase(); // Wyślij nasze dane do góry
+                syncStatsToFirebase(); 
             }
         } else {
-            syncStatsToFirebase(); // Jeśli chmura jest pusta
+            syncStatsToFirebase(); 
         }
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
 }
@@ -208,8 +213,10 @@ function setLang(lang) {
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
 
-// --- SILNIK DŹWIĘKOWY ---
+// --- SILNIK DŹWIĘKOWY (Z dodanym brakującym audioCtx) ---
+let audioCtx = null;
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
+
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
 function updateSoundBtn() {
     const btn = document.getElementById('btnSoundToggle');
@@ -272,7 +279,7 @@ function loadStats() {
 }
 function saveStats() { 
     localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); 
-    syncStatsToFirebase(); // Sync w tle
+    syncStatsToFirebase(); 
 }
 
 function getDailyDateString(dayNumber) {
@@ -337,7 +344,9 @@ function updateDailyMenu() {
 }
 
 function promptForNick(callback) {
-    if (playerNickname) {
+    if (playerNickname && playerId && !playerId.startsWith('guest_')) {
+        callback();
+    } else if (playerNickname) {
         callback();
     } else {
         const overlay = document.getElementById('nickOverlay');
@@ -458,14 +467,16 @@ async function sendScoreToDatabase(isWin, attempts) {
 
         const increment = firebase.firestore.FieldValue.increment;
         
-        const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-        batch.set(weeklyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        if(isWin) {
+            const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
+            batch.set(weeklyRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
-        const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-        batch.set(monthlyRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
+            batch.set(monthlyRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
-        const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-        batch.set(alltimeRef, { nick: playerNickname, wins: increment(isWin ? 1 : 0), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
+            batch.set(alltimeRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        }
 
         await batch.commit();
     } catch (e) { console.error("DB Error:", e); }
@@ -595,7 +606,7 @@ function restorePlayedGame() {
     const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
     if (pastGuesses.length === 0) {
-        document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Brak zapisu.</div>`;
+        document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Brak zapisu dla tego dnia.</div>`;
     } else {
         pastGuesses.forEach(pName => {
             const p = playersDB.find(x => x.name === pName);
@@ -893,7 +904,7 @@ function closeSettings() {
 }
 
 function openRanking() {
-    promptForNick(() => {
+    promptForNick(async () => {
         const overlay = document.getElementById('rankingOverlay');
         overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
         loadRanking('daily');
@@ -909,7 +920,6 @@ async function loadRanking(type) {
     
     let headerWon = document.getElementById('rankHeaderWon');
     
-    // Ukrywanie kolumny "Wygrane" dla Daily
     if(type === 'daily') {
         headerWon.style.display = 'none';
     } else {
