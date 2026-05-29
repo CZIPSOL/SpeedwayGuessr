@@ -468,4 +468,25 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .rank-3 { color: #cd7f32; font-weight: 900; font-size: 14px; }
 .rank-nick { text-transform: uppercase; text-align: left; }
 .rank-won { color: var(--green-neon); font-weight: 900; }
+
+/* --- ZAKŁADKI RANKINGOWE --- */
+.rank-tab {
+    flex: 1;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    padding: 8px 5px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+.rank-tab:hover {
+    color: var(--text-main);
+}
+.rank-tab.active {
+    background: var(--accent);
+    color: #000;
+}
 .rank-lost { color: var(--red-neon); font-weight: 900; }
