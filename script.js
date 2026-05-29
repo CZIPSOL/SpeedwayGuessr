@@ -213,10 +213,9 @@ function setLang(lang) {
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
 
-// --- SILNIK DŹWIĘKOWY (Z dodanym brakującym audioCtx) ---
-let audioCtx = null;
+// --- SILNIK DŹWIĘKOWY (Naprawiono ReferenceError audioCtx!) ---
+let audioCtx = null; // TAA DAA! Zmienna globalna dla kontekstu audio.
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
-
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
 function updateSoundBtn() {
     const btn = document.getElementById('btnSoundToggle');
