@@ -345,10 +345,49 @@ function updateDailyMenu() {
 
 // --- FILTR PRZEKLEŃSTW I XSS ---
 const badWordsList = [
-    "kurwa", "kurwy", "kurwą", "kurew", "jebać", "jebac", "jebany", "zjeb", "jebana", "pierdole", "pierdolić", "wypierdalaj", "spierdalaj", 
-    "chuj", "chuju", "chuja", "cwel", "cwelu", "szmata", "szmato", "dziwka", "dziwko", "suka", "suko", 
-    "jeb", "cipa", "pizda", "pizdo", "kutas", "kutasiarz", "fuck", "bitch", "cunt", "shit", "asshole", "dick"
+    // POLSKI
+    "kurwa", "kurwy", "kurwą", "kurew", "kurwi", "skurwysyn", "skurwiel",
+    "jebać", "jebac", "jebany", "jebana", "zjeb", "zajeb", "odjeb", "wyjeb", "podjeb",
+    "pierdol", "spierdal", "wypierdal", "zapierdal", "podpierdal",
+    "chuj", "chuju", "chuja", "chujo", "cwel", "szmata", "szmato",
+    "dziwka", "dziwko", "suka", "suko", "pizda", "pizdo", "kutas", "kutasiarz",
+    "pedal", "pedał", "ciota", "czarnuch", "ruchanie", "ruchac", "ruchać", "sukinsyn",
+
+    // ANGIELSKI
+    "fuck", "fucker", "fucking", "bitch", "cunt", "shit", "asshole", "bullshit",
+    "nigger", "nigga", "faggot", "retard", "whore", "slut", "motherfucker", 
+    "blowjob", "pedophile", "tranny", "bastard", "dickhead", "dumbass",
+
+    // NIEMIECKI
+    "schlampe", "hurensohn", "fotze", "arschloch", "wichser", "missgeburt",
+
+    // HISZPAŃSKI
+    "puta", "puto", "ramera", "cabron", "pendejo", "gilipollas", "malparido", "maricon", "mierda",
+
+    // FRANCUSKI
+    "salope", "connard", "connasse", "enculé", "encule", "pute",
+
+    // ROSYJSKI (Zarówno angielskie litery jak i cyrylica)
+    "cyka", "blyat", "blyad", "pidor", "pizdec", "chmo", "shluha", "zalyupa", "gondon",
+    "блядь", "сука", "хуй", "пизда", "ебать", "пидор", "шлюха", "гондон", "долбоеб",
+
+    // INNE / UNIWERSALNE (Trolle i polityka)
+    "porno", "hitler", "stfu", "kys"
 ];
+
+function isNickClean(nick) {
+    let lowerNick = nick.toLowerCase().replace(/\s+/g, '');
+    for (let word of badWordsList) {
+        if (lowerNick.includes(word)) return false;
+    }
+    return true;
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
 
 function isNickClean(nick) {
     let lowerNick = nick.toLowerCase().replace(/\s+/g, '');
