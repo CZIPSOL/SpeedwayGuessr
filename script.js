@@ -213,9 +213,10 @@ function setLang(lang) {
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
 
-// --- SILNIK DŹWIĘKOWY (Naprawiono ReferenceError audioCtx!) ---
-let audioCtx = null; // TAA DAA! Zmienna globalna dla kontekstu audio.
+// --- SILNIK DŹWIĘKOWY ---
+let audioCtx = null;
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
+
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
 function updateSoundBtn() {
     const btn = document.getElementById('btnSoundToggle');
@@ -342,6 +343,27 @@ function updateDailyMenu() {
     }
 }
 
+// --- FILTR PRZEKLEŃSTW I XSS ---
+const badWordsList = [
+    "kurwa", "kurwy", "kurwą", "kurew", "jebać", "jebac", "jebany", "zjeb", "jebana", "pierdole", "pierdolić", "wypierdalaj", "spierdalaj", 
+    "chuj", "chuju", "chuja", "cwel", "cwelu", "szmata", "szmato", "dziwka", "dziwko", "suka", "suko", 
+    "jeb", "cipa", "pizda", "pizdo", "kutas", "kutasiarz", "fuck", "bitch", "cunt", "shit", "asshole", "dick"
+];
+
+function isNickClean(nick) {
+    let lowerNick = nick.toLowerCase().replace(/\s+/g, '');
+    for (let word of badWordsList) {
+        if (lowerNick.includes(word)) return false;
+    }
+    return true;
+}
+
+function escapeHTML(str) {
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
 function promptForNick(callback) {
     if (playerNickname && playerId && !playerId.startsWith('guest_')) {
         callback();
@@ -356,11 +378,19 @@ function promptForNick(callback) {
 }
 
 function saveNick() {
-    const input = document.getElementById('nickInput').value.trim();
+    let input = document.getElementById('nickInput').value.trim();
     if (input.length < 3) {
         alert("Nick musi mieć minimum 3 znaki!");
         return;
     }
+    
+    if (!isNickClean(input)) {
+        alert("Ten nick jest niedozwolony. Wybierz inny.");
+        document.getElementById('nickInput').value = "";
+        return;
+    }
+
+    input = escapeHTML(input); 
     playerNickname = input;
     localStorage.setItem('speedwayNickname', playerNickname);
     
@@ -461,20 +491,22 @@ async function sendScoreToDatabase(isWin, attempts) {
         const batch = db.batch();
         const ts = firebase.firestore.FieldValue.serverTimestamp();
         
+        const safeNick = escapeHTML(playerNickname);
+        
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: playerNickname, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
+        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
 
         const increment = firebase.firestore.FieldValue.increment;
         
         if(isWin) {
             const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-            batch.set(weeklyRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            batch.set(weeklyRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
             const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-            batch.set(monthlyRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            batch.set(monthlyRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
             const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-            batch.set(alltimeRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            batch.set(alltimeRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
         }
 
         await batch.commit();
@@ -902,10 +934,12 @@ function closeSettings() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+// --- OTWIERANIE RANKINGU (TERAZ JEST INTELIGENTNE!) ---
 function openRanking() {
     promptForNick(async () => {
         const overlay = document.getElementById('rankingOverlay');
         overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+        // Otwiera zakładkę Daily i od razu wie, jaki dzień jest wybrany!
         loadRanking('daily');
     });
 }
@@ -918,17 +952,23 @@ async function loadRanking(type) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
     
     let headerWon = document.getElementById('rankHeaderWon');
+    let dateDisplay = document.getElementById('rankingDateDisplay');
     
+    // ZMIANA: Dynamiczny napis z informacją, który ranking Daily jest wyświetlany
     if(type === 'daily') {
         headerWon.style.display = 'none';
+        dateDisplay.innerText = `Wyniki z: ${getDailyDateString(selectedDailyDay)} (Daily #${selectedDailyDay})`;
+        dateDisplay.style.display = 'block';
     } else {
         headerWon.style.display = '';
         headerWon.innerText = i18n[currentLang].rankTotalWins || "Suma Wygranych";
+        dateDisplay.style.display = 'none';
     }
 
     try {
         let snapshot;
-        if (type === 'daily') snapshot = await db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").get();
+        // ZMIANA: Używamy selectedDailyDay zamiast currentDailyDay
+        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").get();
         else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").get();
         else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").get();
         else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").get();
@@ -966,12 +1006,13 @@ async function loadRanking(type) {
                 wonCol = `<td>${wonText}</td>`;
             }
             
-            let isMe = row.nick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            let safeRenderNick = escapeHTML(row.nick);
+            let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
 
             tbody.innerHTML += `
                 <tr ${isMe}>
                     <td class="${rankClass}">${index + 1}</td>
-                    <td class="rank-nick ${rankClass}">${row.nick}</td>
+                    <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
                     ${wonCol}
                     <td>${row.guesses}</td>
                 </tr>
