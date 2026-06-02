@@ -159,7 +159,7 @@ const i18n = {
         settingsTitle: "INSTÄLLNINGAR", sound: "Ljud:", soundOn: "På 🔊", soundOff: "Av 🔇",
         subtitle: "Speedway Edition", lastGames: "Senaste Daily:", btnDaily: "Spela Daily", btnReview: "Granska spel", btnEndless: "Endless Guessr", btnTic: "Luffarschack <small>(SNART)</small>", searchPlaceholder: "Ange förarens namn...", btnGuess: "GISSA",
         teams: "Klubbar:", colName: "Förare", colCountry: "Land", colYear: "Född", colGP: "SGP?", colDMP: "Lagmedaljer", colStatus: "Status", colClubs: "Klubbhistorik",
-        tipCountry: "Ursprungsland", tipYear: "Födelseår (⬆️ målet är yngre, ⬇️ målet är äldre)", tipGP: "Var han någonsin ordinarie i SGP?", tipDMP: "Totalt antal polska lagmästerskapsmedaljer.", tipStatus: "Nuvarande status", tipClubs: "Klubbar representerade i Polen",
+        tipCountry: "Ursprungsland", tipYear: "Födelseår (⬆️ målet är yngre, ⬇️ målet är äldre)", tipGP: "Var han någonsin ordinarie i SGP?", tipDMP: "Totalt antal polska lagmästerskapsmedaljer.", tipStatus: "Nuvarande status", tipClubs: "Nuvarande status",
         stats: "STATISTIK", statPlayed: "Spelade", statWon: "Vunna", statStreak: "Aktuell Svit", statMax: "Bästa Svit", btnClose: "STÄNG", archive: "DAILY ARKIV",
         winTitle: "BRAVO!", winSub: "Du gissade föraren!", loseTitle: "INGA FÖRSÖK", loseSub: "Tyvärr, du gissade inte föraren.", btnShare: "DELA 📋", btnPlayEndless: "SPELA ENDLESS", btnPlayAgain: "SPELA IGEN", btnMenu: "HUVUDMENY", theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
         shareText: "Min Speedway Guessr Daily! Kan du slå det?",
@@ -213,8 +213,8 @@ function setLang(lang) {
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
 
-// --- SILNIK DŹWIĘKOWY (Naprawiono ReferenceError audioCtx!) ---
-let audioCtx = null; // TAA DAA! Zmienna globalna dla kontekstu audio.
+// --- SILNIK DŹWIĘKOWY ---
+let audioCtx = null;
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
 function updateSoundBtn() {
@@ -342,6 +342,56 @@ function updateDailyMenu() {
     }
 }
 
+// --- FILTR PRZEKLEŃSTW I BEZPIECZEŃSTWO ---
+const badWordsList = [
+    "kurwa", "kurwy", "kurwą", "kurew", "kurwi", "skurwysyn", "skurwiel",
+    "jebać", "jebac", "jebany", "jebana", "zjeb", "zajeb", "odjeb", "wyjeb", "podjeb",
+    "pierdol", "spierdal", "wypierdal", "zapierdal", "podpierdal",
+    "chuj", "chuju", "chuja", "chujo", "cwel", "szmata", "szmato",
+    "dziwka", "dziwko", "suka", "suko", "pizda", "pizdo", "kutas", "kutasiarz",
+    "pedal", "pedał", "ciota", "czarnuch", "ruchanie", "ruchac", "ruchać", "sukinsyn",
+    "fuck", "fucker", "fucking", "bitch", "cunt", "shit", "asshole", "bullshit",
+    "nigger", "nigga", "faggot", "retard", "whore", "slut", "motherfucker", 
+    "blowjob", "pedophile", "tranny", "bastard", "dickhead", "dumbass",
+    "schlampe", "hurensohn", "fotze", "arschloch", "wichser", "missgeburt",
+    "puta", "puto", "ramera", "cabron", "pendejo", "gilipollas", "malparido", "maricon", "mierda",
+    "salope", "connard", "connasse", "enculé", "encule", "pute",
+    "cyka", "blyat", "blyad", "pidor", "pizdec", "chmo", "shluha", "zalyupa", "gondon",
+    "блядь", "сука", "хуй", "пизда", "ебать", "пидор", "шлюха", "гондон", "долбоеб",
+    "porno", "hitler", "stfu", "kys"
+];
+
+function isNickClean(nick) {
+    let lowerNick = nick.toLowerCase().replace(/\s+/g, '');
+    for (let word of badWordsList) {
+        if (lowerNick.includes(word)) return false;
+    }
+    return true;
+}
+
+function escapeHTML(str) {
+    if (!str) return "";
+    return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+}
+
+// Sprawdzanie unikalności Nicku w bazie
+async function isNickTaken(nickToCheck) {
+    try {
+        const snapshot = await db.collection("leaderboard_alltime")
+                                 .doc("global")
+                                 .collection("scores")
+                                 .where("nick", "==", nickToCheck)
+                                 .get();
+        let taken = false;
+        snapshot.forEach(doc => { if (doc.id !== playerId) taken = true; });
+        return taken;
+    } catch (e) {
+        console.error("Błąd weryfikacji:", e); return false;
+    }
+}
+
 function promptForNick(callback) {
     if (playerNickname && playerId && !playerId.startsWith('guest_')) {
         callback();
@@ -355,23 +405,31 @@ function promptForNick(callback) {
     }
 }
 
-function saveNick() {
-    const input = document.getElementById('nickInput').value.trim();
-    if (input.length < 3) {
-        alert("Nick musi mieć minimum 3 znaki!");
-        return;
+// Bezpieczny Zapis Nicku (Z weryfikacją w DB)
+async function saveNick() {
+    let input = document.getElementById('nickInput').value.trim();
+    if (input.length < 3) { alert("Nick musi mieć minimum 3 znaki!"); return; }
+    if (!isNickClean(input)) { alert("Ten nick narusza zasady. Wybierz inny."); document.getElementById('nickInput').value = ""; return; }
+
+    let safeInput = escapeHTML(input); 
+    const btn = document.querySelector('#nickOverlay .btn-reset');
+    const originalText = btn.innerText;
+    btn.innerText = "SPRAWDZANIE..."; btn.disabled = true;
+
+    const taken = await isNickTaken(safeInput);
+    if (taken) {
+        alert("Ten nick jest już zajęty przez innego gracza! Wymyśl inny.");
+        btn.innerText = originalText; btn.disabled = false; return;
     }
-    playerNickname = input;
+
+    playerNickname = safeInput;
     localStorage.setItem('speedwayNickname', playerNickname);
     
     const overlay = document.getElementById('nickOverlay');
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 300);
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
     
-    if (window.nickCallback) {
-        window.nickCallback();
-        window.nickCallback = null;
-    }
+    btn.innerText = originalText; btn.disabled = false;
+    if (window.nickCallback) { window.nickCallback(); window.nickCallback = null; }
 }
 
 function openCalendar() {
@@ -461,20 +519,22 @@ async function sendScoreToDatabase(isWin, attempts) {
         const batch = db.batch();
         const ts = firebase.firestore.FieldValue.serverTimestamp();
         
+        const safeNick = escapeHTML(playerNickname);
+        
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: playerNickname, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
+        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
 
         const increment = firebase.firestore.FieldValue.increment;
         
         if(isWin) {
             const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-            batch.set(weeklyRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            batch.set(weeklyRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
             const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-            batch.set(monthlyRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            batch.set(monthlyRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
 
             const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-            batch.set(alltimeRef, { nick: playerNickname, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
+            batch.set(alltimeRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
         }
 
         await batch.commit();
@@ -902,6 +962,7 @@ function closeSettings() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+// --- ZABEZPIECZONE ŁADOWANIE RANKINGU ---
 function openRanking() {
     promptForNick(async () => {
         const overlay = document.getElementById('rankingOverlay');
@@ -911,7 +972,6 @@ function openRanking() {
 }
 
 async function loadRanking(type) {
-    // Resetujemy przyciski zakładek
     document.querySelectorAll('.rank-tab').forEach(btn => btn.classList.remove('active'));
     const activeTab = document.getElementById(`tab-${type}`);
     if (activeTab) activeTab.classList.add('active');
@@ -922,7 +982,6 @@ async function loadRanking(type) {
     let headerWon = document.getElementById('rankHeaderWon');
     let dateDisplay = document.getElementById('rankingDateDisplay');
     
-    // Bezpieczne ukrywanie elementów (żadnych błędów "Cannot read properties of null")
     if (type === 'daily') {
         if (headerWon) headerWon.style.display = 'none';
         if (dateDisplay) {
@@ -977,17 +1036,20 @@ async function loadRanking(type) {
                 wonCol = `<td>${wonText}</td>`;
             }
             
-            let safeRenderNick = escapeHTML(row.nick || "Gracz");
+            // Bezpieczne użycie funkcji escapeHTML
+            let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
             let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
 
-            if (tbody) tbody.innerHTML += `
-                <tr ${isMe}>
-                    <td class="${rankClass}">${index + 1}</td>
-                    <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
-                    ${wonCol}
-                    <td>${row.guesses}</td>
-                </tr>
-            `;
+            if (tbody) {
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td class="${rankClass}">${index + 1}</td>
+                        <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
+                        ${wonCol}
+                        <td>${row.guesses}</td>
+                    </tr>
+                `;
+            }
         });
 
     } catch (e) {
