@@ -280,6 +280,29 @@
         <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
     </div>
 
+    <div id="clashMenuContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
+
+        <h1 class="game-title" style="font-size: 32px;">⚔️ Speedway Clash</h1>
+        <h2 class="menu-subtitle">Wybierz tryb gry</h2>
+        
+        <div class="menu-modes" style="margin-top: 20px;">
+            <!-- ZABLOKOWANY TRYB RANKINGOWY -->
+            <button class="menu-btn soon" disabled style="background: rgba(255,255,255,0.1); border: 2px dashed #666;">
+                <span class="btn-icon">🏆</span>
+                <span class="btn-text">Graj o ELO <small style="display: block; margin-top: 5px; color: var(--accent);">(WORK IN PROGRESS...)</small></span>
+            </button>
+            
+            <!-- AKTYWNY TRYB TOWARZYSKI -->
+            <button class="menu-btn" onclick="startFriendlyClash()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
+                <span class="btn-icon">🤝</span>
+                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj dla zabawy)</small></span>
+            </button>
+        </div>
+    </div>
+
     <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box;">
         <div class="clash-header">
             <div id="clashPlayer1" class="clash-player">🔴 Kask Czerwony</div>

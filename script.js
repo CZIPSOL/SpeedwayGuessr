@@ -1137,52 +1137,70 @@ function getCleanClubsList() {
     return Array.from(clubs);
 }
 
-// INTELIGENTNY GENERATOR PLANSZY
-function generateClashBoard() {
-    let allClubs = getCleanClubsList();
+// Funkcja pomocnicza próbująca wygenerować planszę z ustaloną minimalną liczbą pasujących zawodników
+function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
     let attempts = 0;
-    let validBoard = false;
-
-    // Próbujemy wylosować taką planszę, na której WSZYSTKIE 9 pól jest możliwych do zgadnięcia
-    while (!validBoard && attempts < 200) {
+    while (attempts < maxAttempts) {
         attempts++;
-        clashRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3);
-        
+        let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3);
         let validCols = [];
+        
         for (let c of allClubs) {
-            if (clashRows.includes(c)) continue; 
+            if (tempRows.includes(c)) continue; 
             
-            // Sprawdzamy, czy ten potencjalny klub(kolumna) ma jakiegoś zawodnika z KAŻDYM z 3 klubów w wierszach
-            let intersectsAll = clashRows.every(r => {
-                return playersDB.some(p => {
+            // Sprawdzamy czy dany klub (kolumna) ma minimum X zawodników wspólnych z KAŻDYM wierszem
+            let intersectsAll = tempRows.every(r => {
+                let matchCount = 0;
+                for (let p of playersDB) {
                     let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase());
                     if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
-                    return pClubs.includes(c) && pClubs.includes(r);
-                });
+                    
+                    if (pClubs.includes(c) && pClubs.includes(r)) {
+                        matchCount++;
+                    }
+                }
+                return matchCount >= minMatches;
             });
             
             if (intersectsAll) validCols.push(c);
         }
 
         if (validCols.length >= 3) {
+            clashRows = tempRows;
             clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3);
-            validBoard = true;
+            return true;
         }
     }
+    return false;
+}
 
-    // Fallback awaryjny (tzw. Złota Plansza), gdyby algorytm nie mógł nic znaleźć
+// INTELIGENTNY GENERATOR PLANSZY
+function generateClashBoard() {
+    let allClubs = getCleanClubsList();
+    
+    // 1. Najpierw próbujemy idealną planszę (Minimum 3 pasujących zawodników na KAŻDE pole)
+    let validBoard = tryGenerateBoard(allClubs, 3, 500);
+    
+    // 2. Jeśli po 500 próbach się nie uda (bo za mała baza), obniżamy poprzeczkę do 2 zawodników
+    if (!validBoard) {
+        console.log("CLASH: Nie znaleziono planszy z min. 3 zawodnikami. Szukam z 2...");
+        validBoard = tryGenerateBoard(allClubs, 2, 300);
+    }
+    
+    // 3. Fallback awaryjny (tzw. Złota Plansza), gwarantujący, że gra nigdy się nie wywali
     if(!validBoard) {
+        console.log("CLASH: Użyto planszy awaryjnej.");
         clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa'];
         clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra'];
     }
 
-    // Renderowanie wierszy i kolumn
+    // Renderowanie nagłówków wierszy i kolumn
     for(let i=0; i<3; i++) {
         document.getElementById(`row${i}`).innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Motorcycle_speedway_icon.svg" width="20" style="opacity:0.3; margin-bottom:5px;"><br>${getClubAbbr(clashRows[i])}`;
         document.getElementById(`col${i}`).innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Motorcycle_speedway_icon.svg" width="20" style="opacity:0.3; margin-bottom:5px;"><br>${getClubAbbr(clashCols[i])}`;
     }
     
-    // Czyszczenie komórek planszy
+    // Czyszczenie komórek planszy przed nową grą
     for(let r=0; r<3; r++) {
         for(let c=0; c<3; c++) {
             let cell = document.getElementById(`cell-${r}-${c}`);
@@ -1194,12 +1212,23 @@ function generateClashBoard() {
     clashGuessedPlayers = [];
 }
 
+// --- LOGIKA MENU I RZUTU MONETĄ ---
+
 function startClashGame() {
     document.getElementById('mainMenuContainer').style.display = 'none';
-    document.getElementById('clashContainer').style.display = 'block';
+    document.getElementById('clashMenuContainer').style.display = 'flex';
+}
+
+function exitClashMenu() {
+    document.getElementById('clashMenuContainer').style.display = 'none';
+    document.getElementById('mainMenuContainer').style.display = 'flex';
+}
+
+function startFriendlyClash() {
+    document.getElementById('clashMenuContainer').style.display = 'none';
     
-    generateClashBoard();
-    doCoinToss(); // Rzut monetą o pierwszą turę!
+    // Zanim pokażemy samą planszę, rzucamy monetą w osobnym oknie!
+    doCoinToss(); 
 }
 
 function doCoinToss() {
@@ -1210,165 +1239,42 @@ function doCoinToss() {
     const coin = document.getElementById('clashCoinInner');
     const resText = document.getElementById('coinTossResult');
     resText.style.opacity = '0';
+    resText.innerText = "";
     
     // Losujemy: 0 = Czerwony, 1 = Niebieski
     let winner = Math.floor(Math.random() * 2);
+    // Dodajemy obroty (5 pełnych obrotów + wynik)
     let rotations = 5 * 360 + (winner * 180); 
     
-    coin.style.transform = `rotateY(${rotations}deg)`;
-    playSound('flip');
+    // Reset monety do 0
+    coin.style.transition = 'none';
+    coin.style.transform = `rotateY(0deg)`;
     
+    // Odtwarzamy dźwięk rzutu i animację
+    setTimeout(() => {
+        playSound('flip');
+        coin.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        coin.style.transform = `rotateY(${rotations}deg)`;
+    }, 50);
+    
+    // Po 3 sekundach pokazujemy napis i przenosimy do planszy
     setTimeout(() => {
         clashTurn = winner === 0 ? 'red' : 'blue';
         resText.innerText = winner === 0 ? "ZACZYNA KASK CZERWONY!" : "ZACZYNA KASK NIEBIESKI!";
         resText.style.color = winner === 0 ? "#ff3333" : "#3399ff";
         resText.style.opacity = '1';
         playSound(winner === 0 ? 'win' : 'guess');
-        updateClashTurnUI();
         
+        // Ukrywamy monetę po 2 sekundach od zatrzymania i pokazujemy planszę
         setTimeout(() => {
             overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                // START GRY: Renderowanie planszy i UI
+                generateClashBoard();
+                updateClashTurnUI();
+                document.getElementById('clashContainer').style.display = 'block';
+            }, 300);
         }, 2000);
     }, 3000);
-}
-
-function updateClashTurnUI() {
-    document.getElementById('clashPlayer1').className = clashTurn === 'red' ? 'clash-player active' : 'clash-player';
-    document.getElementById('clashPlayer2').className = clashTurn === 'blue' ? 'clash-player active' : 'clash-player';
-}
-
-function handleClashCell(r, c) {
-    if(clashBoardState[r][c] !== null) return; // Zablokuj, jeśli pole już zdobyte
-    
-    clashActiveCell = {r, c};
-    const overlay = document.getElementById('clashSearchOverlay');
-    
-    let rClubName = getClubAbbr(clashRows[r]);
-    let cClubName = getClubAbbr(clashCols[c]);
-    document.getElementById('clashSearchDesc').innerText = `${rClubName} 🤝 ${cClubName}`;
-    document.getElementById('clashGuessInput').value = '';
-    
-    setupClashAutocomplete();
-
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function setupClashAutocomplete() {
-    const oldInput = document.getElementById('clashGuessInput');
-    const newInput = oldInput.cloneNode(true);
-    oldInput.replaceWith(newInput); 
-    
-    newInput.addEventListener('input', function() {
-        let val = this.value; 
-        closeAllLists(); 
-        if (!val || val.length < 2) return;
-        
-        let listContainer = document.createElement("DIV"); 
-        listContainer.setAttribute("class", "autocomplete-items"); 
-        this.parentNode.appendChild(listContainer);
-        
-        let valClean = removePolishAccents(val.toLowerCase());
-        playersDB.forEach(player => {
-            if (clashGuessedPlayers.includes(player.name)) return;
-            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
-                let item = document.createElement("DIV"); 
-                item.innerHTML = player.name;
-                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); });
-                listContainer.appendChild(item);
-            }
-        });
-    });
-}
-
-function closeClashSearch() {
-    const overlay = document.getElementById('clashSearchOverlay');
-    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
-}
-
-function submitClashGuess() {
-    let input = document.getElementById('clashGuessInput').value.trim();
-    if(!input) return;
-
-    const player = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
-    
-    // Jeśli gracz wpisał źle lub użył zawodnika drugi raz na planszy
-    if(!player || clashGuessedPlayers.includes(player.name)) {
-        document.querySelector('#clashSearchOverlay .input-wrapper').classList.add('shake-error');
-        playSound('error');
-        setTimeout(() => { document.querySelector('#clashSearchOverlay .input-wrapper').classList.remove('shake-error'); }, 400);
-        return;
-    }
-
-    let rClub = clashRows[clashActiveCell.r];
-    let cClub = clashCols[clashActiveCell.c];
-
-    let pClubs = player.pastClubs.map(pc => getCleanClubName(pc).toLowerCase());
-    if (player.currentClub) pClubs.push(getCleanClubName(player.currentClub).toLowerCase());
-
-    // WERYFIKACJA: Czy jeździł w obu klubach?
-    if (pClubs.includes(rClub) && pClubs.includes(cClub)) {
-        playSound('win');
-        clashBoardState[clashActiveCell.r][clashActiveCell.c] = clashTurn;
-        clashGuessedPlayers.push(player.name);
-
-        let cell = document.getElementById(`cell-${clashActiveCell.r}-${clashActiveCell.c}`);
-        cell.classList.add(`claimed-${clashTurn}`);
-        cell.innerHTML = `<span class="clash-icon">${clashTurn === 'red' ? '🔴' : '🔵'}</span><span class="clash-player-name">${player.name}</span>`;
-
-        checkClashWin();
-    } else {
-        playSound('error');
-        alert(`Pudło! ${player.name} nie reprezentował obu tych klubów. Tracisz turę!`);
-    }
-
-    closeClashSearch();
-    clashTurn = clashTurn === 'red' ? 'blue' : 'red';
-    updateClashTurnUI();
-}
-
-function checkClashWin() {
-    const lines = [
-        [[0,0],[0,1],[0,2]], [[1,0],[1,1],[1,2]], [[2,0],[2,1],[2,2]], // Wiersze
-        [[0,0],[1,0],[2,0]], [[0,1],[1,1],[2,1]], [[0,2],[1,2],[2,2]], // Kolumny
-        [[0,0],[1,1],[2,2]], [[0,2],[1,1],[2,0]] // Przekątne
-    ];
-
-    for (let line of lines) {
-        let [a,b,c] = line;
-        let v1 = clashBoardState[a[0]][a[1]];
-        let v2 = clashBoardState[b[0]][b[1]];
-        let v3 = clashBoardState[c[0]][c[1]];
-
-        if (v1 && v1 === v2 && v1 === v3) {
-            setTimeout(() => {
-                launchConfetti();
-                playSound('win');
-                alert(`🏁 Koniec gry! ZWYCIĘŻA KASK ${v1 === 'red' ? 'CZERWONY' : 'NIEBIESKI'}! 🏆`);
-                exitClash();
-            }, 500);
-            return;
-        }
-    }
-
-    // Remis (brak wolnych pól)
-    let isDraw = true;
-    for(let r=0; r<3; r++) {
-        for(let c=0; c<3; c++) {
-            if(clashBoardState[r][c] === null) isDraw = false;
-        }
-    }
-    if(isDraw) {
-        setTimeout(() => {
-            playSound('lose');
-            alert("Remis! Brak wolnych pól na planszy. Obaj zawodnicy wykluczeni! 🟥");
-            exitClash();
-        }, 500);
-    }
-}
-
-function exitClash() {
-    document.getElementById('clashContainer').style.display = 'none';
-    document.getElementById('mainMenuContainer').style.display = 'flex';
 }
