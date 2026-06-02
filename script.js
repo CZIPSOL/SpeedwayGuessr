@@ -69,15 +69,15 @@ function signInWithGooglePrompt() {
 function logOut() { auth.signOut(); }
 
 function updateAuthUI(user) {
-    const btn = document.getElementById('btnSettingsLogin');
-    const info = document.getElementById('userInfoDisplay');
+    const btn = document.getElementById('btnProfileLogin');
+    const info = document.getElementById('userInfoDisplayProfile');
     if (!btn || !info) return; 
     
     if (user) {
         btn.innerHTML = i18n[currentLang].btnLogout || "WYLOGUJ SIĘ";
         btn.onclick = logOut;
         btn.style.background = "#e74c3c";
-        info.innerText = `Zalogowano: ${user.displayName}`;
+        info.innerText = `Konto Google: ${user.displayName}`;
         info.style.display = 'block';
     } else {
         btn.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ` + (i18n[currentLang].btnLoginGoogle || "ZALOGUJ PRZEZ GOOGLE");
@@ -946,10 +946,50 @@ async function shareResult() {
     } catch (error) { console.error("Error sharing:", error); alert("Wystąpił nieoczekiwany błąd podczas udostępniania."); }
 }
 
-function showStats() {
-    document.getElementById('statPlayed').innerText = userStats.played; document.getElementById('statWon').innerText = userStats.won;
-    document.getElementById('statStreak').innerText = userStats.currentStreak; document.getElementById('statMaxStreak').innerText = userStats.maxStreak;
-    const overlay = document.getElementById('statsOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+// --- OBSŁUGA PROFILU ---
+function openProfile() {
+    document.getElementById('profileStatPlayed').innerText = userStats.played; 
+    document.getElementById('profileStatWon').innerText = userStats.won;
+    document.getElementById('profileStatStreak').innerText = userStats.currentStreak; 
+    document.getElementById('profileStatMax').innerText = userStats.maxStreak;
+    
+    document.getElementById('changeNickInput').value = playerNickname || "";
+    
+    const overlay = document.getElementById('profileOverlay');
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeProfile() {
+    const overlay = document.getElementById('profileOverlay');
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+// Bezpieczna zmiana nicku na życzenie z profilu
+async function changeNickname() {
+    const inputEl = document.getElementById('changeNickInput');
+    const btn = document.getElementById('btnChangeNick');
+    let newNick = inputEl.value.trim();
+
+    if(newNick === playerNickname) { alert("To jest Twój obecny nick!"); return; }
+    if (newNick.length < 3) { alert("Nick musi mieć minimum 3 znaki!"); return; }
+    if (!isNickClean(newNick)) { alert("Ten nick narusza zasady. Wybierz inny."); inputEl.value = playerNickname || ""; return; }
+
+    let safeInput = escapeHTML(newNick); 
+    const originalText = btn.innerText;
+    btn.innerText = "⏳"; btn.disabled = true;
+
+    const taken = await isNickTaken(safeInput);
+    if (taken) {
+        alert("Ten nick jest już zajęty przez kogoś innego! Wymyśl inny.");
+        btn.innerText = originalText; btn.disabled = false; return;
+    }
+
+    playerNickname = safeInput;
+    localStorage.setItem('speedwayNickname', playerNickname);
+    alert("Twój nick został zmieniony! Będzie użyty do zapisania kolejnego wyniku.");
+    
+    btn.innerText = "GOTOWE!";
+    setTimeout(() => { btn.innerText = originalText; btn.disabled = false; }, 2000);
 }
 
 function openSettings() {
@@ -1064,7 +1104,6 @@ function closeRanking() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-function closeStats() { document.getElementById('statsOverlay').style.opacity = '0'; setTimeout(() => document.getElementById('statsOverlay').style.display = 'none', 300); }
 function setTheme(themeName) { document.documentElement.setAttribute('data-theme', themeName); localStorage.setItem('theme', themeName); }
 
 function launchConfetti() {
