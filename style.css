@@ -440,10 +440,17 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .clubs-path-container { width: max-content; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; display: flex; flex-wrap: nowrap; padding: 5px 0; box-sizing: border-box; }
 
     /* Clash Mobile Responsive */
-    .clash-grid { grid-template-columns: 60px 1fr 1fr 1fr; gap: 5px; }
-    .clash-header-cell { font-size: 9px; }
-    .clash-icon { font-size: 25px; }
-    .clash-player-name { font-size: 9px; }
-    .clash-header { padding: 10px; flex-direction: column; gap: 10px; }
-    .clash-player { width: 100%; text-align: center; }
+    .clash-grid { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 550px; margin: 0 auto; }
+.clash-cell { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; aspect-ratio: unset; min-height: 80px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; text-align: center; transition: 0.2s; overflow: hidden; padding: 5px; flex-direction: column; box-sizing: border-box;}
+.clash-header-cell { background: rgba(0,0,0,0.4); border-color: transparent; color: var(--accent); font-size: 11px; text-transform: uppercase; padding: 5px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+.clash-header-cell.empty { background: transparent; border: none; }
+.clash-playable { cursor: pointer; position: relative; }
+.clash-playable:hover { transform: scale(1.05); border-color: var(--accent); box-shadow: 0 0 15px rgba(241,196,15,0.3); z-index: 5; }
+
+/* Usunięte ikonki, dodane mocne tła i wyraźny tekst */
+.clash-playable.claimed-red { background: rgba(200, 0, 0, 0.8); border-color: #ff3333; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+.clash-playable.claimed-blue { background: rgba(0, 100, 200, 0.8); border-color: #3399ff; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
+.clash-playable.claimed-red:hover, .clash-playable.claimed-blue:hover { transform: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); z-index: 1; }
+
+.clash-player-name { font-size: 12px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,1); word-break: break-word; line-height: 1.2; }
 }

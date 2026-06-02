@@ -261,10 +261,40 @@
         <div id="clashLobbyWaiting" style="display: none; width: 100%; margin-top: 30px;">
             <h3 style="color: var(--text-dim); text-transform: uppercase; font-size: 12px;">Twój kod pokoju:</h3>
             <h1 id="myRoomCodeDisplay" style="font-size: 60px; color: var(--accent); margin: 0; letter-spacing: 5px; font-weight: 900; text-shadow: 0 0 20px rgba(241,196,15,0.4);">XXXXX</h1>
-            <p style="margin-top: 20px; font-weight: bold;" class="loading-pulse">Oczekiwanie na przeciwnika...</p>
+            
+            <!-- SEKCJA GOTOWOŚCI -->
+            <div id="clashReadySection" style="margin-top: 20px;">
+                <p id="waitingText" style="margin-bottom: 20px; font-weight: bold;" class="loading-pulse">Oczekiwanie na przeciwnika...</p>
+                
+                <div id="readyPlayersDiv" style="display: none; flex-direction: column; gap: 10px;">
+                    <div style="display:flex; justify-content: space-around; margin-bottom: 10px; font-size: 14px; font-weight: 900;">
+                        <span id="p1ReadyStatus" style="color: #ff3333; opacity: 0.5;">🔴 Gracz 1</span>
+                        <span id="p2ReadyStatus" style="color: #3399ff; opacity: 0.5;">🔵 Gracz 2</span>
+                    </div>
+                    <button id="btnReady" onclick="toggleClashReady()" class="btn-reset" style="width: 100%; font-size: 16px;">JESTEM GOTÓW</button>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- ============================================== -->
+    <!-- ====== EKRAN PODSUMOWANIA I REWANŻU ====== -->
+    <!-- ============================================== -->
+    <div id="clashSummaryOverlay" class="win-overlay" style="display: none; z-index: 10006;">
+        <div class="stats-modal" style="max-width: 450px;">
+            <h2 id="clashSummaryTitle" style="font-size: 32px; margin-bottom: 10px; text-transform: uppercase;">WYGRYWA ...</h2>
+            
+            <h3 style="color: var(--text-dim); font-size: 14px; margin-top: 20px;">WYNIK SERII</h3>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 28px; font-weight: 900; margin: 15px 0 30px 0;">
+                <span id="summaryP1Name" style="color: #ff3333; flex: 1; text-align: right;">Gracz 1</span>
+                <span id="summaryScore" style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 12px; color: var(--accent);">0 : 0</span>
+                <span id="summaryP2Name" style="color: #3399ff; flex: 1; text-align: left;">Gracz 2</span>
+            </div>
+            
+            <button id="btnRematch" onclick="toggleClashRematch()" class="btn-reset" style="width:100%; margin-bottom: 10px; font-size: 14px;">ZAGRAJ REWANŻ <span id="rematchCount">(0/2 gotowych)</span></button>
+            <button onclick="leaveClashRoom()" class="btn-close" style="width:100%; border-color: var(--red-neon); color: var(--red-neon);">ZAKOŃCZ I WYJDŹ</button>
+        </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->

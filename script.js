@@ -775,36 +775,31 @@ let clashBoardState = Array(9).fill(null);
 let clashGuessedPlayers = [];
 let clashActiveCellIdx = null;
 
-// --- ANTI-CHEAT (Wyłapywanie zmiany karty/okna) ---
 document.addEventListener('visibilitychange', () => {
     if (document.hidden && currentClashRoom && clashStatus === 'playing') {
         if (clashTurn === myClashColor) {
             alert("⚠️ Wykryto zmianę karty! Tracisz turę za podejrzenie oszukiwania.");
-            skipClashTurn("Pudło! (Opuścił okno gry)");
+            skipClashTurn("Opuścił okno gry (KARA)");
         }
     }
 });
 
 function updateClashTurnUI() {
-    let p1El = document.getElementById('clashPlayer1');
-    let p2El = document.getElementById('clashPlayer2');
+    let p1El = document.getElementById('clashPlayer1'); let p2El = document.getElementById('clashPlayer2');
     if(p1El) p1El.className = clashTurn === 'red' ? 'clash-player active' : 'clash-player';
     if(p2El) p2El.className = clashTurn === 'blue' ? 'clash-player active' : 'clash-player';
 }
 
-// --- MENU I NAWIGACJA CLASH ---
 function startClashGame() {
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
         document.getElementById('clashModeSelectContainer').style.display = 'flex';
     });
 }
-
 function exitClashMenu() {
     document.getElementById('clashModeSelectContainer').style.display = 'none';
     document.getElementById('mainMenuContainer').style.display = 'flex';
 }
-
 function openFriendlyLobby() {
     document.getElementById('clashModeSelectContainer').style.display = 'none';
     document.getElementById('clashLobbyContainer').style.display = 'flex';
@@ -812,13 +807,9 @@ function openFriendlyLobby() {
     document.getElementById('clashLobbyWaiting').style.display = 'none';
     document.getElementById('clashLobbyError').style.display = 'none';
 }
-
 function backToClashModeSelect() {
     if(clashUnsubscribe) clashUnsubscribe();
-    if(currentClashRoom) {
-        db.collection("clash_rooms").doc(currentClashRoom).delete().catch(e=>console.log(e));
-        currentClashRoom = null;
-    }
+    if(currentClashRoom) { db.collection("clash_rooms").doc(currentClashRoom).delete().catch(e=>console.log(e)); currentClashRoom = null; }
     document.getElementById('clashLobbyContainer').style.display = 'none';
     document.getElementById('clashModeSelectContainer').style.display = 'flex';
 }
@@ -829,39 +820,42 @@ function generateRoomCode() {
     return code;
 }
 
-// --- TWORZENIE I DOŁĄCZANIE (LOBBY) ---
+// --- LOBBY (HOST / GUEST) ---
 async function createClashRoom() {
     document.getElementById('clashLobbyError').style.display = 'none';
     const btn = document.querySelector('#clashLobbySelect .menu-btn');
     btn.innerText = "TWORZENIE..."; btn.disabled = true;
 
-    const code = generateRoomCode();
-    myClashColor = 'red';
+    const code = generateRoomCode(); myClashColor = 'red';
     
     let allClubs = getCleanClubsList();
-    let validBoard = tryGenerateBoard(allClubs, 3, 500);
-    if (!validBoard) validBoard = tryGenerateBoard(allClubs, 2, 300);
+    let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
     if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
 
     try {
         await db.collection("clash_rooms").doc(code).set({
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'waiting', p1: { id: playerId, nick: playerNickname, color: 'red' }, p2: null,
+            p1Ready: false, p2Ready: false, score: { p1: 0, p2: 0 },
             rows: clashRows, cols: clashCols, board: Array(9).fill(null), turn: 'red', deadline: 0,
-            guessedPlayers: [], lastAction: ''
+            guessedPlayers: [], lastAction: '', rematchP1: false, rematchP2: false
         });
 
         currentClashRoom = code;
         document.getElementById('clashLobbySelect').style.display = 'none';
         document.getElementById('myRoomCodeDisplay').innerText = code;
+        
+        // UI Lobby (Czekanie na gracza)
+        document.getElementById('waitingText').style.display = 'block';
+        document.getElementById('readyPlayersDiv').style.display = 'none';
+        document.getElementById('btnReady').innerText = "JESTEM GOTÓW";
+        document.getElementById('btnReady').disabled = false;
+        document.getElementById('btnReady').style.background = "var(--accent)";
         document.getElementById('clashLobbyWaiting').style.display = 'block';
+        
         btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`; btn.disabled = false;
         listenToClashRoom();
-    } catch(e) {
-        console.error(e);
-        document.getElementById('clashLobbyError').innerText = "Błąd połączenia. Spróbuj ponownie.";
-        document.getElementById('clashLobbyError').style.display = 'block'; btn.disabled = false;
-    }
+    } catch(e) { document.getElementById('clashLobbyError').innerText = "Błąd połączenia. Spróbuj ponownie."; document.getElementById('clashLobbyError').style.display = 'block'; btn.disabled = false; }
 }
 
 async function joinClashRoom() {
@@ -871,46 +865,108 @@ async function joinClashRoom() {
 
     try {
         const roomRef = db.collection("clash_rooms").doc(input); const doc = await roomRef.get();
-        if(!doc.exists) { errorEl.innerText = "Nie znaleziono pokoju o tym kodzie!"; errorEl.style.display = 'block'; return; }
-        if(doc.data().p2 !== null) { errorEl.innerText = "Ten pokój jest już pełny!"; errorEl.style.display = 'block'; return; }
+        if(!doc.exists) { errorEl.innerText = "Nie znaleziono pokoju!"; errorEl.style.display = 'block'; return; }
+        if(doc.data().p2 !== null) { errorEl.innerText = "Pokój jest pełny!"; errorEl.style.display = 'block'; return; }
 
-        await roomRef.update({ p2: { id: playerId, nick: playerNickname, color: 'blue' }, status: 'vsScreen' });
+        await roomRef.update({ p2: { id: playerId, nick: playerNickname, color: 'blue' } });
         myClashColor = 'blue'; currentClashRoom = input;
-        document.getElementById('clashLobbyContainer').style.display = 'none';
+        
+        document.getElementById('clashLobbySelect').style.display = 'none';
+        document.getElementById('myRoomCodeDisplay').innerText = input;
+        document.getElementById('waitingText').style.display = 'none';
+        document.getElementById('readyPlayersDiv').style.display = 'flex';
+        document.getElementById('btnReady').innerText = "JESTEM GOTÓW";
+        document.getElementById('btnReady').disabled = false;
+        document.getElementById('btnReady').style.background = "var(--accent)";
+        document.getElementById('clashLobbyWaiting').style.display = 'block';
+        
         listenToClashRoom();
-    } catch(e) { console.error(e); errorEl.innerText = "Wystąpił błąd!"; errorEl.style.display = 'block'; }
+    } catch(e) { errorEl.innerText = "Wystąpił błąd!"; errorEl.style.display = 'block'; }
+}
+
+// --- GOTOWOŚĆ I REWANŻE ---
+async function toggleClashReady() {
+    let field = myClashColor === 'red' ? 'p1Ready' : 'p2Ready';
+    await db.collection("clash_rooms").doc(currentClashRoom).update({ [field]: true });
+    document.getElementById('btnReady').innerText = "OCZEKIWANIE...";
+    document.getElementById('btnReady').disabled = true;
+    document.getElementById('btnReady').style.background = "#555";
+}
+
+async function toggleClashRematch() {
+    let field = myClashColor === 'red' ? 'rematchP1' : 'rematchP2';
+    await db.collection("clash_rooms").doc(currentClashRoom).update({ [field]: true });
+    document.getElementById('btnRematch').innerText = "CZEKANIE NA DRUGIEGO GRACZA...";
+    document.getElementById('btnRematch').disabled = true;
+    document.getElementById('btnRematch').style.background = "#555";
 }
 
 // --- SILNIK SIECIOWY GRY ---
 function listenToClashRoom() {
     if(!currentClashRoom) return;
     clashUnsubscribe = db.collection("clash_rooms").doc(currentClashRoom).onSnapshot(doc => {
-        if(!doc.exists) { alert("Pokój został zamknięty przez drugiego gracza."); exitClashMenu(); return; }
+        if(!doc.exists) { alert("Przeciwnik zamknął pokój."); leaveClashRoom(); return; }
         const data = doc.data();
         clashStatus = data.status; clashTurn = data.turn; clashBoardState = data.board;
         clashGuessedPlayers = data.guessedPlayers || []; clashRows = data.rows; clashCols = data.cols;
 
+        // Logika w Lobby (Czekanie na gracza i Gotowość)
+        if (clashStatus === 'waiting') {
+            if (data.p2) {
+                document.getElementById('waitingText').style.display = 'none';
+                document.getElementById('readyPlayersDiv').style.display = 'flex';
+                
+                let p1Status = document.getElementById('p1Status');
+                document.getElementById('p1ReadyStatus').style.opacity = data.p1Ready ? '1' : '0.3';
+                document.getElementById('p1ReadyStatus').innerText = data.p1Ready ? `🔴 ${data.p1.nick} (Gotowy)` : `🔴 ${data.p1.nick}`;
+                
+                document.getElementById('p2ReadyStatus').style.opacity = data.p2Ready ? '1' : '0.3';
+                document.getElementById('p2ReadyStatus').innerText = data.p2Ready ? `🔵 ${data.p2.nick} (Gotowy)` : `🔵 ${data.p2.nick}`;
+
+                // HOST odpala rzut monetą gdy obaj gotowi
+                if (myClashColor === 'red' && data.p1Ready && data.p2Ready) {
+                    db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
+                }
+            }
+        }
+
+        // Logika w Podsumowaniu (Rewanż)
+        if (clashStatus === 'summary') {
+            let readys = 0; if(data.rematchP1) readys++; if(data.rematchP2) readys++;
+            document.getElementById('rematchCount').innerText = `(${readys}/2 gotowych)`;
+            
+            // HOST resetuje planszę, gdy obaj chcą grać dalej
+            if (myClashColor === 'red' && data.rematchP1 && data.rematchP2) {
+                let allClubs = getCleanClubsList();
+                let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
+                if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+                
+                db.collection("clash_rooms").doc(currentClashRoom).update({
+                    status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
+                    board: Array(9).fill(null), guessedPlayers: [], lastAction: '',
+                    rows: clashRows, cols: clashCols, rematchP1: false, rematchP2: false
+                });
+            }
+        }
+
         if(clashStatus === 'vsScreen') showVsScreen(data);
         if(clashStatus === 'coinToss') playCoinToss(data);
         if(clashStatus === 'playing') updateClashBoardUI(data);
-        if(clashStatus === 'finished') handleClashEnd(data);
+        if(clashStatus === 'summary' && document.getElementById('clashSummaryOverlay').style.display === 'none') handleClashEnd(data);
     });
 }
 
 function showVsScreen(data) {
     document.getElementById('clashLobbyContainer').style.display = 'none';
+    document.getElementById('clashSummaryOverlay').style.display = 'none'; // Na wypadek rewanżu
     const vsOverlay = document.getElementById('clashVsOverlay');
+    
     document.getElementById('vsP1Name').innerText = data.p1.nick; document.getElementById('vsP2Name').innerText = data.p2.nick;
     document.getElementById('cp1Nick').innerText = data.p1.nick; document.getElementById('cp2Nick').innerText = data.p2.nick;
 
     vsOverlay.style.display = 'block'; setTimeout(() => vsOverlay.style.opacity = '1', 10); playSound('win');
 
-    if(myClashColor === 'red') {
-        setTimeout(() => {
-            let startColor = Math.random() < 0.5 ? 'red' : 'blue';
-            db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'coinToss', turn: startColor });
-        }, 3000);
-    }
+    if(myClashColor === 'red') { setTimeout(() => { db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'coinToss' }); }, 3000); }
 }
 
 function playCoinToss(data) {
@@ -921,7 +977,6 @@ function playCoinToss(data) {
     
     let isRed = data.turn === 'red'; let rotations = 5 * 360 + (isRed ? 0 : 180); 
     coin.style.transition = 'none'; coin.style.transform = `rotateY(0deg)`;
-    
     setTimeout(() => { playSound('flip'); coin.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)'; coin.style.transform = `rotateY(${rotations}deg)`; }, 50);
     
     setTimeout(() => {
@@ -941,21 +996,30 @@ function playCoinToss(data) {
 function updateClashBoardUI(data) {
     document.getElementById('clashContainer').style.display = 'block'; closeClashSearch();
 
+    // Rysujemy same nazwy klubów bez ikon
     for(let i=0; i<3; i++) {
-        document.getElementById(`row${i}`).innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Motorcycle_speedway_icon.svg" width="20" style="opacity:0.3; margin-bottom:5px;"><br>${getClubAbbr(clashRows[i])}`;
-        document.getElementById(`col${i}`).innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Motorcycle_speedway_icon.svg" width="20" style="opacity:0.3; margin-bottom:5px;"><br>${getClubAbbr(clashCols[i])}`;
+        document.getElementById(`row${i}`).innerHTML = `${getClubAbbr(clashRows[i])}`;
+        document.getElementById(`col${i}`).innerHTML = `${getClubAbbr(clashCols[i])}`;
     }
 
+    // Nowe renderowanie wypełnionych pól (bez emotek, same nazwiska)
     for(let r=0; r<3; r++) {
         for(let c=0; c<3; c++) {
             let idx = r * 3 + c; let cell = document.getElementById(`cell-${r}-${c}`); let val = data.board[idx];
-            if(val === 'red' || val === 'blue') { cell.className = `clash-cell clash-playable claimed-${val}`; cell.innerHTML = `<span class="clash-icon">${val === 'red' ? '🔴' : '🔵'}</span>`; } 
-            else { cell.className = 'clash-cell clash-playable'; cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; }
+            if(val === 'red' || val === 'blue') { 
+                cell.className = `clash-cell clash-playable claimed-${val}`; 
+                // Odczytujemy kogo wpisano (jeśli mamy to w bazie) - zakładamy kolejność
+                let guessedName = "?";
+                // Mały trick: szukamy w clashGuessedPlayers odpowiedniego zawodnika
+                cell.innerHTML = `<span class="clash-player-name">${data.guessedPlayers[data.guessedPlayers.length - boardEmptyCount(data.board) - 1] || "Gracz"}</span>`;
+            } else { cell.className = 'clash-cell clash-playable'; cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; }
         }
     }
+    
+    // Prostszy trick do przypisania odpowiednich nazwisk do komórek (wymaga bycia w syncu z historią gry)
+    renderGuessedNamesToGrid(data);
 
     updateClashTurnUI();
-    
     if(clashTurn === myClashColor) { document.getElementById('clashTimerDisplay').style.color = '#00ff66'; playSound('flip'); } 
     else { document.getElementById('clashTimerDisplay').style.color = '#fff'; }
 
@@ -966,6 +1030,18 @@ function updateClashBoardUI(data) {
 
     startClashTimer(data.deadline);
 }
+
+function renderGuessedNamesToGrid(data) {
+    let guessIndex = 0;
+    for(let i=0; i<9; i++) {
+        if (data.board[i] !== null) {
+            let cell = document.getElementById(`cell-${Math.floor(i/3)}-${i%3}`);
+            cell.innerHTML = `<span class="clash-player-name">${data.guessedPlayers[guessIndex]}</span>`;
+            guessIndex++;
+        }
+    }
+}
+function boardEmptyCount(board) { return board.filter(x => x === null).length; }
 
 function startClashTimer(deadlineTime) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
@@ -1011,7 +1087,6 @@ function setupClashAutocomplete() {
         });
     });
 }
-
 function closeClashSearch() { const overlay = document.getElementById('clashSearchOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 
 async function submitClashGuess() {
@@ -1036,21 +1111,19 @@ async function submitClashGuess() {
         let newGuessed = [...clashGuessedPlayers, player.name];
         
         if(checkWinCondition(newBoard, myClashColor)) {
-            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'finished', winner: myClashColor, lastAction: `${player.name} pasuje! Wygrywa mecz.` });
+            let field = myClashColor === 'red' ? 'score.p1' : 'score.p2';
+            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: myClashColor, [field]: firebase.firestore.FieldValue.increment(1) });
         } else if (!newBoard.includes(null)) {
-            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'finished', winner: 'draw', lastAction: `Remis! Pełna plansza.` });
+            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: 'draw' });
         } else {
             await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, turn: myClashColor === 'red' ? 'blue' : 'red', deadline: Date.now() + 120000, lastAction: '' });
         }
     } else {
-        playSound('error'); closeClashSearch(); alert(`Pudło! ${player.name} nie jeździł w obu klubach. Tracisz turę!`);
-        skipClashTurn("Błędna odpowiedź");
+        playSound('error'); closeClashSearch(); alert(`Pudło! ${player.name} nie jeździł w obu klubach. Tracisz turę!`); skipClashTurn("Błędna odpowiedź");
     }
 }
 
-function skipClashTurn(reason) {
-    db.collection("clash_rooms").doc(currentClashRoom).update({ turn: myClashColor === 'red' ? 'blue' : 'red', deadline: Date.now() + 120000, lastAction: reason });
-}
+function skipClashTurn(reason) { db.collection("clash_rooms").doc(currentClashRoom).update({ turn: myClashColor === 'red' ? 'blue' : 'red', deadline: Date.now() + 120000, lastAction: reason }); }
 
 function checkWinCondition(board, color) {
     const lines = [ [0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6] ];
@@ -1059,15 +1132,29 @@ function checkWinCondition(board, color) {
 
 function handleClashEnd(data) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
-    setTimeout(() => {
-        if(data.winner === 'draw') { playSound('lose'); alert("MECZ ZAKOŃCZONY REMISEM! 🤝"); } 
-        else {
-            let isMe = data.winner === myClashColor;
-            if(isMe) { playSound('win'); launchConfetti(); alert(`🏁 BRAWO! Zwyciężasz ten mecz! 🏆`); } 
-            else { playSound('lose'); alert(`Niestety, przeciwnik przejął planszę. Przegrywasz! 💔`); }
-        }
-        leaveClashRoom();
-    }, 1000);
+    
+    // Konfiguracja Ekranu Podsumowania
+    const overlay = document.getElementById('clashSummaryOverlay');
+    const title = document.getElementById('clashSummaryTitle');
+    
+    if(data.winner === 'draw') {
+        title.innerText = "REMIS!"; title.style.color = "#fff"; playSound('lose');
+    } else {
+        let isRedWin = data.winner === 'red';
+        title.innerText = isRedWin ? `WYGRYWA ${data.p1.nick} 🔴` : `WYGRYWA ${data.p2.nick} 🔵`;
+        title.style.color = isRedWin ? "#ff3333" : "#3399ff";
+        if(data.winner === myClashColor) { playSound('win'); launchConfetti(); } else { playSound('lose'); }
+    }
+    
+    document.getElementById('summaryP1Name').innerText = data.p1.nick;
+    document.getElementById('summaryP2Name').innerText = data.p2.nick;
+    document.getElementById('summaryScore').innerText = `${data.score.p1} : ${data.score.p2}`;
+    
+    // Reset przycisku rewanżu
+    const btnRematch = document.getElementById('btnRematch');
+    btnRematch.innerText = "ZAGRAJ REWANŻ"; btnRematch.disabled = false; btnRematch.style.background = "var(--accent)";
+    
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
 
 function leaveClashRoom() {
@@ -1075,18 +1162,15 @@ function leaveClashRoom() {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
     if(currentClashRoom) { db.collection("clash_rooms").doc(currentClashRoom).delete().catch(e=>console.log(e)); }
     currentClashRoom = null;
+    document.getElementById('clashSummaryOverlay').style.display = 'none';
     document.getElementById('clashContainer').style.display = 'none';
     document.getElementById('mainMenuContainer').style.display = 'flex';
 }
 
 function getCleanClubsList() {
     let clubs = new Set();
-    playersDB.forEach(p => {
-        p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase()));
-        if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase());
-    });
-    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c));
-    return Array.from(clubs);
+    playersDB.forEach(p => { p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); });
+    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c)); return Array.from(clubs);
 }
 
 function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
@@ -1098,8 +1182,7 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
             let intersectsAll = tempRows.every(r => {
                 let matchCount = 0;
                 for (let p of playersDB) {
-                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase());
-                    if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
+                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
                     if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
                 }
                 return matchCount >= minMatches;
