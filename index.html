@@ -12,6 +12,10 @@
 </head>
 <body>
 
+    <!-- ============================================== -->
+    <!-- ====== NAKŁADKI (OVERLAYS) / MODALE ====== -->
+    <!-- ============================================== -->
+
     <div id="winOverlay" class="win-overlay" style="display: none;">
         <canvas id="confettiCanvas"></canvas>
         <div class="win-message">
@@ -27,6 +31,7 @@
         </div>
     </div>
 
+    <!-- POBIERANIE NICKU PRZED GRĄ -->
     <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
         <div class="stats-modal" style="max-width: 400px;">
             <h2 style="margin-bottom: 10px; color: var(--accent);" data-i18n="account">TWÓJ PROFIL</h2>
@@ -43,10 +48,12 @@
         </div>
     </div>
 
+    <!-- CENTRUM DOWODZENIA: PROFIL GRACZA -->
     <div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 400px;">
             <h2 style="color: var(--accent); margin-bottom: 20px;" data-i18n="account">TWÓJ PROFIL</h2>
             
+            <!-- KONTO GOOGLE -->
             <div class="setting-block" style="margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; width: 100%;">
                 <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google" style="width: 100%;" data-i18n="btnLoginGoogle">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
@@ -54,6 +61,7 @@
                 <div id="userInfoDisplayProfile" style="display:none; font-size: 12px; color: var(--green-neon); margin-top: 10px; font-weight: 700;"></div>
             </div>
 
+            <!-- ZMIANA NICKU -->
             <div class="setting-block" style="margin-bottom: 25px; width: 100%;">
                 <label style="color: var(--text-dim); font-size: 11px; margin-bottom: 5px; text-transform: uppercase; font-weight: 700;">TWÓJ OBECNY NICK:</label>
                 <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
@@ -62,6 +70,7 @@
                 </div>
             </div>
 
+            <!-- STATYSTYKI -->
             <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-dim);" data-i18n="stats">STATYSTYKI</h3>
             <div class="stats-grid">
                 <div class="stat-box"><span id="profileStatPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
@@ -74,6 +83,7 @@
         </div>
     </div>
 
+    <!-- RANKING MODAL -->
     <div id="rankingOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 500px; padding: 30px 15px;">
             <h2 style="color: var(--accent); margin-bottom: 15px;">RANKING</h2>
@@ -104,6 +114,7 @@
         </div>
     </div>
 
+    <!-- KALENDARZ MODAL -->
     <div id="calendarOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 450px; padding: 30px;">
             <h2 data-i18n="archive">ARCHIWUM DAILY</h2>
@@ -120,6 +131,7 @@
         </div>
     </div>
 
+    <!-- USTAWIENIA MODAL -->
     <div id="settingsOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 350px;">
             <h2 data-i18n="settingsTitle" style="margin-bottom: 25px;">USTAWIENIA</h2>
@@ -151,6 +163,10 @@
         </div>
     </div>
 
+
+    <!-- ============================================== -->
+    <!-- ====== MAIN MENU ====== -->
+    <!-- ============================================== -->
 
     <div id="mainMenuContainer" class="menu-container">
         <div class="top-right-buttons">
@@ -187,6 +203,7 @@
                 <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
             </button>
             
+            <!-- PRZYCISK NOWEGO TRYBU CLASH -->
             <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #3399ff); color: white; border-radius: 18px;">
                 <span class="btn-icon" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">⚔️</span>
                 <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
@@ -195,19 +212,46 @@
     </div>
 
 
-    <div id="clashMenuContainer" class="menu-container" style="display: none; z-index: 50;">
+    <!-- ============================================== -->
+    <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
+    <!-- ============================================== -->
+    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
         <div class="top-right-buttons">
             <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
         </div>
 
         <h1 class="game-title" style="font-size: 32px;">⚔️ Speedway Clash</h1>
+        <h2 class="menu-subtitle">Wybierz tryb gry</h2>
+        
+        <div class="menu-modes" style="margin-top: 20px;">
+            <button class="menu-btn soon" disabled style="background: rgba(255,255,255,0.05); border: 2px dashed #666; color: #888;">
+                <span class="btn-icon">🏆</span>
+                <span class="btn-text">Graj o ELO <small style="display: block; margin-top: 5px; color: var(--accent);">(WORK IN PROGRESS...)</small></span>
+            </button>
+            
+            <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
+                <span class="btn-icon">🤝</span>
+                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj dla zabawy ze znajomym)</small></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ====== EKRAN 2: LOBBY TOWARZYSKIE ====== -->
+    <!-- ============================================== -->
+    <div id="clashLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="backToClashModeSelect()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
+
+        <h1 class="game-title" style="font-size: 32px;">🤝 Mecz Towarzyski</h1>
         
         <div id="clashLobbySelect" style="width: 100%; max-width: 400px; margin-top: 20px;">
-            <button onclick="createClashRoom()" class="menu-btn" style="background: var(--green-neon); margin-bottom: 20px;">
+            <button onclick="createClashRoom()" class="menu-btn" style="background: var(--green-neon); margin-bottom: 20px; width: 100%;">
                 <span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>
             </button>
             
-            <div style="display: flex; gap: 10px; align-items: stretch; justify-content: center;">
+            <div style="display: flex; gap: 10px; align-items: stretch; justify-content: center; width: 100%;">
                 <input type="text" id="joinRoomInput" placeholder="KOD POKOJU..." maxlength="5" style="text-transform: uppercase; font-weight: 900; text-align: center; width: 60%; font-size: 18px; padding: 12px; border-radius: 12px;">
                 <button onclick="joinClashRoom()" class="btn-reset" style="width: 40%; font-size: 14px; padding: 12px; border-radius: 12px;">DOŁĄCZ</button>
             </div>
@@ -221,6 +265,10 @@
         </div>
     </div>
 
+
+    <!-- ============================================== -->
+    <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->
+    <!-- ============================================== -->
     <div id="clashVsOverlay" class="win-overlay" style="display: none; z-index: 10005;">
         <div style="display: flex; align-items: center; justify-content: center; gap: 4vw; width: 100%; height: 100%; padding: 20px;">
             <div style="text-align: center; color: #ff3333; flex: 1;">
@@ -235,6 +283,10 @@
         </div>
     </div>
 
+
+    <!-- ============================================== -->
+    <!-- ====== GŁÓWNY INTERFEJS GRY (DAILY/ENDLESS) == -->
+    <!-- ============================================== -->
 
     <div id="gameContainer" style="display: none;">
         <header class="game-header">
@@ -299,6 +351,9 @@
     </div>
 
 
+    <!-- ============================================== -->
+    <!-- ====== INTERFEJS GRY SPEEDWAY CLASH ====== -->
+    <!-- ============================================== -->
     <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box; position: relative;">
         
         <div id="clashTimerContainer" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
@@ -313,28 +368,18 @@
 
         <div class="clash-grid" id="clashGrid">
             <div class="clash-cell clash-header-cell empty"></div>
-            <div class="clash-cell clash-header-cell" id="col0"></div>
-            <div class="clash-cell clash-header-cell" id="col1"></div>
-            <div class="clash-cell clash-header-cell" id="col2"></div>
-
+            <div class="clash-cell clash-header-cell" id="col0"></div><div class="clash-cell clash-header-cell" id="col1"></div><div class="clash-cell clash-header-cell" id="col2"></div>
             <div class="clash-cell clash-header-cell" id="row0"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 0)" id="cell-0-0"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 1)" id="cell-0-1"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 2)" id="cell-0-2"></div>
-
+            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 0)" id="cell-0-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(0, 1)" id="cell-0-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(0, 2)" id="cell-0-2"></div>
             <div class="clash-cell clash-header-cell" id="row1"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 0)" id="cell-1-0"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 1)" id="cell-1-1"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 2)" id="cell-1-2"></div>
-
+            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 0)" id="cell-1-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(1, 1)" id="cell-1-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(1, 2)" id="cell-1-2"></div>
             <div class="clash-cell clash-header-cell" id="row2"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 0)" id="cell-2-0"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 0)" id="cell-2-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
         </div>
         <button onclick="leaveClashRoom()" class="btn-close" style="margin-top: 30px; width: 100%; border-color: var(--red-neon); color: var(--red-neon);">PODDAJ SIĘ / WYJDŹ</button>
     </div>
 
+    <!-- CLASH MODALE (Wyszukiwarka i Moneta) -->
     <div id="clashSearchOverlay" class="win-overlay" style="display: none; z-index: 10002;">
         <div class="stats-modal" style="overflow: visible; max-width: 450px;">
             <h3 style="color: var(--accent); margin-bottom: 5px; font-weight: 900; font-size: 20px;">PRZEJMIJ POLE</h3>
@@ -362,6 +407,10 @@
     </div>
 
 
+    <!-- ============================================== -->
+    <!-- ====== STOPKA I AKCJE PO GRZE ====== -->
+    <!-- ============================================== -->
+
     <div id="postGameActions" class="post-game-actions" style="display: none;">
         <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="btnShare">UDOSTĘPNIJ 📋</button>
         <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset" data-i18n="btnPlayEndless">GRAJ W TRYB ENDLESS</button>
@@ -376,6 +425,7 @@
         </div>
     </footer>
 
+    <!-- Biblioteki Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>

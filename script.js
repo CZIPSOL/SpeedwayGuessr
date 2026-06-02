@@ -792,21 +792,35 @@ function updateClashTurnUI() {
     if(p2El) p2El.className = clashTurn === 'blue' ? 'clash-player active' : 'clash-player';
 }
 
+// --- MENU I NAWIGACJA CLASH ---
 function startClashGame() {
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
-        document.getElementById('clashMenuContainer').style.display = 'flex';
-        document.getElementById('clashLobbySelect').style.display = 'block';
-        document.getElementById('clashLobbyWaiting').style.display = 'none';
-        document.getElementById('clashLobbyError').style.display = 'none';
+        document.getElementById('clashModeSelectContainer').style.display = 'flex';
     });
 }
 
 function exitClashMenu() {
-    document.getElementById('clashMenuContainer').style.display = 'none';
+    document.getElementById('clashModeSelectContainer').style.display = 'none';
     document.getElementById('mainMenuContainer').style.display = 'flex';
+}
+
+function openFriendlyLobby() {
+    document.getElementById('clashModeSelectContainer').style.display = 'none';
+    document.getElementById('clashLobbyContainer').style.display = 'flex';
+    document.getElementById('clashLobbySelect').style.display = 'block';
+    document.getElementById('clashLobbyWaiting').style.display = 'none';
+    document.getElementById('clashLobbyError').style.display = 'none';
+}
+
+function backToClashModeSelect() {
     if(clashUnsubscribe) clashUnsubscribe();
-    currentClashRoom = null;
+    if(currentClashRoom) {
+        db.collection("clash_rooms").doc(currentClashRoom).delete().catch(e=>console.log(e));
+        currentClashRoom = null;
+    }
+    document.getElementById('clashLobbyContainer').style.display = 'none';
+    document.getElementById('clashModeSelectContainer').style.display = 'flex';
 }
 
 function generateRoomCode() {
@@ -815,6 +829,7 @@ function generateRoomCode() {
     return code;
 }
 
+// --- TWORZENIE I DOŁĄCZANIE (LOBBY) ---
 async function createClashRoom() {
     document.getElementById('clashLobbyError').style.display = 'none';
     const btn = document.querySelector('#clashLobbySelect .menu-btn');
@@ -861,11 +876,12 @@ async function joinClashRoom() {
 
         await roomRef.update({ p2: { id: playerId, nick: playerNickname, color: 'blue' }, status: 'vsScreen' });
         myClashColor = 'blue'; currentClashRoom = input;
-        document.getElementById('clashMenuContainer').style.display = 'none';
+        document.getElementById('clashLobbyContainer').style.display = 'none';
         listenToClashRoom();
     } catch(e) { console.error(e); errorEl.innerText = "Wystąpił błąd!"; errorEl.style.display = 'block'; }
 }
 
+// --- SILNIK SIECIOWY GRY ---
 function listenToClashRoom() {
     if(!currentClashRoom) return;
     clashUnsubscribe = db.collection("clash_rooms").doc(currentClashRoom).onSnapshot(doc => {
@@ -882,7 +898,7 @@ function listenToClashRoom() {
 }
 
 function showVsScreen(data) {
-    if(document.getElementById('clashMenuContainer').style.display !== 'none') { document.getElementById('clashMenuContainer').style.display = 'none'; }
+    document.getElementById('clashLobbyContainer').style.display = 'none';
     const vsOverlay = document.getElementById('clashVsOverlay');
     document.getElementById('vsP1Name').innerText = data.p1.nick; document.getElementById('vsP2Name').innerText = data.p2.nick;
     document.getElementById('cp1Nick').innerText = data.p1.nick; document.getElementById('cp2Nick').innerText = data.p2.nick;
@@ -1061,6 +1077,16 @@ function leaveClashRoom() {
     currentClashRoom = null;
     document.getElementById('clashContainer').style.display = 'none';
     document.getElementById('mainMenuContainer').style.display = 'flex';
+}
+
+function getCleanClubsList() {
+    let clubs = new Set();
+    playersDB.forEach(p => {
+        p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase()));
+        if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase());
+    });
+    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c));
+    return Array.from(clubs);
 }
 
 function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
