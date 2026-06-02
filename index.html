@@ -27,6 +27,7 @@
         </div>
     </div>
 
+    <!-- POBIERANIE NICKU PRZED GRĄ (DLA NOWYCH GRACZY) -->
     <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
         <div class="stats-modal" style="max-width: 400px;">
             <h2 style="margin-bottom: 10px; color: var(--accent);" data-i18n="account">TWÓJ PROFIL</h2>
@@ -38,24 +39,47 @@
             
             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px;" data-i18n="orGuest">LUB PODAJ NICK GOŚCIA</div>
             
-            <input type="text" id="nickInput" data-i18n="guestPlaceholder" placeholder="Wpisz nick (max 12 znaków)" maxlength="12" style="margin-bottom: 15px; text-align: center; text-transform: uppercase; font-weight: 900;">
+            <input type="text" id="nickInput" data-i18n="guestPlaceholder" placeholder="Wpisz nick..." maxlength="12" style="margin-bottom: 15px; text-align: center; text-transform: uppercase; font-weight: 900;">
             <button onclick="saveNick()" class="btn-reset" style="width: 100%;" data-i18n="btnSavePlay">ZAPISZ I GRAJ</button>
         </div>
     </div>
 
-    <div id="statsOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal">
-            <h2 data-i18n="stats">STATYSTYKI</h2>
-            <div class="stats-grid">
-                <div class="stat-box"><span id="statPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
-                <div class="stat-box"><span id="statWon" class="stat-num">0</span><span class="stat-label" data-i18n="statWon">Wygrane</span></div>
-                <div class="stat-box"><span id="statStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statStreak">Aktualna Seria</span></div>
-                <div class="stat-box"><span id="statMaxStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza Seria</span></div>
+    <!-- NOWE OKNO PROFILU (Konto, Nick, Statystyki) -->
+    <div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
+        <div class="stats-modal" style="max-width: 400px;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;" data-i18n="account">TWÓJ PROFIL</h2>
+            
+            <!-- KONTO GOOGLE -->
+            <div class="setting-block" style="margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; width: 100%;">
+                <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google" style="width: 100%;" data-i18n="btnLoginGoogle">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
+                </button>
+                <div id="userInfoDisplayProfile" style="display:none; font-size: 12px; color: var(--green-neon); margin-top: 10px; font-weight: 700;"></div>
             </div>
-            <button onclick="closeStats()" class="btn-close" style="margin-top: 20px;" data-i18n="btnClose">ZAMKNIJ</button>
+
+            <!-- ZMIANA NICKU -->
+            <div class="setting-block" style="margin-bottom: 25px; width: 100%;">
+                <label style="color: var(--text-dim); font-size: 11px; margin-bottom: 5px; text-transform: uppercase; font-weight: 700;">TWÓJ OBECNY NICK:</label>
+                <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
+                    <input type="text" id="changeNickInput" placeholder="Nowy nick..." maxlength="12" style="padding: 12px; font-size: 14px; text-align: center; font-weight: 700; width: 60%; text-transform: uppercase;">
+                    <button onclick="changeNickname()" class="btn-reset" id="btnChangeNick" style="padding: 12px; font-size: 12px; width: 40%;">ZMIEŃ</button>
+                </div>
+            </div>
+
+            <!-- STATYSTYKI -->
+            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-dim);" data-i18n="stats">STATYSTYKI</h3>
+            <div class="stats-grid">
+                <div class="stat-box"><span id="profileStatPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
+                <div class="stat-box"><span id="profileStatWon" class="stat-num">0</span><span class="stat-label" data-i18n="statWon">Wygrane</span></div>
+                <div class="stat-box"><span id="profileStatStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statStreak">Akt. Seria</span></div>
+                <div class="stat-box"><span id="profileStatMax" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza</span></div>
+            </div>
+
+            <button onclick="closeProfile()" class="btn-close" style="margin-top: 20px; width: 100%;" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
+    <!-- RANKING MODAL -->
     <div id="rankingOverlay" class="win-overlay" style="display: none;">
         <div class="stats-modal" style="max-width: 500px; padding: 30px 15px;">
             <h2 style="color: var(--accent); margin-bottom: 15px;">RANKING</h2>
@@ -86,6 +110,7 @@
         </div>
     </div>
 
+    <!-- KALENDARZ MODAL -->
     <div id="calendarOverlay" class="win-overlay" style="display: none;">
         <div class="stats-modal" style="max-width: 450px; padding: 30px;">
             <h2 data-i18n="archive">ARCHIWUM DAILY</h2>
@@ -102,18 +127,11 @@
         </div>
     </div>
 
+    <!-- USTAWIENIA MODAL -->
     <div id="settingsOverlay" class="win-overlay" style="display: none;">
         <div class="stats-modal" style="max-width: 350px;">
             <h2 data-i18n="settingsTitle" style="margin-bottom: 25px;">USTAWIENIA</h2>
             
-            <div class="setting-block" style="margin-bottom: 20px;">
-                <label data-i18n="account">Konto:</label>
-                <button id="btnSettingsLogin" onclick="signInWithGoogle()" class="btn-google" style="margin-top: 5px; width: 100%;" data-i18n="btnLoginGoogle">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
-                </button>
-                <div id="userInfoDisplay" style="display:none; font-size: 12px; color: var(--green-neon); margin-top: 8px; font-weight: 700;"></div>
-            </div>
-
             <div class="setting-block" style="margin-bottom: 20px;">
                 <label data-i18n="sound">Dźwięk:</label>
                 <button id="btnSoundToggle" onclick="toggleSound()" class="theme-btn light" style="margin-top: 5px; font-size: 14px; padding: 10px 20px;">Włączony 🔊</button>
@@ -141,9 +159,12 @@
         </div>
     </div>
 
+    <!-- MAIN MENU -->
     <div id="mainMenuContainer" class="menu-container">
+        <!-- PRZYCISKI W MENU (Ranking, Profil, Ustawienia) -->
         <div class="top-right-buttons">
             <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+            <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
             <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
         </div>
 
@@ -181,11 +202,13 @@
         </div>
     </div>
 
+    <!-- GAME UI -->
     <div id="gameContainer" style="display: none;">
         <header class="game-header">
+            <!-- PRZYCISKI W GRZE -->
             <div class="top-right-buttons">
                 <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
-                <button onclick="showStats()" class="icon-btn" title="Statystyki">📊</button>
+                <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
                 <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
             </div>
             
