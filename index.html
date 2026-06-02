@@ -217,6 +217,7 @@
     <!-- ============================================== -->
     <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
         <div class="top-right-buttons">
+            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
             <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
         </div>
 
@@ -241,6 +242,7 @@
     <!-- ============================================== -->
     <div id="clashLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
         <div class="top-right-buttons">
+            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
             <button onclick="backToClashModeSelect()" class="icon-btn" title="Powrót">🔙</button>
         </div>
 
@@ -436,6 +438,20 @@
         </div>
     </div>
 
+    <!-- CLASH: Jak grać (Zasady) -->
+    <div id="clashInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal" style="max-width: 450px; text-align: left;">
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;">Zasady gry: Speedway Clash ⚔️</h3>
+            <ul style="font-size: 13px; color: var(--text-main); padding-left: 20px; line-height: 1.6; margin-bottom: 20px; font-weight: 600;">
+                <li style="margin-bottom: 10px;">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
+                <li style="margin-bottom: 10px;">Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował <b>oba krzyżujące się kluby</b>.</li>
+                <li style="margin-bottom: 10px;">Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).</li>
+                <li style="margin-bottom: 10px;">Masz <b>2 minuty</b> na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.</li>
+                <li>Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
+            </ul>
+            <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;">ZROZUMIANO</button>
+        </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- ====== STOPKA I AKCJE PO GRZE ====== -->

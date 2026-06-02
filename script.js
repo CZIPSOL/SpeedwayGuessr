@@ -1193,3 +1193,16 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
     }
     return false;
 }
+
+// --- ZASADY GRY CLASH ---
+function showClashInfo() {
+    const overlay = document.getElementById('clashInfoOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeClashInfo() {
+    const overlay = document.getElementById('clashInfoOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
