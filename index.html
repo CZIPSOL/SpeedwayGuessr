@@ -195,9 +195,9 @@
                 <span class="btn-icon">🔄</span>
                 <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
             </button>
-            <button class="menu-btn soon" disabled>
-                <span class="btn-icon">❌</span>
-                <span class="btn-text" data-i18n="btnTic">Kółko i Krzyżyk <small>(SOON)</small></span>
+            <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #3399ff); color: white;">
+                <span class="btn-icon" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">⚔️</span>
+                <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
             </button>
         </div>
     </div>
@@ -278,6 +278,62 @@
         <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="btnShare">UDOSTĘPNIJ 📋</button>
         <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset" data-i18n="btnPlayEndless">GRAJ W TRYB ENDLESS</button>
         <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
+    </div>
+
+    <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box;">
+        <div class="clash-header">
+            <div id="clashPlayer1" class="clash-player">🔴 Kask Czerwony</div>
+            <div id="clashPlayer2" class="clash-player">🔵 Kask Niebieski</div>
+        </div>
+
+        <div class="clash-grid" id="clashGrid">
+            <div class="clash-cell clash-header-cell empty"></div>
+            <div class="clash-cell clash-header-cell" id="col0"></div>
+            <div class="clash-cell clash-header-cell" id="col1"></div>
+            <div class="clash-cell clash-header-cell" id="col2"></div>
+
+            <div class="clash-cell clash-header-cell" id="row0"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 0)" id="cell-0-0"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 1)" id="cell-0-1"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 2)" id="cell-0-2"></div>
+
+            <div class="clash-cell clash-header-cell" id="row1"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 0)" id="cell-1-0"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 1)" id="cell-1-1"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 2)" id="cell-1-2"></div>
+
+            <div class="clash-cell clash-header-cell" id="row2"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 0)" id="cell-2-0"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
+        </div>
+        <button onclick="exitClash()" class="btn-close" style="margin-top: 30px; width: 100%;">ZAKOŃCZ GRĘ</button>
+    </div>
+
+    <div id="clashSearchOverlay" class="win-overlay" style="display: none; z-index: 10002;">
+        <div class="stats-modal" style="overflow: visible; max-width: 450px;">
+            <h3 style="color: var(--accent); margin-bottom: 5px; font-weight: 900; font-size: 20px;">PRZEJMIJ POLE</h3>
+            <p id="clashSearchDesc" style="font-size: 14px; font-weight: 900; color: #fff; margin-bottom: 20px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px;"></p>
+            <div class="input-wrapper" style="position: relative;">
+                <input type="text" id="clashGuessInput" placeholder="Imię i nazwisko zawodnika..." autocomplete="off">
+            </div>
+            <div style="display:flex; gap: 10px; margin-top: 20px;">
+                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1;">POTWIERDŹ</button>
+                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1;">ANULUJ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="coinTossOverlay" class="win-overlay" style="display: none; z-index: 10003;">
+        <div class="stats-modal" style="background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center;">
+            <div class="coin-container">
+                <div class="coin" id="clashCoinInner">
+                    <div class="coin-face coin-front">🔴</div>
+                    <div class="coin-face coin-back">🔵</div>
+                </div>
+            </div>
+            <h2 id="coinTossResult" style="color: #fff; text-shadow: 0 0 15px rgba(0,0,0,1); margin-top: 40px; font-size: 28px; font-weight: 900; opacity: 0; transition: 0.5s;"></h2>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>

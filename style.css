@@ -357,7 +357,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 
 /* ========================================= */
-/* --- RWD MOBILE (Karty na telefonach) --- */
+/* --- RWD MOBILE (PANCERNY FLEXBOX) --- */
 /* ========================================= */
 
 @media (max-width: 768px) {
@@ -396,19 +396,20 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         margin: 0;
     }
     
+    /* GÓRNY PASEK KLUBÓW - WYCENTROWANY I ZABEZPIECZONY */
     .team-path {
         width: 100%;
         min-width: 0; 
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: center; /* Centruje podpis "Drużyny:" */
         gap: 5px;
         margin: 0;
     }
     
     .path-boxes {
-        width: 100%;
-        min-width: 0;
+        width: max-content; /* Służy do ścisłego wycentrowania */
+        max-width: 100%;
         overflow-x: auto;
         display: flex;
         flex-wrap: nowrap;
@@ -425,11 +426,13 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .table-headers { display: none; }
     .table-wrapper { width: 100%; max-width: 100%; }
 
-    /* WNĘTRZE KARTY ZGADYWANIA - TWARDY CSS GRID! */
+    /* WNĘTRZE KARTY ZGADYWANIA - KOMPAKTOWY FLEXBOX */
     .guess-row {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 10px 5px; 
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center; /* Trzyma kafelki razem pośrodku */
+        align-items: center;
+        gap: 10px 8px; /* Mały, równy odstęp */
         width: 100%;
         max-width: 100%;
         padding: 15px 10px;
@@ -442,51 +445,50 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     /* RZĄD 1: Imię */
     .col-name {
-        grid-column: 1 / -1; 
         width: 100%;
         text-align: center;
         padding: 0;
         font-size: 16px;
         font-weight: 900;
+        margin-bottom: 4px;
     }
 
     /* RZĄD 2: 5 atrybutów */
     .col-attr {
-        width: 100%; 
+        width: auto; /* Zrezygnowano z 20% by nie rozpychały się na boki */
         padding: 0;
         display: flex;
         justify-content: center;
     }
     
     .attr-box {
-        width: 100%;
-        max-width: 55px;
-        height: auto;
-        aspect-ratio: 1;
+        width: 48px; /* Twardy wymiar dla telefonu, mniejszy i bezpieczniejszy */
+        height: 48px;
         border-radius: 10px;
         padding: 2px;
     }
 
-    .val-num { font-size: 14px; }
+    .val-num { font-size: 15px; }
     .status-icon { font-size: 18px; }
 
     .tile-flag, .tile-flag-dual {
-        width: 80%;
-        height: 80%;
+        width: 85%; /* Idealne wypełnienie flagą wewnątrz pomniejszonego atrybutu */
+        height: 85%;
     }
 
-    /* RZĄD 3: Kluby z włączonym suwakiem */
+    /* RZĄD 3: Kluby z włączonym suwakiem wycentrowane! */
     .col-clubs {
-        grid-column: 1 / -1; 
         width: 100%;
         max-width: 100%;
-        min-width: 0; /* Gwarancja blokady rozszerzania */
+        min-width: 0; 
         padding: 0;
-        overflow: hidden; /* Odcina próbę rozpychania! */
+        margin-top: 8px;
+        display: flex;
+        justify-content: center; /* Trzyma rząd klubów równo pośrodku! */
     }
 
     .clubs-path-container {
-        width: 100%;
+        width: max-content; /* Kluby nie wymuszają już poszerzenia do 100% dopóki mogą */
         max-width: 100%;
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch; 
@@ -495,4 +497,43 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         padding: 5px 0;
         box-sizing: border-box;
     }
+}
+
+/* ========================================= */
+/* --- SPEEDWAY CLASH (GRID 3x3) --- */
+/* ========================================= */
+.clash-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 15px 30px; border-radius: 20px; border: 1px solid var(--border-color); margin-bottom: 30px; }
+.clash-player { font-size: 16px; font-weight: 900; opacity: 0.3; transition: 0.3s; padding: 12px 20px; border-radius: 12px; border: 2px solid transparent; text-transform: uppercase;}
+.clash-player.active { opacity: 1; transform: scale(1.1); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+.clash-player#clashPlayer1.active { border-color: #ff3333; background: rgba(255,51,51,0.2); text-shadow: 0 0 10px #ff3333; }
+.clash-player#clashPlayer2.active { border-color: #3399ff; background: rgba(51,153,255,0.2); text-shadow: 0 0 10px #3399ff; }
+
+.clash-grid { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 8px; width: 100%; margin: 0 auto; }
+.clash-cell { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; text-align: center; transition: 0.2s; overflow: hidden; padding: 5px; flex-direction: column; box-sizing: border-box;}
+.clash-header-cell { background: rgba(0,0,0,0.4); border-color: transparent; color: var(--accent); font-size: 11px; text-transform: uppercase; padding: 5px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+.clash-header-cell.empty { background: transparent; border: none; }
+.clash-playable { cursor: pointer; position: relative; }
+.clash-playable:hover { transform: scale(1.05); border-color: var(--accent); box-shadow: 0 0 15px rgba(241,196,15,0.3); z-index: 5; }
+
+.clash-playable.claimed-red { background: linear-gradient(135deg, rgba(255,51,51,0.3) 0%, rgba(200,0,0,0.5) 100%); border-color: #ff3333; cursor: default; }
+.clash-playable.claimed-blue { background: linear-gradient(135deg, rgba(51,153,255,0.3) 0%, rgba(0,100,255,0.5) 100%); border-color: #3399ff; cursor: default; }
+.clash-playable.claimed-red:hover, .clash-playable.claimed-blue:hover { transform: none; box-shadow: none; z-index: 1; }
+
+.clash-player-name { font-size: 11px; font-weight: 900; color: #fff; margin-top: 8px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); word-break: break-word; }
+.clash-icon { font-size: 35px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); }
+
+/* Moneta 3D */
+.coin-container { width: 180px; height: 180px; margin: 0 auto; perspective: 1000px; }
+.coin { width: 100%; height: 100%; position: relative; transition: transform 3s cubic-bezier(0.1, 0.8, 0.2, 1); transform-style: preserve-3d; }
+.coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 90px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); border: 8px solid rgba(255,255,255,0.2); }
+.coin-front { background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000); transform: rotateY(0deg); }
+.coin-back { background: radial-gradient(circle at 30% 30%, #66b2ff, #0066cc); transform: rotateY(180deg); }
+
+@media (max-width: 768px) {
+    .clash-grid { grid-template-columns: 60px 1fr 1fr 1fr; gap: 5px; }
+    .clash-header-cell { font-size: 9px; }
+    .clash-icon { font-size: 25px; }
+    .clash-player-name { font-size: 9px; }
+    .clash-header { padding: 10px; flex-direction: column; gap: 10px; }
+    .clash-player { width: 100%; text-align: center; }
 }
