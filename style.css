@@ -72,6 +72,9 @@ body {
 .shake-error { animation: shake 0.4s; }
 .shake-error input { border-color: var(--red-neon) !important; background: rgba(255, 51, 51, 0.1); }
 
+@keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+.loading-pulse { animation: pulse 1.5s infinite ease-in-out; color: var(--accent); }
+
 /* --- KASKI (Życia z PNG) --- */
 .lives-container { display: flex; gap: 6px; justify-content: center; margin-top: 15px; flex-wrap: wrap; }
 .helmet-icon { width: 28px; height: auto; transition: all 0.3s ease; filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); -webkit-filter: drop-shadow(0 0 4px rgba(255, 51, 51, 0.8)); }
@@ -97,7 +100,7 @@ body {
 .menu-subtitle { font-weight: 600; color: var(--text-dim); margin-top: -10px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; font-size: 16px; }
 .menu-modes { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 400px; }
 .menu-btn { display: flex; align-items: center; justify-content: center; gap: 15px; padding: 18px 25px; background: var(--accent); color: #000; border: none; border-radius: 18px; cursor: pointer; font-weight: 900; text-transform: uppercase; font-size: 16px; transition: 0.3s transform ease, 0.3s box-shadow ease; width: 100%; }
-.menu-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(241, 196, 15, 0.3); }
+.menu-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(241, 196, 15, 0.3); }
 .menu-btn.soon { background: #555; color: #aaa; cursor: not-allowed; opacity: 0.6; }
 .menu-btn.soon:hover { transform: none; box-shadow: none; }
 .menu-btn small { text-transform: none; font-weight: 400; font-size: 12px; margin-left: 5px; }
@@ -355,150 +358,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     transform: scale(1.02);
 }
 
-
-/* ========================================= */
-/* --- RWD MOBILE (PANCERNY FLEXBOX) --- */
-/* ========================================= */
-
-@media (max-width: 768px) {
-    body { padding: 15px 5px; overflow-x: hidden; }
-    .menu-container { padding: 30px 15px; width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
-    
-    .game-header { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
-    .top-right-buttons { right: 10px; top: 10px; }
-    
-    .game-title { font-size: 28px; }
-    .game-title-small { font-size: 20px; margin-top: 10px; }
-    
-    .search-box { flex-direction: column; width: 100%; }
-    .search-box button { width: 100%; } 
-    
-    .main-card { padding: 15px; border-radius: 20px; width: 100%; box-sizing: border-box; overflow: hidden; }
-    
-    .header-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 20px;
-        width: 100%;
-    }
-    
-    .photo-container {
-        width: 100px;
-        height: 120px;
-        margin: 0 auto;
-    }
-    
-    #mysteryName {
-        font-size: 22px;
-        text-align: center;
-        margin: 0;
-    }
-    
-    /* GÓRNY PASEK KLUBÓW - WYCENTROWANY I ZABEZPIECZONY */
-    .team-path {
-        width: 100%;
-        min-width: 0; 
-        display: flex;
-        flex-direction: column;
-        align-items: center; /* Centruje podpis "Drużyny:" */
-        gap: 5px;
-        margin: 0;
-    }
-    
-    .path-boxes {
-        width: max-content; /* Służy do ścisłego wycentrowania */
-        max-width: 100%;
-        overflow-x: auto;
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: flex-start;
-        padding-bottom: 5px;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .post-game-actions { flex-direction: column; bottom: 20px; width: 90%; }
-    .post-game-actions button { width: 100%; }
-    .calendar-weekdays { font-size: 10px; }
-    .cal-day { font-size: 12px; }
-
-    .table-headers { display: none; }
-    .table-wrapper { width: 100%; max-width: 100%; }
-
-    /* WNĘTRZE KARTY ZGADYWANIA - KOMPAKTOWY FLEXBOX */
-    .guess-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center; /* Trzyma kafelki razem pośrodku */
-        align-items: center;
-        gap: 10px 8px; /* Mały, równy odstęp */
-        width: 100%;
-        max-width: 100%;
-        padding: 15px 10px;
-        box-sizing: border-box;
-        border-radius: 20px;
-        background: rgba(128, 128, 128, 0.05);
-        border: 1px solid var(--border-color);
-        margin-bottom: 12px;
-    }
-    
-    /* RZĄD 1: Imię */
-    .col-name {
-        width: 100%;
-        text-align: center;
-        padding: 0;
-        font-size: 16px;
-        font-weight: 900;
-        margin-bottom: 4px;
-    }
-
-    /* RZĄD 2: 5 atrybutów */
-    .col-attr {
-        width: auto; /* Zrezygnowano z 20% by nie rozpychały się na boki */
-        padding: 0;
-        display: flex;
-        justify-content: center;
-    }
-    
-    .attr-box {
-        width: 48px; /* Twardy wymiar dla telefonu, mniejszy i bezpieczniejszy */
-        height: 48px;
-        border-radius: 10px;
-        padding: 2px;
-    }
-
-    .val-num { font-size: 15px; }
-    .status-icon { font-size: 18px; }
-
-    .tile-flag, .tile-flag-dual {
-        width: 85%; /* Idealne wypełnienie flagą wewnątrz pomniejszonego atrybutu */
-        height: 85%;
-    }
-
-    /* RZĄD 3: Kluby z włączonym suwakiem wycentrowane! */
-    .col-clubs {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0; 
-        padding: 0;
-        margin-top: 8px;
-        display: flex;
-        justify-content: center; /* Trzyma rząd klubów równo pośrodku! */
-    }
-
-    .clubs-path-container {
-        width: max-content; /* Kluby nie wymuszają już poszerzenia do 100% dopóki mogą */
-        max-width: 100%;
-        overflow-x: auto; 
-        -webkit-overflow-scrolling: touch; 
-        display: flex;
-        flex-wrap: nowrap;
-        padding: 5px 0;
-        box-sizing: border-box;
-    }
-}
-
 /* ========================================= */
 /* --- SPEEDWAY CLASH (GRID 3x3) --- */
 /* ========================================= */
@@ -529,7 +388,58 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .coin-front { background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000); transform: rotateY(0deg); }
 .coin-back { background: radial-gradient(circle at 30% 30%, #66b2ff, #0066cc); transform: rotateY(180deg); }
 
+
+/* ========================================= */
+/* --- RWD MOBILE (PANCERNY FLEXBOX) --- */
+/* ========================================= */
+
 @media (max-width: 768px) {
+    body { padding: 15px 5px; overflow-x: hidden; }
+    .menu-container { padding: 30px 15px; width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
+    
+    .game-header { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
+    .top-right-buttons { right: 10px; top: 10px; }
+    
+    .game-title { font-size: 28px; }
+    .game-title-small { font-size: 20px; margin-top: 10px; }
+    
+    .search-box { flex-direction: column; width: 100%; }
+    .search-box button { width: 100%; } 
+    
+    .main-card { padding: 15px; border-radius: 20px; width: 100%; box-sizing: border-box; overflow: hidden; }
+    
+    .header-section { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px; width: 100%; }
+    
+    .photo-container { width: 100px; height: 120px; margin: 0 auto; }
+    
+    #mysteryName { font-size: 22px; text-align: center; margin: 0; }
+    
+    .team-path { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; margin: 0; }
+    .path-boxes { width: max-content; max-width: 100%; overflow-x: auto; display: flex; flex-wrap: nowrap; justify-content: flex-start; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+
+    .post-game-actions { flex-direction: column; bottom: 20px; width: 90%; }
+    .post-game-actions button { width: 100%; }
+    .calendar-weekdays { font-size: 10px; }
+    .cal-day { font-size: 12px; }
+
+    .table-headers { display: none; }
+    .table-wrapper { width: 100%; max-width: 100%; }
+
+    .guess-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 8px; width: 100%; max-width: 100%; padding: 15px 10px; box-sizing: border-box; border-radius: 20px; background: rgba(128, 128, 128, 0.05); border: 1px solid var(--border-color); margin-bottom: 12px; }
+    
+    .col-name { width: 100%; text-align: center; padding: 0; font-size: 16px; font-weight: 900; margin-bottom: 4px; }
+    .col-attr { width: auto; padding: 0; display: flex; justify-content: center; }
+    
+    .attr-box { width: 48px; height: 48px; border-radius: 10px; padding: 2px; }
+    .val-num { font-size: 15px; }
+    .status-icon { font-size: 18px; }
+
+    .tile-flag, .tile-flag-dual { width: 85%; height: 85%; }
+
+    .col-clubs { width: 100%; max-width: 100%; min-width: 0; padding: 0; margin-top: 8px; display: flex; justify-content: center; }
+    .clubs-path-container { width: max-content; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; display: flex; flex-wrap: nowrap; padding: 5px 0; box-sizing: border-box; }
+
+    /* Clash Mobile Responsive */
     .clash-grid { grid-template-columns: 60px 1fr 1fr 1fr; gap: 5px; }
     .clash-header-cell { font-size: 9px; }
     .clash-icon { font-size: 25px; }

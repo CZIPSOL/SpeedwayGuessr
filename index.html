@@ -27,7 +27,6 @@
         </div>
     </div>
 
-    <!-- POBIERANIE NICKU PRZED GRĄ (DLA NOWYCH GRACZY) -->
     <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
         <div class="stats-modal" style="max-width: 400px;">
             <h2 style="margin-bottom: 10px; color: var(--accent);" data-i18n="account">TWÓJ PROFIL</h2>
@@ -39,17 +38,15 @@
             
             <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px;" data-i18n="orGuest">LUB PODAJ NICK GOŚCIA</div>
             
-            <input type="text" id="nickInput" data-i18n="guestPlaceholder" placeholder="Wpisz nick..." maxlength="12" style="margin-bottom: 15px; text-align: center; text-transform: uppercase; font-weight: 900;">
+            <input type="text" id="nickInput" data-i18n="guestPlaceholder" placeholder="Wpisz nick (max 12 znaków)" maxlength="12" style="margin-bottom: 15px; text-align: center; text-transform: uppercase; font-weight: 900;">
             <button onclick="saveNick()" class="btn-reset" style="width: 100%;" data-i18n="btnSavePlay">ZAPISZ I GRAJ</button>
         </div>
     </div>
 
-    <!-- NOWE OKNO PROFILU (Konto, Nick, Statystyki) -->
     <div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 400px;">
             <h2 style="color: var(--accent); margin-bottom: 20px;" data-i18n="account">TWÓJ PROFIL</h2>
             
-            <!-- KONTO GOOGLE -->
             <div class="setting-block" style="margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; width: 100%;">
                 <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google" style="width: 100%;" data-i18n="btnLoginGoogle">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
@@ -57,7 +54,6 @@
                 <div id="userInfoDisplayProfile" style="display:none; font-size: 12px; color: var(--green-neon); margin-top: 10px; font-weight: 700;"></div>
             </div>
 
-            <!-- ZMIANA NICKU -->
             <div class="setting-block" style="margin-bottom: 25px; width: 100%;">
                 <label style="color: var(--text-dim); font-size: 11px; margin-bottom: 5px; text-transform: uppercase; font-weight: 700;">TWÓJ OBECNY NICK:</label>
                 <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
@@ -66,7 +62,6 @@
                 </div>
             </div>
 
-            <!-- STATYSTYKI -->
             <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-dim);" data-i18n="stats">STATYSTYKI</h3>
             <div class="stats-grid">
                 <div class="stat-box"><span id="profileStatPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
@@ -79,8 +74,7 @@
         </div>
     </div>
 
-    <!-- RANKING MODAL -->
-    <div id="rankingOverlay" class="win-overlay" style="display: none;">
+    <div id="rankingOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 500px; padding: 30px 15px;">
             <h2 style="color: var(--accent); margin-bottom: 15px;">RANKING</h2>
             <div id="rankingDateDisplay" style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px; font-weight: 700; text-transform: uppercase;"></div>
@@ -110,8 +104,7 @@
         </div>
     </div>
 
-    <!-- KALENDARZ MODAL -->
-    <div id="calendarOverlay" class="win-overlay" style="display: none;">
+    <div id="calendarOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 450px; padding: 30px;">
             <h2 data-i18n="archive">ARCHIWUM DAILY</h2>
             <div class="calendar-header">
@@ -127,8 +120,7 @@
         </div>
     </div>
 
-    <!-- USTAWIENIA MODAL -->
-    <div id="settingsOverlay" class="win-overlay" style="display: none;">
+    <div id="settingsOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 350px;">
             <h2 data-i18n="settingsTitle" style="margin-bottom: 25px;">USTAWIENIA</h2>
             
@@ -159,9 +151,8 @@
         </div>
     </div>
 
-    <!-- MAIN MENU -->
+
     <div id="mainMenuContainer" class="menu-container">
-        <!-- PRZYCISKI W MENU (Ranking, Profil, Ustawienia) -->
         <div class="top-right-buttons">
             <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
             <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
@@ -195,17 +186,58 @@
                 <span class="btn-icon">🔄</span>
                 <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
             </button>
-            <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #3399ff); color: white;">
+            
+            <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #3399ff); color: white; border-radius: 18px;">
                 <span class="btn-icon" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">⚔️</span>
                 <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
             </button>
         </div>
     </div>
 
-    <!-- GAME UI -->
+
+    <div id="clashMenuContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
+
+        <h1 class="game-title" style="font-size: 32px;">⚔️ Speedway Clash</h1>
+        
+        <div id="clashLobbySelect" style="width: 100%; max-width: 400px; margin-top: 20px;">
+            <button onclick="createClashRoom()" class="menu-btn" style="background: var(--green-neon); margin-bottom: 20px;">
+                <span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>
+            </button>
+            
+            <div style="display: flex; gap: 10px; align-items: stretch; justify-content: center;">
+                <input type="text" id="joinRoomInput" placeholder="KOD POKOJU..." maxlength="5" style="text-transform: uppercase; font-weight: 900; text-align: center; width: 60%; font-size: 18px; padding: 12px; border-radius: 12px;">
+                <button onclick="joinClashRoom()" class="btn-reset" style="width: 40%; font-size: 14px; padding: 12px; border-radius: 12px;">DOŁĄCZ</button>
+            </div>
+            <p id="clashLobbyError" style="color: var(--red-neon); font-size: 12px; margin-top: 10px; font-weight: bold; display: none;"></p>
+        </div>
+
+        <div id="clashLobbyWaiting" style="display: none; width: 100%; margin-top: 30px;">
+            <h3 style="color: var(--text-dim); text-transform: uppercase; font-size: 12px;">Twój kod pokoju:</h3>
+            <h1 id="myRoomCodeDisplay" style="font-size: 60px; color: var(--accent); margin: 0; letter-spacing: 5px; font-weight: 900; text-shadow: 0 0 20px rgba(241,196,15,0.4);">XXXXX</h1>
+            <p style="margin-top: 20px; font-weight: bold;" class="loading-pulse">Oczekiwanie na przeciwnika...</p>
+        </div>
+    </div>
+
+    <div id="clashVsOverlay" class="win-overlay" style="display: none; z-index: 10005;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 4vw; width: 100%; height: 100%; padding: 20px;">
+            <div style="text-align: center; color: #ff3333; flex: 1;">
+                <div style="font-size: 80px; filter: drop-shadow(0 0 20px #ff3333);">🔴</div>
+                <h2 id="vsP1Name" style="font-weight: 900; font-size: 24px; text-transform: uppercase; word-break: break-word;">Gracz 1</h2>
+            </div>
+            <h1 style="font-size: 40px; color: white; font-style: italic; opacity: 0.5;">VS</h1>
+            <div style="text-align: center; color: #3399ff; flex: 1;">
+                <div style="font-size: 80px; filter: drop-shadow(0 0 20px #3399ff);">🔵</div>
+                <h2 id="vsP2Name" style="font-weight: 900; font-size: 24px; text-transform: uppercase; word-break: break-word;">Gracz 2</h2>
+            </div>
+        </div>
+    </div>
+
+
     <div id="gameContainer" style="display: none;">
         <header class="game-header">
-            <!-- PRZYCISKI W GRZE -->
             <div class="top-right-buttons">
                 <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
                 <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
@@ -266,47 +298,17 @@
         </div>
     </div>
 
-    <footer class="game-footer">
-        <div class="footer-content">
-            <div class="copyright">
-                <p>&copy; 2026 Speedway Guessr.</p>
-            </div>
-        </div>
-    </footer>
 
-    <div id="postGameActions" class="post-game-actions" style="display: none;">
-        <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="btnShare">UDOSTĘPNIJ 📋</button>
-        <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset" data-i18n="btnPlayEndless">GRAJ W TRYB ENDLESS</button>
-        <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
-    </div>
-
-    <div id="clashMenuContainer" class="menu-container" style="display: none; z-index: 50;">
-        <div class="top-right-buttons">
-            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
-        </div>
-
-        <h1 class="game-title" style="font-size: 32px;">⚔️ Speedway Clash</h1>
-        <h2 class="menu-subtitle">Wybierz tryb gry</h2>
+    <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box; position: relative;">
         
-        <div class="menu-modes" style="margin-top: 20px;">
-            <!-- ZABLOKOWANY TRYB RANKINGOWY -->
-            <button class="menu-btn soon" disabled style="background: rgba(255,255,255,0.1); border: 2px dashed #666;">
-                <span class="btn-icon">🏆</span>
-                <span class="btn-text">Graj o ELO <small style="display: block; margin-top: 5px; color: var(--accent);">(WORK IN PROGRESS...)</small></span>
-            </button>
-            
-            <!-- AKTYWNY TRYB TOWARZYSKI -->
-            <button class="menu-btn" onclick="startFriendlyClash()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
-                <span class="btn-icon">🤝</span>
-                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj dla zabawy)</small></span>
-            </button>
+        <div id="clashTimerContainer" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 900;">Czas na odpowiedź:</div>
+            <div id="clashTimerDisplay" style="font-size: 32px; font-weight: 900; color: #fff; transition: 0.3s;">02:00</div>
         </div>
-    </div>
 
-    <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box;">
         <div class="clash-header">
-            <div id="clashPlayer1" class="clash-player">🔴 Kask Czerwony</div>
-            <div id="clashPlayer2" class="clash-player">🔵 Kask Niebieski</div>
+            <div id="clashPlayer1" class="clash-player">🔴 <span id="cp1Nick">Gracz 1</span></div>
+            <div id="clashPlayer2" class="clash-player">🔵 <span id="cp2Nick">Gracz 2</span></div>
         </div>
 
         <div class="clash-grid" id="clashGrid">
@@ -330,7 +332,7 @@
             <div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div>
             <div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
         </div>
-        <button onclick="exitClash()" class="btn-close" style="margin-top: 30px; width: 100%;">ZAKOŃCZ GRĘ</button>
+        <button onclick="leaveClashRoom()" class="btn-close" style="margin-top: 30px; width: 100%; border-color: var(--red-neon); color: var(--red-neon);">PODDAJ SIĘ / WYJDŹ</button>
     </div>
 
     <div id="clashSearchOverlay" class="win-overlay" style="display: none; z-index: 10002;">
@@ -341,8 +343,8 @@
                 <input type="text" id="clashGuessInput" placeholder="Imię i nazwisko zawodnika..." autocomplete="off">
             </div>
             <div style="display:flex; gap: 10px; margin-top: 20px;">
-                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1;">POTWIERDŹ</button>
-                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1;">ANULUJ</button>
+                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1; padding: 12px; font-size: 14px;">POTWIERDŹ</button>
+                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;">ANULUJ</button>
             </div>
         </div>
     </div>
@@ -358,6 +360,21 @@
             <h2 id="coinTossResult" style="color: #fff; text-shadow: 0 0 15px rgba(0,0,0,1); margin-top: 40px; font-size: 28px; font-weight: 900; opacity: 0; transition: 0.5s;"></h2>
         </div>
     </div>
+
+
+    <div id="postGameActions" class="post-game-actions" style="display: none;">
+        <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="btnShare">UDOSTĘPNIJ 📋</button>
+        <button id="btnPlayAgainPost" onclick="resetBoardAndPlay()" class="btn-reset" data-i18n="btnPlayEndless">GRAJ W TRYB ENDLESS</button>
+        <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
+    </div>
+
+    <footer class="game-footer">
+        <div class="footer-content">
+            <div class="copyright">
+                <p>&copy; 2026 Speedway Guessr.</p>
+            </div>
+        </div>
+    </footer>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
