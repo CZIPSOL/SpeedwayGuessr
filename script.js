@@ -137,22 +137,65 @@ function closeProfile() {
 // ====== BEZPIECZEŃSTWO I NICKI (ANTI-CHEAT) ===
 // ==============================================
 
+// Normalization helper: remove diacritics, replace leet, strip non-alphanumerics
+function normalizeForCheck(str) {
+    if (!str) return '';
+    let s = String(str).toLowerCase();
+    // Unicode normalize and remove diacritics
+    try { s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+    // Common leet and symbol replacements
+    s = s.replace(/[@4]/g, 'a').replace(/3/g, 'e').replace(/[1!|]/g, 'i').replace(/0/g, 'o').replace(/[5$]/g, 's').replace(/7/g, 't').replace(/8/g, 'b');
+    // Remove any non-alphanumeric characters (keep letters and digits)
+    s = s.replace(/[^a-z0-9]/g, '');
+    return s;
+}
+
 const badWordsList = [
-    "kurwa", "kurwy", "kurwą", "kurew", "kurwi", "skurwysyn", "skurwiel",
+    // Polish
+    "kurwa", "kurwy", "kurwa", "kurew", "kurwi", "skurwysyn", "skurwiel",
     "jebać", "jebac", "jebany", "jebana", "zjeb", "zajeb", "odjeb", "wyjeb", "podjeb",
     "pierdol", "spierdal", "wypierdal", "zapierdal", "podpierdal",
     "chuj", "chuju", "chuja", "chujo", "cwel", "szmata", "szmato",
     "dziwka", "dziwko", "suka", "suko", "pizda", "pizdo", "kutas", "kutasiarz",
     "pedal", "pedał", "ciota", "czarnuch", "ruchanie", "ruchac", "ruchać", "sukinsyn",
-    "fuck", "fucker", "fucking", "bitch", "cunt", "shit", "asshole", "bullshit",
-    "nigger", "nigga", "faggot", "retard", "whore", "slut", "motherfucker", 
-    "blowjob", "pedophile", "tranny", "bastard", "dickhead", "dumbass",
-    "porno", "hitler", "stfu", "kys"
+    // English
+    "fuck", "fucker", "fucking", "bitch", "cunt", "shit", "asshole", "ass", "bullshit", "damn", "bastard", "dickhead", "dumbass", "prick", "whore", "slut", "motherfucker", "bloody", "bollocks", "bugger",
+    // Spanish
+    "puta", "puto", "joder", "coño", "cabron", "gilipollas", "mierda", "polla", "zorra",
+    // French
+    "pute", "putain", "merde", "encule", "enculé", "connard", "salope",
+    // German
+    "scheisse", "scheiße", "arschloch", "fick", "ficken", "wichser", "fotze",
+    // Italian
+    "cazzo", "stronzo", "puttana", "vaffanculo",
+    // Portuguese
+    "porra", "caralho", "merda", "foda", "fodase", "foda-se",
+    // Russian (transliterated)
+    "blyat", "blyat'", "suka", "pizda", "pidor", "yebat", "ebat",
+    // Turkish (transliterated)
+    "orospu", "siktir", "sik", "sikdir",
+    // Dutch / Belgian
+    "klootzak", "kut", "kanker",
+    // Swedish / Danish / Norwegian
+    "fan", "helvete", "javla", "jävla", "skit", "forhelvede",
+    // Common internet shorthands
+    "stfu", "kys",
+    // Racial slurs and highly offensive terms (kept for moderation)
+    "nigger", "nigga", "faggot", "retard",
+    // Other explicit/harmful terms
+    "pedophile", "porn", "porno"
 ];
 
+// Precompute normalized bad words for faster checks
+const badWordsNormalized = badWordsList.map(w => normalizeForCheck(w)).filter(Boolean);
+
 function isNickClean(nick) {
-    let lowerNick = nick.toLowerCase().replace(/\s+/g, '');
-    for (let word of badWordsList) { if (lowerNick.includes(word)) return false; }
+    const normalized = normalizeForCheck(nick);
+    if (!normalized) return true;
+    for (let bad of badWordsNormalized) {
+        if (!bad) continue;
+        if (normalized.includes(bad)) return false;
+    }
     return true;
 }
 
@@ -297,15 +340,29 @@ function setLang(lang) {
     document.querySelectorAll('.lang-flag').forEach(el => el.classList.remove('active'));
     const flagEl = document.getElementById('flag-' + currentLang); if(flagEl) flagEl.classList.add('active');
 
-    document.querySelectorAll('[data-i18n]').forEach(el => {
+    const strings = i18n[currentLang] || i18n.pl;
+    const nodes = document.querySelectorAll('[data-i18n]');
+    let applied = 0; const missing = new Set();
+    nodes.forEach(el => {
         const key = el.getAttribute('data-i18n');
-        const strings = i18n[currentLang] || i18n.pl;
-        if (strings && strings[key]) {
-            if (el.tagName === 'INPUT') el.placeholder = strings[key];
-            else el.innerHTML = strings[key];
+        if (!key) return;
+        const val = strings[key];
+        if (val !== undefined) {
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = val;
+            else el.innerHTML = val;
+            applied++;
+        } else {
+            missing.add(key);
         }
     });
 
+    // Tooltip keys mapping (data-i18n-tip -> data-tip)
+    document.querySelectorAll('[data-i18n-tip]').forEach(el => {
+        const tipKey = el.getAttribute('data-i18n-tip');
+        if (tipKey && strings[tipKey]) el.setAttribute('data-tip', strings[tipKey]);
+    });
+
+    try { console.log(`i18n: applied ${applied}/${nodes.length} elements; missing keys:`, Array.from(missing).slice(0,20)); } catch (e) {}
     updateDailyMenu(); updateSoundBtn(); updateAuthUI(auth.currentUser);
     if(document.getElementById('calendarOverlay').style.display === 'block') renderCalendar();
     
