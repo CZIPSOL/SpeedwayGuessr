@@ -1561,6 +1561,47 @@ function closeClashInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+try {
+    window.openProfile = openProfile;
+    window.closeProfile = closeProfile;
+    window.openRanking = openRanking;
+    window.closeRanking = closeRanking;
+    window.openSettings = openSettings;
+    window.closeSettings = closeSettings;
+    window.openCalendar = openCalendar;
+    window.closeCalendar = closeCalendar;
+    window.changeDaily = changeDaily;
+    window.changeDailyInGame = changeDailyInGame;
+    window.startDailyGame = startDailyGame;
+    window.startEndlessGame = startEndlessGame;
+    window.startClashGame = startClashGame;
+    window.exitClashMenu = exitClashMenu;
+    window.openFriendlyLobby = openFriendlyLobby;
+    window.backToClashModeSelect = backToClashModeSelect;
+    window.createClashRoom = createClashRoom;
+    window.joinClashRoom = joinClashRoom;
+    window.toggleClashReady = toggleClashReady;
+    window.toggleClashRematch = toggleClashRematch;
+    window.showClashInfo = showClashInfo;
+    window.closeClashInfo = closeClashInfo;
+    window.startLeagueMatchmaking = startLeagueMatchmaking;
+    window.handleClashCell = handleClashCell;
+    window.submitClashGuess = submitClashGuess;
+    window.closeClashSearch = closeClashSearch;
+    window.leaveClashRoom = leaveClashRoom;
+    window.resetBoardAndPlay = resetBoardAndPlay;
+    window.shareResult = shareResult;
+    window.makeGuess = makeGuess;
+    window.giveUpGame = giveUpGame;
+    window.saveNick = saveNick;
+    window.changeNickname = changeNickname;
+    window.signInWithGoogle = signInWithGoogle;
+    window.signInWithGooglePrompt = signInWithGooglePrompt;
+    window.logOut = logOut;
+    window.setTheme = setTheme;
+    window.toggleSound = toggleSound;
+} catch (e) {}
+
 // --- LOGIKA MECZU LIGOWEGO  ---
 
 let isSearchingLeague = false;
