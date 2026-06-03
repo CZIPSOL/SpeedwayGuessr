@@ -214,27 +214,31 @@
     <!-- ============================================== -->
     <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
     <!-- ============================================== -->
-    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
-        <div class="top-right-buttons">
-            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
-            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
-        </div>
-
-        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
-        <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
-        
-        <div class="menu-modes" style="margin-top: 20px;">
-            <button class="menu-btn soon" disabled style="background: rgba(255,255,255,0.05); border: 2px dashed #666; color: #888;">
-                <span class="btn-icon">🏆</span>
-                <span class="btn-text"><span data-i18n="clashElo">Graj o ELO</span> <small style="display: block; margin-top: 5px; color: var(--accent);" data-i18n="clashWip">(WORK IN PROGRESS...)</small></span>
-            </button>
-            
-            <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
-                <span class="btn-icon">🤝</span>
-                <span class="btn-text"><span data-i18n="clashFriendly">Mecz Towarzyski</span> <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;" data-i18n="clashFriendlyDesc">(Graj ze znajomym)</small></span>
-            </button>
-        </div>
+   <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
+    <div class="top-right-buttons">
+        <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
+        <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
     </div>
+
+    <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
+    <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
+    
+    <div class="menu-modes" style="margin-top: 20px;">
+        <!-- ZMIENIONY PRZYCISK: MECZ LIGOWY -->
+        <button id="btnLeagueMode" class="menu-btn" onclick="startLeagueMatchmaking()" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; box-shadow: 0 0 20px rgba(255,215,0,0.3);">
+    <span class="btn-icon">🏆</span>
+    <span class="btn-text">
+        <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
+        <small id="leagueRankDisplay" style="display: block; margin-top: 2px; opacity: 0.9; font-weight: 600;">ŁADOWANIE RANGI...</small>
+    </span>
+</button>
+        
+        <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3); margin-top: 10px;">
+            <span class="btn-icon">🤝</span>
+            <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
+        </button>
+    </div>
+</div>
 
 
     <!-- ============================================== -->

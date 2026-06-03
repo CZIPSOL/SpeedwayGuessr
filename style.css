@@ -314,6 +314,30 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .rank-won { color: var(--green-neon); font-weight: 900; }
 .rank-lost { color: var(--red-neon); font-weight: 900; }
 
+/* --- RANGI LIGOWE --- */
+#leagueRankDisplay {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    margin: 0 auto 14px auto;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+}
+.rank-calibration { color: var(--text-dim); border-color: rgba(142, 142, 147, 0.35); background: rgba(142, 142, 147, 0.08); }
+.rank-bronze { color: #b87333; border-color: rgba(184, 115, 51, 0.45); background: rgba(184, 115, 51, 0.12); text-shadow: 0 0 8px rgba(184, 115, 51, 0.2); }
+.rank-silver { color: #d8d8d8; border-color: rgba(216, 216, 216, 0.45); background: rgba(216, 216, 216, 0.12); text-shadow: 0 0 8px rgba(216, 216, 216, 0.2); }
+.rank-gold { color: #f1c40f; border-color: rgba(241, 196, 15, 0.5); background: rgba(241, 196, 15, 0.12); text-shadow: 0 0 8px rgba(241, 196, 15, 0.25); }
+.rank-platinum { color: #9ad7ff; border-color: rgba(154, 215, 255, 0.5); background: rgba(154, 215, 255, 0.12); text-shadow: 0 0 8px rgba(154, 215, 255, 0.25); }
+.rank-diamond { color: #6fffe9; border-color: rgba(111, 255, 233, 0.5); background: rgba(111, 255, 233, 0.12); text-shadow: 0 0 8px rgba(111, 255, 233, 0.25); }
+.rank-legend { color: #ff5fd7; border-color: rgba(255, 95, 215, 0.5); background: rgba(255, 95, 215, 0.12); text-shadow: 0 0 10px rgba(255, 95, 215, 0.3); }
+
 /* --- ZAKŁADKI RANKINGOWE --- */
 .rank-tab {
     flex: 1;
