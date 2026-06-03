@@ -249,15 +249,17 @@ const i18n = {
 let currentLang = localStorage.getItem('speedwayLang') || 'pl';
 
 function setLang(lang) {
-    currentLang = lang; localStorage.setItem('speedwayLang', lang);
+    currentLang = i18n[lang] ? lang : 'pl';
+    localStorage.setItem('speedwayLang', currentLang);
     document.querySelectorAll('.lang-flag').forEach(el => el.classList.remove('active'));
-    const flagEl = document.getElementById('flag-' + lang); if(flagEl) flagEl.classList.add('active');
+    const flagEl = document.getElementById('flag-' + currentLang); if(flagEl) flagEl.classList.add('active');
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (i18n[lang] && i18n[lang][key]) {
-            if (el.tagName === 'INPUT') el.placeholder = i18n[lang][key];
-            else el.innerHTML = i18n[lang][key];
+        const strings = i18n[currentLang] || i18n.pl;
+        if (strings && strings[key]) {
+            if (el.tagName === 'INPUT') el.placeholder = strings[key];
+            else el.innerHTML = strings[key];
         }
     });
 
@@ -369,13 +371,15 @@ function changeDailyInGame(dir) {
 }
 
 function updateDailyMenu() {
+    const strings = i18n[currentLang] || i18n.pl;
     document.getElementById('dailyDayDisplay').innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
     document.getElementById('btnPrevDaily').style.visibility = (selectedDailyDay <= 1) ? 'hidden' : 'visible';
     document.getElementById('btnNextDaily').style.visibility = (selectedDailyDay >= currentDailyDay) ? 'hidden' : 'visible';
     
     const btn = document.getElementById('btnDailyMode'); const txt = document.getElementById('dailyBtnText');
-    if (userStats.dailyResults[selectedDailyDay]) { btn.classList.remove('disabled'); txt.innerHTML = i18n[currentLang].btnReview; } 
-    else { btn.classList.remove('disabled'); txt.innerHTML = i18n[currentLang].btnDaily; }
+    if (!btn || !txt) return;
+    if (userStats.dailyResults[selectedDailyDay]) { btn.classList.remove('disabled'); txt.innerHTML = strings.btnReview; } 
+    else { btn.classList.remove('disabled'); txt.innerHTML = strings.btnDaily; }
 }
 
 function openCalendar() {
@@ -948,7 +952,8 @@ function listenToClashRoom() {
         // Logika w Podsumowaniu (Rewanż)
         if (clashStatus === 'summary') {
             let readys = 0; if(data.rematchP1) readys++; if(data.rematchP2) readys++;
-            document.getElementById('rematchCount').innerText = `(${readys}/2 gotowych)`;
+            const rematchCountEl = document.getElementById('rematchCount');
+            if (rematchCountEl) rematchCountEl.innerText = `(${readys}/2 gotowych)`;
             
             // HOST resetuje planszę, gdy obaj chcą grać dalej
             if (myClashColor === 'red' && data.rematchP1 && data.rematchP2) {
@@ -1067,6 +1072,18 @@ function updateClashBoardUI(data) {
 }
 
 function boardEmptyCount(board) { return board.filter(x => x === null).length; }
+
+function renderGuessedNamesToGrid(data) {
+    if (!data || !Array.isArray(data.guessedPlayers)) return;
+    data.guessedPlayers.forEach((playerName, index) => {
+        if (!playerName) return;
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        const cell = document.getElementById(`cell-${row}-${col}`);
+        if (!cell) return;
+        cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
+    });
+}
 
 function startClashTimer(deadlineTime) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
