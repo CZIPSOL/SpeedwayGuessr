@@ -1551,9 +1551,7 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
                     );
 
                     if (p.currentClub) {
-                        pClubs.push(
-                            getCleanClubName(p.currentClub).toLowerCase()
-                        );
+                        pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
                     }
 
                     if (pClubs.includes(c) && pClubs.includes(r)) {
@@ -1571,7 +1569,6 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
 
         if (validCols.length >= 3) {
             clashRows = tempRows;
-
             clashCols = [...validCols]
                 .sort(() => 0.5 - Math.random())
                 .slice(0, 3);
