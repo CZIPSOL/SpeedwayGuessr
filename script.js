@@ -1205,11 +1205,22 @@ function listenToClashRoom() {
 
         // 3. LOGIKA LOBBY (Czekanie na gracza i Gotowość)
         if (clashStatus === 'waiting') {
-            if (data.p2) {
-                // Jeśli to mecz ligowy, przejdź od razu do VS (bez klikania gotowości)
-                if (data.type === 'league' && myClashColor === 'red') {
-                    db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
-                }
+    if (data.p2) {
+        // Jeśli to mecz ligowy, Host (red) przełącza status na vsScreen
+        if (data.type === 'league' && myClashColor === 'red') {
+            db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
+            // Usuwamy ogłoszenie z kolejki, bo mecz już ruszył
+            if(data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(()=>{});
+        }
+        
+        // UI dla meczów (zmienia napisy w lobby)
+        const waitingText = document.getElementById('waitingText');
+        if(waitingText) waitingText.style.display = 'none';
+        
+        const readyPlayersDiv = document.getElementById('readyPlayersDiv');
+        if(readyPlayersDiv) readyPlayersDiv.style.display = 'flex';
+    }
+}
 
                 // UI dla meczu towarzyskiego
                 document.getElementById('waitingText').style.display = 'none';
@@ -1571,26 +1582,48 @@ async function startLeagueMatchmaking() {
 
         try {
             const queueRef = db.collection("clash_queue");
+            // Szukamy otwartej oferty, która nie jest nasza
             const snapshot = await queueRef.where("status", "==", "open").limit(1).get();
 
             if (!snapshot.empty) {
-                const roomData = snapshot.docs[0].data();
+                const queueDoc = snapshot.docs[0];
+                const roomData = queueDoc.data();
+                
                 if (roomData.hostId !== playerId) {
-                    await queueRef.doc(snapshot.docs[0].id).update({
-                        status: "matched", guestId: playerId, guestNick: playerNickname
+                    // --- LOGIKA GRACZA 2 (DOŁĄCZAJĄCY) ---
+                    const roomCode = roomData.roomCode;
+                    
+                    // 1. Wpisujemy się bezpośrednio do POKOJU
+                    await db.collection("clash_rooms").doc(roomCode).update({
+                        p2: { 
+                            id: playerId, 
+                            nick: playerNickname, 
+                            elo: userStats.clashLeague.elo, 
+                            color: 'blue' 
+                        },
+                        p2Ready: true
                     });
+
+                    // 2. Oznaczamy ofertę w kolejce jako zamkniętą
+                    await queueRef.doc(queueDoc.id).update({
+                        status: "matched",
+                        guestId: playerId
+                    });
+
                     myClashColor = 'blue';
-                    currentClashRoom = roomData.roomCode;
+                    currentClashRoom = roomCode;
                     listenToClashRoom();
                     isSearchingLeague = false;
                     return;
                 }
             }
 
+            // --- LOGIKA GRACZA 1 (HOST) ---
             const roomCode = generateRoomCode();
             myClashColor = 'red';
             currentClashRoom = roomCode;
 
+            // Przygotowanie planszy
             let allClubs = getCleanClubsList();
             tryGenerateBoard(allClubs, 2, 500);
 
@@ -1603,6 +1636,26 @@ async function startLeagueMatchmaking() {
                 };
             }
 
+            // 1. Tworzymy pokój
+            await db.collection("clash_rooms").doc(roomCode).set({
+                status: 'waiting', 
+                type: 'league',
+                p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'red' },
+                p2: null,
+                p1Ready: true,
+                p2Ready: false,
+                score: { p1: 0, p2: 0 },
+                rows: clashRows,
+                cols: clashCols,
+                constraints: constraints,
+                board: Array(9).fill(null),
+                guessedPlayers: Array(9).fill(null),
+                turn: 'red',
+                deadline: 0,
+                lastAction: ''
+            });
+
+            // 2. Dodajemy ofertę do kolejki
             const queueDoc = await queueRef.add({
                 hostId: playerId,
                 hostNick: playerNickname,
@@ -1611,14 +1664,8 @@ async function startLeagueMatchmaking() {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            await db.collection("clash_rooms").doc(roomCode).set({
-                status: 'waiting', type: 'league', queueId: queueDoc.id,
-                p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'red' },
-                p2: null, p1Ready: true, p2Ready: false, score: { p1: 0, p2: 0 },
-                rows: clashRows, cols: clashCols, constraints: constraints,
-                board: Array(9).fill(null), guessedPlayers: Array(9).fill(null),
-                turn: 'red', deadline: 0, lastAction: ''
-            });
+            // Podpinamy ID kolejki pod pokój, żeby potem posprzątać
+            await db.collection("clash_rooms").doc(roomCode).update({ queueId: queueDoc.id });
 
             listenToClashRoom();
         } catch (e) {
