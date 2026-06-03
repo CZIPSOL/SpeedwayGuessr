@@ -1529,28 +1529,58 @@ function getCleanClubsList() {
 
 function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
     let attempts = 0;
+
     while (attempts < maxAttempts) {
+        attempts++;
+
         let tempRows = [...allClubs]
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 3);
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 3);
+
+        let validCols = [];
+
         for (let c of allClubs) {
-            if (tempRows.includes(c)) continue; 
+            if (tempRows.includes(c)) continue;
+
             let intersectsAll = tempRows.every(r => {
                 let matchCount = 0;
+
                 for (let p of playersDB) {
-                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
-                    if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
+                    let pClubs = p.pastClubs.map(pc =>
+                        getCleanClubName(pc).toLowerCase()
+                    );
+
+                    if (p.currentClub) {
+                        pClubs.push(
+                            getCleanClubName(p.currentClub).toLowerCase()
+                        );
+                    }
+
+                    if (pClubs.includes(c) && pClubs.includes(r)) {
+                        matchCount++;
+                    }
                 }
+
                 return matchCount >= minMatches;
             });
-            if (intersectsAll) validCols.push(c);
+
+            if (intersectsAll) {
+                validCols.push(c);
+            }
         }
-        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols]
-    .sort(() => 0.5 - Math.random())
-    .slice(0, 3);
+
+        if (validCols.length >= 3) {
+            clashRows = tempRows;
+
+            clashCols = [...validCols]
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3);
+
+            return true;
+        }
     }
+
     return false;
-}
 }
 
 // --- ZASADY GRY CLASH ---
