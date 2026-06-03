@@ -1205,34 +1205,30 @@ function listenToClashRoom() {
 
         // 3. LOGIKA LOBBY (Czekanie na gracza i Gotowość)
         if (clashStatus === 'waiting') {
-    if (data.p2) {
-        // Jeśli to mecz ligowy, Host (red) przełącza status na vsScreen
-        if (data.type === 'league' && myClashColor === 'red') {
-            db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
-            // Usuwamy ogłoszenie z kolejki, bo mecz już ruszył
-            if(data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(()=>{});
-        }
-        
-        // UI dla meczów (zmienia napisy w lobby)
-        const waitingText = document.getElementById('waitingText');
-        if(waitingText) waitingText.style.display = 'none';
-        
-        const readyPlayersDiv = document.getElementById('readyPlayersDiv');
-        if(readyPlayersDiv) readyPlayersDiv.style.display = 'flex';
-    }
-}
+            if (data.p2) {
+                const waitingText = document.getElementById('waitingText');
+                if (waitingText) waitingText.style.display = 'none';
 
-                // UI dla meczu towarzyskiego
-                document.getElementById('waitingText').style.display = 'none';
-                document.getElementById('readyPlayersDiv').style.display = 'flex';
-                
-                document.getElementById('p1ReadyStatus').style.opacity = data.p1Ready ? '1' : '0.3';
-                document.getElementById('p1ReadyStatus').innerText = data.p1Ready ? `🔴 ${data.p1.nick} (Gotowy)` : `🔴 ${data.p1.nick}`;
-                
-                document.getElementById('p2ReadyStatus').style.opacity = data.p2Ready ? '1' : '0.3';
-                document.getElementById('p2ReadyStatus').innerText = data.p2Ready ? `🔵 ${data.p2.nick} (Gotowy)` : `🔵 ${data.p2.nick}`;
+                const readyPlayersDiv = document.getElementById('readyPlayersDiv');
+                if (readyPlayersDiv) readyPlayersDiv.style.display = 'flex';
 
-                // HOST odpala start gdy obaj gotowi (tylko w meczu towarzyskim)
+                const p1ReadyStatus = document.getElementById('p1ReadyStatus');
+                if (p1ReadyStatus) {
+                    p1ReadyStatus.style.opacity = data.p1Ready ? '1' : '0.3';
+                    p1ReadyStatus.innerText = data.p1Ready ? `🔴 ${data.p1.nick} (Gotowy)` : `🔴 ${data.p1.nick}`;
+                }
+
+                const p2ReadyStatus = document.getElementById('p2ReadyStatus');
+                if (p2ReadyStatus) {
+                    p2ReadyStatus.style.opacity = data.p2Ready ? '1' : '0.3';
+                    p2ReadyStatus.innerText = data.p2Ready ? `🔵 ${data.p2.nick} (Gotowy)` : `🔵 ${data.p2.nick}`;
+                }
+
+                if (data.type === 'league' && myClashColor === 'red') {
+                    db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
+                    if (data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(() => {});
+                }
+
                 if (data.type !== 'league' && myClashColor === 'red' && data.p1Ready && data.p2Ready) {
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                 }
