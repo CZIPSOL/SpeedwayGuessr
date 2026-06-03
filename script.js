@@ -249,6 +249,9 @@ const i18n = {
 let currentLang = localStorage.getItem('speedwayLang') || 'pl';
 
 function setLang(lang) {
+    try {
+        console.log('setLang called:', lang);
+    } catch (e) {}
     currentLang = i18n[lang] ? lang : 'pl';
     localStorage.setItem('speedwayLang', currentLang);
     document.querySelectorAll('.lang-flag').forEach(el => el.classList.remove('active'));
@@ -270,6 +273,9 @@ function setLang(lang) {
     if (gameMode === 'daily') modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
 }
+
+// Ensure function is available from inline onclick handlers in HTML
+try { window.setLang = setLang; } catch (e) {}
 
 // ==============================================
 // ====== AUDIO, UI I START GRY =================
