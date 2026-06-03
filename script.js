@@ -501,16 +501,36 @@ function updateStatsOnLoss() {
 
 function startDailyGame() { 
     promptForNick(() => {
-        gameMode = 'daily'; document.getElementById('mainMenuContainer').style.display = 'none'; document.getElementById('gameContainer').style.display = 'block'; initGame(); 
+        gameMode = 'daily';
+        const mainMenu = document.getElementById('mainMenuContainer');
+        const gameContainer = document.getElementById('gameContainer');
+        if (mainMenu) mainMenu.style.display = 'none';
+        if (gameContainer) gameContainer.style.display = 'block';
+        initGame(); 
     });
 }
 
-function startEndlessGame() { gameMode = 'endless'; document.getElementById('mainMenuContainer').style.display = 'none'; document.getElementById('gameContainer').style.display = 'block'; initGame(); }
+function startEndlessGame() {
+    gameMode = 'endless';
+    const mainMenu = document.getElementById('mainMenuContainer');
+    const gameContainer = document.getElementById('gameContainer');
+    if (mainMenu) mainMenu.style.display = 'none';
+    if (gameContainer) gameContainer.style.display = 'block';
+    initGame();
+}
 
-function triggerErrorShake() { const inputWrapper = document.querySelector('.input-wrapper'); inputWrapper.classList.add('shake-error'); playSound('error'); setTimeout(() => { inputWrapper.classList.remove('shake-error'); }, 400); }
+function triggerErrorShake() {
+    const inputWrapper = document.querySelector('.input-wrapper');
+    if (!inputWrapper) return;
+    inputWrapper.classList.add('shake-error');
+    playSound('error');
+    setTimeout(() => { inputWrapper.classList.remove('shake-error'); }, 400);
+}
 
 function updateCounterDisplay() { 
-    const container = document.getElementById('livesContainer'); container.style.display = 'flex'; container.innerHTML = '';
+    const container = document.getElementById('livesContainer');
+    if (!container) return;
+    container.style.display = 'flex'; container.innerHTML = '';
     for (let i = 0; i < GUESS_LIMIT; i++) {
         const isLost = i < guessCount; const isJustLost = (i === guessCount - 1) && !isRestoring && !hasWon; 
         let cls = "helmet-icon";
@@ -538,6 +558,7 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 
 function initGame() {
     let randomIndex; const modeDisplay = document.getElementById('gameModeDisplay'); const controls = document.getElementById('gameDailyControls'); const inputSec = document.querySelector('.input-section');
+    if (!modeDisplay || !controls || !inputSec) return;
     
     if (gameMode === 'daily') {
         controls.style.display = 'flex'; dailyNumberGlobal = getDailyDateString(selectedDailyDay);
@@ -840,8 +861,18 @@ function generateRoomCode() {
 
 // --- LOBBY (HOST / GUEST) ---
 async function createClashRoom() {
-    document.getElementById('clashLobbyError').style.display = 'none';
+    const clashLobbyError = document.getElementById('clashLobbyError');
+    const clashLobbySelect = document.getElementById('clashLobbySelect');
+    const myRoomCodeDisplay = document.getElementById('myRoomCodeDisplay');
+    const waitingText = document.getElementById('waitingText');
+    const readyPlayersDiv = document.getElementById('readyPlayersDiv');
+    const btnReady = document.getElementById('btnReady');
+    const clashLobbyWaiting = document.getElementById('clashLobbyWaiting');
+    if (!clashLobbyError || !clashLobbySelect || !myRoomCodeDisplay || !waitingText || !readyPlayersDiv || !btnReady || !clashLobbyWaiting) return;
+
+    clashLobbyError.style.display = 'none';
     const btn = document.querySelector('#clashLobbySelect .menu-btn');
+    if (!btn) return;
     btn.innerText = "TWORZENIE..."; btn.disabled = true;
 
     const code = generateRoomCode(); myClashColor = 'red';
@@ -861,20 +892,20 @@ async function createClashRoom() {
         });
 
         currentClashRoom = code;
-        document.getElementById('clashLobbySelect').style.display = 'none';
-        document.getElementById('myRoomCodeDisplay').innerText = code;
+        clashLobbySelect.style.display = 'none';
+        myRoomCodeDisplay.innerText = code;
         
         // UI Lobby (Czekanie na gracza)
-        document.getElementById('waitingText').style.display = 'block';
-        document.getElementById('readyPlayersDiv').style.display = 'none';
-        document.getElementById('btnReady').innerText = "JESTEM GOTÓW";
-        document.getElementById('btnReady').disabled = false;
-        document.getElementById('btnReady').style.background = "var(--accent)";
-        document.getElementById('clashLobbyWaiting').style.display = 'block';
+        waitingText.style.display = 'block';
+        readyPlayersDiv.style.display = 'none';
+        btnReady.innerText = "JESTEM GOTÓW";
+        btnReady.disabled = false;
+        btnReady.style.background = "var(--accent)";
+        clashLobbyWaiting.style.display = 'block';
         
         btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`; btn.disabled = false;
         listenToClashRoom();
-    } catch(e) { document.getElementById('clashLobbyError').innerText = "Błąd połączenia. Spróbuj ponownie."; document.getElementById('clashLobbyError').style.display = 'block'; btn.disabled = false; }
+    } catch(e) { clashLobbyError.innerText = "Błąd połączenia. Spróbuj ponownie."; clashLobbyError.style.display = 'block'; btn.disabled = false; }
 }
 
 async function joinClashRoom() {
@@ -905,6 +936,7 @@ async function joinClashRoom() {
 
 // --- GOTOWOŚĆ I REWANŻE ---
 async function toggleClashReady() {
+    if (!currentClashRoom) return;
     let field = myClashColor === 'red' ? 'p1Ready' : 'p2Ready';
     await db.collection("clash_rooms").doc(currentClashRoom).update({ [field]: true });
     document.getElementById('btnReady').innerText = "OCZEKIWANIE...";
@@ -913,6 +945,7 @@ async function toggleClashReady() {
 }
 
 async function toggleClashRematch() {
+    if (!currentClashRoom) return;
     let field = myClashColor === 'red' ? 'rematchP1' : 'rematchP2';
     await db.collection("clash_rooms").doc(currentClashRoom).update({ [field]: true });
     document.getElementById('btnRematch').innerText = "CZEKANIE NA DRUGIEGO GRACZA...";
@@ -1029,7 +1062,9 @@ function playCoinToss(data) {
 }
 
 function updateClashBoardUI(data) {
-    document.getElementById('clashContainer').style.display = 'block'; closeClashSearch();
+    const clashContainer = document.getElementById('clashContainer');
+    if (!clashContainer) return;
+    clashContainer.style.display = 'block'; closeClashSearch();
 
     // Rysujemy same nazwy klubów bez ikon
     for(let i=0; i<3; i++) {
@@ -1136,8 +1171,13 @@ async function submitClashGuess() {
     const player = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
     
     if(!player || clashGuessedPlayers.includes(player.name)) {
-        document.querySelector('#clashSearchOverlay .input-wrapper').classList.add('shake-error'); playSound('error');
-        setTimeout(() => { document.querySelector('#clashSearchOverlay .input-wrapper').classList.remove('shake-error'); }, 400); return;
+        const clashInputWrapper = document.querySelector('#clashSearchOverlay .input-wrapper');
+        if (clashInputWrapper) {
+            clashInputWrapper.classList.add('shake-error');
+            setTimeout(() => { clashInputWrapper.classList.remove('shake-error'); }, 400);
+        }
+        playSound('error');
+        return;
     }
 
     let r = Math.floor(clashActiveCellIdx / 3); let c = clashActiveCellIdx % 3;
