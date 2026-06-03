@@ -1232,7 +1232,7 @@ function listenToClashRoom() {
                 if (data.type !== 'league' && myClashColor === 'red' && data.p1Ready && data.p2Ready) {
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                 }
-            }
+    }
         }
 
         // 4. PRZEŁĄCZANIE EKRANÓW GRY
@@ -1530,7 +1530,9 @@ function getCleanClubsList() {
 function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
     let attempts = 0;
     while (attempts < maxAttempts) {
-        attempts++; let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); let validCols = [];
+        let tempRows = [...allClubs]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 3);
         for (let c of allClubs) {
             if (tempRows.includes(c)) continue; 
             let intersectsAll = tempRows.every(r => {
@@ -1543,9 +1545,12 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
             });
             if (intersectsAll) validCols.push(c);
         }
-        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); return true; }
+        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
     }
     return false;
+}
 }
 
 // --- ZASADY GRY CLASH ---
@@ -1758,4 +1763,4 @@ async function updateLeagueStats(gameData) {
     updateLeagueUI();
     
     alert(`Mecz Ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`);
-}
+    }
