@@ -240,8 +240,10 @@ const clubAbbreviations = {
 const countryToCode = { "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", "Australia": "au", "Szwecja": "se", "Słowacja": "sk", "Rosja": "ru", "Łotwa": "lv", "Niemcy": "de", "Francja": "fr", "Słowenia": "si", "USA": "us", "Norwegia": "no", "Ukraina": "ua", "Finlandia": "fi", "Czechy": "cz", "Włochy": "it", "Hiszpania": "es" };
 
 const i18n = {
-    pl: { account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby wejść do rankingu!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick (max 12 znaków)", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ", settingsTitle: "USTAWIENIA", sound: "Dźwięk:", soundOn: "Włączony 🔊", soundOff: "Wyłączony 🔇", subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry Daily:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ", teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "W GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów", stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Akt. Seria", statMax: "Najlepsza", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY", winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless", tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane", rankTotalWins: "Suma Wygranych", rankGuesses: "Próby", months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"] },
-    // Dodatkowe języki omijam dla przejrzystości, pl wystarczy jako core. Jeśli miałeś inne, zostaną one obsłużone z góry, ale polski to podstawa.
+    pl: { 
+        account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby wejść do rankingu!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick (max 12 znaków)", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ", settingsTitle: "USTAWIENIA", sound: "Dźwięk:", soundOn: "Włączony 🔊", soundOff: "Wyłączony 🔇", subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry Daily:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ", teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "W GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów", stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Akt. Seria", statMax: "Najlepsza", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY", winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless", tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane", rankTotalWins: "Suma Wygranych", rankGuesses: "Próby", months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
+        shareText: "Sprawdź mój wynik w Speedway Guessr!", clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Wybierz tryb gry", clashElo: "Graj o ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Mecz Towarzyski", clashFriendlyDesc: "(Graj ze znajomym)", clashLobbyTitle: "🤝 Mecz Towarzyski", clashHost: "UTWÓRZ POKÓJ (HOST)", clashJoinCode: "KOD POKOJU...", clashJoinBtn: "DOŁĄCZ", clashYourCode: "Twój kod pokoju:", clashWaiting: "Oczekiwanie na przeciwnika...", clashReady: "JESTEM GOTÓW", clashTime: "Czas na odpowiedź:", clashSurrender: "PODDAJ SIĘ / WYJDŹ", clashSeries: "WYNIK SERII", clashRematch: "ZAGRAJ REWANŻ", clashQuit: "ZAKOŃCZ I WYJDŹ", clashClaim: "PRZEJMIJ POLE", clashGuessPlaceholder: "Imię i nazwisko zawodnika...", clashConfirm: "POTWIERDŹ", clashCancel: "ANULUJ", clashRulesTitle: "Zasady gry: Speedway Clash ⚔️", clashRules1: "Gra toczy się na planszy 3x3 na zasadach \"Kółko i Krzyżyk\".", clashRules2: "Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował oba krzyżujące się kluby.", clashRules3: "Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).", clashRules4: "Masz 2 minuty na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.", clashRules5: "Wygrywa gracz, który jako pierwszy połączy 3 swoje pola w jednej linii (pion, poziom lub skos)!", clashUnderstood: "ZROZUMIANO"
+    }
 };
 
 let currentLang = localStorage.getItem('speedwayLang') || 'pl';
@@ -519,6 +521,7 @@ function clearGameBoard() {
     document.getElementById('mysteryPhoto').style.display = 'none'; document.getElementById('mysteryPlaceholder').style.display = 'block';
     document.getElementById('photoWrapper').classList.remove('revealed'); document.getElementById('mysteryName').innerText = '???';
     document.getElementById('mysteryName').style.color = 'var(--text-main)'; document.getElementById('postGameActions').style.display = 'none';
+    document.getElementById('btnGiveUp').style.display = 'none';
 }
 
 function resetBoardAndPlay() {
@@ -602,7 +605,18 @@ function makeGuess() {
     if (gameMode === 'daily') { if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); saveStats(); }
     
     guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); document.getElementById('guessInput').value = "";
+    
+    if (guessCount >= 5) {
+        document.getElementById('btnGiveUp').style.display = 'inline-block';
+    }
+
     if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
+}
+
+function giveUpGame() {
+    if(hasWon || hasLost) return;
+    updateStatsOnLoss(); 
+    setTimeout(handleLoss, 400);
 }
 
 function revealClubsOnPath(guessedPlayer) {
@@ -838,7 +852,8 @@ async function createClashRoom() {
             status: 'waiting', p1: { id: playerId, nick: playerNickname, color: 'red' }, p2: null,
             p1Ready: false, p2Ready: false, score: { p1: 0, p2: 0 },
             rows: clashRows, cols: clashCols, board: Array(9).fill(null), turn: 'red', deadline: 0,
-            guessedPlayers: [], lastAction: '', rematchP1: false, rematchP2: false
+            guessedPlayers: Array(9).fill(null), lastAction: '', rematchP1: false, rematchP2: false,
+            coinTossWinner: null
         });
 
         currentClashRoom = code;
@@ -943,10 +958,9 @@ function listenToClashRoom() {
                 
                 db.collection("clash_rooms").doc(currentClashRoom).update({
                     status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
-                    board: Array(9).fill(null), guessedPlayers: [], lastAction: '',
+                    board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
                     rows: clashRows, cols: clashCols, rematchP1: false, rematchP2: false
-                });
-            }
+                });            }
         }
 
         if(clashStatus === 'vsScreen') showVsScreen(data);
@@ -966,7 +980,15 @@ function showVsScreen(data) {
 
     vsOverlay.style.display = 'block'; setTimeout(() => vsOverlay.style.opacity = '1', 10); playSound('win');
 
-    if(myClashColor === 'red') { setTimeout(() => { db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'coinToss' }); }, 3000); }
+    if(myClashColor === 'red') {
+        const coinTossWinner = Math.random() < 0.5 ? 'red' : 'blue';
+        setTimeout(() => {
+            db.collection("clash_rooms").doc(currentClashRoom).update({
+                status: 'coinToss',
+                coinTossWinner
+            });
+        }, 3000);
+    }
 }
 
 function playCoinToss(data) {
@@ -975,7 +997,8 @@ function playCoinToss(data) {
     
     const coin = document.getElementById('clashCoinInner'); const resText = document.getElementById('coinTossResult'); resText.style.opacity = '0'; resText.innerText = "";
     
-    let isRed = data.turn === 'red'; let rotations = 5 * 360 + (isRed ? 0 : 180); 
+    const winner = data.coinTossWinner || (Math.random() < 0.5 ? 'red' : 'blue');
+    let isRed = winner === 'red'; let rotations = 5 * 360 + (isRed ? 0 : 180); 
     coin.style.transition = 'none'; coin.style.transform = `rotateY(0deg)`;
     setTimeout(() => { playSound('flip'); coin.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)'; coin.style.transform = `rotateY(${rotations}deg)`; }, 50);
     
@@ -987,7 +1010,14 @@ function playCoinToss(data) {
             overlay.style.opacity = '0';
             setTimeout(() => {
                 overlay.style.display = 'none';
-                if(myClashColor === 'red') { db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'playing', deadline: Date.now() + 120000 }); }
+                if(myClashColor === 'red') {
+                    db.collection("clash_rooms").doc(currentClashRoom).update({
+                        status: 'playing',
+                        turn: winner,
+                        deadline: Date.now() + 120000,
+                        lastAction: ''
+                    });
+                }
             }, 300);
         }, 2500);
     }, 3000);
@@ -1005,14 +1035,19 @@ function updateClashBoardUI(data) {
     // Nowe renderowanie wypełnionych pól (bez emotek, same nazwiska)
     for(let r=0; r<3; r++) {
         for(let c=0; c<3; c++) {
-            let idx = r * 3 + c; let cell = document.getElementById(`cell-${r}-${c}`); let val = data.board[idx];
+            let idx = r * 3 + c; 
+            let cell = document.getElementById(`cell-${r}-${c}`); 
+            let val = data.board[idx];
+            
             if(val === 'red' || val === 'blue') { 
                 cell.className = `clash-cell clash-playable claimed-${val}`; 
-                // Odczytujemy kogo wpisano (jeśli mamy to w bazie) - zakładamy kolejność
-                let guessedName = "?";
-                // Mały trick: szukamy w clashGuessedPlayers odpowiedniego zawodnika
-                cell.innerHTML = `<span class="clash-player-name">${data.guessedPlayers[data.guessedPlayers.length - boardEmptyCount(data.board) - 1] || "Gracz"}</span>`;
-            } else { cell.className = 'clash-cell clash-playable'; cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; }
+                // Odczytujemy przypisane nazwisko bezpośrednio po indeksie kafelka (0-8)
+                let playerName = data.guessedPlayers[idx] || "Gracz";
+                cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
+            } else { 
+                cell.className = 'clash-cell clash-playable'; 
+                cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
+            }
         }
     }
     
@@ -1031,16 +1066,6 @@ function updateClashBoardUI(data) {
     startClashTimer(data.deadline);
 }
 
-function renderGuessedNamesToGrid(data) {
-    let guessIndex = 0;
-    for(let i=0; i<9; i++) {
-        if (data.board[i] !== null) {
-            let cell = document.getElementById(`cell-${Math.floor(i/3)}-${i%3}`);
-            cell.innerHTML = `<span class="clash-player-name">${data.guessedPlayers[guessIndex]}</span>`;
-            guessIndex++;
-        }
-    }
-}
 function boardEmptyCount(board) { return board.filter(x => x === null).length; }
 
 function startClashTimer(deadlineTime) {
@@ -1107,9 +1132,11 @@ async function submitClashGuess() {
     if (pClubs.includes(rClub) && pClubs.includes(cClub)) {
         playSound('guess'); closeClashSearch();
         
-        let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = myClashColor;
-        let newGuessed = [...clashGuessedPlayers, player.name];
+let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = myClashColor;
         
+        // Zabezpieczenie dla starych pokoi oraz przypisanie do konkretnego pola
+        let newGuessed = clashGuessedPlayers.length === 9 ? [...clashGuessedPlayers] : Array(9).fill(null);
+        newGuessed[clashActiveCellIdx] = player.name;        
         if(checkWinCondition(newBoard, myClashColor)) {
             let field = myClashColor === 'red' ? 'score.p1' : 'score.p2';
             await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: myClashColor, [field]: firebase.firestore.FieldValue.increment(1) });

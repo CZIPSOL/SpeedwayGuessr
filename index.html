@@ -35,7 +35,7 @@
     <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
         <div class="stats-modal" style="max-width: 400px;">
             <h2 style="margin-bottom: 10px; color: var(--accent);" data-i18n="account">TWÓJ PROFIL</h2>
-            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;" data-i18n="loginDesc">Zaloguj się przez Google, aby zsynchronizować postęp i wejść do światowego rankingu, lub graj jako Gość!</p>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;" data-i18n="loginDesc">Zaloguj się przez Google, aby zsynchronizować postęp i wejść do światowego rankingu!</p>
             
             <button onclick="signInWithGooglePrompt()" class="btn-google" style="width: 100%; margin-bottom: 15px;" data-i18n="btnLoginGoogle">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" height="20" alt="G"> ZALOGUJ PRZEZ GOOGLE
@@ -203,7 +203,6 @@
                 <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
             </button>
             
-            <!-- PRZYCISK NOWEGO TRYBU CLASH -->
             <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #3399ff); color: white; border-radius: 18px;">
                 <span class="btn-icon" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">⚔️</span>
                 <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
@@ -221,21 +220,22 @@
             <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
         </div>
 
-        <h1 class="game-title" style="font-size: 32px;">⚔️ Speedway Clash</h1>
-        <h2 class="menu-subtitle">Wybierz tryb gry</h2>
+        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
+        <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
         
         <div class="menu-modes" style="margin-top: 20px;">
             <button class="menu-btn soon" disabled style="background: rgba(255,255,255,0.05); border: 2px dashed #666; color: #888;">
                 <span class="btn-icon">🏆</span>
-                <span class="btn-text">Graj o ELO <small style="display: block; margin-top: 5px; color: var(--accent);">(WORK IN PROGRESS...)</small></span>
+                <span class="btn-text"><span data-i18n="clashElo">Graj o ELO</span> <small style="display: block; margin-top: 5px; color: var(--accent);" data-i18n="clashWip">(WORK IN PROGRESS...)</small></span>
             </button>
             
             <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3);">
                 <span class="btn-icon">🤝</span>
-                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
+                <span class="btn-text"><span data-i18n="clashFriendly">Mecz Towarzyski</span> <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;" data-i18n="clashFriendlyDesc">(Graj ze znajomym)</small></span>
             </button>
         </div>
     </div>
+
 
     <!-- ============================================== -->
     <!-- ====== EKRAN 2: LOBBY TOWARZYSKIE ====== -->
@@ -246,57 +246,38 @@
             <button onclick="backToClashModeSelect()" class="icon-btn" title="Powrót">🔙</button>
         </div>
 
-        <h1 class="game-title" style="font-size: 32px;">🤝 Mecz Towarzyski</h1>
+        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashLobbyTitle">🤝 Mecz Towarzyski</h1>
         
         <div id="clashLobbySelect" style="width: 100%; max-width: 400px; margin-top: 20px;">
             <button onclick="createClashRoom()" class="menu-btn" style="background: var(--green-neon); margin-bottom: 20px; width: 100%;">
-                <span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>
+                <span class="btn-icon">🏠</span><span class="btn-text" data-i18n="clashHost">UTWÓRZ POKÓJ (HOST)</span>
             </button>
             
             <div style="display: flex; gap: 10px; align-items: stretch; justify-content: center; width: 100%;">
-                <input type="text" id="joinRoomInput" placeholder="KOD POKOJU..." maxlength="5" style="text-transform: uppercase; font-weight: 900; text-align: center; width: 60%; font-size: 18px; padding: 12px; border-radius: 12px;">
-                <button onclick="joinClashRoom()" class="btn-reset" style="width: 40%; font-size: 14px; padding: 12px; border-radius: 12px;">DOŁĄCZ</button>
+                <input type="text" id="joinRoomInput" data-i18n="clashJoinCode" placeholder="KOD POKOJU..." maxlength="5" style="text-transform: uppercase; font-weight: 900; text-align: center; width: 60%; font-size: 18px; padding: 12px; border-radius: 12px;">
+                <button onclick="joinClashRoom()" class="btn-reset" style="width: 40%; font-size: 14px; padding: 12px; border-radius: 12px;" data-i18n="clashJoinBtn">DOŁĄCZ</button>
             </div>
             <p id="clashLobbyError" style="color: var(--red-neon); font-size: 12px; margin-top: 10px; font-weight: bold; display: none;"></p>
         </div>
 
         <div id="clashLobbyWaiting" style="display: none; width: 100%; margin-top: 30px;">
-            <h3 style="color: var(--text-dim); text-transform: uppercase; font-size: 12px;">Twój kod pokoju:</h3>
+            <h3 style="color: var(--text-dim); text-transform: uppercase; font-size: 12px;" data-i18n="clashYourCode">Twój kod pokoju:</h3>
             <h1 id="myRoomCodeDisplay" style="font-size: 60px; color: var(--accent); margin: 0; letter-spacing: 5px; font-weight: 900; text-shadow: 0 0 20px rgba(241,196,15,0.4);">XXXXX</h1>
             
-            <!-- SEKCJA GOTOWOŚCI -->
             <div id="clashReadySection" style="margin-top: 20px;">
-                <p id="waitingText" style="margin-bottom: 20px; font-weight: bold;" class="loading-pulse">Oczekiwanie na przeciwnika...</p>
+                <p id="waitingText" style="margin-bottom: 20px; font-weight: bold;" class="loading-pulse" data-i18n="clashWaiting">Oczekiwanie na przeciwnika...</p>
                 
                 <div id="readyPlayersDiv" style="display: none; flex-direction: column; gap: 10px;">
                     <div style="display:flex; justify-content: space-around; margin-bottom: 10px; font-size: 14px; font-weight: 900;">
                         <span id="p1ReadyStatus" style="color: #ff3333; opacity: 0.5;">🔴 Gracz 1</span>
                         <span id="p2ReadyStatus" style="color: #3399ff; opacity: 0.5;">🔵 Gracz 2</span>
                     </div>
-                    <button id="btnReady" onclick="toggleClashReady()" class="btn-reset" style="width: 100%; font-size: 16px;">JESTEM GOTÓW</button>
+                    <button id="btnReady" onclick="toggleClashReady()" class="btn-reset" style="width: 100%; font-size: 16px;" data-i18n="clashReady">JESTEM GOTÓW</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- ====== EKRAN PODSUMOWANIA I REWANŻU ====== -->
-    <!-- ============================================== -->
-    <div id="clashSummaryOverlay" class="win-overlay" style="display: none; z-index: 10006;">
-        <div class="stats-modal" style="max-width: 450px;">
-            <h2 id="clashSummaryTitle" style="font-size: 32px; margin-bottom: 10px; text-transform: uppercase;">WYGRYWA ...</h2>
-            
-            <h3 style="color: var(--text-dim); font-size: 14px; margin-top: 20px;">WYNIK SERII</h3>
-            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 28px; font-weight: 900; margin: 15px 0 30px 0;">
-                <span id="summaryP1Name" style="color: #ff3333; flex: 1; text-align: right;">Gracz 1</span>
-                <span id="summaryScore" style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 12px; color: var(--accent);">0 : 0</span>
-                <span id="summaryP2Name" style="color: #3399ff; flex: 1; text-align: left;">Gracz 2</span>
-            </div>
-            
-            <button id="btnRematch" onclick="toggleClashRematch()" class="btn-reset" style="width:100%; margin-bottom: 10px; font-size: 14px;">ZAGRAJ REWANŻ <span id="rematchCount">(0/2 gotowych)</span></button>
-            <button onclick="leaveClashRoom()" class="btn-close" style="width:100%; border-color: var(--red-neon); color: var(--red-neon);">ZAKOŃCZ I WYJDŹ</button>
-        </div>
-    </div>
 
     <!-- ============================================== -->
     <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->
@@ -346,6 +327,8 @@
                     <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
                 </div>
                 <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                <!-- Przycisk do poddawania się (widoczny po 5 próbach) -->
+                <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn" style="display: none; border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px;" title="Poddaj się">🏳️</button>
             </div>
         </div>
 
@@ -389,7 +372,7 @@
     <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box; position: relative;">
         
         <div id="clashTimerContainer" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
-            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 900;">Czas na odpowiedź:</div>
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 900;" data-i18n="clashTime">Czas na odpowiedź:</div>
             <div id="clashTimerDisplay" style="font-size: 32px; font-weight: 900; color: #fff; transition: 0.3s;">02:00</div>
         </div>
 
@@ -408,20 +391,37 @@
             <div class="clash-cell clash-header-cell" id="row2"></div>
             <div class="clash-cell clash-playable" onclick="handleClashCell(2, 0)" id="cell-2-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
         </div>
-        <button onclick="leaveClashRoom()" class="btn-close" style="margin-top: 30px; width: 100%; border-color: var(--red-neon); color: var(--red-neon);">PODDAJ SIĘ / WYJDŹ</button>
+        <button onclick="leaveClashRoom()" class="btn-close" style="margin-top: 30px; width: 100%; border-color: var(--red-neon); color: var(--red-neon);" data-i18n="clashSurrender">PODDAJ SIĘ / WYJDŹ</button>
     </div>
 
-    <!-- CLASH MODALE (Wyszukiwarka i Moneta) -->
+    <!-- EKRAN PODSUMOWANIA I REWANŻU -->
+    <div id="clashSummaryOverlay" class="win-overlay" style="display: none; z-index: 10006;">
+        <div class="stats-modal" style="max-width: 450px;">
+            <h2 id="clashSummaryTitle" style="font-size: 32px; margin-bottom: 10px; text-transform: uppercase;">WYGRYWA ...</h2>
+            
+            <h3 style="color: var(--text-dim); font-size: 14px; margin-top: 20px;" data-i18n="clashSeries">WYNIK SERII</h3>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 28px; font-weight: 900; margin: 15px 0 30px 0;">
+                <span id="summaryP1Name" style="color: #ff3333; flex: 1; text-align: right;">Gracz 1</span>
+                <span id="summaryScore" style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 12px; color: var(--accent);">0 : 0</span>
+                <span id="summaryP2Name" style="color: #3399ff; flex: 1; text-align: left;">Gracz 2</span>
+            </div>
+            
+            <button id="btnRematch" onclick="toggleClashRematch()" class="btn-reset" style="width:100%; margin-bottom: 10px; font-size: 14px;"><span id="rematchText" data-i18n="clashRematch">ZAGRAJ REWANŻ</span> <span id="rematchCount">(0/2 gotowych)</span></button>
+            <button onclick="leaveClashRoom()" class="btn-close" style="width:100%; border-color: var(--red-neon); color: var(--red-neon);" data-i18n="clashQuit">ZAKOŃCZ I WYJDŹ</button>
+        </div>
+    </div>
+
+    <!-- CLASH MODALE (Wyszukiwarka, Moneta i Info) -->
     <div id="clashSearchOverlay" class="win-overlay" style="display: none; z-index: 10002;">
         <div class="stats-modal" style="overflow: visible; max-width: 450px;">
-            <h3 style="color: var(--accent); margin-bottom: 5px; font-weight: 900; font-size: 20px;">PRZEJMIJ POLE</h3>
+            <h3 style="color: var(--accent); margin-bottom: 5px; font-weight: 900; font-size: 20px;" data-i18n="clashClaim">PRZEJMIJ POLE</h3>
             <p id="clashSearchDesc" style="font-size: 14px; font-weight: 900; color: #fff; margin-bottom: 20px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px;"></p>
             <div class="input-wrapper" style="position: relative;">
-                <input type="text" id="clashGuessInput" placeholder="Imię i nazwisko zawodnika..." autocomplete="off">
+                <input type="text" id="clashGuessInput" data-i18n="clashGuessPlaceholder" placeholder="Imię i nazwisko zawodnika..." autocomplete="off">
             </div>
             <div style="display:flex; gap: 10px; margin-top: 20px;">
-                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1; padding: 12px; font-size: 14px;">POTWIERDŹ</button>
-                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;">ANULUJ</button>
+                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1; padding: 12px; font-size: 14px;" data-i18n="clashConfirm">POTWIERDŹ</button>
+                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;" data-i18n="clashCancel">ANULUJ</button>
             </div>
         </div>
     </div>
@@ -438,20 +438,21 @@
         </div>
     </div>
 
-    <!-- CLASH: Jak grać (Zasady) -->
+    <!-- CLASH: ZASADY GRY -->
     <div id="clashInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
         <div class="stats-modal" style="max-width: 450px; text-align: left;">
-            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;">Zasady gry: Speedway Clash ⚔️</h3>
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;" data-i18n="clashRulesTitle">Zasady gry: Speedway Clash ⚔️</h3>
             <ul style="font-size: 13px; color: var(--text-main); padding-left: 20px; line-height: 1.6; margin-bottom: 20px; font-weight: 600;">
-                <li style="margin-bottom: 10px;">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
-                <li style="margin-bottom: 10px;">Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował <b>oba krzyżujące się kluby</b>.</li>
-                <li style="margin-bottom: 10px;">Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).</li>
-                <li style="margin-bottom: 10px;">Masz <b>2 minuty</b> na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.</li>
-                <li>Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
+                <li style="margin-bottom: 10px;" data-i18n="clashRules1">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
+                <li style="margin-bottom: 10px;" data-i18n="clashRules2">Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował <b>oba krzyżujące się kluby</b>.</li>
+                <li style="margin-bottom: 10px;" data-i18n="clashRules3">Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).</li>
+                <li style="margin-bottom: 10px;" data-i18n="clashRules4">Masz <b>2 minuty</b> na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.</li>
+                <li data-i18n="clashRules5">Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
             </ul>
-            <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;">ZROZUMIANO</button>
+            <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;" data-i18n="clashUnderstood">ZROZUMIANO</button>
         </div>
     </div>
+
 
     <!-- ============================================== -->
     <!-- ====== STOPKA I AKCJE PO GRZE ====== -->
