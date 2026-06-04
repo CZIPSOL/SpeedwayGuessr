@@ -31,6 +31,17 @@
         </div>
     </div>
 
+    <div id="appModalOverlay" class="win-overlay app-modal-overlay" style="display: none; z-index: 10020;">
+        <div class="stats-modal app-modal">
+            <h2 id="appModalTitle">Komunikat</h2>
+            <div id="appModalMessage" class="app-modal-message"></div>
+            <div class="app-modal-actions">
+                <button id="appModalCancel" class="btn-close" type="button">ANULUJ</button>
+                <button id="appModalConfirm" class="btn-reset" type="button">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- POBIERANIE NICKU PRZED GRĄ -->
     <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
         <div class="stats-modal" style="max-width: 400px;">
@@ -214,31 +225,40 @@
     <!-- ============================================== -->
     <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
     <!-- ============================================== -->
-   <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
-    <div class="top-right-buttons">
-        <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
-        <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
-    </div>
+    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
+            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
 
-    <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
-    <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
-    
-    <div class="menu-modes" style="margin-top: 20px;">
-        <!-- ZMIENIONY PRZYCISK: MECZ LIGOWY -->
-        <button id="btnLeagueMode" class="menu-btn" onclick="startLeagueMatchmaking()" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; box-shadow: 0 0 20px rgba(255,215,0,0.3);">
-    <span class="btn-icon">🏆</span>
-    <span class="btn-text">
-        <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
-        <small id="leagueRankDisplay" style="display: block; margin-top: 2px; opacity: 0.9; font-weight: 600;">ŁADOWANIE RANGI...</small>
-    </span>
-</button>
+        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
         
-        <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3); margin-top: 10px;">
-            <span class="btn-icon">🤝</span>
-            <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
-        </button>
+        <div id="lastLeagueContainer" class="last-games-container" style="display: none; margin-top: 5px; margin-bottom: 10px; background: transparent; border: none; padding: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <p class="last-games-title" style="margin:0; font-size: 11px;">Ostatnie mecze:</p>
+                <button onclick="openClashHistory()" class="icon-btn-small" title="Historia Ligowa">📜</button>
+            </div>
+            <div id="lastLeagueList" class="daily-tiles-container" style="margin-top: 5px;"></div>
+        </div>
+
+        <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
+
+        <div class="menu-modes" style="margin-top: 20px;">
+            <button id="btnLeagueMode" class="menu-btn" onclick="startLeagueMatchmaking()" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; box-shadow: 0 0 20px rgba(255,215,0,0.3);">
+                <span class="btn-icon">🏆</span>
+                <span class="btn-text">
+                    <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
+                    <small id="leagueRankDisplay" style="display: block; margin-top: 2px; opacity: 0.9; font-weight: 600;">ŁADOWANIE RANGI...</small>
+                </span>
+            </button>
+
+            <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3); margin-top: 10px;">
+                <span class="btn-icon">🤝</span>
+                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
+            </button>
+        </div>
     </div>
-</div>
 
 
     <!-- ============================================== -->
@@ -373,7 +393,7 @@
     <!-- ============================================== -->
     <!-- ====== INTERFEJS GRY SPEEDWAY CLASH ====== -->
     <!-- ============================================== -->
-    <div id="clashContainer" style="display: none; width: 100%; max-width: 800px; text-align: center; margin-top: 20px; padding: 20px; box-sizing: border-box; position: relative;">
+    <div id="clashContainer" class="clash-screen" style="display: none;">
         
         <div id="clashTimerContainer" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
             <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 900;" data-i18n="clashTime">Czas na odpowiedź:</div>
@@ -454,6 +474,16 @@
                 <li data-i18n="clashRules5">Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
             </ul>
             <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;" data-i18n="clashUnderstood">ZROZUMIANO</button>
+        </div>
+    </div>
+
+    <div id="clashHistoryOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal" style="max-width: 450px;">
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-transform: uppercase;">Historia Ligowa</h3>
+            <div id="clashHistoryList" style="max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px;">
+                <!-- Elementy dodawane przez JS -->
+            </div>
+            <button onclick="closeClashHistory()" class="btn-close" style="width: 100%;">ZAMKNIJ</button>
         </div>
     </div>
 

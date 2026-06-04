@@ -269,6 +269,63 @@ function escapeHTML(str) {
     );
 }
 
+const nativeAlert = window.alert ? window.alert.bind(window) : null;
+
+function showAppModal({ title = "Komunikat", message = "", confirmText = "OK", cancelText = null, danger = false } = {}) {
+    const overlay = document.getElementById('appModalOverlay');
+    const titleEl = document.getElementById('appModalTitle');
+    const messageEl = document.getElementById('appModalMessage');
+    const confirmBtn = document.getElementById('appModalConfirm');
+    const cancelBtn = document.getElementById('appModalCancel');
+
+    return new Promise(resolve => {
+        if (!overlay || !titleEl || !messageEl || !confirmBtn || !cancelBtn) {
+            if (nativeAlert) nativeAlert(String(message || title));
+            resolve(true);
+            return;
+        }
+
+        titleEl.innerText = title;
+        messageEl.innerHTML = "";
+        String(message || "").split("\n").forEach((line, idx) => {
+            if (idx > 0) messageEl.appendChild(document.createElement('br'));
+            messageEl.appendChild(document.createTextNode(line));
+        });
+
+        confirmBtn.innerText = confirmText;
+        confirmBtn.classList.toggle('is-danger', danger);
+        cancelBtn.innerText = cancelText || "";
+        cancelBtn.style.display = cancelText ? 'block' : 'none';
+
+        const close = result => {
+            overlay.style.opacity = '0';
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                resolve(result);
+            }, 180);
+        };
+
+        confirmBtn.onclick = () => close(true);
+        cancelBtn.onclick = () => close(false);
+        overlay.style.display = 'block';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+    });
+}
+
+function appAlert(message, title = "Komunikat") {
+    return showAppModal({ title, message, confirmText: "OK" });
+}
+
+function appConfirm(message, { title = "Potwierdzenie", confirmText = "POTWIERDŹ", cancelText = "ANULUJ", danger = false } = {}) {
+    return showAppModal({ title, message, confirmText, cancelText, danger });
+}
+
+try {
+    window.alert = message => { appAlert(message); };
+} catch (e) {}
+
 async function isNickTaken(nickToCheck) {
     try {
         const snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").where("nick", "==", nickToCheck).get();
@@ -977,6 +1034,7 @@ function launchConfetti() {
 
 let currentClashRoom = null;
 let clashUnsubscribe = null;
+let currentClashData = null;
 let myClashColor = null; 
 let clashTimerInterval = null;
 let clashStatus = 'none'; 
@@ -986,10 +1044,12 @@ let clashCols = [];
 let clashBoardState = Array(9).fill(null); 
 let clashGuessedPlayers = [];
 let clashActiveCellIdx = null;
+let clashLeaveInProgress = false;
 
 const ELO_K_FACTOR_CALIBRATION = 60; // Szybkie zmiany podczas 5 pierwszych gier
 const ELO_K_FACTOR_NORMAL = 30;
-window.hasUpdatedLeague = false; // Flaga, by nie liczyć punktów dwa razy
+const SURRENDER_MIN_ELO_SWING = 12;
+window.hasUpdatedLeague = false; 
 
 // ==============================================
 // ======      RANGI I KOLORY RANG        =======
@@ -1018,13 +1078,21 @@ function getRankClass(elo, matchesPlayed) {
 function updateLeagueUI() {
     const display = document.getElementById('leagueRankDisplay');
     if (display && userStats.clashLeague) {
-        const rank = getLeagueRankName(userStats.clashLeague.elo, userStats.clashLeague.matchesPlayed);
-        display.innerText = `${rank} | ELO: ${Math.round(userStats.clashLeague.elo)}`;
-        display.className = getRankClass(userStats.clashLeague.elo, userStats.clashLeague.matchesPlayed);
+        const played = userStats.clashLeague.matchesPlayed || 0;
+        const elo = userStats.clashLeague.elo || 1000;
+        
+        if (played < 5) {
+            display.innerText = `KALIBRACJA (${played}/5)`;
+        } else {
+            const rank = getLeagueRankName(elo, played);
+            display.innerText = `${rank} | ELO: ${Math.round(elo)}`;
+        }
+        display.className = getRankClass(elo, played);
     }
+    renderLeagueHistory();
 }
 
-
+// --- ANTI-CHEAT ---
 document.addEventListener('visibilitychange', () => {
     if (document.hidden && currentClashRoom && clashStatus === 'playing') {
         if (clashTurn === myClashColor) {
@@ -1040,10 +1108,39 @@ function updateClashTurnUI() {
     if(p2El) p2El.className = clashTurn === 'blue' ? 'clash-player active' : 'clash-player';
 }
 
+function setElementDisplay(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = value;
+}
+
+function showClashMatchView() {
+    setElementDisplay('mainMenuContainer', 'none');
+    setElementDisplay('gameContainer', 'none');
+    setElementDisplay('postGameActions', 'none');
+    setElementDisplay('clashModeSelectContainer', 'none');
+    setElementDisplay('clashLobbyContainer', 'none');
+    setElementDisplay('clashContainer', 'block');
+}
+
+function showClashModeView() {
+    setElementDisplay('clashContainer', 'none');
+    setElementDisplay('clashLobbyContainer', 'none');
+    setElementDisplay('clashModeSelectContainer', 'flex');
+}
+
+function isActiveClashStatus(status) {
+    return ['waiting', 'vsScreen', 'coinToss', 'playing'].includes(status);
+}
+
+function hasBothClashPlayers(data) {
+    return !!(data && data.p1 && data.p2);
+}
+
 function startClashGame() {
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
         document.getElementById('clashModeSelectContainer').style.display = 'flex';
+        updateLeagueUI();
     });
 }
 function exitClashMenu() {
@@ -1070,24 +1167,176 @@ function generateRoomCode() {
     return code;
 }
 
-// --- LOBBY (HOST / GUEST) ---
-async function createClashRoom() {
-    const clashLobbyError = document.getElementById('clashLobbyError');
-    const clashLobbySelect = document.getElementById('clashLobbySelect');
-    const myRoomCodeDisplay = document.getElementById('myRoomCodeDisplay');
-    const waitingText = document.getElementById('waitingText');
-    const readyPlayersDiv = document.getElementById('readyPlayersDiv');
-    const btnReady = document.getElementById('btnReady');
-    const clashLobbyWaiting = document.getElementById('clashLobbyWaiting');
-    if (!clashLobbyError || !clashLobbySelect || !myRoomCodeDisplay || !waitingText || !readyPlayersDiv || !btnReady || !clashLobbyWaiting) return;
+// ==============================================
+// ======   LOGIKA MECZU LIGOWEGO (ELO)   =======
+// ==============================================
 
-    clashLobbyError.style.display = 'none';
-    const btn = document.querySelector('#clashLobbySelect .menu-btn');
+let isSearchingLeague = false;
+let currentQueueId = null;
+
+async function startLeagueMatchmaking() {
+    const btn = document.getElementById('btnLeagueMode');
     if (!btn) return;
+
+    if (isSearchingLeague) {
+        isSearchingLeague = false;
+        resetLeagueButton(btn);
+        if (currentQueueId) {
+            await db.collection("clash_queue").doc(currentQueueId).delete().catch(()=>{});
+            currentQueueId = null;
+        }
+        return;
+    }
+
+    promptForNick(async () => {
+        isSearchingLeague = true;
+        btn.innerHTML = `<span class="loading-pulse" style="font-size:14px; font-weight:900;">SZUKANIE RYWALA...<br><small style="font-size:10px;">(KLIKNIJ ABY ANULOWAĆ)</small></span>`;
+        btn.style.background = "#555";
+        btn.style.boxShadow = "none";
+
+        try {
+            const queueRef = db.collection("clash_queue");
+            const snapshot = await queueRef.where("status", "==", "open").limit(1).get();
+
+            if (!snapshot.empty && isSearchingLeague) {
+                const queueDoc = snapshot.docs[0];
+                const roomData = queueDoc.data();
+                
+                if (roomData.hostId !== playerId) {
+                    const roomCode = roomData.roomCode;
+                    await db.collection("clash_rooms").doc(roomCode).update({
+                        p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'blue' },
+                        p2Ready: true
+                    });
+                    await queueRef.doc(queueDoc.id).update({ status: "matched", guestId: playerId });
+
+                    myClashColor = 'blue'; currentClashRoom = roomCode;
+                    listenToClashRoom();
+                    isSearchingLeague = false;
+                    resetLeagueButton(btn);
+                    return;
+                }
+            }
+
+            if (!isSearchingLeague) return; 
+
+            const roomCode = generateRoomCode(); myClashColor = 'red'; currentClashRoom = roomCode;
+            let allClubs = getCleanClubsList(); tryGenerateBoard(allClubs, 2, 500);
+
+            let constraints = null;
+            if (Math.random() > 0.5) {
+                const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
+                constraints = { col: Math.floor(Math.random() * 3), country: countries[Math.floor(Math.random() * countries.length)] };
+            }
+
+            await db.collection("clash_rooms").doc(roomCode).set({
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                status: 'waiting', type: 'league',
+                p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'red' }, p2: null,
+                p1Ready: true, p2Ready: false, score: { p1: 0, p2: 0 },
+                rows: clashRows, cols: clashCols, constraints: constraints, board: Array(9).fill(null),
+                guessedPlayers: Array(9).fill(null), turn: 'red', deadline: 0, lastAction: ''
+            });
+
+            const queueDoc = await queueRef.add({
+                hostId: playerId, hostNick: playerNickname, roomCode: roomCode, status: "open",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            currentQueueId = queueDoc.id;
+            await db.collection("clash_rooms").doc(roomCode).update({ queueId: currentQueueId });
+            
+            listenToClashRoom();
+            resetLeagueButton(btn);
+
+        } catch (e) {
+            console.error("Matchmaking error:", e);
+            resetLeagueButton(btn); isSearchingLeague = false;
+        }
+    });
+}
+
+function resetLeagueButton(btn) {
+    btn.innerHTML = `
+        <span class="btn-icon">🏆</span>
+        <span class="btn-text">
+            <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
+            <small id="leagueRankDisplay" style="display: block; margin-top: 2px; opacity: 0.9; font-weight: 600;">ŁADOWANIE RANGI...</small>
+        </span>
+    `;
+    btn.style.background = "linear-gradient(135deg, #ffd700, #b8860b)";
+    btn.style.boxShadow = "0 0 20px rgba(255,215,0,0.3)";
+    btn.disabled = false;
+    updateLeagueUI();
+}
+
+function calculateEloChange(myElo, opponentElo, result) {
+    const K = userStats.clashLeague.matchesPlayed < 5 ? ELO_K_FACTOR_CALIBRATION : ELO_K_FACTOR_NORMAL;
+    const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - myElo) / 400));
+    return Math.round(K * (result - expectedScore));
+}
+
+async function updateLeagueStats(gameData) {
+    if (gameData.type !== 'league' || window.hasUpdatedLeague) return;
+    window.hasUpdatedLeague = true;
+
+    ensureLeagueStats(userStats);
+    const league = userStats.clashLeague;
+    const opponent = myClashColor === 'red' ? gameData.p2 : gameData.p1;
+    const opponentElo = opponent ? (opponent.elo || 1000) : 1000;
+    const finishedBySurrender = gameData.finishReason === 'surrender';
+
+    let eloChange = 0;
+    let resultText = "";
+
+    if (gameData.winner === 'draw') {
+        eloChange = 5; 
+        league.draws++;
+        resultText = "REMIS";
+    } else {
+        const isWin = gameData.winner === myClashColor;
+        const result = isWin ? 1 : 0;
+        eloChange = calculateEloChange(league.elo, opponentElo, result);
+
+        if (finishedBySurrender) {
+            eloChange = isWin
+                ? Math.max(eloChange, SURRENDER_MIN_ELO_SWING)
+                : Math.min(eloChange, -SURRENDER_MIN_ELO_SWING);
+        }
+
+        if (isWin) {
+            league.wins++;
+            resultText = finishedBySurrender ? "WYGRANA (WALKOWER)" : "WYGRANA";
+        } else {
+            league.losses++;
+            resultText = finishedBySurrender ? "PORAŻKA (PODDANIE)" : "PORAŻKA";
+        }
+    }
+
+    league.elo += eloChange;
+    league.matchesPlayed++;
+
+    if(!userStats.clashHistory) userStats.clashHistory = [];
+    userStats.clashHistory.unshift({
+        date: new Date().toLocaleDateString(),
+        opponent: opponent ? opponent.nick : "Anonim",
+        result: resultText,
+        change: eloChange
+    });
+
+    saveStats();
+    updateLeagueUI();
+    
+    appAlert(`Mecz ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`, "Mecz ligowy");
+}
+
+// --- LOBBY TOWARZYSKIE ---
+async function createClashRoom() {
+    document.getElementById('clashLobbyError').style.display = 'none';
+    const btn = document.querySelector('#clashLobbySelect .menu-btn');
     btn.innerText = "TWORZENIE..."; btn.disabled = true;
 
     const code = generateRoomCode(); myClashColor = 'red';
-    
     let allClubs = getCleanClubsList();
     let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
     if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
@@ -1103,20 +1352,19 @@ async function createClashRoom() {
         });
 
         currentClashRoom = code;
-        clashLobbySelect.style.display = 'none';
-        myRoomCodeDisplay.innerText = code;
+        document.getElementById('clashLobbySelect').style.display = 'none';
+        document.getElementById('myRoomCodeDisplay').innerText = code;
         
-        // UI Lobby (Czekanie na gracza)
-        waitingText.style.display = 'block';
-        readyPlayersDiv.style.display = 'none';
-        btnReady.innerText = "JESTEM GOTÓW";
-        btnReady.disabled = false;
-        btnReady.style.background = "var(--accent)";
-        clashLobbyWaiting.style.display = 'block';
+        document.getElementById('waitingText').style.display = 'block';
+        document.getElementById('readyPlayersDiv').style.display = 'none';
+        document.getElementById('btnReady').innerText = "JESTEM GOTÓW";
+        document.getElementById('btnReady').disabled = false;
+        document.getElementById('btnReady').style.background = "var(--accent)";
+        document.getElementById('clashLobbyWaiting').style.display = 'block';
         
         btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`; btn.disabled = false;
         listenToClashRoom();
-    } catch(e) { clashLobbyError.innerText = "Błąd połączenia. Spróbuj ponownie."; clashLobbyError.style.display = 'block'; btn.disabled = false; }
+    } catch(e) { document.getElementById('clashLobbyError').innerText = "Błąd połączenia."; document.getElementById('clashLobbyError').style.display = 'block'; btn.disabled = false; }
 }
 
 async function joinClashRoom() {
@@ -1145,7 +1393,6 @@ async function joinClashRoom() {
     } catch(e) { errorEl.innerText = "Wystąpił błąd!"; errorEl.style.display = 'block'; }
 }
 
-// --- GOTOWOŚĆ I REWANŻE ---
 async function toggleClashReady() {
     if (!currentClashRoom) return;
     let field = myClashColor === 'red' ? 'p1Ready' : 'p2Ready';
@@ -1159,7 +1406,7 @@ async function toggleClashRematch() {
     if (!currentClashRoom) return;
     let field = myClashColor === 'red' ? 'rematchP1' : 'rematchP2';
     await db.collection("clash_rooms").doc(currentClashRoom).update({ [field]: true });
-    document.getElementById('btnRematch').innerText = "CZEKANIE NA DRUGIEGO GRACZA...";
+    document.getElementById('btnRematch').innerHTML = `<span>CZEKANIE NA DRUGIEGO GRACZA...</span>`;
     document.getElementById('btnRematch').disabled = true;
     document.getElementById('btnRematch').style.background = "#555";
 }
@@ -1168,27 +1415,20 @@ async function toggleClashRematch() {
 function listenToClashRoom() {
     if(!currentClashRoom) return;
     clashUnsubscribe = db.collection("clash_rooms").doc(currentClashRoom).onSnapshot(doc => {
-        if(!doc.exists) { 
-            alert("Przeciwnik zamknął pokój."); 
-            leaveClashRoom(); 
-            return; 
+        if(!doc.exists) {
+            appAlert("Przeciwnik zamknął pokój.", "Speedway Clash");
+            closeRoomCleanup({ deleteRoom: false });
+            return;
         }
         const data = doc.data();
+        currentClashData = data;
+        clashStatus = data.status; clashTurn = data.turn; clashBoardState = data.board;
+        clashGuessedPlayers = data.guessedPlayers || []; clashRows = data.rows; clashCols = data.cols;
 
-        // Synchronizacja stanu lokalnego z bazą
-        clashStatus = data.status; 
-        clashTurn = data.turn; 
-        clashBoardState = data.board;
-        clashGuessedPlayers = data.guessedPlayers || []; 
-        clashRows = data.rows; 
-        clashCols = data.cols;
-
-        // 1. ODŚWIEŻANIE NAGŁÓWKÓW (Kluby +ew. Narodowość w Lidze)
         for (let i = 0; i < 3; i++) {
             const colHeader = document.getElementById(`col${i}`);
             if (colHeader) {
                 let headerHTML = `${getClubAbbr(clashCols[i])}`;
-                // Jeśli pole ma restrykcję kraju (Mecz Ligowy)
                 if (data.constraints && data.constraints.col === i) {
                     headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
                 }
@@ -1198,17 +1438,14 @@ function listenToClashRoom() {
             if (rowHeader) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
         }
 
-        // 2. OBSŁUGA ZAKOŃCZENIA MECZU LIGOWEGO (ELO)
         if (data.status === 'summary' && data.type === 'league' && !window.hasUpdatedLeague) {
             updateLeagueStats(data);
         }
 
-        // 3. LOGIKA LOBBY (Czekanie na gracza i Gotowość)
         if (clashStatus === 'waiting') {
             if (data.p2) {
                 const waitingText = document.getElementById('waitingText');
                 if (waitingText) waitingText.style.display = 'none';
-
                 const readyPlayersDiv = document.getElementById('readyPlayersDiv');
                 if (readyPlayersDiv) readyPlayersDiv.style.display = 'flex';
 
@@ -1232,14 +1469,31 @@ function listenToClashRoom() {
                 if (data.type !== 'league' && myClashColor === 'red' && data.p1Ready && data.p2Ready) {
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                 }
-    }
+            }
         }
 
-        // 4. PRZEŁĄCZANIE EKRANÓW GRY
-        if (clashStatus === 'vsScreen') showVsScreen(data);
-        if (clashStatus === 'coinToss') playCoinToss(data);
-        if (clashStatus === 'playing') updateClashBoardUI(data);
-        if (clashStatus === 'summary' && document.getElementById('clashSummaryOverlay').style.display === 'none') {
+        if (clashStatus === 'summary') {
+            let readys = 0; if(data.rematchP1) readys++; if(data.rematchP2) readys++;
+            const rematchCount = document.getElementById('rematchCount');
+            if(rematchCount) rematchCount.innerText = `(${readys}/2)`;
+            
+            if (myClashColor === 'red' && data.rematchP1 && data.rematchP2) {
+                let allClubs = getCleanClubsList();
+                let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
+                if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+                
+                db.collection("clash_rooms").doc(currentClashRoom).update({
+                    status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
+                    board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
+                    rows: clashRows, cols: clashCols, rematchP1: false, rematchP2: false
+                });
+            }
+        }
+
+        if(clashStatus === 'vsScreen') showVsScreen(data);
+        if(clashStatus === 'coinToss') playCoinToss(data);
+        if(clashStatus === 'playing') updateClashBoardUI(data);
+        if(clashStatus === 'summary' && document.getElementById('clashSummaryOverlay').style.display === 'none') {
             handleClashEnd(data);
         }
     });
@@ -1247,8 +1501,10 @@ function listenToClashRoom() {
 
 function showVsScreen(data) {
     if (data.type === 'league') window.hasUpdatedLeague = false;
+    setElementDisplay('clashModeSelectContainer', 'none');
     document.getElementById('clashLobbyContainer').style.display = 'none';
-    document.getElementById('clashSummaryOverlay').style.display = 'none'; // Na wypadek rewanżu
+    document.getElementById('clashContainer').style.display = 'none';
+    document.getElementById('clashSummaryOverlay').style.display = 'none'; 
     const vsOverlay = document.getElementById('clashVsOverlay');
     
     document.getElementById('vsP1Name').innerText = data.p1.nick; document.getElementById('vsP2Name').innerText = data.p2.nick;
@@ -1288,10 +1544,7 @@ function playCoinToss(data) {
                 overlay.style.display = 'none';
                 if(myClashColor === 'red') {
                     db.collection("clash_rooms").doc(currentClashRoom).update({
-                        status: 'playing',
-                        turn: winner,
-                        deadline: Date.now() + 120000,
-                        lastAction: ''
+                        status: 'playing', turn: winner, deadline: Date.now() + 120000, lastAction: ''
                     });
                 }
             }, 300);
@@ -1302,31 +1555,13 @@ function playCoinToss(data) {
 function updateClashBoardUI(data) {
     const clashContainer = document.getElementById('clashContainer');
     if (!clashContainer) return;
-    clashContainer.style.display = 'block'; closeClashSearch();
+    showClashMatchView(); closeClashSearch();
 
-    // Rysujemy same nazwy klubów bez ikon
-    for(let i=0; i<3; i++) {
-        document.getElementById(`row${i}`).innerHTML = `${getClubAbbr(clashRows[i])}`;
-        document.getElementById(`col${i}`).innerHTML = `${getClubAbbr(clashCols[i])}`;
-    }
-
-    if (data.constraints) {
-        const colHeader = document.getElementById(`col${data.constraints.col}`);
-        if (colHeader) {
-            colHeader.innerHTML = `${getClubAbbr(clashCols[data.constraints.col])}<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
-        }
-    }
-
-    // Nowe renderowanie wypełnionych pól (bez emotek, same nazwiska)
     for(let r=0; r<3; r++) {
         for(let c=0; c<3; c++) {
-            let idx = r * 3 + c; 
-            let cell = document.getElementById(`cell-${r}-${c}`); 
-            let val = data.board[idx];
-            
+            let idx = r * 3 + c; let cell = document.getElementById(`cell-${r}-${c}`); let val = data.board[idx];
             if(val === 'red' || val === 'blue') { 
                 cell.className = `clash-cell clash-playable claimed-${val}`; 
-                // Odczytujemy przypisane nazwisko bezpośrednio po indeksie kafelka (0-8)
                 let playerName = data.guessedPlayers[idx] || "Gracz";
                 cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
             } else { 
@@ -1335,9 +1570,6 @@ function updateClashBoardUI(data) {
             }
         }
     }
-    
-    // Prostszy trick do przypisania odpowiednich nazwisk do komórek (wymaga bycia w syncu z historią gry)
-    renderGuessedNamesToGrid(data);
 
     updateClashTurnUI();
     if(clashTurn === myClashColor) { document.getElementById('clashTimerDisplay').style.color = '#00ff66'; playSound('flip'); } 
@@ -1349,20 +1581,6 @@ function updateClashBoardUI(data) {
     }
 
     startClashTimer(data.deadline);
-}
-
-function boardEmptyCount(board) { return board.filter(x => x === null).length; }
-
-function renderGuessedNamesToGrid(data) {
-    if (!data || !Array.isArray(data.guessedPlayers)) return;
-    data.guessedPlayers.forEach((playerName, index) => {
-        if (!playerName) return;
-        const row = Math.floor(index / 3);
-        const col = index % 3;
-        const cell = document.getElementById(`cell-${row}-${col}`);
-        if (!cell) return;
-        cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
-    });
 }
 
 function startClashTimer(deadlineTime) {
@@ -1415,8 +1633,7 @@ function closeClashSearch() { const overlay = document.getElementById('clashSear
 function triggerClashError() {
     const wrapper = document.querySelector('#clashSearchOverlay .input-wrapper');
     if (!wrapper) return;
-    wrapper.classList.add('shake-error');
-    playSound('error');
+    wrapper.classList.add('shake-error'); playSound('error');
     setTimeout(() => wrapper.classList.remove('shake-error'), 400);
 }
 
@@ -1425,8 +1642,7 @@ async function executeValidClashMove(playerName) {
     let newGuessed = clashGuessedPlayers.length === 9 ? [...clashGuessedPlayers] : Array(9).fill(null);
     newGuessed[clashActiveCellIdx] = playerName;
 
-    closeClashSearch();
-    playSound('guess');
+    closeClashSearch(); playSound('guess');
 
     if(checkWinCondition(newBoard, myClashColor)) {
         let field = myClashColor === 'red' ? 'score.p1' : 'score.p2';
@@ -1442,9 +1658,7 @@ async function submitClashGuess() {
     let input = document.getElementById('clashGuessInput').value.trim(); if(!input) return;
     const player = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
 
-    if(!player || clashGuessedPlayers.includes(player.name)) {
-        triggerClashError(); return;
-    }
+    if(!player || clashGuessedPlayers.includes(player.name)) { triggerClashError(); return; }
 
     const roomDoc = await db.collection("clash_rooms").doc(currentClashRoom).get();
     const roomData = roomDoc.data();
@@ -1463,17 +1677,14 @@ async function submitClashGuess() {
         }
     }
 
-    let rClub = clashRows[r];
-    let cClub = clashCols[c];
+    let rClub = clashRows[r]; let cClub = clashCols[c];
     let pClubs = player.pastClubs.map(pc => getCleanClubName(pc).toLowerCase());
     if (player.currentClub) pClubs.push(getCleanClubName(player.currentClub).toLowerCase());
 
     if (pClubs.includes(rClub) && pClubs.includes(cClub)) {
         executeValidClashMove(player.name);
     } else {
-        playSound('error'); closeClashSearch();
-        alert(`Pudło! ${player.name} nie reprezentował obu tych klubów.`);
-        skipClashTurn("Błędna odpowiedź");
+        playSound('error'); closeClashSearch(); alert(`Pudło! ${player.name} nie reprezentował obu tych klubów.`); skipClashTurn("Błędna odpowiedź");
     }
 }
 
@@ -1487,7 +1698,6 @@ function checkWinCondition(board, color) {
 function handleClashEnd(data) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
     
-    // Konfiguracja Ekranu Podsumowania
     const overlay = document.getElementById('clashSummaryOverlay');
     const title = document.getElementById('clashSummaryTitle');
     
@@ -1495,7 +1705,11 @@ function handleClashEnd(data) {
         title.innerText = "REMIS!"; title.style.color = "#fff"; playSound('lose');
     } else {
         let isRedWin = data.winner === 'red';
-        title.innerText = isRedWin ? `WYGRYWA ${data.p1.nick} 🔴` : `WYGRYWA ${data.p2.nick} 🔵`;
+        if (data.finishReason === 'surrender') {
+            title.innerText = isRedWin ? `WALKOWER DLA ${data.p1.nick} 🔴` : `WALKOWER DLA ${data.p2.nick} 🔵`;
+        } else {
+            title.innerText = isRedWin ? `WYGRYWA ${data.p1.nick} 🔴` : `WYGRYWA ${data.p2.nick} 🔵`;
+        }
         title.style.color = isRedWin ? "#ff3333" : "#3399ff";
         if(data.winner === myClashColor) { playSound('win'); launchConfetti(); } else { playSound('lose'); }
     }
@@ -1504,21 +1718,173 @@ function handleClashEnd(data) {
     document.getElementById('summaryP2Name').innerText = data.p2.nick;
     document.getElementById('summaryScore').innerText = `${data.score.p1} : ${data.score.p2}`;
     
-    // Reset przycisku rewanżu
     const btnRematch = document.getElementById('btnRematch');
-    btnRematch.innerText = "ZAGRAJ REWANŻ"; btnRematch.disabled = false; btnRematch.style.background = "var(--accent)";
+    if (data.type === 'league') {
+        btnRematch.style.display = 'none';
+    } else {
+        btnRematch.style.display = 'block';
+        btnRematch.innerHTML = `<span id="rematchText">ZAGRAJ REWANŻ</span> <span id="rematchCount">(0/2 gotowych)</span>`;
+        btnRematch.disabled = false;
+        btnRematch.style.background = "var(--accent)";
+    }
     
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
 
-function leaveClashRoom() {
-    if(clashUnsubscribe) clashUnsubscribe();
-    if(clashTimerInterval) clearInterval(clashTimerInterval);
-    if(currentClashRoom) { db.collection("clash_rooms").doc(currentClashRoom).delete().catch(e=>console.log(e)); }
-    currentClashRoom = null;
+// --- HISTORIA I BEZPIECZNE WYJŚCIE ---
+async function submitLeagueSurrender(data) {
+    if (!currentClashRoom || !data || data.status === 'summary') return;
+
+    const winner = myClashColor === 'red' ? 'blue' : 'red';
+    const scoreField = winner === 'red' ? 'score.p1' : 'score.p2';
+    const surrenderedPlayer = myClashColor === 'red' ? data.p1 : data.p2;
+
+    await db.collection("clash_rooms").doc(currentClashRoom).update({
+        status: 'summary',
+        winner,
+        finishReason: 'surrender',
+        surrenderedBy: myClashColor,
+        surrenderedNick: surrenderedPlayer?.nick || playerNickname || "Gracz",
+        [scoreField]: firebase.firestore.FieldValue.increment(1),
+        deadline: 0,
+        lastAction: '',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+async function leaveClashRoom() {
+    if (clashLeaveInProgress) return;
+
+    const data = currentClashData;
+    const activeMatch = isActiveClashStatus(clashStatus);
+    const isLeagueMatch = data?.type === 'league' && hasBothClashPlayers(data);
+
+    if (activeMatch && isLeagueMatch) {
+        const confirmed = await appConfirm(
+            "Poddasz mecz ligowy walkowerem.\nTy otrzymasz porażkę i ujemne ELO, a przeciwnik dostanie wygraną oraz nagrodę ELO.\nCzy na pewno chcesz poddać mecz?",
+            { title: "Potwierdź poddanie", confirmText: "PODDAJ MECZ", danger: true }
+        );
+        if (!confirmed) return;
+
+        clashLeaveInProgress = true;
+        try {
+            await submitLeagueSurrender(data);
+        } catch (e) {
+            console.error("League surrender error:", e);
+            appAlert("Nie udało się poddać meczu. Sprawdź połączenie i spróbuj ponownie.", "Błąd");
+        } finally {
+            clashLeaveInProgress = false;
+        }
+        return;
+    }
+
+    if (activeMatch) {
+        const confirmed = await appConfirm(
+            "Wyjście zamknie aktualny pokój dla obu graczy.\nCzy na pewno chcesz wyjść?",
+            { title: "Opuścić mecz?", confirmText: "WYJDŹ", danger: true }
+        );
+        if (!confirmed) return;
+    }
+
+    await closeRoomCleanup();
+}
+
+async function closeRoomCleanup(options = {}) {
+    const roomId = currentClashRoom;
+    const queueId = currentQueueId || currentClashData?.queueId;
+    const roomData = currentClashData;
+    const deleteRoom = options.deleteRoom !== false;
+
+    if(clashUnsubscribe) { clashUnsubscribe(); clashUnsubscribe = null; }
+    if(clashTimerInterval) { clearInterval(clashTimerInterval); clashTimerInterval = null; }
+
+    currentClashRoom = null; currentQueueId = null; currentClashData = null; isSearchingLeague = false;
+    
+    const btn = document.getElementById('btnLeagueMode');
+    if (btn) resetLeagueButton(btn);
+
+    if (roomId && deleteRoom) {
+        try {
+            const isLeagueSummary = roomData?.type === 'league' && roomData?.status === 'summary';
+            if (isLeagueSummary) {
+                const leftField = myClashColor === 'red' ? 'p1Left' : 'p2Left';
+                const opponentAlreadyLeft = myClashColor === 'red' ? roomData.p2Left : roomData.p1Left;
+                if (opponentAlreadyLeft) {
+                    await db.collection("clash_rooms").doc(roomId).delete();
+                } else {
+                    await db.collection("clash_rooms").doc(roomId).update({
+                        [leftField]: true,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } else {
+                await db.collection("clash_rooms").doc(roomId).delete();
+            }
+        } catch(e) {
+            console.log(e);
+        }
+    }
+
+    if(queueId) { db.collection("clash_queue").doc(queueId).delete().catch(()=>{}); }
+
+    myClashColor = null;
     document.getElementById('clashSummaryOverlay').style.display = 'none';
-    document.getElementById('clashContainer').style.display = 'none';
-    document.getElementById('mainMenuContainer').style.display = 'flex';
+    document.getElementById('clashVsOverlay').style.display = 'none';
+    document.getElementById('coinTossOverlay').style.display = 'none';
+    document.getElementById('clashSearchOverlay').style.display = 'none';
+    showClashModeView();
+}
+
+function renderLeagueHistory() {
+    const container = document.getElementById('lastLeagueContainer');
+    const list = document.getElementById('lastLeagueList');
+    
+    if (container && list && userStats.clashHistory && userStats.clashHistory.length > 0) {
+        container.style.display = 'block'; list.innerHTML = '';
+        const recent = userStats.clashHistory.slice(0, 5).reverse(); 
+        
+        recent.forEach(match => {
+            const tile = document.createElement('div');
+            let cls = 'loss';
+            if(match.result && match.result.includes('WYGRANA')) cls = 'win';
+            if(match.result && match.result.includes('REMIS')) cls = 'draw'; 
+            tile.className = `daily-tile ${cls}`;
+            tile.title = `${match.opponent} (${match.change >= 0 ? '+'+match.change : match.change})`;
+            list.appendChild(tile);
+        });
+    }
+}
+
+function openClashHistory() {
+    const listEl = document.getElementById('clashHistoryList'); listEl.innerHTML = '';
+    
+    if (!userStats.clashHistory || userStats.clashHistory.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:var(--text-dim);">Brak rozegranych meczów.</div>';
+    } else {
+        userStats.clashHistory.forEach(match => {
+            let color = match.result && match.result.includes('WYGRANA') ? 'var(--green-neon)' : (match.result && match.result.includes('REMIS') ? 'var(--yellow-neon)' : 'var(--red-neon)');
+            listEl.innerHTML += `
+                <div style="background: rgba(0,0,0,0.2); padding: 10px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid ${color};">
+                    <div style="display:flex; justify-content: space-between; margin-bottom: 5px;">
+                        <strong>VS ${match.opponent}</strong>
+                        <span style="color: var(--text-dim); font-size: 11px;">${match.date}</span>
+                    </div>
+                    <div style="display:flex; justify-content: space-between; font-weight: bold; color: ${color};">
+                        <span>${match.result}</span>
+                        <span>${match.change >= 0 ? '+' : ''}${match.change} ELO</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    const overlay = document.getElementById('clashHistoryOverlay');
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeClashHistory() {
+    const overlay = document.getElementById('clashHistoryOverlay');
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
 function getCleanClubsList() {
@@ -1529,68 +1895,32 @@ function getCleanClubsList() {
 
 function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
     let attempts = 0;
-
     while (attempts < maxAttempts) {
-        attempts++;
-
-        let tempRows = [...allClubs]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 3);
-
-        let validCols = [];
-
+        attempts++; let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); let validCols = [];
         for (let c of allClubs) {
-            if (tempRows.includes(c)) continue;
-
+            if (tempRows.includes(c)) continue; 
             let intersectsAll = tempRows.every(r => {
                 let matchCount = 0;
-
                 for (let p of playersDB) {
-                    let pClubs = p.pastClubs.map(pc =>
-                        getCleanClubName(pc).toLowerCase()
-                    );
-
-                    if (p.currentClub) {
-                        pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
-                    }
-
-                    if (pClubs.includes(c) && pClubs.includes(r)) {
-                        matchCount++;
-                    }
+                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
+                    if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
                 }
-
                 return matchCount >= minMatches;
             });
-
-            if (intersectsAll) {
-                validCols.push(c);
-            }
+            if (intersectsAll) validCols.push(c);
         }
-
-        if (validCols.length >= 3) {
-            clashRows = tempRows;
-            clashCols = [...validCols]
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 3);
-
-            return true;
-        }
+        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); return true; }
     }
-
     return false;
 }
 
-// --- ZASADY GRY CLASH ---
 function showClashInfo() {
     const overlay = document.getElementById('clashInfoOverlay');
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
-
 function closeClashInfo() {
     const overlay = document.getElementById('clashInfoOverlay');
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 300);
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
 try {
@@ -1632,162 +1962,6 @@ try {
     window.logOut = logOut;
     window.setTheme = setTheme;
     window.toggleSound = toggleSound;
+    window.openClashHistory = openClashHistory;
+    window.closeClashHistory = closeClashHistory;
 } catch (e) {}
-
-// --- LOGIKA MECZU LIGOWEGO  ---
-
-let isSearchingLeague = false;
-
-async function startLeagueMatchmaking() {
-    if (isSearchingLeague) return;
-    promptForNick(async () => {
-        const btn = document.getElementById('btnLeagueMode');
-        if (!btn) return;
-        const originalContent = btn.innerHTML;
-
-        isSearchingLeague = true;
-        btn.disabled = true;
-        btn.innerHTML = `<span class="loading-pulse">SZUKANIE RYWALA...</span>`;
-
-        try {
-            const queueRef = db.collection("clash_queue");
-            // Szukamy otwartej oferty, która nie jest nasza
-            const snapshot = await queueRef.where("status", "==", "open").limit(1).get();
-
-            if (!snapshot.empty) {
-                const queueDoc = snapshot.docs[0];
-                const roomData = queueDoc.data();
-                
-                if (roomData.hostId !== playerId) {
-                    // --- LOGIKA GRACZA 2 (DOŁĄCZAJĄCY) ---
-                    const roomCode = roomData.roomCode;
-                    
-                    // 1. Wpisujemy się bezpośrednio do POKOJU
-                    await db.collection("clash_rooms").doc(roomCode).update({
-                        p2: { 
-                            id: playerId, 
-                            nick: playerNickname, 
-                            elo: userStats.clashLeague.elo, 
-                            color: 'blue' 
-                        },
-                        p2Ready: true
-                    });
-
-                    // 2. Oznaczamy ofertę w kolejce jako zamkniętą
-                    await queueRef.doc(queueDoc.id).update({
-                        status: "matched",
-                        guestId: playerId
-                    });
-
-                    myClashColor = 'blue';
-                    currentClashRoom = roomCode;
-                    listenToClashRoom();
-                    isSearchingLeague = false;
-                    return;
-                }
-            }
-
-            // --- LOGIKA GRACZA 1 (HOST) ---
-            const roomCode = generateRoomCode();
-            myClashColor = 'red';
-            currentClashRoom = roomCode;
-
-            // Przygotowanie planszy
-            let allClubs = getCleanClubsList();
-            tryGenerateBoard(allClubs, 2, 500);
-
-            let constraints = null;
-            if (Math.random() > 0.5) {
-                const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
-                constraints = {
-                    col: Math.floor(Math.random() * 3),
-                    country: countries[Math.floor(Math.random() * countries.length)]
-                };
-            }
-
-            // 1. Tworzymy pokój
-            await db.collection("clash_rooms").doc(roomCode).set({
-                status: 'waiting', 
-                type: 'league',
-                p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'red' },
-                p2: null,
-                p1Ready: true,
-                p2Ready: false,
-                score: { p1: 0, p2: 0 },
-                rows: clashRows,
-                cols: clashCols,
-                constraints: constraints,
-                board: Array(9).fill(null),
-                guessedPlayers: Array(9).fill(null),
-                turn: 'red',
-                deadline: 0,
-                lastAction: ''
-            });
-
-            // 2. Dodajemy ofertę do kolejki
-            const queueDoc = await queueRef.add({
-                hostId: playerId,
-                hostNick: playerNickname,
-                roomCode: roomCode,
-                status: "open",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            // Podpinamy ID kolejki pod pokój, żeby potem posprzątać
-            await db.collection("clash_rooms").doc(roomCode).update({ queueId: queueDoc.id });
-
-            listenToClashRoom();
-        } catch (e) {
-            console.error("Matchmaking error:", e);
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-            isSearchingLeague = false;
-        }
-    });
-}
-
-function calculateEloChange(myElo, opponentElo, result) {
-    const K = userStats.clashLeague.matchesPlayed < 5 ? 60 : 30;
-    const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - myElo) / 400));
-    return Math.round(K * (result - expectedScore));
-}
-
-async function updateLeagueStats(gameData) {
-    if (gameData.type !== 'league' || window.hasUpdatedLeague) return;
-    window.hasUpdatedLeague = true;
-
-    const league = userStats.clashLeague;
-    const opponent = myClashColor === 'red' ? gameData.p2 : gameData.p1;
-    const opponentElo = opponent ? (opponent.elo || 1000) : 1000;
-
-    let eloChange = 0;
-    let resultText = "";
-
-    if (gameData.winner === 'draw') {
-        eloChange = 5; // Bonus za remis
-        league.draws++;
-        resultText = "REMIS";
-    } else {
-        const isWin = gameData.winner === myClashColor;
-        const result = isWin ? 1 : 0;
-        eloChange = calculateEloChange(league.elo, opponentElo, result);
-
-        if (isWin) { league.wins++; resultText = "WYGRANA"; }
-        else { league.losses++; resultText = "PORAŻKA"; }
-    }
-
-    league.elo += eloChange;
-    league.matchesPlayed++;
-
-    userStats.clashHistory.unshift({
-        date: new Date().toLocaleDateString(),
-        opponent: opponent ? opponent.nick : "Anonim",
-        result: resultText,
-        change: eloChange
-    });
-
-    saveStats();
-    updateLeagueUI();
-    
-    alert(`Mecz Ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`);
-    }
