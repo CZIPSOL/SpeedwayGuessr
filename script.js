@@ -1004,7 +1004,7 @@ async function loadRanking(type) {
     if (activeTab) activeTab.classList.add('active');
     
     const tbody = document.getElementById('rankingTableBody'); 
-    const thead = document.getElementById('rankingTableHead');
+    const thead = document.getElementById('rankingTableHead'); // W HTML dodaliśmy id="rankingTableHead" do <thead>
     let dateDisplay = document.getElementById('rankingDateDisplay');
     
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
@@ -1013,7 +1013,7 @@ async function loadRanking(type) {
     if (type === 'league') {
         if (dateDisplay) dateDisplay.style.display = 'none';
         // Nowe nagłówki tabeli dla ligi
-        thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>Ranga</th><th>Mecze</th><th style="color:var(--accent);">ELO</th></tr>`;
+        if (thead) thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>Ranga</th><th>Mecze</th><th style="color:var(--accent);">ELO</th></tr>`;
         
         try {
             // Pobieranie top 100 graczy ligowych
@@ -1021,37 +1021,69 @@ async function loadRanking(type) {
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
             if (tbody) tbody.innerHTML = '';
-            if (scores.length === 0) { if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Brak wyników. Zagraj swój pierwszy mecz! 🏆</td></tr>`; return; }
+            if (scores.length === 0) { 
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Brak wyników. Zagraj swój pierwszy mecz! 🏆</td></tr>`; 
+                return; 
+            }
 
-            scores.forEach((row, index) => {
-                if (row.provisional) return; // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji
+            let currentRankPosition = 1; // Własny licznik, by pozycje nie skakały jak pominiemy graczy na kalibracji
+
+            scores.forEach((row) => {
+                // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji (< 5 meczy)
+                if (row.provisional || row.matchesPlayed < 5) return; 
                 
-                let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
+                let rankClass = ""; 
+                if (currentRankPosition === 1) rankClass = "rank-1"; 
+                else if (currentRankPosition === 2) rankClass = "rank-2"; 
+                else if (currentRankPosition === 3) rankClass = "rank-3";
+                
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
                 let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
+                let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18); // Zmniejszona ikonka dla tabeli
                 
                 if (tbody) { 
                     tbody.innerHTML += `<tr ${isMe}>
-                        <td class="${rankClass}">${index + 1}</td>
+                        <td class="${rankClass}">${currentRankPosition}</td>
                         <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
-                        <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">${rangaText}</td>
+                        <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
+                            <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
+                                ${rangaImg} <span>${rangaText}</span>
+                            </div>
+                        </td>
                         <td style="color:var(--text-dim); font-size:11px;">${row.matchesPlayed}</td>
                         <td style="font-weight:900; color:var(--accent); font-size:14px;">${row.elo}</td>
                     </tr>`; 
                 }
+                currentRankPosition++;
             });
-        } catch (e) { console.error(e); if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; }
+
+            // Jeśli po przefiltrowaniu nikogo nie ma (wszyscy są w trakcie kalibracji)
+            if (tbody && tbody.innerHTML === '') {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Brak wyników. Wszyscy gracze są w trakcie kalibracji! ⚖️</td></tr>`;
+            }
+
+        } catch (e) { 
+            console.error(e); 
+            if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; 
+        }
         return;
     }
 
-    // 3. STARY TRYB (DAILY / ENDLESS)
+    // 3. STARY TRYB (DAILY / ENDLESS / TYGODNIOWE ITP.)
     let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
-    thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
+    if (thead) thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
     
-    if (type === 'daily') { if (dateDisplay) { dateDisplay.innerText = `Wyniki z: ${getDailyDateString(selectedDailyDay)} (Daily #${selectedDailyDay})`; dateDisplay.style.display = 'block'; } } 
-    else { if (dateDisplay) dateDisplay.style.display = 'none'; }
+    if (type === 'daily') { 
+        if (dateDisplay) { 
+            dateDisplay.innerText = `Wyniki z: ${getDailyDateString(selectedDailyDay)} (Daily #${selectedDailyDay})`; 
+            dateDisplay.style.display = 'block'; 
+        } 
+    } else { 
+        if (dateDisplay) dateDisplay.style.display = 'none'; 
+    }
 
     try {
         let snapshot;
@@ -1061,21 +1093,45 @@ async function loadRanking(type) {
         else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").get();
         
         let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
-        scores.sort((a, b) => { let winsA = a.won !== undefined ? a.won : (a.wins || 0); let winsB = b.won !== undefined ? b.won : (b.wins || 0); if (winsB !== winsA) return winsB - winsA; if (a.guesses !== b.guesses) return a.guesses - b.guesses; return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); });
+        scores.sort((a, b) => { 
+            let winsA = a.won !== undefined ? a.won : (a.wins || 0); 
+            let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
+            if (winsB !== winsA) return winsB - winsA; 
+            if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
+            return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
+        });
         
         if (tbody) tbody.innerHTML = '';
-        if (scores.length === 0) { if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>`; return; }
+        if (scores.length === 0) { 
+            if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>`; 
+            return; 
+        }
 
         scores.forEach((row, index) => {
-            let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
+            let rankClass = ""; 
+            if (index === 0) rankClass = "rank-1"; 
+            else if (index === 1) rankClass = "rank-2"; 
+            else if (index === 2) rankClass = "rank-3";
+            
             let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
             let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? 'NIE' : '0'}</span>`;
+            
             let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
             let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
-            if (tbody) { tbody.innerHTML += `<tr ${isMe}><td class="${rankClass}">${index + 1}</td><td class="rank-nick ${rankClass}">${safeRenderNick}</td><td>${wonText}</td><td>${row.guesses}</td></tr>`; }
+            if (tbody) { 
+                tbody.innerHTML += `<tr ${isMe}>
+                    <td class="${rankClass}">${index + 1}</td>
+                    <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
+                    <td>${wonText}</td>
+                    <td>${row.guesses}</td>
+                </tr>`; 
+            }
         });
-    } catch (e) { console.error(e); if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; }
+    } catch (e) { 
+        console.error(e); 
+        if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; 
+    }
 }
 function closeRanking() { const overlay = document.getElementById('rankingOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 
@@ -1130,15 +1186,14 @@ function getLeagueRankName(elo, matchesPlayed) {
     if (elo <= 1300) return 'ZŁOTO 3';
     if (elo <= 1400) return 'ZŁOTO 4';
     if (elo <= 1500) return 'ZŁOTO 5';
-    if (elo <= 1750) return 'PLATYNA 1';
-    if (elo <= 1950) return 'PLATYNA 2';
-    if (elo <= 2150) return 'PLATYNA 3';
-    if (elo <= 2350) return 'PLATYNA 4';
-    if (elo <= 2550) return 'PLATYNA 5';
-    if (elo <= 2750) return 'DIAMENT 1';
-    if (elo <= 3100) return 'DIAMENT 2';
-    if (elo <= 3500) return 'DIAMENT 3';
-    if (elo <= 4000) return 'DIAMENT 4';
+    if (elo <= 1750) return 'SZMARAGD 1';
+    if (elo <= 1950) return 'SZMARAGD 2';
+    if (elo <= 2150) return 'SZMARAGD 3';
+    if (elo <= 2350) return 'SZMARAGD 4';
+    if (elo <= 2750) return 'SZMARAGD 5';
+    if (elo <= 3100) return 'DIAMENT 1';
+    if (elo <= 3500) return 'DIAMENT 2';
+    if (elo <= 4000) return 'DIAMENT 3';
     return 'LEGENDA';
 }
 
@@ -1147,9 +1202,42 @@ function getRankClass(elo, matchesPlayed) {
     if (elo <= 475) return 'rank-bronze';
     if (elo <= 950) return 'rank-silver';
     if (elo <= 1500) return 'rank-gold';
-    if (elo <= 2550) return 'rank-platinum';
+    if (elo <= 2750) return 'rank-emerald';
     if (elo <= 4000) return 'rank-diamond';
     return 'rank-legend';
+}
+
+// NOWOŚĆ: Funkcja generująca tag obrazka z odpowiednią rangą
+function getLeagueImageTag(elo, matchesPlayed, size = 24) {
+    if (matchesPlayed < 5) return '⚖️'; // Waga dla Kalibracji
+    
+    let src = '';
+    if (elo <= 175) src = 'images/rangi/ranga_braz1.png';
+    else if (elo <= 250) src = 'images/rangi/ranga_braz2.png';
+    else if (elo <= 325) src = 'images/rangi/ranga_braz3.png';
+    else if (elo <= 400) src = 'images/rangi/ranga_braz4.png';
+    else if (elo <= 475) src = 'images/rangi/ranga_braz5.png';
+    else if (elo <= 550) src = 'images/rangi/ranga_srebro1.png';
+    else if (elo <= 650) src = 'images/rangi/ranga_srebro2.png';
+    else if (elo <= 750) src = 'images/rangi/ranga_srebro3.png';
+    else if (elo <= 850) src = 'images/rangi/ranga_srebro4.png';
+    else if (elo <= 950) src = 'images/rangi/ranga_srebro5.png';
+    else if (elo <= 1100) src = 'images/rangi/ranga_zloto1.png';
+    else if (elo <= 1200) src = 'images/rangi/ranga_zloto2.png';
+    else if (elo <= 1300) src = 'images/rangi/ranga_zloto3.png';
+    else if (elo <= 1400) src = 'images/rangi/ranga_zloto4.png';
+    else if (elo <= 1500) src = 'images/rangi/ranga_zloto5.png';
+    else if (elo <= 1750) src = 'images/rangi/ranga_szmaragd1.png';
+    else if (elo <= 1950) src = 'images/rangi/ranga_szmaragd2.png';
+    else if (elo <= 2150) src = 'images/rangi/ranga_szmaragd3.png';
+    else if (elo <= 2350) return 'images/rangi/ranga_szmaragd4.png';
+    else if (elo <= 2750) src = 'images/rangi/ranga_szmaragd5.png';
+    else if (elo <= 3100) src = 'images/rangi/ranga_diament1.png';
+    else if (elo <= 3500) src = 'images/rangi/ranga_diament2.png';
+    else if (elo <= 4000) src = 'images/rangi/ranga_diament3.png';
+    else src = 'images/rangi/ranga_legenda.png';
+    
+    return `<img src="images/rangi/${src}" alt="Ranga" style="height: ${size}px; vertical-align: middle; margin-right: 5px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));">`;
 }
 
 function updateLeagueUI() {
@@ -1162,7 +1250,9 @@ function updateLeagueUI() {
             display.innerText = `KALIBRACJA (${played}/5)`;
         } else {
             const rank = getLeagueRankName(elo, played);
-            display.innerText = `${rank} | ELO: ${Math.round(elo)}`;
+            const imgTag = getLeagueImageTag(elo, played, 24); // Rysuje grafikę na 24px
+            // Używamy innerHTML zamiast innerText, żeby obrazek mógł się wyrenderować
+            display.innerHTML = `${imgTag} <span style="vertical-align: middle;">${rank} | ELO: ${Math.round(elo)}</span>`;
         }
         display.className = getRankClass(elo, played);
     }
@@ -1282,7 +1372,8 @@ async function startLeagueMatchmaking() {
                 if (roomData.hostId !== playerId) {
                     const roomCode = roomData.roomCode;
                     await db.collection("clash_rooms").doc(roomCode).update({
-                        p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'blue' },
+                        // DODANE: matchesPlayed
+                        p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'blue' },
                         p2Ready: true
                     });
                     await queueRef.doc(queueDoc.id).update({ status: "matched", guestId: playerId });
@@ -1309,7 +1400,8 @@ async function startLeagueMatchmaking() {
             await db.collection("clash_rooms").doc(roomCode).set({
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 status: 'waiting', type: 'league',
-                p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, color: 'red' }, p2: null,
+                // DODANE: matchesPlayed
+                p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'red' }, p2: null,
                 p1Ready: true, p2Ready: false, score: { p1: 0, p2: 0 },
                 rows: clashRows, cols: clashCols, constraints: constraints, board: Array(9).fill(null),
                 guessedPlayers: Array(9).fill(null), turn: 'red', deadline: 0, lastAction: ''
@@ -1359,6 +1451,9 @@ async function updateLeagueStats(gameData) {
 
     ensureLeagueStats(userStats);
     const league = userStats.clashLeague;
+    // Zabezpieczenie na brak zmiennej winStreak u starych graczy
+    if (typeof league.winStreak !== 'number') league.winStreak = 0; 
+    
     const opponent = myClashColor === 'red' ? gameData.p2 : gameData.p1;
     const opponentElo = opponent ? (opponent.elo || 1000) : 1000;
     const finishedBySurrender = gameData.finishReason === 'surrender';
@@ -1369,6 +1464,7 @@ async function updateLeagueStats(gameData) {
     if (gameData.winner === 'draw') {
         eloChange = 5; 
         league.draws++;
+        league.winStreak = 0; // Remis psuje serię
         resultText = "REMIS";
     } else {
         const isWin = gameData.winner === myClashColor;
@@ -1383,9 +1479,17 @@ async function updateLeagueStats(gameData) {
 
         if (isWin) {
             league.wins++;
+            league.winStreak++;
             resultText = finishedBySurrender ? "WYGRANA (WALKOWER)" : "WYGRANA";
+            
+            // BONUS ZA SERIĘ (3 lub więcej wygranych)
+            if (league.winStreak >= 3) {
+                eloChange += 5;
+                resultText += ` (SERIA 🔥 +5)`;
+            }
         } else {
             league.losses++;
+            league.winStreak = 0;
             resultText = finishedBySurrender ? "PORAŻKA (PODDANIE)" : "PORAŻKA";
         }
     }
