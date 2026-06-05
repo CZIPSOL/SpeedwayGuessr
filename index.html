@@ -219,14 +219,15 @@
     </div>
 
 
-    <!-- ============================================== -->
+        <!-- ============================================== -->
     <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
     <!-- ============================================== -->
-    <div class="top-right-buttons">
-        <button onclick="openRanking('league')" class="icon-btn" title="Ranking Ligowy">🏆</button>
-        <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
-        <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
-    </div>
+    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="openRanking('league')" class="icon-btn" title="Ranking Ligowy">🏆</button>
+            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
+            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
 
         <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
         
