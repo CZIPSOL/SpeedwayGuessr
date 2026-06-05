@@ -1160,7 +1160,7 @@ let clashGuessedPlayers = [];
 let clashActiveCellIdx = null;
 let clashLeaveInProgress = false;
 
-const ELO_K_FACTOR_CALIBRATION = 60; // Szybkie zmiany podczas 5 pierwszych gier
+const ELO_K_FACTOR_CALIBRATION = 60;
 const ELO_K_FACTOR_NORMAL = 30;
 const SURRENDER_MIN_ELO_SWING = 12;
 window.hasUpdatedLeague = false; 
@@ -1207,35 +1207,34 @@ function getRankClass(elo, matchesPlayed) {
     return 'rank-legend';
 }
 
-// NOWOŚĆ: Funkcja generująca tag obrazka z odpowiednią rangą
 function getLeagueImageTag(elo, matchesPlayed, size = 24) {
     if (matchesPlayed < 5) return '⚖️'; // Waga dla Kalibracji
     
     let src = '';
-    if (elo <= 175) src = 'images/rangi/ranga_braz1.png';
-    else if (elo <= 250) src = 'images/rangi/ranga_braz2.png';
-    else if (elo <= 325) src = 'images/rangi/ranga_braz3.png';
-    else if (elo <= 400) src = 'images/rangi/ranga_braz4.png';
-    else if (elo <= 475) src = 'images/rangi/ranga_braz5.png';
-    else if (elo <= 550) src = 'images/rangi/ranga_srebro1.png';
-    else if (elo <= 650) src = 'images/rangi/ranga_srebro2.png';
-    else if (elo <= 750) src = 'images/rangi/ranga_srebro3.png';
-    else if (elo <= 850) src = 'images/rangi/ranga_srebro4.png';
-    else if (elo <= 950) src = 'images/rangi/ranga_srebro5.png';
-    else if (elo <= 1100) src = 'images/rangi/ranga_zloto1.png';
-    else if (elo <= 1200) src = 'images/rangi/ranga_zloto2.png';
-    else if (elo <= 1300) src = 'images/rangi/ranga_zloto3.png';
-    else if (elo <= 1400) src = 'images/rangi/ranga_zloto4.png';
-    else if (elo <= 1500) src = 'images/rangi/ranga_zloto5.png';
-    else if (elo <= 1750) src = 'images/rangi/ranga_szmaragd1.png';
-    else if (elo <= 1950) src = 'images/rangi/ranga_szmaragd2.png';
-    else if (elo <= 2150) src = 'images/rangi/ranga_szmaragd3.png';
-    else if (elo <= 2350) return 'images/rangi/ranga_szmaragd4.png';
-    else if (elo <= 2750) src = 'images/rangi/ranga_szmaragd5.png';
-    else if (elo <= 3100) src = 'images/rangi/ranga_diament1.png';
-    else if (elo <= 3500) src = 'images/rangi/ranga_diament2.png';
-    else if (elo <= 4000) src = 'images/rangi/ranga_diament3.png';
-    else src = 'images/rangi/ranga_legenda.png';
+    if (elo <= 175) src = 'ranga_braz1.png';
+    else if (elo <= 250) src = 'ranga_braz2.png';
+    else if (elo <= 325) src = 'ranga_braz3.png';
+    else if (elo <= 400) src = 'ranga_braz4.png';
+    else if (elo <= 475) src = 'ranga_braz5.png';
+    else if (elo <= 550) src = 'ranga_srebro1.png';
+    else if (elo <= 650) src = 'ranga_srebro2.png';
+    else if (elo <= 750) src = 'ranga_srebro3.png';
+    else if (elo <= 850) src = 'ranga_srebro4.png';
+    else if (elo <= 950) src = 'ranga_srebro5.png';
+    else if (elo <= 1100) src = 'ranga_zloto1.png';
+    else if (elo <= 1200) src = 'ranga_zloto2.png';
+    else if (elo <= 1300) src = 'ranga_zloto3.png';
+    else if (elo <= 1400) src = 'ranga_zloto4.png';
+    else if (elo <= 1500) src = 'ranga_zloto5.png';
+    else if (elo <= 1750) src = 'ranga_szmaragd1.png';
+    else if (elo <= 1950) src = 'ranga_szmaragd2.png';
+    else if (elo <= 2150) src = 'ranga_szmaragd3.png';
+    else if (elo <= 2350) src = 'ranga_szmaragd4.png';
+    else if (elo <= 2750) src = 'ranga_szmaragd5.png';
+    else if (elo <= 3100) src = 'ranga_diament1.png';
+    else if (elo <= 3500) src = 'ranga_diament2.png';
+    else if (elo <= 4000) src = 'ranga_diament3.png';
+    else src = 'ranga_legenda.png'; // Zmiana nazwy żeby nie było literówek!
     
     return `<img src="images/rangi/${src}" alt="Ranga" style="height: ${size}px; vertical-align: middle; margin-right: 5px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));">`;
 }
@@ -1250,8 +1249,7 @@ function updateLeagueUI() {
             display.innerText = `KALIBRACJA (${played}/5)`;
         } else {
             const rank = getLeagueRankName(elo, played);
-            const imgTag = getLeagueImageTag(elo, played, 24); // Rysuje grafikę na 24px
-            // Używamy innerHTML zamiast innerText, żeby obrazek mógł się wyrenderować
+            const imgTag = getLeagueImageTag(elo, played, 24); 
             display.innerHTML = `${imgTag} <span style="vertical-align: middle;">${rank} | ELO: ${Math.round(elo)}</span>`;
         }
         display.className = getRankClass(elo, played);
@@ -1372,7 +1370,6 @@ async function startLeagueMatchmaking() {
                 if (roomData.hostId !== playerId) {
                     const roomCode = roomData.roomCode;
                     await db.collection("clash_rooms").doc(roomCode).update({
-                        // DODANE: matchesPlayed
                         p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'blue' },
                         p2Ready: true
                     });
@@ -1400,7 +1397,6 @@ async function startLeagueMatchmaking() {
             await db.collection("clash_rooms").doc(roomCode).set({
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 status: 'waiting', type: 'league',
-                // DODANE: matchesPlayed
                 p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'red' }, p2: null,
                 p1Ready: true, p2Ready: false, score: { p1: 0, p2: 0 },
                 rows: clashRows, cols: clashCols, constraints: constraints, board: Array(9).fill(null),
@@ -1451,7 +1447,6 @@ async function updateLeagueStats(gameData) {
 
     ensureLeagueStats(userStats);
     const league = userStats.clashLeague;
-    // Zabezpieczenie na brak zmiennej winStreak u starych graczy
     if (typeof league.winStreak !== 'number') league.winStreak = 0; 
     
     const opponent = myClashColor === 'red' ? gameData.p2 : gameData.p1;
@@ -1464,7 +1459,7 @@ async function updateLeagueStats(gameData) {
     if (gameData.winner === 'draw') {
         eloChange = 5; 
         league.draws++;
-        league.winStreak = 0; // Remis psuje serię
+        league.winStreak = 0; 
         resultText = "REMIS";
     } else {
         const isWin = gameData.winner === myClashColor;
@@ -1481,8 +1476,6 @@ async function updateLeagueStats(gameData) {
             league.wins++;
             league.winStreak++;
             resultText = finishedBySurrender ? "WYGRANA (WALKOWER)" : "WYGRANA";
-            
-            // BONUS ZA SERIĘ (3 lub więcej wygranych)
             if (league.winStreak >= 3) {
                 eloChange += 5;
                 resultText += ` (SERIA 🔥 +5)`;
@@ -1688,8 +1681,21 @@ function showVsScreen(data) {
     document.getElementById('clashSummaryOverlay').style.display = 'none'; 
     const vsOverlay = document.getElementById('clashVsOverlay');
     
-    document.getElementById('vsP1Name').innerText = data.p1.nick; document.getElementById('vsP2Name').innerText = data.p2.nick;
-    document.getElementById('cp1Nick').innerText = data.p1.nick; document.getElementById('cp2Nick').innerText = data.p2.nick;
+    // Ustawiamy nicki i ewentualnie grafiki rang
+    let p1NickHTML = data.p1.nick;
+    let p2NickHTML = data.p2.nick;
+    
+    if (data.type === 'league') {
+        const p1RankImg = getLeagueImageTag(data.p1.elo, data.p1.matchesPlayed || 5, 24);
+        const p2RankImg = getLeagueImageTag(data.p2.elo, data.p2.matchesPlayed || 5, 24);
+        p1NickHTML = `${p1RankImg} ${data.p1.nick}`;
+        p2NickHTML = `${p2RankImg} ${data.p2.nick}`;
+    }
+
+    document.getElementById('vsP1Name').innerHTML = p1NickHTML; 
+    document.getElementById('vsP2Name').innerHTML = p2NickHTML;
+    document.getElementById('cp1Nick').innerHTML = p1NickHTML; 
+    document.getElementById('cp2Nick').innerHTML = p2NickHTML;
 
     vsOverlay.style.display = 'block'; setTimeout(() => vsOverlay.style.opacity = '1', 10); playSound('win');
 
