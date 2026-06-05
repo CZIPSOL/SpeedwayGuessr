@@ -988,15 +988,70 @@ async function shareResult() {
     } catch (error) { console.error("Error sharing:", error); alert("Wystąpił nieoczekiwany błąd podczas udostępniania."); }
 }
 
-function openRanking() { promptForNick(async () => { const overlay = document.getElementById('rankingOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10); loadRanking('daily'); }); }
+function openRanking(defaultTab = 'daily') { 
+    promptForNick(async () => { 
+        const overlay = document.getElementById('rankingOverlay'); 
+        overlay.style.display = 'block'; 
+        setTimeout(() => overlay.style.opacity = '1', 10); 
+        loadRanking(defaultTab); 
+    }); 
+}
 
 async function loadRanking(type) {
-    document.querySelectorAll('.rank-tab').forEach(btn => btn.classList.remove('active')); const activeTab = document.getElementById(`tab-${type}`); if (activeTab) activeTab.classList.add('active');
-    const tbody = document.getElementById('rankingTableBody'); if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
-    let headerWon = document.getElementById('rankHeaderWon'); let dateDisplay = document.getElementById('rankingDateDisplay');
+    // 1. Zmiana aktywnych zakładek
+    document.querySelectorAll('.rank-tab').forEach(btn => btn.classList.remove('active')); 
+    const activeTab = document.getElementById(`tab-${type}`); 
+    if (activeTab) activeTab.classList.add('active');
     
-    if (type === 'daily') { if (headerWon) headerWon.style.display = 'none'; if (dateDisplay) { dateDisplay.innerText = `Wyniki z: ${getDailyDateString(selectedDailyDay)} (Daily #${selectedDailyDay})`; dateDisplay.style.display = 'block'; } } 
-    else { if (headerWon) { headerWon.style.display = ''; headerWon.innerText = i18n[currentLang].rankTotalWins || "Suma Wygranych"; } if (dateDisplay) dateDisplay.style.display = 'none'; }
+    const tbody = document.getElementById('rankingTableBody'); 
+    const thead = document.getElementById('rankingTableHead');
+    let dateDisplay = document.getElementById('rankingDateDisplay');
+    
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
+
+    // 2. NOWOŚĆ: TRYB LIGOWY CLASH
+    if (type === 'league') {
+        if (dateDisplay) dateDisplay.style.display = 'none';
+        // Nowe nagłówki tabeli dla ligi
+        thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>Ranga</th><th>Mecze</th><th style="color:var(--accent);">ELO</th></tr>`;
+        
+        try {
+            // Pobieranie top 100 graczy ligowych
+            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
+            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            
+            if (tbody) tbody.innerHTML = '';
+            if (scores.length === 0) { if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Brak wyników. Zagraj swój pierwszy mecz! 🏆</td></tr>`; return; }
+
+            scores.forEach((row, index) => {
+                if (row.provisional) return; // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji
+                
+                let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
+                let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+                let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
+                
+                if (tbody) { 
+                    tbody.innerHTML += `<tr ${isMe}>
+                        <td class="${rankClass}">${index + 1}</td>
+                        <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
+                        <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">${rangaText}</td>
+                        <td style="color:var(--text-dim); font-size:11px;">${row.matchesPlayed}</td>
+                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${row.elo}</td>
+                    </tr>`; 
+                }
+            });
+        } catch (e) { console.error(e); if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; }
+        return;
+    }
+
+    // 3. STARY TRYB (DAILY / ENDLESS)
+    let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
+    thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
+    
+    if (type === 'daily') { if (dateDisplay) { dateDisplay.innerText = `Wyniki z: ${getDailyDateString(selectedDailyDay)} (Daily #${selectedDailyDay})`; dateDisplay.style.display = 'block'; } } 
+    else { if (dateDisplay) dateDisplay.style.display = 'none'; }
 
     try {
         let snapshot;
@@ -1007,17 +1062,20 @@ async function loadRanking(type) {
         
         let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
         scores.sort((a, b) => { let winsA = a.won !== undefined ? a.won : (a.wins || 0); let winsB = b.won !== undefined ? b.won : (b.wins || 0); if (winsB !== winsA) return winsB - winsA; if (a.guesses !== b.guesses) return a.guesses - b.guesses; return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); });
+        
         if (tbody) tbody.innerHTML = '';
-        if (scores.length === 0) { let colspan = type === 'daily' ? "3" : "4"; if (tbody) tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>`; return; }
+        if (scores.length === 0) { if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>`; return; }
 
         scores.forEach((row, index) => {
             let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
-            let wonCol = ''; if (type !== 'daily') { let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); let wonText = winsAmount > 0 ? `<span class="rank-won">${winsAmount}</span>` : `<span class="rank-lost">0</span>`; wonCol = `<td>${wonText}</td>`; }
+            let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
+            let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? 'NIE' : '0'}</span>`;
             let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
             let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
-            if (tbody) { tbody.innerHTML += `<tr ${isMe}><td class="${rankClass}">${index + 1}</td><td class="rank-nick ${rankClass}">${safeRenderNick}</td>${wonCol}<td>${row.guesses}</td></tr>`; }
+            
+            if (tbody) { tbody.innerHTML += `<tr ${isMe}><td class="${rankClass}">${index + 1}</td><td class="rank-nick ${rankClass}">${safeRenderNick}</td><td>${wonText}</td><td>${row.guesses}</td></tr>`; }
         });
-    } catch (e) { console.error("Błąd ładowania rankingu:", e); let colspan = type === 'daily' ? "3" : "4"; if (tbody) tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align: center; color: var(--red-neon);">Błąd łączenia z bazą danych ❌</td></tr>`; }
+    } catch (e) { console.error(e); if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; }
 }
 function closeRanking() { const overlay = document.getElementById('rankingOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 
@@ -1057,21 +1115,40 @@ window.hasUpdatedLeague = false;
 
 function getLeagueRankName(elo, matchesPlayed) {
     if (matchesPlayed < 5) return `KALIBRACJA (${matchesPlayed}/5)`;
-    if (elo < 900) return 'BRĄZ';
-    if (elo < 1100) return 'SREBRO';
-    if (elo < 1300) return 'ZŁOTO';
-    if (elo < 1500) return 'PLATYNA';
-    if (elo < 1700) return 'DIAMENT';
+    if (elo <= 175) return 'BRĄZ 1';
+    if (elo <= 250) return 'BRĄZ 2';
+    if (elo <= 325) return 'BRĄZ 3';
+    if (elo <= 400) return 'BRĄZ 4';
+    if (elo <= 475) return 'BRĄZ 5';
+    if (elo <= 550) return 'SREBRO 1';
+    if (elo <= 650) return 'SREBRO 2';
+    if (elo <= 750) return 'SREBRO 3';
+    if (elo <= 850) return 'SREBRO 4';
+    if (elo <= 950) return 'SREBRO 5';
+    if (elo <= 1100) return 'ZŁOTO 1';
+    if (elo <= 1200) return 'ZŁOTO 2';
+    if (elo <= 1300) return 'ZŁOTO 3';
+    if (elo <= 1400) return 'ZŁOTO 4';
+    if (elo <= 1500) return 'ZŁOTO 5';
+    if (elo <= 1750) return 'PLATYNA 1';
+    if (elo <= 1950) return 'PLATYNA 2';
+    if (elo <= 2150) return 'PLATYNA 3';
+    if (elo <= 2350) return 'PLATYNA 4';
+    if (elo <= 2550) return 'PLATYNA 5';
+    if (elo <= 2750) return 'DIAMENT 1';
+    if (elo <= 3100) return 'DIAMENT 2';
+    if (elo <= 3500) return 'DIAMENT 3';
+    if (elo <= 4000) return 'DIAMENT 4';
     return 'LEGENDA';
 }
 
 function getRankClass(elo, matchesPlayed) {
     if (matchesPlayed < 5) return 'rank-calibration';
-    if (elo < 900) return 'rank-bronze';
-    if (elo < 1100) return 'rank-silver';
-    if (elo < 1300) return 'rank-gold';
-    if (elo < 1500) return 'rank-platinum';
-    if (elo < 1700) return 'rank-diamond';
+    if (elo <= 475) return 'rank-bronze';
+    if (elo <= 950) return 'rank-silver';
+    if (elo <= 1500) return 'rank-gold';
+    if (elo <= 2550) return 'rank-platinum';
+    if (elo <= 4000) return 'rank-diamond';
     return 'rank-legend';
 }
 

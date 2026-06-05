@@ -96,26 +96,23 @@
 
     <!-- RANKING MODAL -->
     <div id="rankingOverlay" class="win-overlay" style="display: none; z-index: 10000;">
-        <div class="stats-modal" style="max-width: 500px; padding: 30px 15px;">
+        <div class="stats-modal" style="max-width: 550px; padding: 30px 15px;">
             <h2 style="color: var(--accent); margin-bottom: 15px;">RANKING</h2>
             <div id="rankingDateDisplay" style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px; font-weight: 700; text-transform: uppercase;"></div>
             
-            <div class="tabs-container" style="display: flex; gap: 5px; justify-content: center; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px;">
+            <div class="tabs-container" style="display: flex; gap: 5px; justify-content: center; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; flex-wrap: wrap;">
                 <button id="tab-daily" class="rank-tab active" onclick="loadRanking('daily')" data-i18n="tabDaily">DZIENNY</button>
                 <button id="tab-weekly" class="rank-tab" onclick="loadRanking('weekly')" data-i18n="tabWeekly">TYDZIEŃ</button>
                 <button id="tab-monthly" class="rank-tab" onclick="loadRanking('monthly')" data-i18n="tabMonthly">MIESIĄC</button>
                 <button id="tab-alltime" class="rank-tab" onclick="loadRanking('alltime')" data-i18n="tabAllTime">OGÓLNY</button>
+                <!-- NOWA ZAKŁADKA -->
+                <button id="tab-league" class="rank-tab" onclick="loadRanking('league')" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; font-weight: 900;">LIGA CLASH</button>
             </div>
 
             <div style="overflow-x: auto; width: 100%;">
                 <table class="ranking-table">
-                    <thead>
-                        <tr>
-                            <th>Poz.</th>
-                            <th style="text-align: left;">Nick</th>
-                            <th id="rankHeaderWon">Wygrane</th>
-                            <th data-i18n="rankGuesses">Próby</th>
-                        </tr>
+                    <thead id="rankingTableHead">
+                        <!-- Tabela jest dynamicznie generowana przez JS -->
                     </thead>
                     <tbody id="rankingTableBody">
                     </tbody>
@@ -225,12 +222,11 @@
     <!-- ============================================== -->
     <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
     <!-- ============================================== -->
-    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
-        <div class="top-right-buttons">
-            <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
-            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
-            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
-        </div>
+    <div class="top-right-buttons">
+        <button onclick="openRanking('league')" class="icon-btn" title="Ranking Ligowy">🏆</button>
+        <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
+        <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
+    </div>
 
         <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
         
