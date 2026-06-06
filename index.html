@@ -216,6 +216,9 @@
                 <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
             </button>
         </div>
+        <button onclick="openSuggestion()" style="margin-top: 25px; font-size: 12px; color: var(--text-dim); display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.02); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-family: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
+            💡 <span>Brakuje zawodnika? Zaproponuj go!</span>
+        </button>
     </div>
 
 
@@ -515,6 +518,32 @@
         </div>
     </div>
 
+    <div id="suggestionOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal" style="max-width: 420px; text-align: left;">
+            <h2 style="color: var(--accent); margin-bottom: 10px; text-align: center; font-weight: 900;">ZGŁOŚ ZAWODNIKA</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px; text-align: center; line-height: 1.4;">Zauważyłeś brak żużlowca podczas gry? Podaj jego dane, a po weryfikacji dodam go do oficjalnej bazy! 🤝</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 14px; width: 100%;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Imię i Nazwisko *</label>
+                    <input type="text" id="sugNameInput" placeholder="np. Zenon Plech" style="padding: 12px; font-size: 14px; font-weight: 600;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Kraj pochodzenia</label>
+                    <input type="text" id="sugCountryInput" placeholder="np. Polska" style="padding: 12px; font-size: 14px; font-weight: 600;">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Kluby / Uwagi (opcjonalnie)</label>
+                    <textarea id="sugNotesInput" placeholder="np. Stal Gorzów, Wybrzeże Gdańsk..." style="padding: 12px; font-size: 14px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; resize: vertical; min-height: 70px; font-family: inherit; font-weight: 600; box-sizing: border-box;"></textarea>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 25px; width: 100%;">
+                <button onclick="submitSuggestion()" class="btn-reset" id="btnSubmitSug" style="flex: 1; padding: 12px; font-size: 14px;">WYŚLIJ</button>
+                <button onclick="closeSuggestion()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;">ZAMKNIJ</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- ====== STOPKA I AKCJE PO GRZE ====== -->

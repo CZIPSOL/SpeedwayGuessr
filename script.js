@@ -2131,6 +2131,70 @@ function closeClashInfo() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+// --- FORMULARZ ZGŁASZANIA BRAKUJĄCYCH ZAWODNIKÓW ---
+function openSuggestion() {
+    const overlay = document.getElementById('suggestionOverlay');
+    if (!overlay) return;
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeSuggestion() {
+    const overlay = document.getElementById('suggestionOverlay');
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+async function submitSuggestion() {
+    const nameInput = document.getElementById('sugNameInput');
+    const countryInput = document.getElementById('sugCountryInput');
+    const notesInput = document.getElementById('sugNotesInput');
+    const btn = document.getElementById('btnSubmitSug');
+    
+    if (!nameInput || !btn) return;
+
+    let name = nameInput.value.trim();
+    let country = countryInput ? countryInput.value.trim() : "";
+    let notes = notesInput ? notesInput.value.trim() : "";
+    
+    if (name.length < 3) {
+        appAlert("Wpisz poprawne imię i nazwisko zawodnika!", "Błąd formularza");
+        return;
+    }
+    
+    const originalText = btn.innerText;
+    btn.innerText = "WYSYŁANIE...";
+    btn.disabled = true;
+    
+    try {
+        // Zapis zgłoszenia do dedykowanej kolekcji w Firestore
+        await db.collection("player_suggestions").add({
+            playerName: escapeHTML(name),
+            country: escapeHTML(country),
+            notes: escapeHTML(notes),
+            suggestedBy: playerNickname || "Anonimowy Gość",
+            userId: playerId || "unknown",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        appAlert("Dziękuję! Twoja propozycja została przesłana do weryfikacji. 🎯", "Zgłoszenie wysłane");
+        
+        // Czyszczenie pól i zamknięcie
+        nameInput.value = "";
+        if (countryInput) countryInput.value = "";
+        if (notesInput) notesInput.value = "";
+        closeSuggestion();
+        
+    } catch (e) {
+        console.error("Suggestion save error:", e);
+        appAlert("Nie udało się wysłać zgłoszenia. Sprawdź połączenie internetowe.", "Błąd");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
 try {
     window.openProfile = openProfile;
     window.closeProfile = closeProfile;
@@ -2172,4 +2236,7 @@ try {
     window.toggleSound = toggleSound;
     window.openClashHistory = openClashHistory;
     window.closeClashHistory = closeClashHistory;
+    window.openSuggestion = openSuggestion;
+    window.closeSuggestion = closeSuggestion;
+    window.submitSuggestion = submitSuggestion;
 } catch (e) {}
