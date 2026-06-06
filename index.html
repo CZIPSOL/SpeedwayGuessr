@@ -461,16 +461,47 @@
 
     <!-- CLASH: ZASADY GRY -->
     <div id="clashInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
-        <div class="stats-modal" style="max-width: 450px; text-align: left;">
-            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;" data-i18n="clashRulesTitle">Zasady gry: Speedway Clash ⚔️</h3>
+        <div class="stats-modal" style="max-width: 450px; text-align: left; max-height: 90vh; overflow-y: auto;">
+            
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;">Zasady gry: Speedway Clash ⚔️</h3>
             <ul style="font-size: 13px; color: var(--text-main); padding-left: 20px; line-height: 1.6; margin-bottom: 20px; font-weight: 600;">
-                <li style="margin-bottom: 10px;" data-i18n="clashRules1">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
-                <li style="margin-bottom: 10px;" data-i18n="clashRules2">Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował <b>oba krzyżujące się kluby</b>.</li>
-                <li style="margin-bottom: 10px;" data-i18n="clashRules3">Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).</li>
-                <li style="margin-bottom: 10px;" data-i18n="clashRules4">Masz <b>2 minuty</b> na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.</li>
-                <li data-i18n="clashRules5">Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
+                <li style="margin-bottom: 10px;">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
+                <li style="margin-bottom: 10px;">Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował <b>oba krzyżujące się kluby</b>.</li>
+                <li style="margin-bottom: 10px;">Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).</li>
+                <li style="margin-bottom: 10px; background: rgba(0,255,102,0.1); padding: 5px; border-radius: 5px; border-left: 3px solid var(--green-neon);">
+                    <b>DODATKOWY WYMÓG:</b> Czasami pod herbem klubu w górnym rzędzie pojawi się zielona nazwa kraju (np. <span style="color:var(--green-neon);">[Dania]</span>). Oznacza to, że odgadywany zawodnik w tej kolumnie musi dodatkowo pochodzić z tego państwa!
+                </li>
+                <li style="margin-bottom: 10px;">Masz <b>2 minuty</b> na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.</li>
+                <li>Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
             </ul>
-            <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;" data-i18n="clashUnderstood">ZROZUMIANO</button>
+
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;">System Rang</h3>
+            <p style="font-size: 11px; color: var(--text-dim); text-align: center; margin-top: -10px; margin-bottom: 15px;">Wygrywaj mecze ligowe, by awansować!</p>
+            
+            <div style="font-size: 13px; font-weight: 700; display: flex; flex-direction: column; gap: 8px; margin-bottom: 25px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(184, 115, 51, 0.15); border: 1px solid rgba(184, 115, 51, 0.4); border-radius: 8px;">
+                    <span><img src="images/rangi/ranga_braz5.png" style="height: 20px; vertical-align: middle; margin-right: 5px;"> BRĄZ (1-5)</span> <span style="color: var(--text-dim);">ELO: 0 - 475</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(216, 216, 216, 0.15); border: 1px solid rgba(216, 216, 216, 0.4); border-radius: 8px;">
+                    <span><img src="images/rangi/ranga_srebro5.png" style="height: 20px; vertical-align: middle; margin-right: 5px;"> SREBRO (1-5)</span> <span style="color: var(--text-dim);">ELO: 476 - 950</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(241, 196, 15, 0.15); border: 1px solid rgba(241, 196, 15, 0.4); border-radius: 8px;">
+                    <span><img src="images/rangi/ranga_zloto5.png" style="height: 20px; vertical-align: middle; margin-right: 5px;"> ZŁOTO (1-5)</span> <span style="color: var(--text-dim);">ELO: 951 - 1500</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(46, 204, 113, 0.15); border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 8px;">
+                    <span><img src="images/rangi/ranga_szmaragd5.png" style="height: 20px; vertical-align: middle; margin-right: 5px;"> SZMARAGD (1-5)</span> <span style="color: var(--text-dim);">ELO: 1501 - 2750</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(111, 255, 233, 0.15); border: 1px solid rgba(111, 255, 233, 0.4); border-radius: 8px;">
+                    <span><img src="images/rangi/ranga_diament3.png" style="height: 20px; vertical-align: middle; margin-right: 5px;"> DIAMENT (1-3)</span> <span style="color: var(--text-dim);">ELO: 2751 - 4000</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255, 95, 215, 0.15); border: 1px solid rgba(255, 95, 215, 0.5); border-radius: 8px; box-shadow: 0 0 10px rgba(255, 95, 215, 0.2);">
+                    <span style="color: #ff5fd7; font-weight: 900;"><img src="images/rangi/ranga_legenda.png" style="height: 20px; vertical-align: middle; margin-right: 5px;"> LEGENDA</span> <span style="color: #ff5fd7; opacity: 0.8;">ELO: 4001+</span>
+                </div>
+            </div>
+
+            <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;">ZROZUMIANO</button>
         </div>
     </div>
 
