@@ -114,16 +114,6 @@ async function syncStatsFromFirebase() {
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
 }
 
-async function syncStatsToFirebase() {
-    if (!auth.currentUser) return;
-    try {
-        await db.collection('users').doc(auth.currentUser.uid).set({
-            stats: JSON.stringify(userStats),
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        await syncLeagueScoreToFirebase();
-    } catch (e) { console.error("Cloud Sync Save Error:", e); }
-}
 
 function ensureLeagueStats(stats) {
     if (!stats.clashLeague) {
@@ -162,11 +152,25 @@ function getLeagueDisplayText() {
     return `${getLeagueRankName(league.elo, league.matchesPlayed)} • ELO ${Math.round(league.elo)} • ${league.matchesPlayed} MECZ/Y`;
 }
 
-async function syncLeagueScoreToFirebase() {
+async function syncStatsToFirebase() {
+    // Ranking ELO wysyłamy ZAWSZE (nawet jako Gość)
+    await syncLeagueScoreToFirebase();
+
+    // Zapis statystyk profilu i archiwum zostawiamy tylko dla zalogowanych (Google)
     if (!auth.currentUser) return;
+    try {
+        await db.collection('users').doc(auth.currentUser.uid).set({
+            stats: JSON.stringify(userStats),
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    } catch (e) { console.error("Cloud Sync Save Error:", e); }
+}
+
+async function syncLeagueScoreToFirebase() {
+    if (!playerId) return; // Otwieramy bramki! Teraz wpuszcza i graczy Google, i Gości.
     const league = ensureLeagueStats(userStats).clashLeague;
     try {
-        await db.collection('leaderboard_clash_beta').doc(auth.currentUser.uid).set({
+        await db.collection('leaderboard_clash_beta').doc(playerId).set({
             nick: playerNickname || 'Gracz',
             elo: Math.round(league.elo),
             matchesPlayed: league.matchesPlayed,
@@ -868,10 +872,23 @@ function makeGuess() {
     if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
 
-function giveUpGame() {
-    if(hasWon || hasLost) return;
-    updateStatsOnLoss(); 
-    setTimeout(handleLoss, 400);
+async function giveUpGame() {
+    if (hasWon || hasLost) return;
+    
+    // Nowoczesne okienko potwierdzenia (jak w Lidze)
+    const confirmed = await appConfirm(
+        "Czy na pewno chcesz się poddać i odkryć zawodnika?", 
+        { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" }
+    );
+    if (!confirmed) return;
+    
+    // Ustawiamy od razu limit 10 prób, jako karę za poddanie się
+    guessCount = GUESS_LIMIT;
+    updateCounterDisplay();
+    updateStatsOnLoss();
+    handleLoss();
+    
+    document.getElementById('btnGiveUp').style.display = 'none';
 }
 
 function revealClubsOnPath(guessedPlayer) {
