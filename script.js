@@ -1444,10 +1444,10 @@ async function startLeagueMatchmaking() {
 
 function resetLeagueButton(btn) {
     btn.innerHTML = `
-        <span class="btn-icon">🏆</span>
-        <span class="btn-text">
+        <span class="btn-icon" style="font-size: 28px;">🏆</span>
+        <span class="btn-text" style="text-align: left; width: 100%;">
             <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
-            <small id="leagueRankDisplay" style="display: block; margin-top: 2px; opacity: 0.9; font-weight: 600;">ŁADOWANIE RANGI...</small>
+            <small id="leagueRankDisplay">ŁADOWANIE RANGI...</small>
         </span>
     `;
     btn.style.background = "linear-gradient(135deg, #ffd700, #b8860b)";
