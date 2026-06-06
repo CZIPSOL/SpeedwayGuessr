@@ -564,6 +564,10 @@ function loadStats() {
         ensureLeagueStats(userStats);
     }
     ensureLeagueStats(userStats);
+    
+    setTimeout(() => {
+        syncLeagueScoreToFirebase();
+    }, 1500);
 }
 function saveStats() { 
     localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); 
