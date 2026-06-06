@@ -2168,7 +2168,6 @@ async function submitSuggestion() {
     btn.disabled = true;
     
     try {
-        // Zapis zgłoszenia do dedykowanej kolekcji w Firestore
         await db.collection("player_suggestions").add({
             playerName: escapeHTML(name),
             country: escapeHTML(country),
@@ -2180,7 +2179,6 @@ async function submitSuggestion() {
         
         appAlert("Dziękuję! Twoja propozycja została przesłana do weryfikacji. 🎯", "Zgłoszenie wysłane");
         
-        // Czyszczenie pól i zamknięcie
         nameInput.value = "";
         if (countryInput) countryInput.value = "";
         if (notesInput) notesInput.value = "";
@@ -2195,6 +2193,7 @@ async function submitSuggestion() {
     }
 }
 
+// Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
     window.openProfile = openProfile;
     window.closeProfile = closeProfile;
