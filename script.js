@@ -2310,13 +2310,22 @@ async function submitBugReport() {
     const originalText = btn.innerText;
     btn.innerText = "WYSYŁANIE...";
     btn.disabled = true;
+
+    // NOWOŚĆ: Ciche pobieranie danych o sprzęcie gracza
+    const deviceInfo = {
+        userAgent: navigator.userAgent,          // Model telefonu/przeglądarki
+        screenWidth: window.innerWidth,          // Szerokość ekranu w pikselach
+        screenHeight: window.innerHeight,        // Wysokość ekranu
+        language: navigator.language             // Język urządzenia
+    };
     
     try {
         await db.collection("bug_reports").add({
             description: escapeHTML(description),
             reportedBy: playerNickname || "Anonimowy Gość",
             userId: playerId || "unknown",
-            gameMode: gameMode, // Zapisuje tryb, w którym gracz aktualnie był
+            gameMode: gameMode,
+            deviceInfo: deviceInfo, // Zapisujemy sprzęt do bazy!
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
@@ -2358,7 +2367,6 @@ try {
     window.toggleClashRematch = toggleClashRematch;
     window.showClashInfo = showClashInfo;
     window.closeClashInfo = closeClashInfo;
-    
     window.startLeagueMatchmaking = startLeagueMatchmaking;
     window.handleClashCell = handleClashCell;
     window.submitClashGuess = submitClashGuess;
