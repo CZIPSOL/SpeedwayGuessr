@@ -2358,6 +2358,7 @@ try {
     window.toggleClashRematch = toggleClashRematch;
     window.showClashInfo = showClashInfo;
     window.closeClashInfo = closeClashInfo;
+    
     window.startLeagueMatchmaking = startLeagueMatchmaking;
     window.handleClashCell = handleClashCell;
     window.submitClashGuess = submitClashGuess;
