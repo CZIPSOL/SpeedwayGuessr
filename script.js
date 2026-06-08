@@ -1885,7 +1885,26 @@ function handleClashCell(r, c) {
     const overlay = document.getElementById('clashSearchOverlay');
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
+function closeClashSearch() { 
+    const overlay = document.getElementById('clashSearchOverlay'); 
+    if(overlay) { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); } 
+}
 
+function setupClashAutocomplete() {
+    const oldInput = document.getElementById('clashGuessInput'); const newInput = oldInput.cloneNode(true); oldInput.replaceWith(newInput); 
+    newInput.addEventListener('input', function() {
+        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
+        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
+        let valClean = removePolishAccents(val.toLowerCase());
+        playersDB.forEach(player => {
+            if (clashGuessedPlayers.includes(player.name)) return;
+            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
+                let item = document.createElement("DIV"); item.innerHTML = player.name;
+                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); }); listContainer.appendChild(item);
+            }
+        });
+    });
+}
 async function submitClashGuess() {
     let input = document.getElementById('clashGuessInput').value.trim(); if(!input) return;
     const player = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
