@@ -2279,6 +2279,61 @@ async function submitSuggestion() {
     }
 }
 
+// --- FORMULARZ ZGŁASZANIA BŁĘDÓW ---
+function openBugReport() {
+    const overlay = document.getElementById('bugReportOverlay');
+    if (!overlay) return;
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeBugReport() {
+    const overlay = document.getElementById('bugReportOverlay');
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+async function submitBugReport() {
+    const descInput = document.getElementById('bugDescInput');
+    const btn = document.getElementById('btnSubmitBug');
+    
+    if (!descInput || !btn) return;
+
+    let description = descInput.value.trim();
+    
+    if (description.length < 5) {
+        appAlert("Opis błędu jest zbyt krótki! Napisz proszę coś więcej.", "Błąd formularza");
+        return;
+    }
+    
+    const originalText = btn.innerText;
+    btn.innerText = "WYSYŁANIE...";
+    btn.disabled = true;
+    
+    try {
+        await db.collection("bug_reports").add({
+            description: escapeHTML(description),
+            reportedBy: playerNickname || "Anonimowy Gość",
+            userId: playerId || "unknown",
+            gameMode: gameMode, // Zapisuje tryb, w którym gracz aktualnie był
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        appAlert("Dziękuję! Zgłoszenie błędu zostało wysłane. 🛠️", "Zgłoszenie wysłane");
+        
+        descInput.value = "";
+        closeBugReport();
+        
+    } catch (e) {
+        console.error("Bug report save error:", e);
+        appAlert("Nie udało się wysłać zgłoszenia. Sprawdź połączenie internetowe.", "Błąd");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
     window.openProfile = openProfile;
@@ -2327,4 +2382,7 @@ try {
     window.openLocalClashLobby = openLocalClashLobby;
     window.backToClashModeSelectFromLocal = backToClashModeSelectFromLocal;
     window.startLocalClashMatch = startLocalClashMatch;
+    window.openBugReport = openBugReport;
+    window.closeBugReport = closeBugReport;
+    window.submitBugReport = submitBugReport;
 } catch (e) {}

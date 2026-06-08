@@ -216,9 +216,14 @@
                 <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
             </button>
         </div>
-        <button onclick="openSuggestion()" style="margin-top: 25px; font-size: 12px; color: var(--text-dim); display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.02); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-family: inherit; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
-            💡 <span>Brakuje zawodnika? Zaproponuj go!</span>
-        </button>
+        <div style="display: flex; gap: 10px; margin-top: 25px; justify-content: center; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;">
+            <button onclick="openSuggestion()" style="flex: 1; font-size: 11px; color: var(--text-dim); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
+                💡 Brak zawodnika?
+            </button>
+            <button onclick="openBugReport()" style="flex: 1; font-size: 11px; color: var(--text-dim); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase;" onmouseover="this.style.color='var(--red-neon)'; this.style.borderColor='var(--red-neon)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
+                🐛 Zgłoś Błąd
+            </button>
+        </div>
     </div>
 
 
@@ -564,6 +569,25 @@
             <div style="display: flex; gap: 10px; margin-top: 25px; width: 100%;">
                 <button onclick="submitSuggestion()" class="btn-reset" id="btnSubmitSug" style="flex: 1; padding: 12px; font-size: 14px;">WYŚLIJ</button>
                 <button onclick="closeSuggestion()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;">ZAMKNIJ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bugReportOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal" style="max-width: 420px; text-align: left;">
+            <h2 style="color: var(--red-neon); margin-bottom: 10px; text-align: center; font-weight: 900;">ZGŁOŚ BŁĄD 🐛</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px; text-align: center; line-height: 1.4;">Coś poszło nie tak? Gra się zacięła? Opisz problem, a postaram się go jak najszybciej naprawić!</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 14px; width: 100%;">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Opis problemu *</label>
+                    <textarea id="bugDescInput" placeholder="Co dokładnie się zepsuło? Co kliknąłeś zanim to się stało?" style="padding: 12px; font-size: 14px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; resize: vertical; min-height: 100px; font-family: inherit; font-weight: 600; box-sizing: border-box;"></textarea>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 25px; width: 100%;">
+                <button onclick="submitBugReport()" class="btn-reset" id="btnSubmitBug" style="flex: 1; padding: 12px; font-size: 14px; background: var(--red-neon); box-shadow: 0 0 15px rgba(255,51,51,0.4);">WYŚLIJ BŁĄD</button>
+                <button onclick="closeBugReport()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;">ZAMKNIJ</button>
             </div>
         </div>
     </div>
