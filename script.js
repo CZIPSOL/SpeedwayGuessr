@@ -702,14 +702,18 @@ async function sendScoreToDatabase(isWin, attempts) {
         batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
 
         const increment = firebase.firestore.FieldValue.increment;
-        if(isWin) {
-            const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-            batch.set(weeklyRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
-            const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-            batch.set(monthlyRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
-            const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-            batch.set(alltimeRef, { nick: safeNick, wins: increment(1), guesses: increment(attempts), timestamp: ts }, { merge: true });
-        }
+        const winIncrement = isWin ? 1 : 0; // Dodaje 1 jeśli wygrana, 0 jeśli przegrana
+        
+        // Zapis do tabel sumarycznych (zawsze dodaje próby, ale wygrane tylko jeśli isWin == true)
+        const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
+        batch.set(weeklyRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        
+        const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
+        batch.set(monthlyRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        
+        const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
+        batch.set(alltimeRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        
         await batch.commit();
     } catch (e) { console.error("DB Error:", e); }
 }
