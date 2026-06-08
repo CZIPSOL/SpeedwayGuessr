@@ -257,6 +257,11 @@
                 <span class="btn-icon">🤝</span>
                 <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
             </button>
+
+            <button class="menu-btn" onclick="openLocalClashLobby()" style="background: rgba(255,255,255,0.05); color: var(--text-dim); margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; padding: 12px; box-shadow: none;">
+                <span class="btn-icon">🖥️</span>
+                <span class="btn-text" style="text-align: left; width: 100%;">GRAJ NA JEDNYM PC <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Lokalny multiplayer)</small></span>
+            </button>
         </div>
     </div>
 
@@ -302,6 +307,24 @@
         </div>
     </div>
 
+    <div id="clashLocalLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
+        <button onclick="backToClashModeSelectFromLocal()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Powrót">🔙</button>
+        <h1 class="game-title" style="font-size: 28px;">🖥️ Gra Lokalna</h1>
+        <p style="color:var(--text-dim); text-align:center; font-size:12px; margin-bottom:25px;">Wpiszcie swoje nicki, aby zagrać na jednym ekranie.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; margin: 0 auto;">
+            <div>
+                <label style="color:#ff3333; font-weight:900; font-size:11px; text-transform:uppercase;">Gracz 1 (Czerwony)</label>
+                <input type="text" id="localPlayer1Input" placeholder="Nick Gracza 1" style="width:100%; padding:12px; border-radius:10px; border:2px solid #ff3333; background:rgba(0,0,0,0.5); color:#fff; font-weight:bold; font-size: 16px; margin-top:5px; text-align:center;">
+            </div>
+            <div>
+                <label style="color:#3399ff; font-weight:900; font-size:11px; text-transform:uppercase;">Gracz 2 (Niebieski)</label>
+                <input type="text" id="localPlayer2Input" placeholder="Nick Gracza 2" style="width:100%; padding:12px; border-radius:10px; border:2px solid #3399ff; background:rgba(0,0,0,0.5); color:#fff; font-weight:bold; font-size: 16px; margin-top:5px; text-align:center;">
+            </div>
+            
+            <button onclick="startLocalClashMatch()" class="btn-reset" style="width:100%; margin-top:20px; padding: 15px; font-size: 16px;">ROZPOCZNIJ MECZ</button>
+        </div>
+    </div>
 
     <!-- ============================================== -->
     <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->
@@ -529,7 +552,7 @@
                     <input type="text" id="sugNameInput" placeholder="np. Zenon Plech" style="padding: 12px; font-size: 14px; font-weight: 600;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Kraj pochodzenia (opcjonalnie)</label>
+                    <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase;">Kraj pochodzenia</label>
                     <input type="text" id="sugCountryInput" placeholder="np. Polska" style="padding: 12px; font-size: 14px; font-weight: 600;">
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 4px;">

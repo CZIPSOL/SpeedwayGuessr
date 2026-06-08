@@ -1524,7 +1524,73 @@ async function updateLeagueStats(gameData) {
     
     appAlert(`Mecz ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`, "Mecz ligowy");
 }
+// LOCAL MULTIPLAYER:
+let isLocalClash = false;
+let localClashData = null;
 
+function openLocalClashLobby() {
+    document.getElementById('clashModeSelectContainer').style.display = 'none';
+    document.getElementById('clashLocalLobbyContainer').style.display = 'flex';
+    document.getElementById('localPlayer1Input').value = playerNickname || 'Gracz 1';
+    document.getElementById('localPlayer2Input').value = 'Gracz 2';
+}
+
+function backToClashModeSelectFromLocal() {
+    document.getElementById('clashLocalLobbyContainer').style.display = 'none';
+    document.getElementById('clashModeSelectContainer').style.display = 'flex';
+}
+
+function startLocalClashMatch() {
+    let p1Nick = document.getElementById('localPlayer1Input').value.trim() || 'Gracz 1';
+    let p2Nick = document.getElementById('localPlayer2Input').value.trim() || 'Gracz 2';
+    
+    isLocalClash = true; currentClashRoom = "LOCAL";
+    
+    let allClubs = getCleanClubsList();
+    let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
+    if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+    
+    let constraints = null;
+    if (Math.random() > 0.5) {
+        const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
+        constraints = { col: Math.floor(Math.random() * 3), country: countries[Math.floor(Math.random() * countries.length)] };
+    }
+
+    localClashData = {
+        type: 'local', status: 'vsScreen',
+        p1: { nick: p1Nick, color: 'red' }, p2: { nick: p2Nick, color: 'blue' },
+        score: { p1: 0, p2: 0 }, rows: clashRows, cols: clashCols, constraints: constraints,
+        board: Array(9).fill(null), guessedPlayers: Array(9).fill(null),
+        turn: Math.random() < 0.5 ? 'red' : 'blue', deadline: 0, lastAction: ''
+    };
+    
+    document.getElementById('clashLocalLobbyContainer').style.display = 'none';
+    updateLocalClashData({}); // Inicjalizacja widoku
+}
+
+function updateLocalClashData(updates) {
+    if (!isLocalClash) return;
+    localClashData = { ...localClashData, ...updates }; const data = localClashData;
+    
+    clashStatus = data.status; clashTurn = data.turn; clashBoardState = data.board;
+    clashGuessedPlayers = data.guessedPlayers || []; clashRows = data.rows; clashCols = data.cols;
+
+    for (let i = 0; i < 3; i++) {
+        const colHeader = document.getElementById(`col${i}`);
+        if (colHeader) {
+            let headerHTML = `${getClubAbbr(clashCols[i])}`;
+            if (data.constraints && data.constraints.col === i) headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+            colHeader.innerHTML = headerHTML;
+        }
+        const rowHeader = document.getElementById(`row${i}`);
+        if (rowHeader) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+    }
+
+    if(clashStatus === 'vsScreen') showVsScreen(data);
+    if(clashStatus === 'coinToss') playCoinToss(data);
+    if(clashStatus === 'playing') updateClashBoardUI(data);
+    if(clashStatus === 'summary' && document.getElementById('clashSummaryOverlay').style.display === 'none') handleClashEnd(data);
+} 
 // --- LOBBY TOWARZYSKIE ---
 async function createClashRoom() {
     document.getElementById('clashLobbyError').style.display = 'none';
@@ -1702,15 +1768,11 @@ function showVsScreen(data) {
     document.getElementById('clashSummaryOverlay').style.display = 'none'; 
     const vsOverlay = document.getElementById('clashVsOverlay');
     
-    // Ustawiamy nicki i ewentualnie grafiki rang
-    let p1NickHTML = data.p1.nick;
-    let p2NickHTML = data.p2.nick;
-    
+    let p1NickHTML = data.p1.nick; let p2NickHTML = data.p2.nick;
     if (data.type === 'league') {
         const p1RankImg = getLeagueImageTag(data.p1.elo, data.p1.matchesPlayed || 5, 24);
         const p2RankImg = getLeagueImageTag(data.p2.elo, data.p2.matchesPlayed || 5, 24);
-        p1NickHTML = `${p1RankImg} ${data.p1.nick}`;
-        p2NickHTML = `${p2RankImg} ${data.p2.nick}`;
+        p1NickHTML = `${p1RankImg} ${data.p1.nick}`; p2NickHTML = `${p2RankImg} ${data.p2.nick}`;
     }
 
     document.getElementById('vsP1Name').innerHTML = p1NickHTML; 
@@ -1720,21 +1782,18 @@ function showVsScreen(data) {
 
     vsOverlay.style.display = 'block'; setTimeout(() => vsOverlay.style.opacity = '1', 10); playSound('win');
 
-    if(myClashColor === 'red') {
+    if(!isLocalClash && myClashColor === 'red') {
         const coinTossWinner = Math.random() < 0.5 ? 'red' : 'blue';
-        setTimeout(() => {
-            db.collection("clash_rooms").doc(currentClashRoom).update({
-                status: 'coinToss',
-                coinTossWinner
-            });
-        }, 3000);
+        setTimeout(() => { db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'coinToss', coinTossWinner }); }, 3000);
+    } else if (isLocalClash) {
+        const coinTossWinner = data.turn;
+        setTimeout(() => { updateLocalClashData({ status: 'coinToss', coinTossWinner }); }, 3000);
     }
 }
 
 function playCoinToss(data) {
     const vsOverlay = document.getElementById('clashVsOverlay'); vsOverlay.style.opacity = '0'; setTimeout(() => vsOverlay.style.display = 'none', 300);
     const overlay = document.getElementById('coinTossOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-    
     const coin = document.getElementById('clashCoinInner'); const resText = document.getElementById('coinTossResult'); resText.style.opacity = '0'; resText.innerText = "";
     
     const winner = data.coinTossWinner || (Math.random() < 0.5 ? 'red' : 'blue');
@@ -1750,10 +1809,10 @@ function playCoinToss(data) {
             overlay.style.opacity = '0';
             setTimeout(() => {
                 overlay.style.display = 'none';
-                if(myClashColor === 'red') {
-                    db.collection("clash_rooms").doc(currentClashRoom).update({
-                        status: 'playing', turn: winner, deadline: Date.now() + 120000, lastAction: ''
-                    });
+                if(!isLocalClash && myClashColor === 'red') {
+                    db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'playing', turn: winner, deadline: Date.now() + 120000, lastAction: '' });
+                } else if (isLocalClash) {
+                    updateLocalClashData({ status: 'playing', turn: winner, deadline: Date.now() + 120000, lastAction: '' });
                 }
             }, 300);
         }, 2500);
@@ -1780,12 +1839,16 @@ function updateClashBoardUI(data) {
     }
 
     updateClashTurnUI();
-    if(clashTurn === myClashColor) { document.getElementById('clashTimerDisplay').style.color = '#00ff66'; playSound('flip'); } 
+    if(clashTurn === myClashColor || isLocalClash) { document.getElementById('clashTimerDisplay').style.color = '#00ff66'; playSound('flip'); } 
     else { document.getElementById('clashTimerDisplay').style.color = '#fff'; }
 
-    if(data.lastAction && data.lastAction !== '' && data.turn === myClashColor) {
-        setTimeout(() => alert(`Przeciwnik: ${data.lastAction}\nTERAZ TWOJA TURA!`), 200);
-        db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
+    if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
+        setTimeout(() => alert(`Uwaga: ${data.lastAction}!\nTERAZ TURA GRACZA: ${data.turn === 'red' ? data.p1.nick : data.p2.nick}`), 200);
+        if (isLocalClash) {
+            localClashData.lastAction = '';
+        } else {
+            db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
+        }
     }
 
     startClashTimer(data.deadline);
@@ -1799,18 +1862,20 @@ function startClashTimer(deadlineTime) {
         let now = Date.now(); let diff = deadlineTime - now;
         if (diff <= 0) {
             clearInterval(clashTimerInterval); display.innerText = "00:00"; display.style.color = "var(--red-neon)";
-            if(clashTurn === myClashColor && clashStatus === 'playing') { skipClashTurn("Koniec czasu!"); }
+            if(clashStatus === 'playing') {
+                if(isLocalClash || clashTurn === myClashColor) skipClashTurn("Koniec czasu!");
+            }
             return;
         }
         let totalSeconds = Math.floor(diff / 1000); let m = Math.floor(totalSeconds / 60).toString().padStart(2, '0'); let s = (totalSeconds % 60).toString().padStart(2, '0');
         display.innerText = `${m}:${s}`;
-        if(totalSeconds <= 10 && clashTurn === myClashColor) { display.style.color = "var(--red-neon)"; playSound('flip'); }
+        if(totalSeconds <= 10 && (clashTurn === myClashColor || isLocalClash)) { display.style.color = "var(--red-neon)"; playSound('flip'); }
         else { display.style.color = "#fff"; }
     }, 1000);
 }
 
 function handleClashCell(r, c) {
-    if (clashTurn !== myClashColor) { alert("Czekaj na swoją kolej!"); return; }
+    if (!isLocalClash && clashTurn !== myClashColor) { alert("Czekaj na swoją kolej!"); return; }
     let idx = r * 3 + c; if(clashBoardState[idx] !== null) { alert("To pole jest już zajęte!"); return; }
     
     clashActiveCellIdx = idx;
@@ -1821,55 +1886,13 @@ function handleClashCell(r, c) {
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
 
-function setupClashAutocomplete() {
-    const oldInput = document.getElementById('clashGuessInput'); const newInput = oldInput.cloneNode(true); oldInput.replaceWith(newInput); 
-    newInput.addEventListener('input', function() {
-        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
-        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
-        let valClean = removePolishAccents(val.toLowerCase());
-        playersDB.forEach(player => {
-            if (clashGuessedPlayers.includes(player.name)) return;
-            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
-                let item = document.createElement("DIV"); item.innerHTML = player.name;
-                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); }); listContainer.appendChild(item);
-            }
-        });
-    });
-}
-function closeClashSearch() { const overlay = document.getElementById('clashSearchOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
-
-function triggerClashError() {
-    const wrapper = document.querySelector('#clashSearchOverlay .input-wrapper');
-    if (!wrapper) return;
-    wrapper.classList.add('shake-error'); playSound('error');
-    setTimeout(() => wrapper.classList.remove('shake-error'), 400);
-}
-
-async function executeValidClashMove(playerName) {
-    let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = myClashColor;
-    let newGuessed = clashGuessedPlayers.length === 9 ? [...clashGuessedPlayers] : Array(9).fill(null);
-    newGuessed[clashActiveCellIdx] = playerName;
-
-    closeClashSearch(); playSound('guess');
-
-    if(checkWinCondition(newBoard, myClashColor)) {
-        let field = myClashColor === 'red' ? 'score.p1' : 'score.p2';
-        await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: myClashColor, [field]: firebase.firestore.FieldValue.increment(1) });
-    } else if (!newBoard.includes(null)) {
-        await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: 'draw' });
-    } else {
-        await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, turn: myClashColor === 'red' ? 'blue' : 'red', deadline: Date.now() + 120000, lastAction: '' });
-    }
-}
-
 async function submitClashGuess() {
     let input = document.getElementById('clashGuessInput').value.trim(); if(!input) return;
     const player = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
 
     if(!player || clashGuessedPlayers.includes(player.name)) { triggerClashError(); return; }
 
-    const roomDoc = await db.collection("clash_rooms").doc(currentClashRoom).get();
-    const roomData = roomDoc.data();
+    const roomData = isLocalClash ? localClashData : await db.collection("clash_rooms").doc(currentClashRoom).get().then(doc => doc.data());
 
     let r = Math.floor(clashActiveCellIdx / 3); let c = clashActiveCellIdx % 3;
 
@@ -1896,11 +1919,46 @@ async function submitClashGuess() {
     }
 }
 
-function skipClashTurn(reason) { db.collection("clash_rooms").doc(currentClashRoom).update({ turn: myClashColor === 'red' ? 'blue' : 'red', deadline: Date.now() + 120000, lastAction: reason }); }
+async function executeValidClashMove(playerName) {
+    let turnColor = isLocalClash ? clashTurn : myClashColor;
+    let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = turnColor;
+    let newGuessed = clashGuessedPlayers.length === 9 ? [...clashGuessedPlayers] : Array(9).fill(null);
+    newGuessed[clashActiveCellIdx] = playerName;
 
-function checkWinCondition(board, color) {
-    const lines = [ [0,1,2], [3,4,5], [6,7,8], [0,3,6], [1,4,7], [2,5,8], [0,4,8], [2,4,6] ];
-    return lines.some(line => { let [a,b,c] = line; return board[a] === color && board[b] === color && board[c] === color; });
+    closeClashSearch(); playSound('guess');
+    let nextTurn = turnColor === 'red' ? 'blue' : 'red';
+
+    if(checkWinCondition(newBoard, turnColor)) {
+        if(isLocalClash) {
+            let p1Score = localClashData.score.p1 + (turnColor === 'red' ? 1 : 0);
+            let p2Score = localClashData.score.p2 + (turnColor === 'blue' ? 1 : 0);
+            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: turnColor, score: {p1: p1Score, p2: p2Score} });
+        } else {
+            let field = turnColor === 'red' ? 'score.p1' : 'score.p2';
+            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: turnColor, [field]: firebase.firestore.FieldValue.increment(1) });
+        }
+    } else if (!newBoard.includes(null)) {
+        if(isLocalClash) {
+            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: 'draw' });
+        } else {
+            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: 'draw' });
+        }
+    } else {
+        if(isLocalClash) {
+            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, turn: nextTurn, deadline: Date.now() + 120000, lastAction: '' });
+        } else {
+            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, turn: nextTurn, deadline: Date.now() + 120000, lastAction: '' });
+        }
+    }
+}
+
+function skipClashTurn(reason) { 
+    let nextTurn = clashTurn === 'red' ? 'blue' : 'red';
+    if (isLocalClash) {
+        updateLocalClashData({ turn: nextTurn, deadline: Date.now() + 120000, lastAction: reason });
+    } else {
+        db.collection("clash_rooms").doc(currentClashRoom).update({ turn: nextTurn, deadline: Date.now() + 120000, lastAction: reason }); 
+    }
 }
 
 function handleClashEnd(data) {
@@ -1919,7 +1977,7 @@ function handleClashEnd(data) {
             title.innerText = isRedWin ? `WYGRYWA ${data.p1.nick} 🔴` : `WYGRYWA ${data.p2.nick} 🔵`;
         }
         title.style.color = isRedWin ? "#ff3333" : "#3399ff";
-        if(data.winner === myClashColor) { playSound('win'); launchConfetti(); } else { playSound('lose'); }
+        if(isLocalClash || data.winner === myClashColor) { playSound('win'); launchConfetti(); } else { playSound('lose'); }
     }
     
     document.getElementById('summaryP1Name').innerText = data.p1.nick;
@@ -1929,39 +1987,45 @@ function handleClashEnd(data) {
     const btnRematch = document.getElementById('btnRematch');
     if (data.type === 'league') {
         btnRematch.style.display = 'none';
+    } else if (isLocalClash) {
+        btnRematch.style.display = 'block';
+        btnRematch.innerHTML = `<span>ZAGRAJ REWANŻ</span>`;
+        btnRematch.disabled = false;
+        btnRematch.style.background = "var(--accent)";
+        btnRematch.onclick = () => {
+             let allClubs = getCleanClubsList();
+             let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
+             if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+             let constraints = null;
+             if (Math.random() > 0.5) {
+                 const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
+                 constraints = { col: Math.floor(Math.random() * 3), country: countries[Math.floor(Math.random() * countries.length)] };
+             }
+             updateLocalClashData({
+                 status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
+                 board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
+                 rows: clashRows, cols: clashCols, constraints: constraints
+             });
+        };
     } else {
         btnRematch.style.display = 'block';
         btnRematch.innerHTML = `<span id="rematchText">ZAGRAJ REWANŻ</span> <span id="rematchCount">(0/2 gotowych)</span>`;
         btnRematch.disabled = false;
         btnRematch.style.background = "var(--accent)";
+        btnRematch.onclick = toggleClashRematch;
     }
     
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
 
-// --- HISTORIA I BEZPIECZNE WYJŚCIE ---
-async function submitLeagueSurrender(data) {
-    if (!currentClashRoom || !data || data.status === 'summary') return;
-
-    const winner = myClashColor === 'red' ? 'blue' : 'red';
-    const scoreField = winner === 'red' ? 'score.p1' : 'score.p2';
-    const surrenderedPlayer = myClashColor === 'red' ? data.p1 : data.p2;
-
-    await db.collection("clash_rooms").doc(currentClashRoom).update({
-        status: 'summary',
-        winner,
-        finishReason: 'surrender',
-        surrenderedBy: myClashColor,
-        surrenderedNick: surrenderedPlayer?.nick || playerNickname || "Gracz",
-        [scoreField]: firebase.firestore.FieldValue.increment(1),
-        deadline: 0,
-        lastAction: '',
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-}
-
 async function leaveClashRoom() {
     if (clashLeaveInProgress) return;
+
+    if (isLocalClash) {
+        const confirmed = await appConfirm("Wyjście zamknie aktualny mecz lokalny.\nCzy na pewno chcesz wyjść?", { title: "Zakończyć mecz?", confirmText: "ZAKOŃCZ", danger: true });
+        if (confirmed) closeRoomCleanup();
+        return;
+    }
 
     const data = currentClashData;
     const activeMatch = isActiveClashStatus(clashStatus);
@@ -1973,24 +2037,13 @@ async function leaveClashRoom() {
             { title: "Potwierdź poddanie", confirmText: "PODDAJ MECZ", danger: true }
         );
         if (!confirmed) return;
-
         clashLeaveInProgress = true;
-        try {
-            await submitLeagueSurrender(data);
-        } catch (e) {
-            console.error("League surrender error:", e);
-            appAlert("Nie udało się poddać meczu. Sprawdź połączenie i spróbuj ponownie.", "Błąd");
-        } finally {
-            clashLeaveInProgress = false;
-        }
+        try { await submitLeagueSurrender(data); } catch (e) { appAlert("Błąd przy poddawaniu.", "Błąd"); } finally { clashLeaveInProgress = false; }
         return;
     }
 
     if (activeMatch) {
-        const confirmed = await appConfirm(
-            "Wyjście zamknie aktualny pokój dla obu graczy.\nCzy na pewno chcesz wyjść?",
-            { title: "Opuścić mecz?", confirmText: "WYJDŹ", danger: true }
-        );
+        const confirmed = await appConfirm("Wyjście zamknie aktualny pokój dla obu graczy.\nCzy na pewno chcesz wyjść?", { title: "Opuścić mecz?", confirmText: "WYJDŹ", danger: true });
         if (!confirmed) return;
     }
 
@@ -2007,33 +2060,24 @@ async function closeRoomCleanup(options = {}) {
     if(clashTimerInterval) { clearInterval(clashTimerInterval); clashTimerInterval = null; }
 
     currentClashRoom = null; currentQueueId = null; currentClashData = null; isSearchingLeague = false;
+    isLocalClash = false; localClashData = null; // Reset trybu lokalnego
     
     const btn = document.getElementById('btnLeagueMode');
     if (btn) resetLeagueButton(btn);
 
-    if (roomId && deleteRoom) {
+    if (roomId && deleteRoom && roomId !== 'LOCAL') {
         try {
             const isLeagueSummary = roomData?.type === 'league' && roomData?.status === 'summary';
             if (isLeagueSummary) {
                 const leftField = myClashColor === 'red' ? 'p1Left' : 'p2Left';
                 const opponentAlreadyLeft = myClashColor === 'red' ? roomData.p2Left : roomData.p1Left;
-                if (opponentAlreadyLeft) {
-                    await db.collection("clash_rooms").doc(roomId).delete();
-                } else {
-                    await db.collection("clash_rooms").doc(roomId).update({
-                        [leftField]: true,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
-            } else {
-                await db.collection("clash_rooms").doc(roomId).delete();
-            }
-        } catch(e) {
-            console.log(e);
-        }
+                if (opponentAlreadyLeft) await db.collection("clash_rooms").doc(roomId).delete();
+                else await db.collection("clash_rooms").doc(roomId).update({ [leftField]: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            } else { await db.collection("clash_rooms").doc(roomId).delete(); }
+        } catch(e) {}
     }
 
-    if(queueId) { db.collection("clash_queue").doc(queueId).delete().catch(()=>{}); }
+    if(queueId) db.collection("clash_queue").doc(queueId).delete().catch(()=>{});
 
     myClashColor = null;
     document.getElementById('clashSummaryOverlay').style.display = 'none';
@@ -2162,6 +2206,25 @@ async function submitSuggestion() {
         appAlert("Wpisz poprawne imię i nazwisko zawodnika!", "Błąd formularza");
         return;
     }
+
+    // Walidacja zawodnika (z ignorowaniem wielkości liter i polskich znaków)
+    const normalizeName = (str) => {
+        const accents = 'ąćęłńóśźż';
+        const accentsOut = 'acelnoszz';
+        return str.toLowerCase().split('').map(letter => {
+            const idx = accents.indexOf(letter);
+            return idx !== -1 ? accentsOut[idx] : letter;
+        }).join('').replace(/[^a-z]/g, ''); // wyrzuca wszystko co nie jest zwykłą literą
+    };
+
+    let searchName = normalizeName(name);
+    let playerExists = playersDB.some(p => normalizeName(p.name) === searchName);
+
+    if (playerExists) {
+        appAlert(`Zawodnik "${name}" znajduje się już w naszej bazie! Dziękujemy za czujność. 🏁`, "Zawodnik istnieje");
+        nameInput.value = ""; 
+        return;
+    }
     
     const originalText = btn.innerText;
     btn.innerText = "WYSYŁANIE...";
@@ -2238,4 +2301,7 @@ try {
     window.openSuggestion = openSuggestion;
     window.closeSuggestion = closeSuggestion;
     window.submitSuggestion = submitSuggestion;
+    window.openLocalClashLobby = openLocalClashLobby;
+    window.backToClashModeSelectFromLocal = backToClashModeSelectFromLocal;
+    window.startLocalClashMatch = startLocalClashMatch;
 } catch (e) {}

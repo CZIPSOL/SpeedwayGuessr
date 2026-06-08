@@ -550,3 +550,13 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     padding: 6px 12px !important;
     box-shadow: none !important;
 }
+
+#summaryScore {
+    white-space: nowrap !important;
+    min-width: 100px !important;
+    text-align: center !important;
+    flex-shrink: 0 !important;
+}
+#summaryP1Name, #summaryP2Name {
+    word-break: break-word; /* Długie nicki będą się zwijać w dół, nie psując wyniku */
+}
