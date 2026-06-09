@@ -1031,9 +1031,8 @@ function renderGuess(player, isRestore = false) {
         ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
         : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-    // --- KLUBY I DYMKI (ŚCIEŻKA KARIERY) ---
+// --- KLUBY I DYMKI (ŚCIEŻKA KARIERY) ---
     let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
-    let clubsTooltipText = player.pastClubs.map(c => getClubAbbr(c)).join(" ➔ ");
     let clubsHTML = player.pastClubs.map(c => {
         let badgeHtml = c.includes("(W)") ? '<div class="loan-badge">W</div>' : ((c.includes("(G)") || c.includes("(Gość)")) ? '<div class="loan-badge" style="background:#3399ff;">G</div>' : '');
         let isMatch = targetCleanClubs.includes(getCleanClubName(c)); 
@@ -1041,12 +1040,15 @@ function renderGuess(player, isRestore = false) {
         let cleanC = getCleanClubName(c).toLowerCase(); 
         let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); 
         let specialClass = isSpecial ? ' club-special' : '';
-        return `<div class="club-logo-wrapper"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${badgeHtml}</div>`;
+        
+        // NOWOŚĆ: Każdy kwadracik (herb) dostaje swój własny dymek z pełną nazwą klubu!
+        return `<div class="club-logo-wrapper guess-cell-tooltip" data-tooltip="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${badgeHtml}</div>`;
     }).join('<div class="club-divider"></div>');
 
     // --- WSTRZYKIWANIE HTML ---
     let d1 = isRestore ? 0 : 0.1; let d2 = isRestore ? 0 : 0.3; let d3 = isRestore ? 0 : 0.5; let d4 = isRestore ? 0 : 0.7; let d5 = isRestore ? 0 : 0.9; let d6 = isRestore ? 0 : 1.1;
 
+    // USUNIĘTO: Zbiorczy dymek z głównego diva "col-clubs", aby pojedyncze herby mogły działać niezależnie
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
         <div class="col-attr"><div class="attr-box ${countryCls} flip-anim" style="animation-delay: ${d1}s">${countryContent}</div></div>
@@ -1054,7 +1056,7 @@ function renderGuess(player, isRestore = false) {
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs guess-cell-tooltip flip-anim" data-tooltip="${clubsTooltipText}" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
+        <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
@@ -1166,14 +1168,11 @@ async function loadRanking(type) {
 
             let currentRankPosition = 1; // Własny licznik, by pozycje nie skakały jak pominiemy graczy na kalibracji
 
-            scores.forEach((row) => {
+            scores.forEach((row, index) => {
                 // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji (< 5 meczy)
                 if (row.provisional || row.matchesPlayed < 5) return; 
                 
-                let rankClass = ""; 
-                if (currentRankPosition === 1) rankClass = "rank-1"; 
-                else if (currentRankPosition === 2) rankClass = "rank-2"; 
-                else if (currentRankPosition === 3) rankClass = "rank-3";
+                let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
                 
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
                 let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
