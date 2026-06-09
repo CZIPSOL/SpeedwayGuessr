@@ -1,39 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap');
+
+/* GLOBALNY FIX NA ROZJEŻDŻANIE SIĘ STRONY */
 * { box-sizing: border-box; }
-
-/* Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
-}
-
-/* Chrome, Edge, Safari, Opera */
-::-webkit-scrollbar {
-    width: 6px; 
-    height: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.3);
-    border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.6);
-}
-
-
-[data-theme="light"] ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-}
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.4);
-}
 
 :root {
     --bg-dark: #0a0a0c;
@@ -77,12 +45,22 @@
     --club-path-border: #dcdce0;
 }
 
-html, body {
-    overflow-x: hidden;
-    max-width: 100vw;
-    margin: 0;
-    padding: 0;
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.4) transparent;
 }
+
+/* Chrome, Edge, Safari, Opera */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.6); }
+
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.4); }
+
+html, body { overflow-x: hidden; max-width: 100vw; margin: 0; padding: 0; }
 
 body {
     font-family: 'Montserrat', sans-serif; 
@@ -164,6 +142,7 @@ body {
 .daily-tile { width: 25px; height: 25px; border-radius: 6px; }
 .daily-tile.win { background: var(--green-neon); box-shadow: 0 0 8px rgba(0, 255, 102, 0.3); }
 .daily-tile.loss { background: var(--red-neon); box-shadow: 0 0 8px rgba(255, 51, 51, 0.3); }
+.daily-tile.draw { background: var(--yellow-neon); box-shadow: 0 0 8px rgba(255, 204, 0, 0.3); }
 
 /* --- GAME HEADER --- */
 .game-header { text-align: center; margin-bottom: 25px; position: relative; width: 100%; max-width: 1150px; }
@@ -275,10 +254,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 [data-theme="light"] .club-special { background: rgba(0,0,0,0.02) !important; }
 
 .loan-badge { position: absolute; top: -4px; right: -4px; background: #666; color: white; font-size: 9px; font-weight: 900; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid #222; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 5; }
-
-.tooltip { position: relative; cursor: help; }
-.tooltip::after { content: attr(data-tip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #222; color: #fff; padding: 10px 15px; border-radius: 8px; font-size: 13px; white-space: nowrap; opacity: 0; visibility: hidden; transition: 0.3s; border: 1px solid var(--accent); z-index: 100; pointer-events: none; }
-.tooltip:hover::after { opacity: 1; visibility: visible; bottom: 160%; }
 
 /* --- STOPKA I USTAWIENIA W MODALU --- */
 .setting-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -441,7 +416,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .clash-player#clashPlayer1.active { border-color: #ff3333; background: rgba(255,51,51,0.2); text-shadow: 0 0 10px #ff3333; }
 .clash-player#clashPlayer2.active { border-color: #3399ff; background: rgba(51,153,255,0.2); text-shadow: 0 0 10px #3399ff; }
 
-/* Zmniejszona i ściśnięta plansza Clash */
+
 .clash-grid { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 550px; margin: 0 auto; box-sizing: border-box; }
 .clash-cell { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; aspect-ratio: unset; min-height: 80px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; text-align: center; transition: 0.2s; overflow: hidden; padding: 5px; flex-direction: column; box-sizing: border-box;}
 .clash-header-cell { background: rgba(0,0,0,0.4); border-color: transparent; color: var(--accent); font-size: 11px; text-transform: uppercase; padding: 5px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
@@ -449,12 +424,11 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .clash-playable { cursor: pointer; position: relative; }
 .clash-playable:hover { transform: scale(1.05); border-color: var(--accent); box-shadow: 0 0 15px rgba(241,196,15,0.3); z-index: 5; }
 
-/* Solidne tła przejętych komórek z głębią */
+
 .clash-playable.claimed-red { background: rgba(200, 0, 0, 0.8); border-color: #ff3333; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .clash-playable.claimed-blue { background: rgba(0, 100, 200, 0.8); border-color: #3399ff; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
 .clash-playable.claimed-red:hover, .clash-playable.claimed-blue:hover { transform: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); z-index: 1; }
 
-/* Duży tekst z nazwiskiem zawodnika */
 .clash-player-name { font-size: 12px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,1); word-break: break-word; line-height: 1.2; }
 
 /* Moneta 3D */
@@ -464,60 +438,41 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .coin-front { background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000); transform: rotateY(0deg); }
 .coin-back { background: radial-gradient(circle at 30% 30%, #66b2ff, #0066cc); transform: rotateY(180deg); }
 
-
 /* ========================================= */
-/* --- RWD MOBILE (PANCERNY FLEXBOX) --- */
+/* --- RWD MOBILE --- */
 /* ========================================= */
-
 @media (max-width: 768px) {
     body { padding: 10px; overflow-x: hidden; }
     .menu-container { padding: 25px 15px; width: 100%; max-width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
-    
     .game-header { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; padding-top: 50px; }
     .top-right-buttons { right: 10px; top: 10px; position: fixed; z-index: 100; }
-    
     .game-title { font-size: 24px; }
     .game-title-small { font-size: 18px; margin-top: 10px; }
-    
     .search-box { flex-direction: column; width: 100%; gap: 10px; }
     .input-wrapper { width: 100%; flex: 1; }
     .search-box button { width: 100%; flex: none; }
-    
     .main-card { padding: 15px; border-radius: 20px; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; }
-    
     .header-section { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; }
-    
     .photo-container { width: 100px; height: 120px; margin: 0 auto; }
-    
     #mysteryName { font-size: 20px; text-align: center; margin: 0; }
-    
     .team-path { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; }
     .path-boxes { width: 100%; max-width: 100%; overflow-x: auto; display: flex; flex-wrap: nowrap; justify-content: center; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
-
     .post-game-actions { flex-direction: column; bottom: 10px; width: 95%; max-width: 95%; padding: 15px; }
     .post-game-actions button { width: 100%; margin-bottom: 8px; }
     .post-game-actions button:last-child { margin-bottom: 0; }
     .calendar-weekdays { font-size: 10px; }
     .cal-day { font-size: 12px; }
-
     .table-headers { display: none; }
     .table-wrapper { width: 100%; max-width: 100%; }
-
     .guess-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; width: 100%; max-width: 100%; padding: 12px 8px; box-sizing: border-box; border-radius: 15px; background: rgba(128, 128, 128, 0.05); border: 1px solid var(--border-color); margin-bottom: 10px; }
-    
     .col-name { width: 100%; text-align: center; padding: 0; font-size: 14px; font-weight: 900; margin-bottom: 8px; }
     .col-attr { width: auto; padding: 0; display: flex; justify-content: center; }
-    
     .attr-box { width: 45px; height: 45px; border-radius: 10px; padding: 2px; }
     .val-num { font-size: 14px; }
     .status-icon { font-size: 16px; }
-
     .tile-flag, .tile-flag-dual { width: 38px; height: 38px; }
-
     .col-clubs { width: 100%; max-width: 100%; min-width: 0; padding: 0; margin-top: 10px; display: flex; justify-content: center; }
     .clubs-path-container { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; display: flex; flex-wrap: nowrap; padding: 8px 0; box-sizing: border-box; justify-content: flex-start; }
-
-    /* Clash Mobile Responsive */
     .clash-grid { grid-template-columns: 50px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
     .clash-screen { width: 100%; min-height: calc(100vh - 20px); margin-top: 0; padding: 16px 10px; border-radius: 18px; }
     .clash-cell { min-height: 50px; font-size: 10px; padding: 3px; }
@@ -525,22 +480,15 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .clash-player-name { font-size: 9px; }
     .clash-header { padding: 10px; flex-direction: column; gap: 8px; }
     .clash-player { width: 100%; text-align: center; font-size: 14px; }
-    
-    /* Stats modal fix for mobile */
     .stats-modal { width: 95%; max-width: 95%; padding: 25px 20px; max-height: 90vh; overflow-y: auto; }
     .app-modal-actions { flex-direction: column-reverse; }
-    
-    /* Input section fix */
     .input-section { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
-    
-    /* Icon buttons fix */
     .icon-btn { padding: 6px 10px; font-size: 18px; }
     .icon-btn-small { font-size: 16px; padding: 4px; }
 }
 
 .daily-tile.draw { background: var(--yellow-neon); box-shadow: 0 0 8px rgba(255, 204, 0, 0.3); }
 
-/* --- POPRAWKA CZYTELNOŚCI RANGI NA ŻÓŁTYM PRZYCISKU --- */
 #btnLeagueMode #leagueRankDisplay {
     color: #111 !important;
     text-shadow: none !important;
@@ -551,12 +499,73 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     box-shadow: none !important;
 }
 
-#summaryScore {
-    white-space: nowrap !important;
-    min-width: 100px !important;
-    text-align: center !important;
-    flex-shrink: 0 !important;
+#summaryScore { white-space: nowrap !important; min-width: 100px !important; text-align: center !important; flex-shrink: 0 !important; }
+#summaryP1Name, #summaryP2Name { word-break: break-word; }
+
+/* =================================================== */
+/* === NOWE, SPÓJNE DYNAMIČNE DYMKI (TOOLTIPS) CLUBS/YEAR === */
+/* =================================================== */
+
+.guess-cell-tooltip {
+    position: relative;
+    cursor: help;
 }
-#summaryP1Name, #summaryP2Name {
-    word-break: break-word; /* Długie nicki będą się zwijać w dół, nie psując wyniku */
+.guess-cell-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    background: rgba(20, 20, 25, 0.95);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 99;
+    text-transform: none;
+    letter-spacing: 0;
+}
+.guess-cell-tooltip:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.btn-hint-input {
+    background: #ffaa00;
+    color: #000;
+    border: none;
+    padding: 0 15px;
+    border-radius: 14px;
+    font-weight: 900;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(255,170,0,0.2);
+}
+.btn-hint-input:hover {
+    background: #ffc44d;
+    box-shadow: 0 0 15px rgba(255,170,0,0.5);
+}
+
+.leaderboard-hint-badge {
+    background: rgba(255, 170, 0, 0.15);
+    color: #ffaa00;
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 900;
+    margin-left: 5px;
+    vertical-align: middle;
 }

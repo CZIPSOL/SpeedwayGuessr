@@ -8,6 +8,9 @@ let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; const DAILY_START_DATE = new Date('2026-05-12T00:00:00'); 
+let hintUsed = false;             // Czy gracz aktywował i zatwierdził podpowiedź
+let hintRevealedString = "";      // Bieżący stan kresek i odkrytych liter
+let errorsAfterHint = 0;          // Licznik błędów popełnionych OD momentu wzięcia podpowiedzi
 
 // Rozbudowane statystyki o historię Clash
 let userStats = { 
@@ -698,13 +701,19 @@ async function sendScoreToDatabase(isWin, attempts) {
     try {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
         const safeNick = escapeHTML(playerNickname);
+        
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
+        batch.set(dailyRef, { 
+            nick: safeNick, 
+            won: isWin ? 1 : 0, 
+            guesses: attempts, 
+            hintUsed: hintUsed, // NOWOŚĆ: Rejestracja podpowiedzi w bazie danych
+            timestamp: ts 
+        }, { merge: true });
 
         const increment = firebase.firestore.FieldValue.increment;
-        const winIncrement = isWin ? 1 : 0; // Dodaje 1 jeśli wygrana, 0 jeśli przegrana
+        const winIncrement = isWin ? 1 : 0;
         
-        // Zapis do tabel sumarycznych (zawsze dodaje próby, ale wygrane tylko jeśli isWin == true)
         const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
         batch.set(weeklyRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
@@ -791,6 +800,12 @@ function clearGameBoard() {
 }
 
 function resetBoardAndPlay() {
+    hintUsed = false;
+    hintRevealedString = "";
+    errorsAfterHint = 0;
+    const hintContainer = document.getElementById('hintButtonContainer');
+    if (hintContainer) hintContainer.innerHTML = "";
+    updateSecretDisplay();
     document.getElementById('winOverlay').style.opacity = '0'; document.getElementById('loseOverlay').style.opacity = '0';
     setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; document.getElementById('loseOverlay').style.display = 'none'; }, 200);
     clearGameBoard(); gameMode = 'endless'; initGame();
@@ -876,10 +891,92 @@ function makeGuess() {
     if (guessCount >= 5) {
         document.getElementById('btnGiveUp').style.display = 'inline-block';
     }
+    // Wyświetlanie przycisku podpowiedzi po 5 nieudanych próbach (tylko w Daily)
+        if (guessCount >= 5 && !hintUsed && gameMode === 'daily') {
+            const container = document.getElementById('hintButtonContainer');
+            if (container && container.innerHTML === "") {
+                container.innerHTML = `<button onclick="triggerPlayerHint()" class="btn-hint-input" title="Wykorzystaj podpowiedź">💡</button>`;
+            }
+        }
+        
+        // Jeśli podpowiedź była aktywna, każdy kolejny błąd odkrywa nową literę
+        if (hintUsed) {
+            progressHintOnMistake();
+        }
 
     if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
+async function triggerPlayerHint() {
+    if (hintUsed) return;
+    
+    const confirmed = await appConfirm(
+        "Czy chcesz skorzystać z podpowiedzi? Twój wynik w rankingu Daily zostanie oznaczony odznaką [💡 PODP.], co obniży Twoją pozycję przy remisach.",
+        { title: "Wziąć podpowiedź? 💡", confirmText: "TAK, DAJ PODPOWIEDŹ", danger: false }
+    );
+    if (!confirmed) return;
 
+    hintUsed = true;
+    errorsAfterHint = 0;
+    
+    let nameArr = targetPlayer.name.split("");
+    hintRevealedString = nameArr.map(char => char === " " ? " " : "_").join("");
+    
+    const container = document.getElementById('hintButtonContainer');
+    if (container) container.innerHTML = "";
+    
+    updateSecretDisplay();
+    playSound('flip');
+}
+
+function progressHintOnMistake() {
+    if (!hintUsed) return;
+    errorsAfterHint++;
+    
+    let targetName = targetPlayer.name; 
+    let currentArr = hintRevealedString.split("");
+    
+    let parts = targetName.split(" ");
+    let firstName = parts[0] || "";
+    let lastName = parts[1] || "";
+
+    if (errorsAfterHint === 1) {
+        // Pierwsza litera imienia
+        currentArr[0] = firstName.charAt(0);
+    } 
+    else if (errorsAfterHint === 2) {
+        // Pierwsza litera nazwiska
+        let lastNameStartIdx = firstName.length + 1;
+        if (lastName.length > 0) {
+            currentArr[lastNameStartIdx] = lastName.charAt(0);
+        }
+    } 
+    else {
+        // Losowa nieodkryta litera
+        let unrevealedIndices = [];
+        for (let i = 0; i < targetName.length; i++) {
+            if (targetName.charAt(i) !== " " && currentArr[i] === "_") {
+                unrevealedIndices.push(i);
+            }
+        }
+        if (unrevealedIndices.length > 0) {
+            let randomIdx = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+            currentArr[randomIdx] = targetName.charAt(randomIdx);
+        }
+    }
+    
+    hintRevealedString = currentArr.join("");
+    updateSecretDisplay();
+}
+function updateSecretDisplay() {
+    const displayEl = document.getElementById('secretPlayerDisplay');
+    if (!displayEl) return;
+
+    if (!hintUsed) {
+        displayEl.innerText = "???";
+    } else {
+        displayEl.innerText = hintRevealedString;
+    }
+}
 async function giveUpGame() {
     if (hasWon || hasLost) return;
     
@@ -920,7 +1017,16 @@ function renderGuess(player, isRestore = false) {
     const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
+    // --- DYMEK WIEKU ---
+    let yearCls = "green";
+    let yearTooltip = "Idealnie!";
+    if (player.year < targetPlayer.year) {
+        yearCls = "higher"; 
+        yearTooltip = "Szukany zawodnik jest MŁODSZY 👶";
+    } else if (player.year > targetPlayer.year) {
+        yearCls = "lower"; 
+        yearTooltip = "Szukany zawodnik jest STARSZY 🧓";
+    }
     let yearContent = `<span>${player.year}</span>`;
     if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
 
@@ -933,23 +1039,26 @@ function renderGuess(player, isRestore = false) {
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
+    // --- DYMEK KLUBÓW ---
     let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
+    let clubsTooltipText = player.pastClubs.map(c => getClubAbbr(c)).join(" ➔ ");
     let clubsHTML = player.pastClubs.map(c => {
         let isLoan = c.includes("(W)"); let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
         let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
-        return `<div class="club-logo-wrapper tooltip" data-tip="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge">W</div>' : ''}</div>`;
+        return `<div class="club-logo-wrapper"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge">W</div>' : ''}</div>`;
     }).join('<div class="club-divider"></div>');
 
     let d1 = isRestore ? 0 : 0.1; let d2 = isRestore ? 0 : 0.3; let d3 = isRestore ? 0 : 0.5; let d4 = isRestore ? 0 : 0.7; let d5 = isRestore ? 0 : 0.9; let d6 = isRestore ? 0 : 1.1;
 
+    // --- WSTRZYKNIĘCIE NOWYCH KLAS DO HTML ---
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
         <div class="col-attr"><div class="attr-box ${countryCls} flip-anim" style="animation-delay: ${d1}s">${countryContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
+        <div class="col-attr"><div class="attr-box ${yearCls} guess-cell-tooltip flip-anim" data-tooltip="${yearTooltip}" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
+        <div class="col-clubs guess-cell-tooltip flip-anim" data-tooltip="${clubsTooltipText}" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
@@ -1053,36 +1162,25 @@ async function loadRanking(type) {
 
             let currentRankPosition = 1; // Własny licznik, by pozycje nie skakały jak pominiemy graczy na kalibracji
 
-            scores.forEach((row) => {
-                // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji (< 5 meczy)
-                if (row.provisional || row.matchesPlayed < 5) return; 
-                
-                let rankClass = ""; 
-                if (currentRankPosition === 1) rankClass = "rank-1"; 
-                else if (currentRankPosition === 2) rankClass = "rank-2"; 
-                else if (currentRankPosition === 3) rankClass = "rank-3";
-                
+            scores.forEach((row, index) => {
+                let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
                 let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
-                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-                let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
-                let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18); // Zmniejszona ikonka dla tabeli
+                // NOWOŚĆ: Jeśli gracz użył ułatwienia, dodaj plakietkę obok nicku w Daily
+                let hintBadge = row.hintUsed ? `<span class="leaderboard-hint-badge" title="Użyto podpowiedzi literowej">💡 PODP.</span>` : '';
+                
+                let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
+                let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? 'NIE' : '0'}</span>`;
                 
                 if (tbody) { 
                     tbody.innerHTML += `<tr ${isMe}>
-                        <td class="${rankClass}">${currentRankPosition}</td>
-                        <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
-                        <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
-                            <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
-                                ${rangaImg} <span>${rangaText}</span>
-                            </div>
-                        </td>
-                        <td style="color:var(--text-dim); font-size:11px;">${row.matchesPlayed}</td>
-                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${row.elo}</td>
+                        <td class="${rankClass}">${index + 1}</td>
+                        <td class="rank-nick ${rankClass}">${safeRenderNick}${hintBadge}</td>
+                        <td>${wonText}</td>
+                        <td>${row.guesses}</td>
                     </tr>`; 
                 }
-                currentRankPosition++;
             });
 
             // Jeśli po przefiltrowaniu nikogo nie ma (wszyscy są w trakcie kalibracji)
@@ -1908,6 +2006,12 @@ function setupClashAutocomplete() {
             }
         });
     });
+    function triggerClashError() {
+    const wrapper = document.querySelector('#clashSearchOverlay .input-wrapper');
+    if (!wrapper) return;
+    wrapper.classList.add('shake-error'); playSound('error');
+    setTimeout(() => wrapper.classList.remove('shake-error'), 400);
+}
 }
 async function submitClashGuess() {
     let input = document.getElementById('clashGuessInput').value.trim(); if(!input) return;
@@ -2393,5 +2497,6 @@ try {
     window.startLocalClashMatch = startLocalClashMatch;
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
-    window.submitBugReport = submitBugReport;
+window.submitBugReport = submitBugReport;
+    window.triggerPlayerHint = triggerPlayerHint;
 } catch (e) {}
