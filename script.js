@@ -991,11 +991,16 @@ function revealClubsOnPath(guessedPlayer) {
 }
 
 function renderGuess(player, isRestore = false) {
-    const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
-    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
-    const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
+    const resultsDiv = document.getElementById('results'); 
+    const row = document.createElement('div'); row.className = 'guess-row'; 
+    let rowEmojis = "";
     
-    const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
+    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; 
+    const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
+    const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; 
+    const gpIcon = isGuessGP ? "✅" : "❌";
+    
+    // --- WIEK I DYMKI (STARSZY/MŁODSZY) ---
     let yearCls = "green";
     let yearTooltip = "Idealnie!";
     if (player.year < targetPlayer.year) {
@@ -1007,22 +1012,39 @@ function renderGuess(player, isRestore = false) {
     }
     let yearContent = `<span>${player.year}</span>`;
     if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
+
+    // --- DMP ---
     const dmpCls = (player.dmp === targetPlayer.dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
     if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
 
-    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = targetPlayer.country.split("/").map(c => c.trim());
-    let countryCls = "red"; if (player.country === targetPlayer.country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === targetPlayer.region) countryCls = "yellow";
+    // --- KRAJ ---
+    const pCountries = player.country.split("/").map(c => c.trim()); 
+    const tCountries = targetPlayer.country.split("/").map(c => c.trim());
+    let countryCls = "red"; 
+    if (player.country === targetPlayer.country) countryCls = "green"; 
+    else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; 
+    else if (player.region === targetPlayer.region) countryCls = "yellow";
+    
     let c1 = countryToCode[pCountries[0]] || 'pl';
-    let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
+    let countryContent = pCountries.length > 1 
+        ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
+        : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
+    // --- KLUBY I DYMKI (ŚCIEŻKA KARIERY) ---
     let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
+    let clubsTooltipText = player.pastClubs.map(c => getClubAbbr(c)).join(" ➔ ");
     let clubsHTML = player.pastClubs.map(c => {
-        let isLoan = c.includes("(W)"); let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
-        let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
-        return `<div class="club-logo-wrapper tooltip" data-tip="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge">W</div>' : ''}</div>`;
+        let badgeHtml = c.includes("(W)") ? '<div class="loan-badge">W</div>' : ((c.includes("(G)") || c.includes("(Gość)")) ? '<div class="loan-badge" style="background:#3399ff;">G</div>' : '');
+        let isMatch = targetCleanClubs.includes(getCleanClubName(c)); 
+        let matchClass = isMatch ? 'club-match' : 'club-dim';
+        let cleanC = getCleanClubName(c).toLowerCase(); 
+        let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); 
+        let specialClass = isSpecial ? ' club-special' : '';
+        return `<div class="club-logo-wrapper"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${badgeHtml}</div>`;
     }).join('<div class="club-divider"></div>');
 
+    // --- WSTRZYKIWANIE HTML ---
     let d1 = isRestore ? 0 : 0.1; let d2 = isRestore ? 0 : 0.3; let d3 = isRestore ? 0 : 0.5; let d4 = isRestore ? 0 : 0.7; let d5 = isRestore ? 0 : 0.9; let d6 = isRestore ? 0 : 1.1;
 
     row.innerHTML = `
@@ -1032,15 +1054,23 @@ function renderGuess(player, isRestore = false) {
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs guess-cell-tooltip flip-anim" data-tooltip="${player.pastClubs.map(c => getClubAbbr(c)).join(' ➔ ')}" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
+        <div class="col-clubs guess-cell-tooltip flip-anim" data-tooltip="${clubsTooltipText}" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
-    if (!isRestore) { setTimeout(() => playSound('flip'), 100); setTimeout(() => playSound('flip'), 300); setTimeout(() => playSound('flip'), 500); setTimeout(() => playSound('flip'), 700); setTimeout(() => playSound('flip'), 900); setTimeout(() => playSound('flip'), 1100); }
+    if (!isRestore) { 
+        setTimeout(() => playSound('flip'), 100); setTimeout(() => playSound('flip'), 300); 
+        setTimeout(() => playSound('flip'), 500); setTimeout(() => playSound('flip'), 700); 
+        setTimeout(() => playSound('flip'), 900); setTimeout(() => playSound('flip'), 1100); 
+    }
     
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
-        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === targetPlayer.year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green"; else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
+        if (attr === 'country') c = countryCls; 
+        else if (attr === 'year' && player.year === targetPlayer.year) c = "green"; 
+        else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; 
+        else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green"; 
+        else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
