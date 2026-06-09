@@ -908,50 +908,66 @@ document.addEventListener("click", function (e) {
 function closeAllLists() { let items = document.getElementsByClassName("autocomplete-items"); while (items.length > 0) items[0].parentNode.removeChild(items[0]); }
 
 function setupAutocomplete() {
-    const oldInput = document.getElementById('playerInput');
-    if (!oldInput) return; // Zabezpieczenie przed brakiem inputu
+    const inputEl = document.getElementById('playerInput');
+    const listContainer = document.getElementById('autocompleteList');
     
-    // Klonujemy input, aby usunąć stare, zacięte nasłuchiwacze (event listeners)
-    const newInput = oldInput.cloneNode(true); 
-    oldInput.replaceWith(newInput); 
+    // Zabezpieczenie - jeśli nie znajdzie pól na stronie, nie wywali błędu
+    if (!inputEl || !listContainer) return; 
     
+    // Klonujemy pole, aby usunąć wszystkie stare zacięte eventy (zapobiega to "dublowaniu" się list)
+    const newInput = inputEl.cloneNode(true);
+    inputEl.replaceWith(newInput);
+
+    // Zamykanie listy po kliknięciu gdziekolwiek indziej na stronie
+    document.addEventListener("click", function (e) {
+        if (e.target.id !== "playerInput") {
+            const list = document.getElementById('autocompleteList');
+            if(list) list.innerHTML = '';
+        }
+    });
+
+    // Główna funkcja wyszukiwania
     newInput.addEventListener('input', function() {
-        let val = this.value; 
-        closeAllLists(); 
-        if (!val || val.length < 2) return;
+        const val = this.value;
+        listContainer.innerHTML = ''; // Zawsze czyścimy starą listę przed pokazaniem nowej
         
-        let listContainer = document.createElement("DIV"); 
-        listContainer.setAttribute("class", "autocomplete-items"); 
-        this.parentNode.appendChild(listContainer);
+        if (!val || val.length < 2) return; // Uruchamiamy wyszukiwanie dopiero od 2 wpisanych znaków
         
-        let valClean = removePolishAccents(val.toLowerCase());
+        // Wewnętrzna funkcja ignorująca polskie znaki (aby działało Zmarzlik == Zmąrżlik)
+        const removeAccents = (str) => {
+            const accents = 'ąćęłńóśźż';
+            const out = 'acelnoszz';
+            return str.split('').map(l => accents.indexOf(l) !== -1 ? out[accents.indexOf(l)] : l).join('');
+        };
+        
+        const valClean = removeAccents(val.toLowerCase());
         
         playersDB.forEach(player => {
-            // Dodatkowe zabezpieczenie bazy danych
             if (!player || !player.name) return;
+            if (guessedPlayersNames.includes(player.name)) return; // Nie pokazujemy odgadniętych
             
-            if (guessedPlayersNames.includes(player.name)) return;
-            
-            let pName = player.name;
-            let pNameClean = removePolishAccents(pName.toLowerCase());
+            const pName = player.name;
+            const pNameClean = removeAccents(pName.toLowerCase());
             
             if (pNameClean.includes(valClean)) {
-                let item = document.createElement("DIV"); 
+                let item = document.createElement("DIV");
                 
-                // POGRUBIENIE wpisywanej frazy (np. wpiszesz "mar", to pokaże Z**mar**zlik)
+                // POGRUBIENIE wpisywanej frazy (Efekt wizualny)
                 let matchIdx = pNameClean.indexOf(valClean);
                 if (matchIdx !== -1) {
                     item.innerHTML = pName.substring(0, matchIdx) 
-                                   + "<strong>" + pName.substring(matchIdx, matchIdx + val.length) + "</strong>" 
+                                   + "<strong style='color:var(--accent);'>" + pName.substring(matchIdx, matchIdx + val.length) + "</strong>" 
                                    + pName.substring(matchIdx + val.length);
                 } else {
                     item.innerHTML = pName;
                 }
                 
+                // Co ma się stać po kliknięciu w nazwisko na liście:
                 item.addEventListener("click", () => { 
                     newInput.value = pName; 
-                    closeAllLists(); 
+                    listContainer.innerHTML = ''; // Ukrywamy listę po wyborze
                 }); 
+                
                 listContainer.appendChild(item);
             }
         });
