@@ -12,6 +12,10 @@
 </head>
 <body>
 
+    <!-- ============================================== -->
+    <!-- ====== NAKŁADKI (OVERLAYS) / MODALE ====== -->
+    <!-- ============================================== -->
+
     <div id="winOverlay" class="win-overlay" style="display: none;">
         <canvas id="confettiCanvas"></canvas>
         <div class="win-message">
@@ -28,140 +32,468 @@
     </div>
 
     <div id="appModalOverlay" class="win-overlay app-modal-overlay" style="display: none; z-index: 10020;">
-        <div class="app-modal">
-            <h3 id="appModalTitle" class="app-modal-title">Potwierdzenie</h3>
-            <p id="appModalText" class="app-modal-text">Czy na pewno chcesz wykonać tę akcję?</p>
+        <div class="stats-modal app-modal">
+            <h2 id="appModalTitle">Komunikat</h2>
+            <div id="appModalMessage" class="app-modal-message"></div>
             <div class="app-modal-actions">
-                <button id="appModalCancel" class="btn-close">Anuluj</button>
-                <button id="appModalConfirm" class="btn-reset">Potwierdź</button>
+                <button id="appModalCancel" class="btn-close" type="button">ANULUJ</button>
+                <button id="appModalConfirm" class="btn-reset" type="button">OK</button>
             </div>
         </div>
     </div>
 
-    <div id="profileOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal">
-            <button onclick="closeProfile()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Zamknij">❌</button>
-            <h2 data-i18n="statsTitle" style="color: var(--accent); margin-bottom: 20px; font-weight: 900;">STATYSTYKI PROFILU</h2>
+    <!-- POBIERANIE NICKU PRZED GRĄ -->
+    <div id="nickOverlay" class="win-overlay" style="display: none; z-index: 10001;">
+        <div class="stats-modal" style="max-width: 400px;">
+            <h2 style="margin-bottom: 10px; color: var(--accent);" data-i18n="account">TWÓJ PROFIL</h2>
+            <p style="font-size: 12px; color: var(--text-dim); margin-bottom: 20px;" data-i18n="loginDesc">Zaloguj się przez Google, aby zsynchronizować postęp i wejść do światowego rankingu!</p>
             
-            <div id="authSection" class="auth-box" style="margin-bottom: 20px;">
-                <p id="authStatusText" style="font-size: 13px; color: var(--text-dim); margin-bottom: 10px;">Grasz jako Gość. Twoje statystyki są zapisane tylko na tym urządzeniu.</p>
-                <button id="btnGoogleAuth" onclick="signInWithGooglePrompt()" class="menu-btn" style="background: #fff; color: #000; font-size: 13px; padding: 10px; max-width: 250px; margin: 0 auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" style="height:16px; margin-right:8px; vertical-align:middle;" alt="Google">
-                    Zaloguj przez Google
+            <button onclick="signInWithGooglePrompt()" class="btn-google" style="width: 100%; margin-bottom: 15px;" data-i18n="btnLoginGoogle">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" height="20" alt="G"> ZALOGUJ PRZEZ GOOGLE
+            </button>
+            
+            <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px;" data-i18n="orGuest">LUB PODAJ NICK GOŚCIA</div>
+            
+            <input type="text" id="nickInput" data-i18n="guestPlaceholder" placeholder="Wpisz nick (max 12 znaków)" maxlength="12" style="margin-bottom: 15px; text-align: center; text-transform: uppercase; font-weight: 900;">
+            <button onclick="saveNick()" class="btn-reset" style="width: 100%;" data-i18n="btnSavePlay">ZAPISZ I GRAJ</button>
+        </div>
+    </div>
+
+    <!-- CENTRUM DOWODZENIA: PROFIL GRACZA -->
+    <div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
+        <div class="stats-modal" style="max-width: 400px;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;" data-i18n="account">TWÓJ PROFIL</h2>
+            
+            <!-- KONTO GOOGLE -->
+            <div class="setting-block" style="margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; width: 100%;">
+                <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google" style="width: 100%;" data-i18n="btnLoginGoogle">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
                 </button>
-                <button id="btnLogOut" onclick="logOut()" class="menu-btn" style="display:none; background: var(--red-neon); color: #fff; font-size: 13px; padding: 10px; max-width: 200px; margin: 0 auto;">
-                    Wyloguj się 🚪
-                </button>
+                <div id="userInfoDisplayProfile" style="display:none; font-size: 12px; color: var(--green-neon); margin-top: 10px; font-weight: 700;"></div>
             </div>
 
-            <div id="nickChangeSection" style="margin-bottom: 20px; max-width: 300px; margin-left: auto; margin-right: auto;">
-                <label style="font-size: 11px; color: var(--text-dim); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 5px;">Twój Nick w Rankingach:</label>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="profileNickInput" style="padding: 8px; font-size: 13px; font-weight: 700; border-radius: 8px;">
-                    <button onclick="changeNickname()" class="btn-reset" style="padding: 8px 12px; font-size: 12px; border-radius: 8px; font-weight: 900;">ZAPISZ</button>
+            <!-- ZMIANA NICKU -->
+            <div class="setting-block" style="margin-bottom: 25px; width: 100%;">
+                <label style="color: var(--text-dim); font-size: 11px; margin-bottom: 5px; text-transform: uppercase; font-weight: 700;">TWÓJ OBECNY NICK:</label>
+                <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
+                    <input type="text" id="changeNickInput" placeholder="Nowy nick..." maxlength="12" style="padding: 12px; font-size: 14px; text-align: center; font-weight: 700; width: 60%; text-transform: uppercase;">
+                    <button onclick="changeNickname()" class="btn-reset" id="btnChangeNick" style="padding: 12px; font-size: 12px; width: 40%;">ZMIEŃ</button>
                 </div>
             </div>
 
+            <!-- STATYSTYKI -->
+            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text-dim);" data-i18n="stats">STATYSTYKI</h3>
             <div class="stats-grid">
-                <div class="stat-card"><span class="stat-num" id="statPlayed">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
-                <div class="stat-card"><span class="stat-num" id="statWon">0</span><span class="stat-label" data-i18n="statWon">Wygrane</span></div>
-                <div class="stat-card"><span class="stat-num" id="statWinPct">0%</span><span class="stat-label" data-i18n="statWinPct">% Wygranych</span></div>
-                <div class="stat-card"><span class="stat-num" id="statCurrentStreak">0</span><span class="stat-label" data-i18n="statCurrentStreak">Seria zwycięstw</span></div>
-                <div class="stat-card"><span class="stat-num" id="statMaxStreak">0</span><span class="stat-label" data-i18n="statMaxStreak">Max seria</span></div>
+                <div class="stat-box"><span id="profileStatPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
+                <div class="stat-box"><span id="profileStatWon" class="stat-num">0</span><span class="stat-label" data-i18n="statWon">Wygrane</span></div>
+                <div class="stat-box"><span id="profileStatStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statStreak">Akt. Seria</span></div>
+                <div class="stat-box"><span id="profileStatMax" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza</span></div>
             </div>
-            
-            <h3 style="margin-top: 25px; margin-bottom: 10px; font-size: 14px; font-weight: 900; color: var(--text-dim);" data-i18n="statsDistribution">ROZKŁAD PRÓB (DAILY):</h3>
-            <div id="guessDistributionContainer" style="display: flex; flex-direction: column; gap: 5px; max-width: 300px; margin: 0 auto; margin-bottom: 20px;"></div>
-            
-            <button onclick="closeProfile()" class="btn-close" style="width: 100%;" data-i18n="btnClose">ZAMKNIJ</button>
+
+            <button onclick="closeProfile()" class="btn-close" style="margin-top: 20px; width: 100%;" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
-    <div id="rankingOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal" style="max-width: 550px;">
-            <button onclick="closeRanking()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Zamknij">❌</button>
-            <h2 data-i18n="rankingTitle" style="color: var(--accent); margin-bottom: 15px; font-weight: 900;">TABELA LIDERÓW 🏆</h2>
+    <!-- RANKING MODAL -->
+    <div id="rankingOverlay" class="win-overlay" style="display: none; z-index: 10000;">
+        <div class="stats-modal" style="max-width: 550px; padding: 30px 15px;">
+            <h2 style="color: var(--accent); margin-bottom: 15px;">RANKING</h2>
+            <div id="rankingDateDisplay" style="font-size: 11px; color: var(--text-dim); margin-top: -10px; margin-bottom: 15px; font-weight: 700; text-transform: uppercase;"></div>
             
-            <div class="rank-tabs">
-                <button id="tab-daily" class="rank-tab active" onclick="loadRanking('daily')">Daily</button>
-                <button id="tab-weekly" class="rank-tab" onclick="loadRanking('weekly')">Tydzień</button>
-                <button id="tab-monthly" class="rank-tab" onclick="loadRanking('monthly')">Miesiąc</button>
-                <button id="tab-alltime" class="rank-tab" onclick="loadRanking('alltime')">All-Time</button>
-                <button id="tab-league" class="rank-tab" onclick="loadRanking('league')" style="color: #ffd700; font-weight: 900;">🏆 Liga Clash</button>
+            <div class="tabs-container" style="display: flex; gap: 5px; justify-content: center; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; flex-wrap: wrap;">
+                <button id="tab-daily" class="rank-tab active" onclick="loadRanking('daily')" data-i18n="tabDaily">DZIENNY</button>
+                <button id="tab-weekly" class="rank-tab" onclick="loadRanking('weekly')" data-i18n="tabWeekly">TYDZIEŃ</button>
+                <button id="tab-monthly" class="rank-tab" onclick="loadRanking('monthly')" data-i18n="tabMonthly">MIESIĄC</button>
+                <button id="tab-alltime" class="rank-tab" onclick="loadRanking('alltime')" data-i18n="tabAllTime">OGÓLNY</button>
+                <!-- NOWA ZAKŁADKA -->
+                <button id="tab-league" class="rank-tab" onclick="loadRanking('league')" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; font-weight: 900;">LIGA CLASH</button>
             </div>
 
-            <div id="rankingDateDisplay" class="ranking-date-subtitle" style="display: none;"></div>
-
-            <div class="ranking-table-wrapper">
+            <div style="overflow-x: auto; width: 100%;">
                 <table class="ranking-table">
                     <thead id="rankingTableHead">
-                        <tr>
-                            <th>Poz.</th>
-                            <th style="text-align: left;">Nick</th>
-                            <th>Rozwiązane</th>
-                            <th>Próby</th>
-                        </tr>
+                        <!-- Tabela jest dynamicznie generowana przez JS -->
                     </thead>
                     <tbody id="rankingTableBody">
-                        <tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie liderów... ⏳</td></tr>
                     </tbody>
                 </table>
             </div>
-            <button onclick="closeRanking()" class="btn-close" style="width: 100%; margin-top: 15px;" data-i18n="btnClose">ZAMKNIJ</button>
+            <button onclick="closeRanking()" class="btn-close" style="margin-top: 15px; width: 80%;" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
-    <div id="settingsOverlay" class="win-overlay" style="display: none;">
+    <!-- KALENDARZ MODAL -->
+    <div id="calendarOverlay" class="win-overlay" style="display: none; z-index: 10000;">
+        <div class="stats-modal" style="max-width: 450px; padding: 30px;">
+            <h2 data-i18n="archive">ARCHIWUM DAILY</h2>
+            <div class="calendar-header">
+                <button id="calBtnPrev" class="icon-btn-small" onclick="changeCalendarMonth(-1)">◀</button>
+                <h3 id="calendarMonthDisplay" style="margin: 0;">Maj 2026</h3>
+                <button id="calBtnNext" class="icon-btn-small" onclick="changeCalendarMonth(1)">▶</button>
+            </div>
+            <div class="calendar-weekdays" id="calendarWeekdays">
+                <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>Sb</div><div>Nd</div>
+            </div>
+            <div id="calendarGrid" class="calendar-grid-real"></div>
+            <button onclick="closeCalendar()" class="btn-close" style="margin-top: 25px;" data-i18n="btnClose">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <!-- USTAWIENIA MODAL -->
+    <div id="settingsOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal" style="max-width: 350px;">
-            <button onclick="closeSettings()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Zamknij">❌</button>
-            <h2 data-i18n="settingsTitle" style="color: var(--accent); margin-bottom: 25px; font-weight: 900;">USTAWIENIA ⚙️</h2>
+            <h2 data-i18n="settingsTitle" style="margin-bottom: 25px;">USTAWIENIA</h2>
             
-            <div style="display: flex; flex-direction: column; gap: 20px; text-align: left; width: 100%; margin-bottom: 25px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 700; font-size: 14px;" data-i18n="settingTheme">Motyw graficzny:</span>
-                    <button id="btnThemeToggle" onclick="toggleTheme()" class="icon-btn" style="font-size: 20px;">🌙</button>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 700; font-size: 14px;" data-i18n="settingSound">Dźwięki w grze:</span>
-                    <button id="btnSoundToggle" onclick="toggleSound()" class="icon-btn" style="font-size: 20px;">🔊</button>
+            <div class="setting-block" style="margin-bottom: 20px;">
+                <label data-i18n="sound">Dźwięk:</label>
+                <button id="btnSoundToggle" onclick="toggleSound()" class="theme-btn light" style="margin-top: 5px; font-size: 14px; padding: 10px 20px;">Włączony 🔊</button>
+            </div>
+
+            <div class="setting-block" style="margin-bottom: 20px;">
+                <label data-i18n="theme">Motyw:</label>
+                <div class="btn-group" style="justify-content: center; margin-top: 5px;">
+                    <button onclick="setTheme('light')" class="theme-btn light" data-i18n="themeLight">Jasny</button>
+                    <button onclick="setTheme('dark')" class="theme-btn dark" data-i18n="themeDark">Ciemny</button>
                 </div>
             </div>
-            <button onclick="closeSettings()" class="btn-close" style="width: 100%;" data-i18n="btnClose">ZAMKNIJ</button>
+
+            <div class="setting-block" style="margin-bottom: 25px;">
+                <label data-i18n="lang">Język:</label>
+                <div class="flag-group" style="justify-content: center; margin-top: 5px;">
+                    <img src="https://flagcdn.com/w40/pl.png" onclick="setLang('pl')" class="lang-flag" id="flag-pl" alt="PL" title="Polski">
+                    <img src="https://flagcdn.com/w40/gb.png" onclick="setLang('en')" class="lang-flag" id="flag-en" alt="EN" title="English">
+                    <img src="https://flagcdn.com/w40/se.png" onclick="setLang('sv')" class="lang-flag" id="flag-sv" alt="SV" title="Svenska">
+                    <img src="https://flagcdn.com/w40/dk.png" onclick="setLang('da')" class="lang-flag" id="flag-da" alt="DA" title="Dansk">
+                </div>
+            </div>
+
+            <button onclick="closeSettings()" class="btn-close" data-i18n="btnClose" style="width: 100%;">ZAMKNIJ</button>
         </div>
     </div>
 
-    <div id="calendarOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal" style="max-width: 400px;">
-            <button onclick="closeCalendar()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Zamknij">❌</button>
-            <h2 style="color: var(--accent); margin-bottom: 10px; font-weight: 900;">ARCHIWUM DAILY 📜</h2>
-            <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 15px; margin-top: -5px;">Wybierz archiwalny dzień, aby zagrać (nie liczy się do rankingu).</p>
+
+    <!-- ============================================== -->
+    <!-- ====== MAIN MENU ====== -->
+    <!-- ============================================== -->
+
+    <div id="mainMenuContainer" class="menu-container">
+        <div class="top-right-buttons">
+            <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+            <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
+            <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
+        </div>
+
+        <h1 class="game-title">🏁 Speedway Guessr</h1>
+        <p class="alpha-tag">Alpha ver. 1.0.0</p>
+        <h2 class="menu-subtitle" data-i18n="subtitle">Edycja Żużlowa</h2>
+        
+        <div id="lastGamesContainer" class="last-games-container" style="display: none;">
+            <p class="last-games-title" data-i18n="lastGames">Ostatnie gry Daily:</p>
+            <div id="lastGamesList" class="daily-tiles-container"></div>
+        </div>
+
+        <div class="menu-modes">
+            <div class="daily-mode-wrapper">
+                <div class="daily-selector">
+                    <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1)">◀</button>
+                    <span id="dailyDayDisplay" style="font-weight: 900;">Daily ...</span>
+                    <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1)">▶</button>
+                    <button class="icon-btn-small" onclick="openCalendar()" title="Kalendarz" style="margin-left: 10px;">📅</button>
+                </div>
+                <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
+                    <span class="btn-icon">🏁</span>
+                    <span id="dailyBtnText" class="btn-text" data-i18n="btnDaily">Graj Daily</span>
+                </button>
+            </div>
+
+            <button class="menu-btn endless" onclick="startEndlessGame()">
+                <span class="btn-icon">🔄</span>
+                <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
+            </button>
             
-            <div class="calendar-header-nav">
-                <button onclick="moveCalendarMonth(-1)" class="icon-btn-small">◀</button>
-                <span id="calendarMonthYearLabel" style="font-weight: 900; font-size: 14px; text-transform: uppercase;">Miesiąc Rok</span>
-                <button onclick="moveCalendarMonth(1)" class="icon-btn-small">▶</button>
-            </div>
-
-            <div class="calendar-grid-labels">
-                <div>Pn</div><div>Wt</div><div>Śr</div><div>Cz</div><div>Pt</div><div>So</div><div>Nd</div>
-            </div>
-            <div id="calendarDaysGrid" class="calendar-days-grid"></div>
-
-            <button onclick="closeCalendar()" class="btn-close" style="width: 100%; margin-top: 15px;" data-i18n="btnClose">ZAMKNIJ</button>
+            <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #3399ff); color: white; border-radius: 18px;">
+                <span class="btn-icon" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">⚔️</span>
+                <span class="btn-text" style="text-shadow: 0 0 10px rgba(0,0,0,0.5);">SPEEDWAY CLASH <small>(Nowość!)</small></span>
+            </button>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 25px; justify-content: center; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;">
+            <button onclick="openSuggestion()" style="flex: 1; font-size: 11px; color: var(--text-dim); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
+                💡 Brak zawodnika?
+            </button>
+            <button onclick="openBugReport()" style="flex: 1; font-size: 11px; color: var(--text-dim); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase;" onmouseover="this.style.color='var(--red-neon)'; this.style.borderColor='var(--red-neon)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
+                🐛 Zgłoś Błąd
+            </button>
         </div>
     </div>
 
-    <div id="clashHistoryOverlay" class="win-overlay" style="display: none;">
-        <div class="stats-modal" style="max-width: 400px; text-align: left;">
-            <button onclick="closeClashHistory()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Zamknij">❌</button>
-            <h2 style="color: var(--accent); margin-bottom: 15px; text-align: center; font-weight: 900;">OSTATNIE MECZE LIGOWE</h2>
-            <div id="clashHistoryList" style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;"></div>
-            <button onclick="closeClashHistory()" class="btn-close" style="width: 100%;">ZAMKNIJ</button>
+
+        <!-- ============================================== -->
+    <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
+    <!-- ============================================== -->
+    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="openRanking('league')" class="icon-btn" title="Ranking Ligowy">🏆</button>
+            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
+            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
+
+        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
+        
+        <div id="lastLeagueContainer" class="last-games-container" style="display: none; margin-top: 5px; margin-bottom: 10px; background: transparent; border: none; padding: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <p class="last-games-title" style="margin:0; font-size: 11px;">Ostatnie mecze:</p>
+                <button onclick="openClashHistory()" class="icon-btn-small" title="Historia Ligowa">📜</button>
+            </div>
+            <div id="lastLeagueList" class="daily-tiles-container" style="margin-top: 5px;"></div>
+        </div>
+
+        <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
+
+        <div class="menu-modes" style="margin-top: 20px;">
+            <button id="btnLeagueMode" class="menu-btn" onclick="startLeagueMatchmaking()" style="background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; box-shadow: 0 0 20px rgba(255,215,0,0.3);">
+                <span class="btn-icon" style="font-size: 28px;">🏆</span>
+                <span class="btn-text" style="text-align: left; width: 100%;">
+                    <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
+                    <small id="leagueRankDisplay">ŁADOWANIE RANGI...</small>
+                </span>
+            </button>
+
+            <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3); margin-top: 10px;">
+                <span class="btn-icon">🤝</span>
+                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
+            </button>
+
+            <button class="menu-btn" onclick="openLocalClashLobby()" style="background: rgba(255,255,255,0.05); color: var(--text-dim); margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; padding: 12px; box-shadow: none;">
+                <span class="btn-icon">🖥️</span>
+                <span class="btn-text" style="text-align: left; width: 100%;">GRAJ NA JEDNYM PC <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Lokalny multiplayer)</small></span>
+            </button>
         </div>
     </div>
 
+
+    <!-- ============================================== -->
+    <!-- ====== EKRAN 2: LOBBY TOWARZYSKIE ====== -->
+    <!-- ============================================== -->
+    <div id="clashLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
+        <div class="top-right-buttons">
+            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
+            <button onclick="backToClashModeSelect()" class="icon-btn" title="Powrót">🔙</button>
+        </div>
+
+        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashLobbyTitle">🤝 Mecz Towarzyski</h1>
+        
+        <div id="clashLobbySelect" style="width: 100%; max-width: 400px; margin-top: 20px;">
+            <button onclick="createClashRoom()" class="menu-btn" style="background: var(--green-neon); margin-bottom: 20px; width: 100%;">
+                <span class="btn-icon">🏠</span><span class="btn-text" data-i18n="clashHost">UTWÓRZ POKÓJ (HOST)</span>
+            </button>
+            
+            <div style="display: flex; gap: 10px; align-items: stretch; justify-content: center; width: 100%;">
+                <input type="text" id="joinRoomInput" data-i18n="clashJoinCode" placeholder="KOD POKOJU..." maxlength="5" style="text-transform: uppercase; font-weight: 900; text-align: center; width: 60%; font-size: 18px; padding: 12px; border-radius: 12px;">
+                <button onclick="joinClashRoom()" class="btn-reset" style="width: 40%; font-size: 14px; padding: 12px; border-radius: 12px;" data-i18n="clashJoinBtn">DOŁĄCZ</button>
+            </div>
+            <p id="clashLobbyError" style="color: var(--red-neon); font-size: 12px; margin-top: 10px; font-weight: bold; display: none;"></p>
+        </div>
+
+        <div id="clashLobbyWaiting" style="display: none; width: 100%; margin-top: 30px;">
+            <h3 style="color: var(--text-dim); text-transform: uppercase; font-size: 12px;" data-i18n="clashYourCode">Twój kod pokoju:</h3>
+            <h1 id="myRoomCodeDisplay" style="font-size: 60px; color: var(--accent); margin: 0; letter-spacing: 5px; font-weight: 900; text-shadow: 0 0 20px rgba(241,196,15,0.4);">XXXXX</h1>
+            
+            <div id="clashReadySection" style="margin-top: 20px;">
+                <p id="waitingText" style="margin-bottom: 20px; font-weight: bold;" class="loading-pulse" data-i18n="clashWaiting">Oczekiwanie na przeciwnika...</p>
+                
+                <div id="readyPlayersDiv" style="display: none; flex-direction: column; gap: 10px;">
+                    <div style="display:flex; justify-content: space-around; margin-bottom: 10px; font-size: 14px; font-weight: 900;">
+                        <span id="p1ReadyStatus" style="color: #ff3333; opacity: 0.5;">🔴 Gracz 1</span>
+                        <span id="p2ReadyStatus" style="color: #3399ff; opacity: 0.5;">🔵 Gracz 2</span>
+                    </div>
+                    <button id="btnReady" onclick="toggleClashReady()" class="btn-reset" style="width: 100%; font-size: 16px;" data-i18n="clashReady">JESTEM GOTÓW</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="clashLocalLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
+        <button onclick="backToClashModeSelectFromLocal()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Powrót">🔙</button>
+        <h1 class="game-title" style="font-size: 28px;">🖥️ Gra Lokalna</h1>
+        <p style="color:var(--text-dim); text-align:center; font-size:12px; margin-bottom:25px;">Wpiszcie swoje nicki, aby zagrać na jednym ekranie.</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; margin: 0 auto;">
+            <div>
+                <label style="color:#ff3333; font-weight:900; font-size:11px; text-transform:uppercase;">Gracz 1 (Czerwony)</label>
+                <input type="text" id="localPlayer1Input" placeholder="Nick Gracza 1" style="width:100%; padding:12px; border-radius:10px; border:2px solid #ff3333; background:rgba(0,0,0,0.5); color:#fff; font-weight:bold; font-size: 16px; margin-top:5px; text-align:center;">
+            </div>
+            <div>
+                <label style="color:#3399ff; font-weight:900; font-size:11px; text-transform:uppercase;">Gracz 2 (Niebieski)</label>
+                <input type="text" id="localPlayer2Input" placeholder="Nick Gracza 2" style="width:100%; padding:12px; border-radius:10px; border:2px solid #3399ff; background:rgba(0,0,0,0.5); color:#fff; font-weight:bold; font-size: 16px; margin-top:5px; text-align:center;">
+            </div>
+            
+            <button onclick="startLocalClashMatch()" class="btn-reset" style="width:100%; margin-top:20px; padding: 15px; font-size: 16px;">ROZPOCZNIJ MECZ</button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->
+    <!-- ============================================== -->
+    <div id="clashVsOverlay" class="win-overlay" style="display: none; z-index: 10005;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 4vw; width: 100%; height: 100%; padding: 20px;">
+            <div style="text-align: center; color: #ff3333; flex: 1;">
+                <div style="font-size: 80px; filter: drop-shadow(0 0 20px #ff3333);">🔴</div>
+                <h2 id="vsP1Name" style="font-weight: 900; font-size: 24px; text-transform: uppercase; word-break: break-word;">Gracz 1</h2>
+            </div>
+            <h1 style="font-size: 40px; color: white; font-style: italic; opacity: 0.5;">VS</h1>
+            <div style="text-align: center; color: #3399ff; flex: 1;">
+                <div style="font-size: 80px; filter: drop-shadow(0 0 20px #3399ff);">🔵</div>
+                <h2 id="vsP2Name" style="font-weight: 900; font-size: 24px; text-transform: uppercase; word-break: break-word;">Gracz 2</h2>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- ====== GŁÓWNY INTERFEJS GRY (DAILY/ENDLESS) == -->
+    <!-- ============================================== -->
+
+    <div id="gameContainer" style="display: none;">
+        <header class="game-header">
+            <div class="top-right-buttons">
+                <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+                <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
+                <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
+            </div>
+            
+            <h1 class="game-title-small">🏁 Speedway Guessr</h1>
+            <h3 id="gameModeDisplay"></h3>
+            
+            <div id="gameDailyControls" class="game-daily-controls" style="display: none;">
+                <button id="inGamePrevBtn" class="icon-btn-small" onclick="changeDailyInGame(-1)">◀</button>
+                <button class="icon-btn-small" onclick="openCalendar()">📅</button>
+                <button id="inGameNextBtn" class="icon-btn-small" onclick="changeDailyInGame(1)">▶</button>
+            </div>
+            
+            <div id="livesContainer" class="lives-container" style="display: none;"></div>
+        </header>
+
+        <div class="input-section">
+            <div class="search-box">
+                <div class="input-wrapper">
+                    <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
+                </div>
+                <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                <!-- Przycisk do poddawania się (widoczny po 5 próbach) -->
+                <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn" style="display: none; border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px;" title="Poddaj się">🏳️</button>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <div class="header-section">
+                <div class="photo-container" id="photoWrapper">
+                    <span id="mysteryPlaceholder">?</span>
+                    <img id="mysteryPhoto" src="" alt="Photo" style="display: none;">
+                </div>
+                <div class="info-container">
+                    <h2 id="mysteryName">???</h2>
+                    <div class="team-path">
+                        <span class="path-label" data-i18n="teams">Drużyny:</span>
+                        <div id="pathBoxes" class="path-boxes"></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="table-wrapper">
+                <div class="table-headers">
+                    <div class="col-name" data-i18n="colName">Zawodnik</div>
+                    <div class="col-attr tooltip" data-i18n="colCountry" data-i18n-tip="tipCountry" data-tip="Kraj pochodzenia">Kraj</div>
+                    <div class="col-attr tooltip" data-i18n="colYear" data-i18n-tip="tipYear" data-tip="Rok urodzenia">Rok ur.</div>
+                    <div class="col-attr tooltip" data-i18n="colGP" data-i18n-tip="tipGP" data-tip="Czy był w GP?">GP?</div>
+                    <div class="col-attr tooltip" data-i18n="colDMP" data-i18n-tip="tipDMP" data-tip="Medale DMP">Medale DMP</div>
+                    <div class="col-attr tooltip" data-i18n="colStatus" data-i18n-tip="tipStatus" data-tip="Status">Status</div>
+                    <div class="col-clubs-header tooltip" data-i18n="colClubs" data-i18n-tip="tipClubs" data-tip="Historia">Historia Klubów</div>
+                </div>
+
+                <div id="results" class="results-container"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- ====== INTERFEJS GRY SPEEDWAY CLASH ====== -->
+    <!-- ============================================== -->
+    <div id="clashContainer" class="clash-screen" style="display: none;">
+        
+        <div id="clashTimerContainer" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+            <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 900;" data-i18n="clashTime">Czas na odpowiedź:</div>
+            <div id="clashTimerDisplay" style="font-size: 32px; font-weight: 900; color: #fff; transition: 0.3s;">02:00</div>
+        </div>
+
+        <div class="clash-header">
+            <div id="clashPlayer1" class="clash-player">🔴 <span id="cp1Nick">Gracz 1</span></div>
+            <div id="clashPlayer2" class="clash-player">🔵 <span id="cp2Nick">Gracz 2</span></div>
+        </div>
+
+        <div class="clash-grid" id="clashGrid">
+            <div class="clash-cell clash-header-cell empty"></div>
+            <div class="clash-cell clash-header-cell" id="col0"></div><div class="clash-cell clash-header-cell" id="col1"></div><div class="clash-cell clash-header-cell" id="col2"></div>
+            <div class="clash-cell clash-header-cell" id="row0"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 0)" id="cell-0-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(0, 1)" id="cell-0-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(0, 2)" id="cell-0-2"></div>
+            <div class="clash-cell clash-header-cell" id="row1"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 0)" id="cell-1-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(1, 1)" id="cell-1-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(1, 2)" id="cell-1-2"></div>
+            <div class="clash-cell clash-header-cell" id="row2"></div>
+            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 0)" id="cell-2-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
+        </div>
+        <button onclick="leaveClashRoom()" class="btn-close" style="margin-top: 30px; width: 100%; border-color: var(--red-neon); color: var(--red-neon);" data-i18n="clashSurrender">PODDAJ SIĘ / WYJDŹ</button>
+    </div>
+
+    <!-- EKRAN PODSUMOWANIA I REWANŻU -->
+    <div id="clashSummaryOverlay" class="win-overlay" style="display: none; z-index: 10006;">
+        <div class="stats-modal" style="max-width: 450px;">
+            <h2 id="clashSummaryTitle" style="font-size: 32px; margin-bottom: 10px; text-transform: uppercase;">WYGRYWA ...</h2>
+            
+            <h3 style="color: var(--text-dim); font-size: 14px; margin-top: 20px;" data-i18n="clashSeries">WYNIK SERII</h3>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 28px; font-weight: 900; margin: 15px 0 30px 0;">
+                <span id="summaryP1Name" style="color: #ff3333; flex: 1; text-align: right;">Gracz 1</span>
+                <span id="summaryScore" style="background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 12px; color: var(--accent);">0 : 0</span>
+                <span id="summaryP2Name" style="color: #3399ff; flex: 1; text-align: left;">Gracz 2</span>
+            </div>
+            
+            <button id="btnRematch" onclick="toggleClashRematch()" class="btn-reset" style="width:100%; margin-bottom: 10px; font-size: 14px;"><span id="rematchText" data-i18n="clashRematch">ZAGRAJ REWANŻ</span> <span id="rematchCount">(0/2 gotowych)</span></button>
+            <button onclick="leaveClashRoom()" class="btn-close" style="width:100%; border-color: var(--red-neon); color: var(--red-neon);" data-i18n="clashQuit">ZAKOŃCZ I WYJDŹ</button>
+        </div>
+    </div>
+
+    <!-- CLASH MODALE (Wyszukiwarka, Moneta i Info) -->
+    <div id="clashSearchOverlay" class="win-overlay" style="display: none; z-index: 10002;">
+        <div class="stats-modal" style="overflow: visible; max-width: 450px;">
+            <h3 style="color: var(--accent); margin-bottom: 5px; font-weight: 900; font-size: 20px;" data-i18n="clashClaim">PRZEJMIJ POLE</h3>
+            <p id="clashSearchDesc" style="font-size: 14px; font-weight: 900; color: #fff; margin-bottom: 20px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px;"></p>
+            <div class="input-wrapper" style="position: relative;">
+                <input type="text" id="clashGuessInput" data-i18n="clashGuessPlaceholder" placeholder="Imię i nazwisko zawodnika..." autocomplete="off">
+            </div>
+            <div style="display:flex; gap: 10px; margin-top: 20px;">
+                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1; padding: 12px; font-size: 14px;" data-i18n="clashConfirm">POTWIERDŹ</button>
+                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;" data-i18n="clashCancel">ANULUJ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="coinTossOverlay" class="win-overlay" style="display: none; z-index: 10003;">
+        <div class="stats-modal" style="background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center;">
+            <div class="coin-container">
+                <div class="coin" id="clashCoinInner">
+                    <div class="coin-face coin-front">🔴</div>
+                    <div class="coin-face coin-back">🔵</div>
+                </div>
+            </div>
+            <h2 id="coinTossResult" style="color: #fff; text-shadow: 0 0 15px rgba(0,0,0,1); margin-top: 40px; font-size: 28px; font-weight: 900; opacity: 0; transition: 0.5s;"></h2>
+        </div>
+    </div>
+
+    <!-- CLASH: ZASADY GRY -->
     <div id="clashInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
         <div class="stats-modal" style="max-width: 450px; text-align: left; max-height: 90vh; overflow-y: auto;">
+            
             <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-align: center; text-transform: uppercase;">Zasady gry: Speedway Clash ⚔️</h3>
             <ul style="font-size: 13px; color: var(--text-main); padding-left: 20px; line-height: 1.6; margin-bottom: 20px; font-weight: 600;">
                 <li style="margin-bottom: 10px;">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
@@ -201,6 +533,16 @@
             </div>
 
             <button onclick="closeClashInfo()" class="btn-close" style="width: 100%;">ZROZUMIANO</button>
+        </div>
+    </div>
+
+    <div id="clashHistoryOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal" style="max-width: 450px;">
+            <h3 style="color: var(--accent); margin-bottom: 15px; font-weight: 900; text-transform: uppercase;">Historia Ligowa</h3>
+            <div id="clashHistoryList" style="max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px;">
+                <!-- Elementy dodawane przez JS -->
+            </div>
+            <button onclick="closeClashHistory()" class="btn-close" style="width: 100%;">ZAMKNIJ</button>
         </div>
     </div>
 
@@ -250,279 +592,9 @@
         </div>
     </div>
 
-
-    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
-        <div class="top-right-buttons">
-            <button onclick="openRanking('league')" class="icon-btn" title="Ranking Ligowy">🏆</button>
-            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
-            <button onclick="closeRoomCleanup()" class="icon-btn" title="Powrót">🔙</button>
-        </div>
-
-        <h1 class="game-title" style="font-size: 32px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
-        
-        <div id="lastLeagueContainer" class="last-games-container" style="display: none; margin-top: 5px; margin-bottom: 10px; background: transparent; border: none; padding: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <p class="last-games-title" style="margin:0; font-size: 11px;">Ostatnie mecze:</p>
-                <button onclick="openClashHistory()" class="icon-btn-small" title="Historia Ligowa">📜</button>
-            </div>
-            <div id="lastLeagueList" class="daily-tiles-container" style="margin-top: 5px;"></div>
-        </div>
-
-        <h2 class="menu-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
-
-        <div class="menu-modes" style="margin-top: 20px;">
-            <button id="btnLeagueMode" class="menu-btn" onclick="startLeagueMatchmaking()">
-                <span class="btn-icon" style="font-size: 28px;">🏆</span>
-                <span class="btn-text" style="text-align: left; width: 100%;">
-                    <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
-                    <small id="leagueRankDisplay">ŁADOWANIE RANGI...</small>
-                </span>
-            </button>
-
-            <button class="menu-btn" onclick="openFriendlyLobby()" style="background: var(--green-neon); color: #000; box-shadow: 0 0 20px rgba(0,255,102,0.3); margin-top: 10px;">
-                <span class="btn-icon">🤝</span>
-                <span class="btn-text">Mecz Towarzyski <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Graj ze znajomym)</small></span>
-            </button>
-
-            <button class="menu-btn" onclick="openLocalClashLobby()" style="background: rgba(255,255,255,0.05); color: var(--text-dim); margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; padding: 12px; box-shadow: none;">
-                <span class="btn-icon">🖥️</span>
-                <span class="btn-text" style="text-align: left; width: 100%;">GRAJ NA JEDNYM PC <small style="display: block; margin-top: 2px; opacity: 0.8; font-weight: 600;">(Lokalny multiplayer)</small></span>
-            </button>
-        </div>
-    </div>
-
-    <div id="clashLocalLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
-        <button onclick="backToClashModeSelectFromLocal()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Powrót">🔙</button>
-        <h1 class="game-title" style="font-size: 28px;">🖥️ Gra Lokalna</h1>
-        <p style="color:var(--text-dim); text-align:center; font-size:12px; margin-bottom:25px;">Wpiszcie swoje nicki, aby zagrać na jednym ekranie.</p>
-        
-        <div style="display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; margin: 0 auto;">
-            <div>
-                <label style="color:#ff3333; font-weight:900; font-size:11px; text-transform:uppercase;">Gracz 1 (Czerwony)</label>
-                <input type="text" id="localPlayer1Input" placeholder="Nick Gracza 1" style="width:100%; padding:12px; border-radius:10px; border:2px solid #ff3333; background:rgba(0,0,0,0.5); color:#fff; font-weight:bold; font-size: 16px; margin-top:5px; text-align:center;">
-            </div>
-            <div>
-                <label style="color:#3399ff; font-weight:900; font-size:11px; text-transform:uppercase;">Gracz 2 (Niebieski)</label>
-                <input type="text" id="localPlayer2Input" placeholder="Nick Gracza 2" style="width:100%; padding:12px; border-radius:10px; border:2px solid #3399ff; background:rgba(0,0,0,0.5); color:#fff; font-weight:bold; font-size: 16px; margin-top:5px; text-align:center;">
-            </div>
-            
-            <button onclick="startLocalClashMatch()" class="btn-reset" style="width:100%; margin-top:20px; padding: 15px; font-size: 16px;">ROZPOCZNIJ MECZ</button>
-        </div>
-    </div>
-
-    <div id="clashLobbyContainer" class="menu-container" style="display: none; z-index: 50;">
-        <button onclick="backToClashModeSelect()" class="icon-btn" style="position: absolute; top: 15px; right: 15px;" title="Powrót">🔙</button>
-        <h1 class="game-title" style="font-size: 28px;" data-i18n="clashTitle">⚔️ Speedway Clash</h1>
-        
-        <div id="clashLobbySelect" style="width: 100%;">
-            <button class="menu-btn" onclick="createClashRoom()"><span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span></button>
-            <div style="margin: 20px 0; font-weight: 700; color: var(--text-dim);" data-i18n="clashOr">--- LUB ---</div>
-            <div style="display: flex; flex-direction: column; gap: 8px; max-width: 280px; margin: 0 auto;">
-                <input type="text" id="joinRoomInput" placeholder="KOD POKOJU (5 LITER)" maxlength="5" style="text-transform: uppercase; text-align: center; padding: 12px; font-size: 16px; font-weight: 900; letter-spacing: 2px;">
-                <button class="btn-reset" onclick="joinClashRoom()" style="padding: 12px; font-size: 15px;"><span class="btn-text">DOŁĄCZ DO POKOJU</span></button>
-            </div>
-        </div>
-
-        <div id="clashLobbyWaiting" style="display: none; width: 100%; margin-top: 15px;">
-            <div style="background: rgba(0,0,0,0.3); border: 2px dashed var(--border-color); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-                <p style="font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 900; margin-bottom: 5px;">KOD TWOJEGO POKOJU:</p>
-                <h2 id="myRoomCodeDisplay" style="font-size: 36px; color: var(--accent); font-weight: 900; letter-spacing: 4px; margin: 0;">XXXXX</h2>
-                <p style="font-size: 11px; color: var(--text-dim); margin-top: 5px;">Podaj ten kod znajomemu, aby mógł dołączyć!</p>
-            </div>
-            
-            <p id="waitingText" class="loading-pulse" style="font-weight: 700; color: var(--text-dim);">OCZEKIWANIE NA PRZECIWNIKA... ⏳</p>
-            
-            <div id="readyPlayersDiv" style="display: none; flex-direction: column; gap: 10px; margin-bottom: 20px; font-weight: 700; font-size: 14px; text-align: left; max-width: 240px; margin-left: auto; margin-right: auto;">
-                <div id="p1ReadyStatus" style="opacity: 0.3;">🔴 Gracz 1</div>
-                <div id="p2ReadyStatus" style="opacity: 0.3;">🔵 Gracz 2</div>
-            </div>
-
-            <button id="btnReady" class="btn-reset" onclick="toggleClashReady()" style="width: 100%; max-width: 280px; padding: 14px; font-size: 16px; font-weight: 900;">JESTEM GOTÓW</button>
-        </div>
-
-        <div id="clashLobbyError" style="display: none; color: var(--red-neon); font-weight: 700; margin-top: 15px; font-size: 13px;"></div>
-    </div>
-
-
-    <div id="mainMenuContainer" class="menu-container">
-        <div class="top-right-buttons">
-            <button onclick="openProfile()" class="icon-btn" title="Statystyki i Profil">👤</button>
-            <button onclick="openRanking('daily')" class="icon-btn" title="Rankingi">🏆</button>
-            <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
-        </div>
-
-        <h1 class="game-title">Speedway<br><span>Guessr</span></h1>
-        <h2 class="menu-subtitle" data-i18n="gameSubtitle">Odgadnij ukrytego zawodnika żużlowego!</h2>
-
-        <div class="menu-modes">
-            <button id="btnDailyMode" class="menu-btn" onclick="startDailyGame()">
-            <span class="btn-icon">📅</span>
-            <span class="btn-text">
-                <span id="dailyBtnText" data-i18n="btnDaily">WYZWANIE DAILY</span>
-                <small id="dailyNumberLabel" style="display: block; margin-top: 2px; opacity: 0.6; font-size: 11px; font-weight: 600;">Daily #...</small>
-            </span>
-        </button>
-            
-            <button class="menu-btn btn-endless" onclick="startEndlessGame()">
-                <span class="btn-icon">♾️</span>
-                <span class="btn-text" data-i18n="btnEndless">TRYB ENDLESS (TRENING)</span>
-            </button>
-
-            <button class="menu-btn" onclick="startClashGame()" style="background: linear-gradient(135deg, #ff3333, #990000); color: #fff; border: 1px solid rgba(255,51,51,0.3); box-shadow: 0 0 15px rgba(255,51,51,0.2); margin-top: 15px;">
-                <span class="btn-icon">⚔️</span>
-                <span class="btn-text" style="font-weight: 900; letter-spacing: 0.5px;">SPEEDWAY CLASH <small style="display: block; margin-top: 2px; opacity: 0.7; font-weight: 600; font-size: 11px;">(Tryb Multiplayer PVP)</small></span>
-            </button>
-        </div>
-
-        <button onclick="openCalendar()" class="btn-calendar-menu" style="margin-top: 20px;"><span class="btn-icon">📅</span> <span data-i18n="btnCalendar">ARCHIWUM / KALENDARZ</span></button>
-
-        <div style="display: flex; gap: 10px; margin-top: 25px; justify-content: center; width: 100%; max-width: 400px; margin-left: auto; margin-right: auto;">
-            <button onclick="openSuggestion()" style="flex: 1; font-size: 11px; color: var(--text-dim); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase;" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
-                💡 Brak zawodnika?
-            </button>
-            <button onclick="openBugReport()" style="flex: 1; font-size: 11px; color: var(--text-dim); background: rgba(255,255,255,0.02); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); cursor: pointer; transition: 0.2s; font-weight: 700; text-transform: uppercase;" onmouseover="this.style.color='var(--red-neon)'; this.style.borderColor='var(--red-neon)'" onmouseout="this.style.color='var(--text-dim)'; this.style.borderColor='var(--border-color)'">
-                🐛 Zgłoś Błąd
-            </button>
-        </div>
-    </div>
-
-
-    <div id="gameContainer" class="game-container" style="display: none;">
-        <div class="game-header-top">
-            <div class="game-mode-indicator"><span id="modeBadge" class="badge">DAILY</span> <span id="gameDayIndicator" style="font-weight: 700; font-size: 13px; color: var(--text-dim);">#1</span></div>
-            <button onclick="window.location.reload()" class="icon-btn" title="Powrót do Menu">🔙</button>
-        </div>
-
-        <div class="secret-box">
-            <div class="secret-avatar">👤</div>
-            <h1 id="secretPlayerDisplay" class="secret-name">???</h1>
-        </div>
-
-        <div class="game-status-bar">
-            <div class="status-item"><span class="status-label" data-i18n="statusGuesses">Próby:</span><span id="counterDisplay" class="status-val">0 / 10</span></div>
-            <div id="endlessStreakDisplay" class="status-item" style="display: none;"><span class="status-label" data-i18n="statusStreak">Seria:</span><span id="endlessStreakVal" class="status-val" style="color: var(--green-neon);">0</span></div>
-        </div>
-
-        <div class="table-wrapper">
-            <table id="gameTable" class="game-table" style="display: none;">
-                <thead>
-                    <tr>
-                        <th data-i18n="colPlayer">Zawodnik</th>
-                        <th data-i18n="colCountry">Kraj</th>
-                        <th class="guess-cell-tooltip" data-tooltip="czy był stałym uczestnikiem GP?">GP</th>
-                        <th data-i18n="colDmp">DMP</th>
-                        <th class="guess-cell-tooltip" data-tooltip="Czy nadal jezdzi?">Status</th>
-                        <th data-i18n="colYear">Rok ur.</th>
-                        <th data-i18n="colClubs">Kluby w Polsce</th>
-                    </tr>
-                </thead>
-                <tbody id="guessesTableBody"></tbody>
-            </table>
-        </div>
-
-        <div class="input-section" id="inputSection" style="display: none;">
-            <div class="input-wrapper" style="display: flex; gap: 8px; width: 100%; position: relative;">
-                <div id="hintButtonContainer" style="display: flex;"></div>
-                <input type="text" id="playerInput" placeholder="Wpisz imię i nazwisko żużlowca..." autocomplete="off">
-                <button id="btnGuess" onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
-                <div id="autocompleteList" class="autocomplete-items"></div>
-            </div>
-            <button id="btnGiveUp" onclick="giveUpGame()" class="btn-giveup" style="margin-top: 10px;" data-i18n="btnGiveUp">PODDAJ SIĘ 🏳️</button>
-        </div>
-    </div>
-
-
-    <div id="clashVsOverlay" class="win-overlay clash-overlay-fs" style="display: none; z-index: 10020; background: #050507;">
-        <div class="vs-screen-content">
-            <h1 class="vs-title" class="loading-pulse">MECZ ZNALEZIONY</h1>
-            <div class="vs-players-row">
-                <div class="vs-player-block red-side"><div class="vs-avatar">🔴</div><h2 id="vsP1Name" class="vs-name">Gracz 1</h2></div>
-                <div class="vs-vs-badge">VS</div>
-                <div class="vs-player-block blue-side"><div class="vs-avatar">🔵</div><h2 id="vsP2Name" class="vs-name">Gracz 2</h2></div>
-            </div>
-            <p style="color: var(--text-dim); margin-top: 30px; font-weight:600;" class="loading-pulse">Trwa losowanie zawodnika rozpoczynającego bieg... 🪙</p>
-        </div>
-    </div>
-
-    <div id="coinTossOverlay" class="win-overlay clash-overlay-fs" style="display: none; z-index: 10025; background: rgba(5,5,7,0.95);">
-        <div class="coin-toss-content">
-            <h2 style="font-weight: 900; letter-spacing: 1px; margin-bottom: 40px; text-transform: uppercase;">Losowanie pól startowych</h2>
-            <div class="clash-coin-wrapper"><div id="clashCoinInner" class="clash-coin-inner"><div class="coin-face coin-front">🔴</div><div class="coin-face coin-back">🔵</div></div></div>
-            <h3 id="coinTossResult" style="margin-top: 40px; font-weight: 900; font-size: 22px; transition: 0.3s; opacity: 0;"></h3>
-        </div>
-    </div>
-
-    <div id="clashContainer" class="clash-screen" style="display: none;">
-        <div class="clash-header">
-            <div class="clash-players-info">
-                <div id="clashPlayer1" class="clash-player red-side"><span class="player-dot">🔴</span> <span id="cp1Nick" class="clash-nick-text">Gracz 1</span></div>
-                <div class="clash-vs-center"><div id="clashTimerDisplay" class="clash-timer">02:00</div></div>
-                <div id="clashPlayer2" class="clash-player blue-side"><span class="player-dot">🔵</span> <span id="cp2Nick" class="clash-nick-text">Gracz 2</span></div>
-            </div>
-        </div>
-
-        <div class="clash-board-wrapper">
-            <div class="clash-grid">
-                <div class="clash-header-cell empty"></div>
-                <div class="clash-header-cell column-hdr" id="col0">Klub A</div>
-                <div class="clash-header-cell column-hdr" id="col1">Klub B</div>
-                <div class="clash-header-cell column-hdr" id="col2">Klub C</div>
-
-                <div class="clash-header-cell row-hdr" id="row0">Klub 1</div>
-                <div class="clash-cell clash-playable" id="cell-0-0" onclick="handleClashCell(0,0)"></div>
-                <div class="clash-cell clash-playable" id="cell-0-1" onclick="handleClashCell(0,1)"></div>
-                <div class="clash-cell clash-playable" id="cell-0-2" onclick="handleClashCell(0,2)"></div>
-
-                <div class="clash-header-cell row-hdr" id="row1">Klub 2</div>
-                <div class="clash-cell clash-playable" id="cell-1-0" onclick="handleClashCell(1,0)"></div>
-                <div class="clash-cell clash-playable" id="cell-1-1" onclick="handleClashCell(1,1)"></div>
-                <div class="clash-cell clash-playable" id="cell-1-2" onclick="handleClashCell(1,2)"></div>
-
-                <div class="clash-header-cell row-hdr" id="row2">Klub 3</div>
-                <div class="clash-cell clash-playable" id="cell-2-0" onclick="handleClashCell(2,0)"></div>
-                <div class="clash-cell clash-playable" id="cell-2-1" onclick="handleClashCell(2,1)"></div>
-                <div class="clash-cell clash-playable" id="cell-2-2" onclick="handleClashCell(2,2)"></div>
-            </div>
-        </div>
-
-        <div class="clash-footer-actions" style="margin-top: 25px; text-align: center;">
-            <button onclick="leaveClashRoom()" class="btn-giveup" style="max-width: 200px; padding: 10px 20px; font-size: 13px;">REZYGNACJA / WYJDŹ 🏳️</button>
-        </div>
-    </div>
-
-    <div id="clashSearchOverlay" class="win-overlay" style="display: none; z-index: 10030; background: rgba(10,10,12,0.92);">
-        <div class="stats-modal" style="max-width: 400px;">
-            <h3 style="font-weight: 900; font-size: 13px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; text-align: center;">Wybrane powiązanie klubowe:</h3>
-            <h2 id="clashSearchDesc" style="color: var(--accent); font-weight: 900; font-size: 20px; text-align: center; margin-top: 0; margin-bottom: 20px;">KLUB X 🤝 KLUB Y</h2>
-            
-            <div class="input-wrapper" style="position: relative; width: 100%; margin-bottom: 20px;">
-                <input type="text" id="clashGuessInput" placeholder="Wpisz imię i nazwisko żużlowca..." autocomplete="off" style="width: 100%; padding: 14px;">
-            </div>
-
-            <div style="display: flex; gap: 10px; width: 100%;">
-                <button onclick="submitClashGuess()" class="btn-reset" style="flex: 1; padding: 12px; font-size: 14px; font-weight: 900;">ZATWIERDŹ</button>
-                <button onclick="closeClashSearch()" class="btn-close" style="flex: 1; padding: 12px; font-size: 14px;">ANULUJ</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="clashSummaryOverlay" class="win-overlay" style="display: none; z-index: 10040;">
-        <div class="stats-modal" style="max-width: 450px;">
-            <h1 id="clashSummaryTitle" style="font-size: 28px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; text-align: center;">MECZ ZAKOŃCZONY</h1>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 14px; margin-bottom: 25px; font-size: 18px; font-weight: 900;">
-                <div id="summaryP1Name" style="color: #ff3333; flex: 1; text-align: left;">Gracz 1</div>
-                <div id="summaryScore" style="font-size: 26px; color: var(--accent); letter-spacing: 2px; padding: 0 15px;">0 : 0</div>
-                <div id="summaryP2Name" style="color: #3399ff; flex: 1; text-align: right;">Gracz 2</div>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <button id="btnRematch" class="btn-reset" onclick="toggleClashRematch()" style="width: 100%; padding: 14px; font-size: 15px; font-weight: 900;">ZAGRAJ REWANŻ <span id="rematchCount">(0/2)</span></button>
-                <button onclick="closeRoomCleanup()" class="btn-close" style="width: 100%; padding: 12px; font-size: 14px;">POWRÓT DO MENU</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- ============================================== -->
+    <!-- ====== STOPKA I AKCJE PO GRZE ====== -->
+    <!-- ============================================== -->
 
     <div id="postGameActions" class="post-game-actions" style="display: none;">
         <button id="btnSharePost" onclick="shareResult()" class="btn-share" style="display: none;" data-i18n="btnShare">UDOSTĘPNIJ 📋</button>
@@ -538,7 +610,9 @@
         </div>
     </footer>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>\n    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <!-- Biblioteki Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 
     <script src="db.js"></script>
