@@ -857,7 +857,7 @@ function resetBoardAndPlay() {
     const hintContainer = document.getElementById('hintButtonContainer');
     if (hintContainer) hintContainer.innerHTML = "";
     updateSecretDisplay();
-    
+
     document.getElementById('winOverlay').style.opacity = '0'; document.getElementById('loseOverlay').style.opacity = '0';
     setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; document.getElementById('loseOverlay').style.display = 'none'; }, 200);
     clearGameBoard(); gameMode = 'endless'; initGame();
