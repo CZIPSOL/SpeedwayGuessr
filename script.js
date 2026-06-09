@@ -6,12 +6,11 @@ let targetPlayer; let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
 let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
-let hintUsed = false;             
-let hintRevealedString = "";      
-let errorsAfterHint = 0;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; const DAILY_START_DATE = new Date('2026-05-12T00:00:00'); 
 
+let hintActive = false; 
+let hintsUsedCount = 0; // Wpłynie na pozycję w rankingu
 // Rozbudowane statystyki o historię Clash
 let userStats = { 
     played: 0, won: 0, currentStreak: 0, maxStreak: 0, 
@@ -702,8 +701,8 @@ async function sendScoreToDatabase(isWin, attempts) {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
         const safeNick = escapeHTML(playerNickname);
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, hintUsed: hintUsed, timestamp: ts }, { merge: true });
-
+        // Dodajemy 'hints: hintsUsedCount'
+        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });
         const increment = firebase.firestore.FieldValue.increment;
         const winIncrement = isWin ? 1 : 0; // Dodaje 1 jeśli wygrana, 0 jeśli przegrana
         
@@ -772,6 +771,21 @@ function triggerErrorShake() {
     setTimeout(() => { inputWrapper.classList.remove('shake-error'); }, 400);
 }
 
+// System powiadomień (Toast) - zamiast irytujących alertów
+function showToast(message, type = 'normal') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast-msg ${type}`;
+    toast.innerText = message;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'fadeOutToast 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 function updateCounterDisplay() { 
     const container = document.getElementById('livesContainer');
     if (!container) return;
@@ -786,80 +800,49 @@ function updateCounterDisplay() {
 
 function clearGameBoard() {
     guessCount = 0; guessHistory = []; guessedPlayersNames = []; hasWon = false; hasLost = false; isRestoring = false;
-    document.getElementById('results').innerHTML = ''; 
-    const inputEl = document.getElementById('playerInput');
-    if (inputEl) inputEl.value = '';
+    hintActive = false; hintsUsedCount = 0; // Reset podpowiedzi
+    document.getElementById('results').innerHTML = ''; document.getElementById('guessInput').value = '';
     document.getElementById('mysteryPhoto').style.display = 'none'; document.getElementById('mysteryPlaceholder').style.display = 'block';
     document.getElementById('photoWrapper').classList.remove('revealed'); document.getElementById('mysteryName').innerText = '???';
     document.getElementById('mysteryName').style.color = 'var(--text-main)'; document.getElementById('postGameActions').style.display = 'none';
     document.getElementById('btnGiveUp').style.display = 'none';
+    document.getElementById('btnHint').style.display = 'none';
 }
 
-function updateSecretDisplay() {
-    const displayEl = document.getElementById('secretPlayerDisplay');
-    if (!displayEl) return;
-    displayEl.innerText = hintUsed ? hintRevealedString : "???";
-}
-
-async function triggerPlayerHint() {
-    if (hintUsed) return;
-    const confirmed = await appConfirm(
-        "Czy chcesz skorzystać z podpowiedzi? Twój wynik w rankingu zostanie oznaczony [💡 PODP.], co obniży Twoją pozycję przy remisach.",
-        { title: "Wziąć podpowiedź? 💡", confirmText: "TAK", danger: false }
-    );
-    if (!confirmed) return;
-
-    hintUsed = true;
-    errorsAfterHint = 0;
+// Generowanie tekstu podpowiedzi
+function updateHintDisplay() {
+    if (!hintActive) return;
+    const parts = targetPlayer.name.split(' ');
+    let result = [];
     
-    let nameArr = targetPlayer.name.split("");
-    hintRevealedString = nameArr.map(char => char === " " ? " " : "_").join("");
-    
-    const container = document.getElementById('hintButtonContainer');
-    if (container) container.innerHTML = "";
-    
-    updateSecretDisplay();
-    playSound('flip');
-}
-
-function progressHintOnMistake() {
-    if (!hintUsed) return;
-    errorsAfterHint++;
-    
-    let targetName = targetPlayer.name; 
-    let currentArr = hintRevealedString.split("");
-    let parts = targetName.split(" ");
-    let firstName = parts[0] || "";
-    let lastName = parts.slice(1).join(" ") || "";
-
-    if (errorsAfterHint === 1) {
-        currentArr[0] = firstName.charAt(0);
-    } else if (errorsAfterHint === 2) {
-        let lastNameStartIdx = firstName.length + 1;
-        if (lastName.length > 0) currentArr[lastNameStartIdx] = lastName.charAt(0);
-    } else {
-        let unrevealedIndices = [];
-        for (let i = 0; i < targetName.length; i++) {
-            if (targetName.charAt(i) !== " " && currentArr[i] === "_") unrevealedIndices.push(i);
+    parts.forEach((part, partIndex) => {
+        let word = "";
+        for (let i = 0; i < part.length; i++) {
+            // Pierwsza litera imienia (od 6 próby)
+            if (partIndex === 0 && i === 0 && guessCount >= 6) word += part[i];
+            // Pierwsza litera nazwiska (od 7 próby)
+            else if (partIndex === 1 && i === 0 && guessCount >= 7) word += part[i];
+            // Kreska
+            else word += "_";
         }
-        if (unrevealedIndices.length > 0) {
-            let randomIdx = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
-            currentArr[randomIdx] = targetName.charAt(randomIdx);
-        }
-    }
+        // Wstawiamy wąską spację między litery dla czytelności
+        result.push(word.split('').join('\u200A'));
+    });
     
-    hintRevealedString = currentArr.join("");
-    updateSecretDisplay();
+    document.getElementById('mysteryName').innerText = result.join(' \u00A0\u00A0 ');
+}
+
+// Aktywacja podpowiedzi z przycisku
+function useHint() {
+    if (hintActive) return;
+    hintActive = true;
+    hintsUsedCount = 1;
+    document.getElementById('btnHint').style.display = 'none'; // Ukrywamy po kliknięciu
+    updateHintDisplay();
+    showToast("Użyto podpowiedzi!", "success");
 }
 
 function resetBoardAndPlay() {
-    hintUsed = false;
-    hintRevealedString = "";
-    errorsAfterHint = 0;
-    const hintContainer = document.getElementById('hintButtonContainer');
-    if (hintContainer) hintContainer.innerHTML = "";
-    updateSecretDisplay();
-
     document.getElementById('winOverlay').style.opacity = '0'; document.getElementById('loseOverlay').style.opacity = '0';
     setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; document.getElementById('loseOverlay').style.display = 'none'; }, 200);
     clearGameBoard(); gameMode = 'endless'; initGame();
@@ -902,61 +885,21 @@ function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁ�
 function getCleanClubName(clubName) { return clubName ? clubName.replace(" (W)", "").trim() : ""; }
 function getClubAbbr(clubName) { if (!clubName) return "---"; let cleanName = getCleanClubName(clubName).toLowerCase(); if (clubAbbreviations[cleanName]) return clubAbbreviations[cleanName]; let words = cleanName.split(' '); return removePolishAccents(words[words.length - 1].substring(0, 3)).toUpperCase(); }
 
-document.addEventListener("click", function (e) { 
-    if (e.target.id !== "playerInput" && e.target.id !== "clashGuessInput") closeAllLists(); 
-});
+document.addEventListener("click", function (e) { if (e.target.id !== "guessInput" && e.target.id !== "clashGuessInput") closeAllLists(); });
+
 function closeAllLists() { let items = document.getElementsByClassName("autocomplete-items"); while (items.length > 0) items[0].parentNode.removeChild(items[0]); }
 
 function setupAutocomplete() {
-    const inputEl = document.getElementById('playerInput');
-    if (!inputEl) return; 
-    
-    // Klonujemy, żeby usunąć zacięte nasłuchiwacze z poprzednich gier
-    const newInput = inputEl.cloneNode(true);
-    inputEl.replaceWith(newInput);
-
+    const oldInput = document.getElementById('guessInput'); const newInput = oldInput.cloneNode(true); oldInput.replaceWith(newInput); 
     newInput.addEventListener('input', function() {
-        const val = this.value;
-        closeAllLists(); // To usunie stare listy z ekranu
-        
-        if (!val || val.length < 2) return; 
-        
-        // Dynamicznie tworzymy CAŁKIEM NOWY kontener na listę pod inputem (tak jak w Clash!)
-        let listContainer = document.createElement("DIV"); 
-        listContainer.setAttribute("class", "autocomplete-items"); 
-        this.parentNode.appendChild(listContainer);
-        
-        const removeAccents = (str) => {
-            const accents = 'ąćęłńóśźż';
-            const out = 'acelnoszz';
-            return str.split('').map(l => accents.indexOf(l) !== -1 ? out[accents.indexOf(l)] : l).join('');
-        };
-        
-        const valClean = removeAccents(val.toLowerCase());
-        
+        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
+        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
+        let valClean = removePolishAccents(val.toLowerCase());
         playersDB.forEach(player => {
-            if (!player || !player.name) return;
             if (guessedPlayersNames.includes(player.name)) return;
-            
-            const pNameClean = removeAccents(player.name.toLowerCase());
-            
-            if (pNameClean.includes(valClean)) {
-                let item = document.createElement("DIV");
-                
-                let matchIdx = pNameClean.indexOf(valClean);
-                if (matchIdx !== -1) {
-                    item.innerHTML = player.name.substring(0, matchIdx) 
-                                   + "<strong style='color:var(--accent);'>" + player.name.substring(matchIdx, matchIdx + val.length) + "</strong>" 
-                                   + player.name.substring(matchIdx + val.length);
-                } else {
-                    item.innerHTML = player.name;
-                }
-                
-                item.addEventListener("click", () => { 
-                    newInput.value = player.name; 
-                    closeAllLists(); 
-                }); 
-                listContainer.appendChild(item);
+            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
+                let item = document.createElement("DIV"); item.innerHTML = player.name;
+                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); }); listContainer.appendChild(item);
             }
         });
     });
@@ -971,65 +914,38 @@ function buildTeamPath() {
     if (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.") { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); }
 }
 
-function setupAutocomplete() {
-    const inputEl = document.getElementById('playerInput');
-    if (!inputEl) return; 
+function makeGuess() {
+    if(hasWon || hasLost) return; const input = document.getElementById('guessInput').value.trim();
+    if (!input) { triggerErrorShake(); return; }
+    const guessedPlayer = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
+    if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer?.name)) { triggerErrorShake(); return; }
     
-    // Klonujemy, żeby usunąć zacięte nasłuchiwacze z poprzednich gier
-    const newInput = inputEl.cloneNode(true);
-    inputEl.replaceWith(newInput);
+    guessedPlayersNames.push(guessedPlayer.name); playSound('guess');
+    if (gameMode === 'daily') { if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); saveStats(); }
+    
+    guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); document.getElementById('guessInput').value = "";
+    
+    // LOGIKA POJAWIANIA SIĘ PRZYCISKÓW (Zmienione zasady)
+    if (guessCount === 5 && !hintActive && guessedPlayer.name !== targetPlayer.name) {
+        document.getElementById('btnHint').style.display = 'inline-block';
+        showToast("Możesz użyć podpowiedzi!", "normal");
+    }
+    
+    if (guessCount >= 7) {
+        document.getElementById('btnGiveUp').style.display = 'inline-block';
+    }
 
-    newInput.addEventListener('input', function() {
-        const val = this.value;
-        closeAllLists(); // To usunie stare listy z ekranu
-        
-        if (!val || val.length < 2) return; 
-        
-        // Dynamicznie tworzymy CAŁKIEM NOWY kontener na listę pod inputem (tak jak w Clash!)
-        let listContainer = document.createElement("DIV"); 
-        listContainer.setAttribute("class", "autocomplete-items"); 
-        this.parentNode.appendChild(listContainer);
-        
-        const removeAccents = (str) => {
-            const accents = 'ąćęłńóśźż';
-            const out = 'acelnoszz';
-            return str.split('').map(l => accents.indexOf(l) !== -1 ? out[accents.indexOf(l)] : l).join('');
-        };
-        
-        const valClean = removeAccents(val.toLowerCase());
-        
-        playersDB.forEach(player => {
-            if (!player || !player.name) return;
-            if (guessedPlayersNames.includes(player.name)) return;
-            
-            const pNameClean = removeAccents(player.name.toLowerCase());
-            
-            if (pNameClean.includes(valClean)) {
-                let item = document.createElement("DIV");
-                
-                let matchIdx = pNameClean.indexOf(valClean);
-                if (matchIdx !== -1) {
-                    item.innerHTML = player.name.substring(0, matchIdx) 
-                                   + "<strong style='color:var(--accent);'>" + player.name.substring(matchIdx, matchIdx + val.length) + "</strong>" 
-                                   + player.name.substring(matchIdx + val.length);
-                } else {
-                    item.innerHTML = player.name;
-                }
-                
-                item.addEventListener("click", () => { 
-                    newInput.value = player.name; 
-                    closeAllLists(); 
-                }); 
-                listContainer.appendChild(item);
-            }
-        });
-    });
+    // Aktualizacja widoku podpowiedzi (jeśli użyto)
+    if (hintActive && guessedPlayer.name !== targetPlayer.name) {
+        updateHintDisplay();
+    }
+
+    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
 
 async function giveUpGame() {
     if (hasWon || hasLost) return;
     
-    // Nowoczesne okienko potwierdzenia (jak w Lidze)
     const confirmed = await appConfirm(
         "Czy na pewno chcesz się poddać i odkryć zawodnika?", 
         { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" }
@@ -1038,6 +954,7 @@ async function giveUpGame() {
     
     // Ustawiamy od razu limit 10 prób, jako karę za poddanie się
     guessCount = GUESS_LIMIT;
+    hintsUsedCount = 1; // Poddanie liczy się jako najgorszy wynik
     updateCounterDisplay();
     updateStatsOnLoss();
     handleLoss();
@@ -1053,11 +970,7 @@ function revealClubsOnPath(guessedPlayer) {
             let cleanC = getCleanClubName(box.dataset.club).toLowerCase();
             if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
             box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`;
-            
-            // NOWE KLASY DYMKÓW:
-            box.classList.add('found', 'guess-cell-tooltip'); 
-            box.setAttribute('data-tooltip', box.dataset.club);
-        }
+            box.classList.add('found'); box.setAttribute('title', box.dataset.club);        }
     });
     if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.")) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
@@ -1065,68 +978,43 @@ function revealClubsOnPath(guessedPlayer) {
 }
 
 function renderGuess(player, isRestore = false) {
-    const resultsDiv = document.getElementById('results'); 
-    const row = document.createElement('div'); row.className = 'guess-row'; 
-    let rowEmojis = "";
+    const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
+    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
+    const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; 
-    const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
-    const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; 
-    const gpIcon = isGuessGP ? "✅" : "❌";
-    
-    // --- WIEK I DYMKI (STARSZY/MŁODSZY) ---
-    let yearCls = "green";
-    let yearTooltip = "Idealnie!";
-    if (player.year < targetPlayer.year) {
-        yearCls = "higher"; 
-        yearTooltip = "Szukany zawodnik jest MŁODSZY 👶";
-    } else if (player.year > targetPlayer.year) {
-        yearCls = "lower"; 
-        yearTooltip = "Szukany zawodnik jest STARSZY 🧓";
-    }
-    let yearContent = `<span>${player.year}</span>`;
-    if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
+    const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
+    let yearTitle = "";
+    if (player.year > targetPlayer.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
+    else if (player.year < targetPlayer.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
+    else yearTitle = "Dokładnie ten sam rocznik!";
 
-    // --- DMP ---
+    let yearContent = `<span>${player.year}</span>`;
+    if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
+    else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
+
     const dmpCls = (player.dmp === targetPlayer.dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
-    if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
+    if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
 
-    // --- KRAJ ---
-    const pCountries = player.country.split("/").map(c => c.trim()); 
-    const tCountries = targetPlayer.country.split("/").map(c => c.trim());
-    let countryCls = "red"; 
-    if (player.country === targetPlayer.country) countryCls = "green"; 
-    else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; 
-    else if (player.region === targetPlayer.region) countryCls = "yellow";
-    
+    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = targetPlayer.country.split("/").map(c => c.trim());
+    let countryCls = "red"; if (player.country === targetPlayer.country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === targetPlayer.region) countryCls = "yellow";
     let c1 = countryToCode[pCountries[0]] || 'pl';
-    let countryContent = pCountries.length > 1 
-        ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
-        : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
+    let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-// --- KLUBY I DYMKI (ŚCIEŻKA KARIERY) ---
     let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
-        let badgeHtml = c.includes("(W)") ? '<div class="loan-badge">W</div>' : ((c.includes("(G)") || c.includes("(Gość)")) ? '<div class="loan-badge" style="background:#3399ff;">G</div>' : '');
-        let isMatch = targetCleanClubs.includes(getCleanClubName(c)); 
-        let matchClass = isMatch ? 'club-match' : 'club-dim';
-        let cleanC = getCleanClubName(c).toLowerCase(); 
-        let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); 
-        let specialClass = isSpecial ? ' club-special' : '';
-        
-        // NOWOŚĆ: Każdy kwadracik (herb) dostaje swój własny dymek z pełną nazwą klubu!
-        return `<div class="club-logo-wrapper guess-cell-tooltip" data-tooltip="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${badgeHtml}</div>`;
+        let isLoan = c.includes("(W)"); let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
+        let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
+        // Zamiana CSSowego Tooltipa na niezawodny natywny `title=""` ze względu na z-index i ucinanie na telefonach
+        return `<div class="club-logo-wrapper" title="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge">W</div>' : ''}</div>`;
     }).join('<div class="club-divider"></div>');
 
-    // --- WSTRZYKIWANIE HTML ---
     let d1 = isRestore ? 0 : 0.1; let d2 = isRestore ? 0 : 0.3; let d3 = isRestore ? 0 : 0.5; let d4 = isRestore ? 0 : 0.7; let d5 = isRestore ? 0 : 0.9; let d6 = isRestore ? 0 : 1.1;
 
-    // USUNIĘTO: Zbiorczy dymek z głównego diva "col-clubs", aby pojedyncze herby mogły działać niezależnie
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
         <div class="col-attr"><div class="attr-box ${countryCls} flip-anim" style="animation-delay: ${d1}s">${countryContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${yearCls} guess-cell-tooltip flip-anim" data-tooltip="${yearTooltip}" style="animation-delay: ${d2}s">${yearContent}</div></div>
+        <div class="col-attr" title="${yearTitle}"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
@@ -1134,19 +1022,11 @@ function renderGuess(player, isRestore = false) {
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
-    if (!isRestore) { 
-        setTimeout(() => playSound('flip'), 100); setTimeout(() => playSound('flip'), 300); 
-        setTimeout(() => playSound('flip'), 500); setTimeout(() => playSound('flip'), 700); 
-        setTimeout(() => playSound('flip'), 900); setTimeout(() => playSound('flip'), 1100); 
-    }
+    if (!isRestore) { setTimeout(() => playSound('flip'), 100); setTimeout(() => playSound('flip'), 300); setTimeout(() => playSound('flip'), 500); setTimeout(() => playSound('flip'), 700); setTimeout(() => playSound('flip'), 900); setTimeout(() => playSound('flip'), 1100); }
     
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
-        if (attr === 'country') c = countryCls; 
-        else if (attr === 'year' && player.year === targetPlayer.year) c = "green"; 
-        else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; 
-        else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green"; 
-        else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
+        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === targetPlayer.year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green"; else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
@@ -1175,11 +1055,8 @@ function revealTargetInfoUI() {
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.club) return;
         let cleanC = getCleanClubName(box.dataset.club).toLowerCase(); if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
-        box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`; 
-        
-        // NOWE KLASY DYMKÓW:
-        box.classList.add('found', 'guess-cell-tooltip'); 
-        box.setAttribute('data-tooltip', box.dataset.club);
+        // Zamiast data-tip
+box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`; box.classList.add('found'); box.setAttribute('title', box.dataset.club);
     });
     const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
 }
@@ -1246,11 +1123,14 @@ async function loadRanking(type) {
 
             let currentRankPosition = 1; // Własny licznik, by pozycje nie skakały jak pominiemy graczy na kalibracji
 
-            scores.forEach((row, index) => {
+            scores.forEach((row) => {
                 // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji (< 5 meczy)
                 if (row.provisional || row.matchesPlayed < 5) return; 
                 
-                let rankClass = ""; if (index === 0) rankClass = "rank-1"; else if (index === 1) rankClass = "rank-2"; else if (index === 2) rankClass = "rank-3";
+                let rankClass = ""; 
+                if (currentRankPosition === 1) rankClass = "rank-1"; 
+                else if (currentRankPosition === 2) rankClass = "rank-2"; 
+                else if (currentRankPosition === 3) rankClass = "rank-3";
                 
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
                 let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
@@ -1258,14 +1138,18 @@ async function loadRanking(type) {
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
                 let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18); // Zmniejszona ikonka dla tabeli
-                let hintBadge = row.hintUsed ? `<span class="leaderboard-hint-badge" title="Użyto podpowiedzi literowej">💡 PODP.</span>` : '';
                 
                 if (tbody) { 
                     tbody.innerHTML += `<tr ${isMe}>
-                        <td class="${rankClass}">${index + 1}</td>
-                        <td class="rank-nick ${rankClass}">${safeRenderNick}${hintBadge}</td>
-                        <td>${wonText}</td>
-                        <td>${row.guesses}</td>
+                        <td class="${rankClass}">${currentRankPosition}</td>
+                        <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
+                        <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
+                            <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
+                                ${rangaImg} <span>${rangaText}</span>
+                            </div>
+                        </td>
+                        <td style="color:var(--text-dim); font-size:11px;">${row.matchesPlayed}</td>
+                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${row.elo}</td>
                     </tr>`; 
                 }
                 currentRankPosition++;
@@ -1309,6 +1193,12 @@ async function loadRanking(type) {
             let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
             if (winsB !== winsA) return winsB - winsA; 
             if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
+            
+            // NOWOŚĆ: Osoby które użyły podpowiedzi są niżej
+            let hintsA = a.hints || 0;
+            let hintsB = b.hints || 0;
+            if (hintsA !== hintsB) return hintsA - hintsB;
+            
             return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
         });
         
@@ -2033,12 +1923,14 @@ function updateClashBoardUI(data) {
     else { document.getElementById('clashTimerDisplay').style.color = '#fff'; }
 
     if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
-        setTimeout(() => alert(`Uwaga: ${data.lastAction}!\nTERAZ TURA GRACZA: ${data.turn === 'red' ? data.p1.nick : data.p2.nick}`), 200);
+        setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
         if (isLocalClash) {
             localClashData.lastAction = '';
         } else {
             db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
         }
+    } else if (data.turn === myClashColor && clashStatus === 'playing') {
+        showToast("TWÓJ RUCH!", "normal");
     }
 
     startClashTimer(data.deadline);
@@ -2065,8 +1957,8 @@ function startClashTimer(deadlineTime) {
 }
 
 function handleClashCell(r, c) {
-    if (!isLocalClash && clashTurn !== myClashColor) { alert("Czekaj na swoją kolej!"); return; }
-    let idx = r * 3 + c; if(clashBoardState[idx] !== null) { alert("To pole jest już zajęte!"); return; }
+    if (!isLocalClash && clashTurn !== myClashColor) { showToast("Czekaj na swoją kolej!", "error"); return; }
+    let idx = r * 3 + c; if(clashBoardState[idx] !== null) { showToast("To pole jest już zajęte!", "error"); return; }
     
     clashActiveCellIdx = idx;
     document.getElementById('clashSearchDesc').innerText = `${getClubAbbr(clashRows[r])} 🤝 ${getClubAbbr(clashCols[c])}`;
@@ -2099,7 +1991,7 @@ async function submitClashGuess() {
     let input = document.getElementById('clashGuessInput').value.trim(); if(!input) return;
     const player = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
 
-    if(!player || clashGuessedPlayers.includes(player.name)) { triggerClashError(); return; }
+    if(!player || clashGuessedPlayers.includes(player.name)) { showToast("Zawodnik nie istnieje lub został podany!", "error"); return; }
 
     const roomData = isLocalClash ? localClashData : await db.collection("clash_rooms").doc(currentClashRoom).get().then(doc => doc.data());
 
@@ -2110,7 +2002,7 @@ async function submitClashGuess() {
         const pCountries = player.country.split("/").map(s => s.trim());
         if (!pCountries.includes(reqCountry)) {
             playSound('error');
-            alert(`BŁĄD! Ta kolumna wymaga zawodnika z kraju: ${reqCountry.toUpperCase()}`);
+            showToast(`BŁĄD! Ta kolumna wymaga zawodnika z kraju: ${reqCountry.toUpperCase()}`, "error");
             skipClashTurn("Zły kraj zawodnika");
             closeClashSearch();
             return;
@@ -2124,23 +2016,22 @@ async function submitClashGuess() {
     if (pClubs.includes(rClub) && pClubs.includes(cClub)) {
         executeValidClashMove(player.name);
     } else {
-        playSound('error'); closeClashSearch(); alert(`Pudło! ${player.name} nie reprezentował obu tych klubów.`); skipClashTurn("Błędna odpowiedź");
+        playSound('error'); closeClashSearch(); 
+        showToast(`Pudło! ${player.name} nie jeździł w obu tych klubach.`, "error"); 
+        skipClashTurn("Błędna odpowiedź");
     }
 }
-function checkWinCondition(board, playerColor) {
+
+// Sprawdzanie czy gracz ułożył 3 w linii w Clashu
+function checkWinCondition(board, color) {
     const lines = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rzędy poziome
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Kolumny pionowe
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rzędy poziom
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Kolumny pion
         [0, 4, 8], [2, 4, 6]             // Skosy
     ];
-    for (let i = 0; i < lines.length; i++) {
-        const [a, b, c] = lines[i];
-        if (board[a] === playerColor && board[b] === playerColor && board[c] === playerColor) {
-            return true;
-        }
-    }
-    return false;
+    return lines.some(line => line.every(index => board[index] === color));
 }
+
 async function executeValidClashMove(playerName) {
     let turnColor = isLocalClash ? clashTurn : myClashColor;
     let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = turnColor;
@@ -2593,5 +2484,4 @@ try {
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
     window.submitBugReport = submitBugReport;
-    window.triggerPlayerHint = triggerPlayerHint;
 } catch (e) {}

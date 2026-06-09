@@ -373,14 +373,18 @@
             <div id="livesContainer" class="lives-container" style="display: none;"></div>
         </header>
 
-        <div class="input-section" id="inputSection" style="display: none;">
-            <div class="input-wrapper" style="display: flex; gap: 8px; width: 100%; position: relative;">
-                <div id="hintButtonContainer" style="display: flex;"></div>
+        <div class="input-section">
+            <div class="search-box">
+                <!-- Przycisk podpowiedzi z lewej strony -->
+                <button id="btnHint" onclick="useHint()" class="icon-btn" style="display: none; border-color: var(--accent); color: var(--accent); padding: 0 15px;" title="Użyj podpowiedzi">💡</button>
                 
-                <input type="text" id="playerInput" placeholder="Wpisz imię i nazwisko żużlowca..." autocomplete="off">
-                <button id="btnGuess" onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                <div class="input-wrapper">
+                    <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
+                </div>
+                <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
                 
-                <button id="btnGiveUp" onclick="giveUpGame()" class="btn-giveup" style="display: none; border: 2px solid var(--red-neon); margin: 0; padding: 0 15px; flex-shrink: 0; white-space: nowrap;" title="Poddaj się">PODDAJ SIĘ 🏳️</button>
+                <!-- Przycisk poddania z prawej strony -->
+                <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn" style="display: none; border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px;" title="Poddaj się">🏳️</button>
             </div>
         </div>
 
@@ -609,7 +613,7 @@
             </div>
         </div>
     </footer>
-
+    <div id="toastContainer" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 99999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"></div>
     <!-- Biblioteki Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
