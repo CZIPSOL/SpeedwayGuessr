@@ -786,7 +786,9 @@ function updateCounterDisplay() {
 
 function clearGameBoard() {
     guessCount = 0; guessHistory = []; guessedPlayersNames = []; hasWon = false; hasLost = false; isRestoring = false;
-    document.getElementById('results').innerHTML = ''; document.getElementById('guessInput').value = '';
+    document.getElementById('results').innerHTML = ''; 
+    const inputEl = document.getElementById('playerInput');
+    if (inputEl) inputEl.value = '';
     document.getElementById('mysteryPhoto').style.display = 'none'; document.getElementById('mysteryPlaceholder').style.display = 'block';
     document.getElementById('photoWrapper').classList.remove('revealed'); document.getElementById('mysteryName').innerText = '???';
     document.getElementById('mysteryName').style.color = 'var(--text-main)'; document.getElementById('postGameActions').style.display = 'none';
@@ -900,12 +902,16 @@ function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁ�
 function getCleanClubName(clubName) { return clubName ? clubName.replace(" (W)", "").trim() : ""; }
 function getClubAbbr(clubName) { if (!clubName) return "---"; let cleanName = getCleanClubName(clubName).toLowerCase(); if (clubAbbreviations[cleanName]) return clubAbbreviations[cleanName]; let words = cleanName.split(' '); return removePolishAccents(words[words.length - 1].substring(0, 3)).toUpperCase(); }
 
-document.addEventListener("click", function (e) { if (e.target.id !== "guessInput" && e.target.id !== "clashGuessInput") closeAllLists(); });
-
+document.addEventListener("click", function (e) { 
+    if (e.target.id !== "playerInput" && e.target.id !== "clashGuessInput") closeAllLists(); 
+});
 function closeAllLists() { let items = document.getElementsByClassName("autocomplete-items"); while (items.length > 0) items[0].parentNode.removeChild(items[0]); }
 
 function setupAutocomplete() {
-    const oldInput = document.getElementById('guessInput'); const newInput = oldInput.cloneNode(true); oldInput.replaceWith(newInput); 
+    const oldInput = document.getElementById('playerInput');
+    if (!oldInput) return; 
+    const newInput = oldInput.cloneNode(true); 
+    oldInput.replaceWith(newInput); 
     newInput.addEventListener('input', function() {
         let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
         let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
@@ -930,7 +936,10 @@ function buildTeamPath() {
 }
 
 function makeGuess() {
-    if(hasWon || hasLost) return; const input = document.getElementById('guessInput').value.trim();
+    if(hasWon || hasLost) return; 
+    const inputEl = document.getElementById('playerInput');
+    if (!inputEl) return;
+    const input = inputEl.value.trim();
     if (!input) { triggerErrorShake(); return; }
     const guessedPlayer = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
     if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer?.name)) { triggerErrorShake(); return; }
@@ -938,19 +947,20 @@ function makeGuess() {
     guessedPlayersNames.push(guessedPlayer.name); playSound('guess');
     if (gameMode === 'daily') { if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); saveStats(); }
     
-    guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); document.getElementById('guessInput').value = "";
+    guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); 
+    inputEl.value = "";
     
     if (guessCount >= 5) {
         document.getElementById('btnGiveUp').style.display = 'inline-block';
     }
     if (guessCount >= 5 && !hintUsed) {
-            const container = document.getElementById('hintButtonContainer');
-            if (container && container.innerHTML === "") {
-                container.innerHTML = `<button onclick="triggerPlayerHint()" class="btn-hint-input" title="Wykorzystaj podpowiedź">💡</button>`;
-            }
+        const container = document.getElementById('hintButtonContainer');
+        if (container && container.innerHTML === "") {
+            container.innerHTML = `<button onclick="triggerPlayerHint()" class="btn-hint-input" title="Wykorzystaj podpowiedź">💡</button>`;
         }
+    }
         
-        if (hintUsed) progressHintOnMistake();
+    if (hintUsed) progressHintOnMistake();
 
     if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
@@ -982,7 +992,10 @@ function revealClubsOnPath(guessedPlayer) {
             let cleanC = getCleanClubName(box.dataset.club).toLowerCase();
             if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
             box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`;
-            box.classList.add('found', 'tooltip'); box.setAttribute('data-tip', box.dataset.club);
+            
+            // NOWE KLASY DYMKÓW:
+            box.classList.add('found', 'guess-cell-tooltip'); 
+            box.setAttribute('data-tooltip', box.dataset.club);
         }
     });
     if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.")) {
@@ -1101,7 +1114,11 @@ function revealTargetInfoUI() {
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.club) return;
         let cleanC = getCleanClubName(box.dataset.club).toLowerCase(); if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
-        box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`; box.classList.add('found', 'tooltip'); box.setAttribute('data-tip', box.dataset.club);
+        box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`; 
+        
+        // NOWE KLASY DYMKÓW:
+        box.classList.add('found', 'guess-cell-tooltip'); 
+        box.setAttribute('data-tooltip', box.dataset.club);
     });
     const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
 }
