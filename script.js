@@ -188,14 +188,37 @@ async function syncLeagueScoreToFirebase() {
 }
 
 function openProfile() {
-    document.getElementById('profileStatPlayed').innerText = userStats.played; 
-    document.getElementById('profileStatWon').innerText = userStats.won;
-    document.getElementById('profileStatStreak').innerText = userStats.currentStreak; 
-    document.getElementById('profileStatMax').innerText = userStats.maxStreak;
-    document.getElementById('changeNickInput').value = playerNickname || "";
+    if(document.getElementById('statPlayed')) document.getElementById('statPlayed').innerText = userStats.played; 
+    if(document.getElementById('statWon')) document.getElementById('statWon').innerText = userStats.won;
+    
+    let winPct = userStats.played > 0 ? Math.round((userStats.won / userStats.played) * 100) : 0;
+    if(document.getElementById('statWinPct')) document.getElementById('statWinPct').innerText = winPct + "%";
+    
+    if(document.getElementById('statCurrentStreak')) document.getElementById('statCurrentStreak').innerText = userStats.currentStreak; 
+    if(document.getElementById('statMaxStreak')) document.getElementById('statMaxStreak').innerText = userStats.maxStreak;
+    if(document.getElementById('profileNickInput')) document.getElementById('profileNickInput').value = playerNickname || "";
     
     const overlay = document.getElementById('profileOverlay');
-    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+    if(overlay) { overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10); }
+}
+
+async function changeNickname() {
+    const inputEl = document.getElementById('profileNickInput'); 
+    if (!inputEl) return;
+    
+    let newNick = inputEl.value.trim();
+
+    if(newNick === playerNickname) { appAlert("To jest Twój obecny nick!"); return; }
+    if (newNick.length < 3) { appAlert("Nick musi mieć minimum 3 znaki!"); return; }
+    if (!isNickClean(newNick)) { appAlert("Ten nick narusza zasady. Wybierz inny."); inputEl.value = playerNickname || ""; return; }
+
+    let safeInput = escapeHTML(newNick); 
+
+    const taken = await isNickTaken(safeInput);
+    if (taken) { appAlert("Ten nick jest już zajęty! Wymyśl inny."); return; }
+
+    playerNickname = safeInput; localStorage.setItem('speedwayNickname', playerNickname);
+    appAlert("Twój nick został zmieniony! Będzie widoczny przy kolejnym zapisanym wyniku.");
 }
 
 function closeProfile() {
@@ -613,14 +636,20 @@ function changeDailyInGame(dir) {
 
 function updateDailyMenu() {
     const strings = i18n[currentLang] || i18n.pl;
-    document.getElementById('dailyDayDisplay').innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
-    document.getElementById('btnPrevDaily').style.visibility = (selectedDailyDay <= 1) ? 'hidden' : 'visible';
-    document.getElementById('btnNextDaily').style.visibility = (selectedDailyDay >= currentDailyDay) ? 'hidden' : 'visible';
     
-    const btn = document.getElementById('btnDailyMode'); const txt = document.getElementById('dailyBtnText');
+    // Nowy identyfikator dla numeru Daily na przycisku
+    const label = document.getElementById('dailyNumberLabel');
+    if (label) label.innerText = `Daily #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
+
+    const btn = document.getElementById('btnDailyMode'); 
+    const txt = document.getElementById('dailyBtnText');
     if (!btn || !txt) return;
-    if (userStats.dailyResults[selectedDailyDay]) { btn.classList.remove('disabled'); txt.innerHTML = strings.btnReview; } 
-    else { btn.classList.remove('disabled'); txt.innerHTML = strings.btnDaily; }
+    
+    if (userStats.dailyResults[selectedDailyDay]) { 
+        btn.classList.remove('disabled'); txt.innerHTML = strings.btnReview; 
+    } else { 
+        btn.classList.remove('disabled'); txt.innerHTML = strings.btnDaily; 
+    }
 }
 
 function openCalendar() {
@@ -631,11 +660,19 @@ function closeCalendar() { const overlay = document.getElementById('calendarOver
 function changeCalendarMonth(dir) { calRenderMonth += dir; if (calRenderMonth > 11) { calRenderMonth = 0; calRenderYear++; } else if (calRenderMonth < 0) { calRenderMonth = 11; calRenderYear--; } renderCalendar(); }
 
 function renderCalendar() {
-    document.getElementById('calendarMonthDisplay').innerText = `${i18n[currentLang].months[calRenderMonth]} ${calRenderYear}`;
-    const wdContainer = document.getElementById('calendarWeekdays'); wdContainer.innerHTML = '';
-    i18n[currentLang].weekdays.forEach(wd => { wdContainer.innerHTML += `<div>${wd}</div>`; });
+    const monthLabel = document.getElementById('calendarMonthYearLabel');
+    if (monthLabel) monthLabel.innerText = `${i18n[currentLang].months[calRenderMonth]} ${calRenderYear}`;
+    
+    const wdContainer = document.getElementById('calendarWeekdays'); 
+    if (wdContainer) {
+        wdContainer.innerHTML = '';
+        i18n[currentLang].weekdays.forEach(wd => { wdContainer.innerHTML += `<div>${wd}</div>`; });
+    }
 
-    const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
+    const grid = document.getElementById('calendarDaysGrid'); 
+    if (!grid) return;
+    grid.innerHTML = '';
+    
     const firstDay = new Date(calRenderYear, calRenderMonth, 1);
     const daysInMonth = new Date(calRenderYear, calRenderMonth + 1, 0).getDate();
     let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
@@ -2497,6 +2534,8 @@ try {
     window.startLocalClashMatch = startLocalClashMatch;
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
-window.submitBugReport = submitBugReport;
+    window.submitBugReport = submitBugReport;
     window.triggerPlayerHint = triggerPlayerHint;
+    window.openProfile = openProfile;
+    window.changeNickname = changeNickname;
 } catch (e) {}
