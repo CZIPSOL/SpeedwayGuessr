@@ -377,10 +377,11 @@
             <div class="input-wrapper" style="display: flex; gap: 8px; width: 100%; position: relative;">
                 <div id="hintButtonContainer" style="display: flex;"></div>
                 
-                <input type="text" id="guessInput" placeholder="Wpisz imię i nazwisko żużlowca..." autocomplete="off">                <button id="btnGuess" onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
-                <div id="autocompleteList" class="autocomplete-items"></div>
+                <input type="text" id="playerInput" placeholder="Wpisz imię i nazwisko żużlowca..." autocomplete="off">
+                <button id="btnGuess" onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                
+                <button id="btnGiveUp" onclick="giveUpGame()" class="btn-giveup" style="display: none; border: 2px solid var(--red-neon); margin: 0; padding: 0 15px; flex-shrink: 0; white-space: nowrap;" title="Poddaj się">PODDAJ SIĘ 🏳️</button>
             </div>
-            <button id="btnGiveUp" onclick="giveUpGame()" class="btn-giveup" style="margin-top: 10px;" data-i18n="btnGiveUp">PODDAJ SIĘ 🏳️</button>
         </div>
 
         <div class="main-card">

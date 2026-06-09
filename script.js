@@ -909,31 +909,23 @@ function closeAllLists() { let items = document.getElementsByClassName("autocomp
 
 function setupAutocomplete() {
     const inputEl = document.getElementById('playerInput');
-    const listContainer = document.getElementById('autocompleteList');
+    if (!inputEl) return; 
     
-    // Zabezpieczenie - jeśli nie znajdzie pól na stronie, nie wywali błędu
-    if (!inputEl || !listContainer) return; 
-    
-    // Klonujemy pole, aby usunąć wszystkie stare zacięte eventy (zapobiega to "dublowaniu" się list)
+    // Klonujemy, żeby usunąć zacięte nasłuchiwacze z poprzednich gier
     const newInput = inputEl.cloneNode(true);
     inputEl.replaceWith(newInput);
 
-    // Zamykanie listy po kliknięciu gdziekolwiek indziej na stronie
-    document.addEventListener("click", function (e) {
-        if (e.target.id !== "playerInput") {
-            const list = document.getElementById('autocompleteList');
-            if(list) list.innerHTML = '';
-        }
-    });
-
-    // Główna funkcja wyszukiwania
     newInput.addEventListener('input', function() {
         const val = this.value;
-        listContainer.innerHTML = ''; // Zawsze czyścimy starą listę przed pokazaniem nowej
+        closeAllLists(); // To usunie stare listy z ekranu
         
-        if (!val || val.length < 2) return; // Uruchamiamy wyszukiwanie dopiero od 2 wpisanych znaków
+        if (!val || val.length < 2) return; 
         
-        // Wewnętrzna funkcja ignorująca polskie znaki (aby działało Zmarzlik == Zmąrżlik)
+        // Dynamicznie tworzymy CAŁKIEM NOWY kontener na listę pod inputem (tak jak w Clash!)
+        let listContainer = document.createElement("DIV"); 
+        listContainer.setAttribute("class", "autocomplete-items"); 
+        this.parentNode.appendChild(listContainer);
+        
         const removeAccents = (str) => {
             const accents = 'ąćęłńóśźż';
             const out = 'acelnoszz';
@@ -944,30 +936,26 @@ function setupAutocomplete() {
         
         playersDB.forEach(player => {
             if (!player || !player.name) return;
-            if (guessedPlayersNames.includes(player.name)) return; // Nie pokazujemy odgadniętych
+            if (guessedPlayersNames.includes(player.name)) return;
             
-            const pName = player.name;
-            const pNameClean = removeAccents(pName.toLowerCase());
+            const pNameClean = removeAccents(player.name.toLowerCase());
             
             if (pNameClean.includes(valClean)) {
                 let item = document.createElement("DIV");
                 
-                // POGRUBIENIE wpisywanej frazy (Efekt wizualny)
                 let matchIdx = pNameClean.indexOf(valClean);
                 if (matchIdx !== -1) {
-                    item.innerHTML = pName.substring(0, matchIdx) 
-                                   + "<strong style='color:var(--accent);'>" + pName.substring(matchIdx, matchIdx + val.length) + "</strong>" 
-                                   + pName.substring(matchIdx + val.length);
+                    item.innerHTML = player.name.substring(0, matchIdx) 
+                                   + "<strong style='color:var(--accent);'>" + player.name.substring(matchIdx, matchIdx + val.length) + "</strong>" 
+                                   + player.name.substring(matchIdx + val.length);
                 } else {
-                    item.innerHTML = pName;
+                    item.innerHTML = player.name;
                 }
                 
-                // Co ma się stać po kliknięciu w nazwisko na liście:
                 item.addEventListener("click", () => { 
-                    newInput.value = pName; 
-                    listContainer.innerHTML = ''; // Ukrywamy listę po wyborze
+                    newInput.value = player.name; 
+                    closeAllLists(); 
                 }); 
-                
                 listContainer.appendChild(item);
             }
         });
@@ -983,62 +971,59 @@ function buildTeamPath() {
     if (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.") { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); }
 }
 
-function makeGuess() {
-    if(hasWon || hasLost) return; 
+function setupAutocomplete() {
     const inputEl = document.getElementById('playerInput');
-    if (!inputEl) return;
-    const input = inputEl.value.trim();
+    if (!inputEl) return; 
     
-    // Wewnętrzna funkcja do ładnego trzęsienia się paska przy błędzie
-    const showError = () => {
-        const wrapper = document.querySelector('.input-wrapper');
-        if (wrapper) { 
-            wrapper.classList.add('shake-error'); 
-            setTimeout(() => wrapper.classList.remove('shake-error'), 400); 
-        }
-        playSound('error');
-    };
+    // Klonujemy, żeby usunąć zacięte nasłuchiwacze z poprzednich gier
+    const newInput = inputEl.cloneNode(true);
+    inputEl.replaceWith(newInput);
 
-    if (!input) { showError(); return; }
-    
-    // Szukanie gracza w bazie
-    const guessedPlayer = playersDB.find(p => p && p.name && p.name.toLowerCase() === input.toLowerCase());
-    if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer.name)) { showError(); return; }
-    
-    guessedPlayersNames.push(guessedPlayer.name); 
-    playSound('guess');
-    
-    if (gameMode === 'daily') { 
-        if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
-        userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); 
-        saveStats(); 
-    }
-    
-    guessCount++; 
-    updateCounterDisplay(); 
-    renderGuess(guessedPlayer); 
-    revealClubsOnPath(guessedPlayer); 
-    inputEl.value = "";
-    
-    // Logika przycisku Poddaj Się i Żaróweczki z Podpowiedzią
-    if (guessCount >= 5) {
-        document.getElementById('btnGiveUp').style.display = 'inline-block';
-    }
-    if (guessCount >= 5 && !hintUsed) {
-        const container = document.getElementById('hintButtonContainer');
-        if (container && container.innerHTML === "") {
-            container.innerHTML = `<button onclick="triggerPlayerHint()" class="btn-hint-input" title="Wykorzystaj podpowiedź">💡</button>`;
-        }
-    }
+    newInput.addEventListener('input', function() {
+        const val = this.value;
+        closeAllLists(); // To usunie stare listy z ekranu
         
-    // Rozwój podpowiedzi po błędzie
-    if (hintUsed) progressHintOnMistake();
-
-    // Sprawdzenie limitu (Porażka)
-    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { 
-        updateStatsOnLoss(); 
-        setTimeout(handleLoss, 1400); 
-    }
+        if (!val || val.length < 2) return; 
+        
+        // Dynamicznie tworzymy CAŁKIEM NOWY kontener na listę pod inputem (tak jak w Clash!)
+        let listContainer = document.createElement("DIV"); 
+        listContainer.setAttribute("class", "autocomplete-items"); 
+        this.parentNode.appendChild(listContainer);
+        
+        const removeAccents = (str) => {
+            const accents = 'ąćęłńóśźż';
+            const out = 'acelnoszz';
+            return str.split('').map(l => accents.indexOf(l) !== -1 ? out[accents.indexOf(l)] : l).join('');
+        };
+        
+        const valClean = removeAccents(val.toLowerCase());
+        
+        playersDB.forEach(player => {
+            if (!player || !player.name) return;
+            if (guessedPlayersNames.includes(player.name)) return;
+            
+            const pNameClean = removeAccents(player.name.toLowerCase());
+            
+            if (pNameClean.includes(valClean)) {
+                let item = document.createElement("DIV");
+                
+                let matchIdx = pNameClean.indexOf(valClean);
+                if (matchIdx !== -1) {
+                    item.innerHTML = player.name.substring(0, matchIdx) 
+                                   + "<strong style='color:var(--accent);'>" + player.name.substring(matchIdx, matchIdx + val.length) + "</strong>" 
+                                   + player.name.substring(matchIdx + val.length);
+                } else {
+                    item.innerHTML = player.name;
+                }
+                
+                item.addEventListener("click", () => { 
+                    newInput.value = player.name; 
+                    closeAllLists(); 
+                }); 
+                listContainer.appendChild(item);
+            }
+        });
+    });
 }
 
 async function giveUpGame() {
@@ -2142,7 +2127,20 @@ async function submitClashGuess() {
         playSound('error'); closeClashSearch(); alert(`Pudło! ${player.name} nie reprezentował obu tych klubów.`); skipClashTurn("Błędna odpowiedź");
     }
 }
-
+function checkWinCondition(board, playerColor) {
+    const lines = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rzędy poziome
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Kolumny pionowe
+        [0, 4, 8], [2, 4, 6]             // Skosy
+    ];
+    for (let i = 0; i < lines.length; i++) {
+        const [a, b, c] = lines[i];
+        if (board[a] === playerColor && board[b] === playerColor && board[c] === playerColor) {
+            return true;
+        }
+    }
+    return false;
+}
 async function executeValidClashMove(playerName) {
     let turnColor = isLocalClash ? clashTurn : myClashColor;
     let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = turnColor;
