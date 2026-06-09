@@ -909,18 +909,50 @@ function closeAllLists() { let items = document.getElementsByClassName("autocomp
 
 function setupAutocomplete() {
     const oldInput = document.getElementById('playerInput');
-    if (!oldInput) return; 
+    if (!oldInput) return; // Zabezpieczenie przed brakiem inputu
+    
+    // Klonujemy input, aby usunąć stare, zacięte nasłuchiwacze (event listeners)
     const newInput = oldInput.cloneNode(true); 
     oldInput.replaceWith(newInput); 
+    
     newInput.addEventListener('input', function() {
-        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
-        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
+        let val = this.value; 
+        closeAllLists(); 
+        if (!val || val.length < 2) return;
+        
+        let listContainer = document.createElement("DIV"); 
+        listContainer.setAttribute("class", "autocomplete-items"); 
+        this.parentNode.appendChild(listContainer);
+        
         let valClean = removePolishAccents(val.toLowerCase());
+        
         playersDB.forEach(player => {
+            // Dodatkowe zabezpieczenie bazy danych
+            if (!player || !player.name) return;
+            
             if (guessedPlayersNames.includes(player.name)) return;
-            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
-                let item = document.createElement("DIV"); item.innerHTML = player.name;
-                item.addEventListener("click", () => { newInput.value = player.name; closeAllLists(); }); listContainer.appendChild(item);
+            
+            let pName = player.name;
+            let pNameClean = removePolishAccents(pName.toLowerCase());
+            
+            if (pNameClean.includes(valClean)) {
+                let item = document.createElement("DIV"); 
+                
+                // POGRUBIENIE wpisywanej frazy (np. wpiszesz "mar", to pokaże Z**mar**zlik)
+                let matchIdx = pNameClean.indexOf(valClean);
+                if (matchIdx !== -1) {
+                    item.innerHTML = pName.substring(0, matchIdx) 
+                                   + "<strong>" + pName.substring(matchIdx, matchIdx + val.length) + "</strong>" 
+                                   + pName.substring(matchIdx + val.length);
+                } else {
+                    item.innerHTML = pName;
+                }
+                
+                item.addEventListener("click", () => { 
+                    newInput.value = pName; 
+                    closeAllLists(); 
+                }); 
+                listContainer.appendChild(item);
             }
         });
     });
@@ -940,16 +972,39 @@ function makeGuess() {
     const inputEl = document.getElementById('playerInput');
     if (!inputEl) return;
     const input = inputEl.value.trim();
-    if (!input) { triggerErrorShake(); return; }
-    const guessedPlayer = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
-    if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer?.name)) { triggerErrorShake(); return; }
     
-    guessedPlayersNames.push(guessedPlayer.name); playSound('guess');
-    if (gameMode === 'daily') { if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); saveStats(); }
+    // Wewnętrzna funkcja do ładnego trzęsienia się paska przy błędzie
+    const showError = () => {
+        const wrapper = document.querySelector('.input-wrapper');
+        if (wrapper) { 
+            wrapper.classList.add('shake-error'); 
+            setTimeout(() => wrapper.classList.remove('shake-error'), 400); 
+        }
+        playSound('error');
+    };
+
+    if (!input) { showError(); return; }
     
-    guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); 
+    // Szukanie gracza w bazie
+    const guessedPlayer = playersDB.find(p => p && p.name && p.name.toLowerCase() === input.toLowerCase());
+    if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer.name)) { showError(); return; }
+    
+    guessedPlayersNames.push(guessedPlayer.name); 
+    playSound('guess');
+    
+    if (gameMode === 'daily') { 
+        if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
+        userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); 
+        saveStats(); 
+    }
+    
+    guessCount++; 
+    updateCounterDisplay(); 
+    renderGuess(guessedPlayer); 
+    revealClubsOnPath(guessedPlayer); 
     inputEl.value = "";
     
+    // Logika przycisku Poddaj Się i Żaróweczki z Podpowiedzią
     if (guessCount >= 5) {
         document.getElementById('btnGiveUp').style.display = 'inline-block';
     }
@@ -960,9 +1015,14 @@ function makeGuess() {
         }
     }
         
+    // Rozwój podpowiedzi po błędzie
     if (hintUsed) progressHintOnMistake();
 
-    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
+    // Sprawdzenie limitu (Porażka)
+    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { 
+        updateStatsOnLoss(); 
+        setTimeout(handleLoss, 1400); 
+    }
 }
 
 async function giveUpGame() {
