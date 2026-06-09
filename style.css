@@ -560,3 +560,73 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 #summaryP1Name, #summaryP2Name {
     word-break: break-word; /* Długie nicki będą się zwijać w dół, nie psując wyniku */
 }
+
+/* =================================================== */
+/* === DYNAMICZNE DYMKI (TOOLTIPS) CLUBS / YEAR / HEADERS === */
+/* =================================================== */
+
+.guess-cell-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.guess-cell-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%) scale(0.9);
+    background: rgba(20, 20, 25, 0.95);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 99;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.guess-cell-tooltip:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.btn-hint-input {
+    background: #ffaa00;
+    color: #000;
+    border: none;
+    padding: 0 15px;
+    border-radius: 14px;
+    font-weight: 900;
+    font-size: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(255,170,0,0.2);
+}
+.btn-hint-input:hover {
+    background: #ffc44d;
+    box-shadow: 0 0 15px rgba(255,170,0,0.5);
+}
+
+.leaderboard-hint-badge {
+    background: rgba(255, 170, 0, 0.15);
+    color: #ffaa00;
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 900;
+    margin-left: 5px;
+    vertical-align: middle;
+}

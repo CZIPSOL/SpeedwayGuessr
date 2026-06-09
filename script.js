@@ -6,6 +6,9 @@ let targetPlayer; let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
 let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
+let hintUsed = false;             
+let hintRevealedString = "";      
+let errorsAfterHint = 0;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; const DAILY_START_DATE = new Date('2026-05-12T00:00:00'); 
 
@@ -699,7 +702,7 @@ async function sendScoreToDatabase(isWin, attempts) {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
         const safeNick = escapeHTML(playerNickname);
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, timestamp: ts }, { merge: true });
+        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, hintUsed: hintUsed, timestamp: ts }, { merge: true });
 
         const increment = firebase.firestore.FieldValue.increment;
         const winIncrement = isWin ? 1 : 0; // Dodaje 1 jeśli wygrana, 0 jeśli przegrana
@@ -790,7 +793,71 @@ function clearGameBoard() {
     document.getElementById('btnGiveUp').style.display = 'none';
 }
 
+function updateSecretDisplay() {
+    const displayEl = document.getElementById('secretPlayerDisplay');
+    if (!displayEl) return;
+    displayEl.innerText = hintUsed ? hintRevealedString : "???";
+}
+
+async function triggerPlayerHint() {
+    if (hintUsed) return;
+    const confirmed = await appConfirm(
+        "Czy chcesz skorzystać z podpowiedzi? Twój wynik w rankingu zostanie oznaczony [💡 PODP.], co obniży Twoją pozycję przy remisach.",
+        { title: "Wziąć podpowiedź? 💡", confirmText: "TAK", danger: false }
+    );
+    if (!confirmed) return;
+
+    hintUsed = true;
+    errorsAfterHint = 0;
+    
+    let nameArr = targetPlayer.name.split("");
+    hintRevealedString = nameArr.map(char => char === " " ? " " : "_").join("");
+    
+    const container = document.getElementById('hintButtonContainer');
+    if (container) container.innerHTML = "";
+    
+    updateSecretDisplay();
+    playSound('flip');
+}
+
+function progressHintOnMistake() {
+    if (!hintUsed) return;
+    errorsAfterHint++;
+    
+    let targetName = targetPlayer.name; 
+    let currentArr = hintRevealedString.split("");
+    let parts = targetName.split(" ");
+    let firstName = parts[0] || "";
+    let lastName = parts.slice(1).join(" ") || "";
+
+    if (errorsAfterHint === 1) {
+        currentArr[0] = firstName.charAt(0);
+    } else if (errorsAfterHint === 2) {
+        let lastNameStartIdx = firstName.length + 1;
+        if (lastName.length > 0) currentArr[lastNameStartIdx] = lastName.charAt(0);
+    } else {
+        let unrevealedIndices = [];
+        for (let i = 0; i < targetName.length; i++) {
+            if (targetName.charAt(i) !== " " && currentArr[i] === "_") unrevealedIndices.push(i);
+        }
+        if (unrevealedIndices.length > 0) {
+            let randomIdx = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+            currentArr[randomIdx] = targetName.charAt(randomIdx);
+        }
+    }
+    
+    hintRevealedString = currentArr.join("");
+    updateSecretDisplay();
+}
+
 function resetBoardAndPlay() {
+    hintUsed = false;
+    hintRevealedString = "";
+    errorsAfterHint = 0;
+    const hintContainer = document.getElementById('hintButtonContainer');
+    if (hintContainer) hintContainer.innerHTML = "";
+    updateSecretDisplay();
+    
     document.getElementById('winOverlay').style.opacity = '0'; document.getElementById('loseOverlay').style.opacity = '0';
     setTimeout(() => { document.getElementById('winOverlay').style.display = 'none'; document.getElementById('loseOverlay').style.display = 'none'; }, 200);
     clearGameBoard(); gameMode = 'endless'; initGame();
@@ -876,6 +943,14 @@ function makeGuess() {
     if (guessCount >= 5) {
         document.getElementById('btnGiveUp').style.display = 'inline-block';
     }
+    if (guessCount >= 5 && !hintUsed) {
+            const container = document.getElementById('hintButtonContainer');
+            if (container && container.innerHTML === "") {
+                container.innerHTML = `<button onclick="triggerPlayerHint()" class="btn-hint-input" title="Wykorzystaj podpowiedź">💡</button>`;
+            }
+        }
+        
+        if (hintUsed) progressHintOnMistake();
 
     if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
@@ -921,9 +996,17 @@ function renderGuess(player, isRestore = false) {
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
     const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
+    let yearCls = "green";
+    let yearTooltip = "Idealnie!";
+    if (player.year < targetPlayer.year) {
+        yearCls = "higher"; 
+        yearTooltip = "Szukany zawodnik jest MŁODSZY 👶";
+    } else if (player.year > targetPlayer.year) {
+        yearCls = "lower"; 
+        yearTooltip = "Szukany zawodnik jest STARSZY 🧓";
+    }
     let yearContent = `<span>${player.year}</span>`;
     if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
-
     const dmpCls = (player.dmp === targetPlayer.dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
     if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="⬇️">⬇️</span>`; else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="⬆️">⬆️</span>`;
@@ -945,11 +1028,11 @@ function renderGuess(player, isRestore = false) {
     row.innerHTML = `
         <div class="col-name">${player.name}</div>
         <div class="col-attr"><div class="attr-box ${countryCls} flip-anim" style="animation-delay: ${d1}s">${countryContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
+        <div class="col-attr"><div class="attr-box ${yearCls} guess-cell-tooltip flip-anim" data-tooltip="${yearTooltip}" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
         <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
-        <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
+        <div class="col-clubs guess-cell-tooltip flip-anim" data-tooltip="${player.pastClubs.map(c => getClubAbbr(c)).join(' ➔ ')}" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
     
@@ -1068,18 +1151,14 @@ async function loadRanking(type) {
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
                 let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18); // Zmniejszona ikonka dla tabeli
+                let hintBadge = row.hintUsed ? `<span class="leaderboard-hint-badge" title="Użyto podpowiedzi literowej">💡 PODP.</span>` : '';
                 
                 if (tbody) { 
                     tbody.innerHTML += `<tr ${isMe}>
-                        <td class="${rankClass}">${currentRankPosition}</td>
-                        <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
-                        <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
-                            <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
-                                ${rangaImg} <span>${rangaText}</span>
-                            </div>
-                        </td>
-                        <td style="color:var(--text-dim); font-size:11px;">${row.matchesPlayed}</td>
-                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${row.elo}</td>
+                        <td class="${rankClass}">${index + 1}</td>
+                        <td class="rank-nick ${rankClass}">${safeRenderNick}${hintBadge}</td>
+                        <td>${wonText}</td>
+                        <td>${row.guesses}</td>
                     </tr>`; 
                 }
                 currentRankPosition++;
@@ -2394,4 +2473,5 @@ try {
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
     window.submitBugReport = submitBugReport;
+    window.triggerPlayerHint = triggerPlayerHint;
 } catch (e) {}

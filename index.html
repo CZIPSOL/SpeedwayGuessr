@@ -373,15 +373,15 @@
             <div id="livesContainer" class="lives-container" style="display: none;"></div>
         </header>
 
-        <div class="input-section">
-            <div class="search-box">
-                <div class="input-wrapper">
-                    <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
-                </div>
-                <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
-                <!-- Przycisk do poddawania się (widoczny po 5 próbach) -->
-                <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn" style="display: none; border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px;" title="Poddaj się">🏳️</button>
+        <div class="input-section" id="inputSection" style="display: none;">
+            <div class="input-wrapper" style="display: flex; gap: 8px; width: 100%; position: relative;">
+                <div id="hintButtonContainer" style="display: flex;"></div>
+                
+                <input type="text" id="playerInput" placeholder="Wpisz imię i nazwisko żużlowca..." autocomplete="off">
+                <button id="btnGuess" onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                <div id="autocompleteList" class="autocomplete-items"></div>
             </div>
+            <button id="btnGiveUp" onclick="giveUpGame()" class="btn-giveup" style="margin-top: 10px;" data-i18n="btnGiveUp">PODDAJ SIĘ 🏳️</button>
         </div>
 
         <div class="main-card">
