@@ -637,12 +637,14 @@ function changeDailyInGame(dir) {
 function updateDailyMenu() {
     const strings = i18n[currentLang] || i18n.pl;
     
-    // Nowy identyfikator dla numeru Daily na przycisku
+    // Zabezpieczenie dla labelki
     const label = document.getElementById('dailyNumberLabel');
     if (label) label.innerText = `Daily #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
 
     const btn = document.getElementById('btnDailyMode'); 
     const txt = document.getElementById('dailyBtnText');
+    
+    // Jeśli z jakiegoś powodu nie ma przycisku (np. jesteś w trakcie gry), przerwij funkcję zamiast rzucać błąd!
     if (!btn || !txt) return;
     
     if (userStats.dailyResults[selectedDailyDay]) { 

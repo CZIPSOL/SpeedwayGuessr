@@ -485,9 +485,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .input-section { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
     .icon-btn { padding: 6px 10px; font-size: 18px; }
     .icon-btn-small { font-size: 16px; padding: 4px; }
-}
-
-.daily-tile.draw { background: var(--yellow-neon); box-shadow: 0 0 8px rgba(255, 204, 0, 0.3); }
+    .daily-tile.draw { background: var(--yellow-neon); box-shadow: 0 0 8px rgba(255, 204, 0, 0.3); }
 
 #btnLeagueMode #leagueRankDisplay {
     color: #111 !important;
@@ -501,6 +499,9 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 #summaryScore { white-space: nowrap !important; min-width: 100px !important; text-align: center !important; flex-shrink: 0 !important; }
 #summaryP1Name, #summaryP2Name { word-break: break-word; }
+#btnGiveUp { width: 100%; max-width: 100%; font-size: 12px; padding: 12px; }
+}
+
 
 /* =================================================== */
 /* === NOWE, SPÓJNE DYNAMIČNE DYMKI (TOOLTIPS) CLUBS/YEAR === */
