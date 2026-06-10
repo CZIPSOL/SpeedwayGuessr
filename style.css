@@ -486,16 +486,43 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .history-list-container { max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px; }
 
 
-/* RWD MOBILE (PANCERNY FLEXBOX) */
+/* ========================================= */
+/* --- RWD MOBILE (TELEFONY I TABLETY) --- */
+/* ========================================= */
+
 @media (max-width: 768px) {
     body { padding: 10px; overflow-x: hidden; }
-    .menu-container { padding: 25px 15px; width: 100%; max-width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
     
-    .game-header { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; padding-top: 50px; }
-    .top-right-buttons { right: 10px; top: 10px; position: fixed; z-index: 100; }
+    .menu-container { 
+        padding: 25px 15px 35px 15px; 
+        width: 100%; 
+        max-width: 100%; 
+        margin-top: 10px; 
+        border-radius: 20px; 
+        box-sizing: border-box; 
+    }
     
-    .game-title { font-size: 24px; }
-    .game-title-small { font-size: 18px; margin-top: 10px; }
+    /* 1. NAPRAWA IKONEK (Usunięcie nachodzenia na tytuł) */
+    .top-right-buttons { 
+        position: relative; /* Zamiast fixed */
+        right: auto; 
+        top: auto; 
+        justify-content: center; /* Wyśrodkowanie ikonek na telefonie */
+        width: 100%; 
+        margin-bottom: 20px; 
+        z-index: 10; 
+    }
+    
+    .game-header { 
+        width: 100%; 
+        max-width: 100%; 
+        padding: 0 10px; 
+        box-sizing: border-box; 
+        padding-top: 10px; /* Zmniejszony margines górny, bo ikonki go teraz spychają */
+    }
+    
+    .game-title { font-size: 26px; margin-bottom: 10px; }
+    .game-title-small { font-size: 20px; margin-top: 0; }
     .glow-title { font-size: 28px; }
     
     .search-box { flex-direction: column; width: 100%; gap: 10px; }
@@ -505,7 +532,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .main-card { padding: 15px; border-radius: 20px; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; }
     .header-section { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; }
     .photo-container { width: 100px; height: 120px; margin: 0 auto; }
-    #mysteryName { font-size: 20px; text-align: center; margin: 0; }
+    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3;}
     .team-path { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; }
     .path-boxes { width: 100%; max-width: 100%; overflow-x: auto; display: flex; flex-wrap: nowrap; justify-content: center; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
 
@@ -515,19 +542,78 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .calendar-weekdays { font-size: 10px; }
     .cal-day { font-size: 12px; }
 
-    .table-headers { display: none; }
+    .table-headers { display: none; } /* Ukrywamy nagłówki tabeli na mobile */
     .table-wrapper { width: 100%; max-width: 100%; }
-    .guess-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; width: 100%; max-width: 100%; padding: 12px 8px; box-sizing: border-box; border-radius: 15px; background: rgba(128, 128, 128, 0.05); border: 1px solid var(--border-color); margin-bottom: 10px; }
+
+    /* 2. UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
+    .guess-row { 
+        display: grid !important; 
+        grid-template-columns: repeat(5, 1fr); /* 5 równych kolumn na atrybuty */
+        gap: 8px; 
+        width: 100%; 
+        max-width: 100%; 
+        padding: 15px 10px; 
+        box-sizing: border-box; 
+        border-radius: 15px; 
+        background: rgba(128, 128, 128, 0.05); 
+        border: 1px solid var(--border-color); 
+        margin-bottom: 10px; 
+    }
     
-    .col-name { width: 100%; text-align: center; padding: 0; font-size: 14px; font-weight: 900; margin-bottom: 8px; }
-    .col-attr { width: auto; padding: 0; display: flex; justify-content: center; }
-    .attr-box { width: 45px; height: 45px; border-radius: 10px; padding: 2px; }
+    /* Wiersz 1: Imię i nazwisko (rozciąga się na wszystkie 5 kolumn) */
+    .col-name { 
+        grid-column: 1 / -1; 
+        width: 100%; 
+        text-align: center; 
+        padding: 0; 
+        font-size: 16px; 
+        font-weight: 900; 
+        margin-bottom: 5px; 
+    }
+    
+    /* Wiersz 2: Kwadraty z atrybutami (każdy wpada w 1 z 5 kolumn) */
+    .col-attr { 
+        width: 100%; 
+        padding: 0; 
+        display: flex; 
+        justify-content: center; 
+    }
+    
+    .attr-box { 
+        width: 100%; 
+        max-width: 55px; /* Maksymalna wielkość kwadratu */
+        height: 55px; 
+        border-radius: 10px; 
+        padding: 2px; 
+    }
+    
     .val-num { font-size: 14px; }
     .status-icon { font-size: 16px; }
     .tile-flag, .tile-flag-dual { width: 38px; height: 38px; }
 
-    .col-clubs { width: 100%; max-width: 100%; min-width: 0; padding: 0; margin-top: 10px; display: flex; justify-content: center; }
-    .clubs-path-container { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; display: flex; flex-wrap: nowrap; padding: 8px 0; box-sizing: border-box; justify-content: flex-start; }
+    /* Wiersz 3: Historia klubów (rozciąga się na wszystkie 5 kolumn) */
+    .col-clubs { 
+        grid-column: 1 / -1; 
+        width: 100%; 
+        max-width: 100%; 
+        min-width: 0; 
+        padding: 0; 
+        margin-top: 5px; 
+        display: flex; 
+        justify-content: center; 
+    }
+    
+    .clubs-path-container { 
+        width: 100%; 
+        max-width: 100%; 
+        overflow-x: auto; 
+        -webkit-overflow-scrolling: touch; 
+        display: flex; 
+        flex-wrap: nowrap; 
+        padding: 8px 0; 
+        box-sizing: border-box; 
+        justify-content: center; /* Środkuje kluby na telefonie */
+    }
 
     /* Clash Mobile Responsive */
     .clash-grid { grid-template-columns: 50px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
