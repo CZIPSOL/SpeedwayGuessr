@@ -485,7 +485,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .text-legend { color: #ff5fd7; }
 .history-list-container { max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px; }
 
-
 /* ========================================= */
 /* --- RWD MOBILE (TELEFONY I TABLETY) --- */
 /* ========================================= */
@@ -504,10 +503,10 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     /* 1. NAPRAWA IKONEK (Usunięcie nachodzenia na tytuł) */
     .top-right-buttons { 
-        position: relative; /* Zamiast fixed */
+        position: relative; 
         right: auto; 
         top: auto; 
-        justify-content: center; /* Wyśrodkowanie ikonek na telefonie */
+        justify-content: center; 
         width: 100%; 
         margin-bottom: 20px; 
         z-index: 10; 
@@ -518,7 +517,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         max-width: 100%; 
         padding: 0 10px; 
         box-sizing: border-box; 
-        padding-top: 10px; /* Zmniejszony margines górny, bo ikonki go teraz spychają */
+        padding-top: 10px; 
     }
     
     .game-title { font-size: 26px; margin-bottom: 10px; }
@@ -533,49 +532,56 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .header-section { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; }
     .photo-container { width: 100px; height: 120px; margin: 0 auto; }
     #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3;}
-    .team-path { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; }
-.team-path { 
+    
+    /* 2. ZABEZPIECZENIE I SCROLL DLA GÓRNYCH KLUBÓW */
+    .info-container { 
         width: 100%; 
-        min-width: 0; 
+        max-width: 100%; 
+        box-sizing: border-box; 
+    }
+
+    .team-path { 
+        width: 100%; 
+        max-width: 100%; 
         display: flex; 
         flex-direction: column; 
         align-items: center; 
         gap: 8px; 
         margin: 0; 
+        overflow: hidden; /* Zabezpiecza przed rozpychaniem strony */
     }
 
     .path-boxes { 
-        /* Złoty trick na scrollowanie bez obcinania lewej krawędzi */
-        width: max-content; 
-        max-width: 100%; 
-        margin: 0 auto; 
-        
+        width: 100%; 
         overflow-x: auto; 
         display: flex; 
         flex-wrap: nowrap; 
-        justify-content: flex-start; /* Zawsze od lewej wewnątrz boxa */
         padding-bottom: 12px; 
         -webkit-overflow-scrolling: touch; 
     }
 
-    /* Pasek scrolla tylko na telefonach */
+    .path-boxes::before,
+    .path-boxes::after {
+        content: '';
+        margin: auto;
+    }
+
     .path-boxes::-webkit-scrollbar { height: 4px; }
     .path-boxes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-
+    /* Modale i tabele */
     .post-game-actions { flex-direction: column; bottom: 10px; width: 95%; max-width: 95%; padding: 15px; }
     .post-game-actions button { width: 100%; margin-bottom: 8px; }
     .post-game-actions button:last-child { margin-bottom: 0; }
     .calendar-weekdays { font-size: 10px; }
     .cal-day { font-size: 12px; }
-
-    .table-headers { display: none; } /* Ukrywamy nagłówki tabeli na mobile */
+    .table-headers { display: none; } 
     .table-wrapper { width: 100%; max-width: 100%; }
 
-    /* 2. UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
+    /* 3. UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
     .guess-row { 
         display: grid !important; 
-        grid-template-columns: repeat(5, 1fr); /* 5 równych kolumn na atrybuty */
+        grid-template-columns: repeat(5, 1fr); 
         gap: 8px; 
         width: 100%; 
         max-width: 100%; 
@@ -587,7 +593,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         margin-bottom: 10px; 
     }
     
-    /* Wiersz 1: Imię i nazwisko (rozciąga się na wszystkie 5 kolumn) */
     .col-name { 
         grid-column: 1 / -1; 
         width: 100%; 
@@ -598,7 +603,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         margin-bottom: 5px; 
     }
     
-    /* Wiersz 2: Kwadraty z atrybutami (każdy wpada w 1 z 5 kolumn) */
     .col-attr { 
         width: 100%; 
         padding: 0; 
@@ -608,7 +612,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     .attr-box { 
         width: 100%; 
-        max-width: 55px; /* Maksymalna wielkość kwadratu */
+        max-width: 55px; 
         height: 55px; 
         border-radius: 10px; 
         padding: 2px; 
@@ -618,30 +622,31 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .status-icon { font-size: 16px; }
     .tile-flag, .tile-flag-dual { width: 38px; height: 38px; }
 
-    /* Wiersz 3: Historia klubów (rozciąga się na wszystkie 5 kolumn) */
-.col-clubs { 
+    /* 4. ZABEZPIECZENIE I SCROLL DLA DOLNYCH KLUBÓW */
+    .col-clubs { 
         grid-column: 1 / -1; 
         width: 100%; 
         max-width: 100%; 
         min-width: 0; 
         padding: 0; 
         margin-top: 5px; 
-        display: flex; 
-        justify-content: center; /* Kontener nadrzędny wypycha do środka */
+        overflow: hidden; /* Zabezpiecza przed rozpychaniem wewnątrz grida */
     }
     
     .clubs-path-container { 
-        width: max-content; 
-        max-width: 100%; 
-        margin: 0 auto; 
-        
+        width: 100%; 
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch; 
         display: flex; 
         flex-wrap: nowrap; 
         padding: 8px 0; 
         box-sizing: border-box; 
-        justify-content: flex-start; 
+    }
+
+    .clubs-path-container::before,
+    .clubs-path-container::after {
+        content: '';
+        margin: auto;
     }
 
     .clubs-path-container::-webkit-scrollbar { height: 4px; }
@@ -664,6 +669,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .icon-btn-small { font-size: 16px; padding: 4px; }
 }
 
+/* Wymuszenie nadpisania dla ligi i podsumowań na mobile i desktopie */
 #btnLeagueMode #leagueRankDisplay { color: #111 !important; text-shadow: none !important; background: rgba(0, 0, 0, 0.1) !important; border: 1px solid rgba(0, 0, 0, 0.15) !important; margin: 4px 0 0 0 !important; padding: 6px 12px !important; box-shadow: none !important; }
 #summaryScore { white-space: nowrap !important; min-width: 100px !important; text-align: center !important; flex-shrink: 0 !important; }
 #summaryP1Name, #summaryP2Name { word-break: break-word; }
