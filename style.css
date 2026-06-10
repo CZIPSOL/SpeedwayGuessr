@@ -458,7 +458,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .text-legend { color: #ff5fd7; }
 .history-list-container { max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px; }
 
-
 /* ========================================= */
 /* --- RWD MOBILE (TELEFONY I TABLETY) --- */
 /* ========================================= */
@@ -475,7 +474,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         box-sizing: border-box; 
     }
     
-    /* 1. NAPRAWA IKONEK (Usunięcie nachodzenia na tytuł) */
+    /* NAPRAWA IKONEK (Usunięcie nachodzenia na tytuł) */
     .top-right-buttons { 
         position: relative; 
         right: auto; 
@@ -502,40 +501,67 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .input-wrapper { width: 100%; flex: 1; }
     .search-box button { width: 100%; flex: none; }
     
-    .main-card { padding: 15px; border-radius: 20px; width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; }
-    .header-section { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; }
-    .photo-container { width: 100px; height: 120px; margin: 0 auto; }
-    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3;}
-    
-    /* 2. ZABEZPIECZENIE I SCROLL DLA GÓRNYCH KLUBÓW */
-    .info-container { 
+    /* ======================================================== */
+    /* PANCERNE KONTENERY - ZABEZPIECZENIE PRZED ROZPYCHANIEM */
+    /* ======================================================== */
+    .main-card { 
+        padding: 15px; 
+        border-radius: 20px; 
         width: 100%; 
         max-width: 100%; 
         box-sizing: border-box; 
         overflow: hidden; 
+        min-width: 0; /* KLUCZ: wymusza kurczenie się flexboxa */
+    }
+    
+    .header-section { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 15px; 
+        margin-bottom: 20px; 
+        width: 100%; 
+        min-width: 0; 
+    }
+    
+    .photo-container { width: 100px; height: 120px; margin: 0 auto; }
+    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3;}
+    
+    .info-container { 
+        width: 100%; 
+        max-width: 100%; 
+        box-sizing: border-box; 
+        min-width: 0; 
     }
 
     .team-path { 
         width: 100%; 
-        max-width: 100%; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        gap: 8px; 
+        min-width: 0; 
+        display: block; /* ODCINA flexboxa i usztywnia szerokość do 100% ekranu */
+        text-align: center; 
         margin: 0; 
-        overflow: hidden; 
+    }
+    
+    .path-label {
+        display: block;
+        margin-bottom: 8px;
     }
 
+    /* SCROLL DLA GÓRNYCH KLUBÓW (POD ZNAKIEM ZAPYTANIA) */
     .path-boxes { 
-        width: max-content; 
-        max-width: 100%; 
-        margin: 0 auto; 
+        width: 100%; 
         overflow-x: auto; 
         display: flex; 
         flex-wrap: nowrap; 
-        justify-content: flex-start; 
         padding-bottom: 12px; 
         -webkit-overflow-scrolling: touch; 
+    }
+
+    /* Ten trick idealnie centruje kluby gdy jest ich mało i pozwala scrollować gdy jest ich dużo */
+    .path-boxes::before,
+    .path-boxes::after {
+        content: '';
+        margin: auto;
     }
 
     .path-boxes::-webkit-scrollbar { height: 4px; }
@@ -550,7 +576,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .table-headers { display: none; } 
     .table-wrapper { width: 100%; max-width: 100%; }
 
-    /* 3. UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
+    /* UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
     .guess-row { 
         display: grid !important; 
         grid-template-columns: repeat(5, 1fr); 
@@ -594,7 +620,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .status-icon { font-size: 16px; }
     .tile-flag, .tile-flag-dual { width: 38px; height: 38px; }
 
-    /* 4. ZABEZPIECZENIE I SCROLL DLA DOLNYCH KLUBÓW */
+    /* SCROLL DLA DOLNYCH KLUBÓW (HISTORIA ODP) */
     .col-clubs { 
         grid-column: 1 / -1; 
         width: 100%; 
@@ -607,16 +633,19 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     }
     
     .clubs-path-container { 
-        width: max-content; 
-        max-width: 100%; 
-        margin: 0 auto; 
+        width: 100%; 
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch; 
         display: flex; 
         flex-wrap: nowrap; 
-        justify-content: flex-start; 
         padding: 8px 0; 
         box-sizing: border-box; 
+    }
+
+    .clubs-path-container::before,
+    .clubs-path-container::after {
+        content: '';
+        margin: auto;
     }
 
     .clubs-path-container::-webkit-scrollbar { height: 4px; }
