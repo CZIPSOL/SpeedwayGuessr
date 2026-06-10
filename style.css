@@ -155,7 +155,15 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 .life-lost-anim { animation: crackHelmetPNG 0.6s ease-out forwards; }
 
 /* PRZYCISKI GŁÓWNE */
-.top-right-buttons { position: absolute; right: 20px; top: 20px; display: flex; gap: 10px; z-index: 10; }
+.top-right-buttons { 
+    position: relative;
+    display: flex; 
+    justify-content: flex-end; 
+    width: 100%; 
+    gap: 10px; 
+    margin-bottom: 10px;
+    z-index: 10; 
+}
 .icon-btn { background: transparent; border: 2px solid var(--border-color); border-radius: 12px; font-size: 20px; padding: 8px 12px; cursor: pointer; color: var(--text-main); transition: 0.3s; }
 .icon-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--accent); }
 .icon-btn-small { background: transparent; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; transition: 0.2s; padding: 5px; }
@@ -168,6 +176,11 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 
 /* --- NOWOCZESNE PRZYCISKI 3D MENU --- */
 .menu-btn { display: flex; align-items: center; justify-content: center; gap: 15px; padding: 16px 25px; border: none; border-radius: 18px; cursor: pointer; font-weight: 900; text-transform: uppercase; font-size: 16px; width: 100%; transition: transform 0.1s ease, box-shadow 0.1s ease; position: relative; }
+.menu-btn:hover {
+    filter: brightness(0.85); /* Lekkie przyciemnienie całego przycisku */
+    outline: 2px solid rgba(255, 255, 255, 0.3); /* Dodatkowa subtelna obwódka */
+    outline-offset: 2px;
+}
 .btn-yellow { background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%); color: #1a1a1c; box-shadow: 0 6px 0 #d35400, 0 15px 20px rgba(0,0,0,0.4); }
 .btn-yellow:active { transform: translateY(6px); box-shadow: 0 0 0 #d35400, 0 5px 10px rgba(0,0,0,0.4); }
 .btn-clash { background: linear-gradient(135deg, #ff4757 0%, #3742fa 100%); color: white; box-shadow: 0 6px 0 #2f3542, 0 15px 20px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); }
@@ -180,7 +193,22 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 .menu-btn.disabled { opacity: 0.5; cursor: pointer; background: #666 !important; color: #fff !important; box-shadow: none !important; transform: none !important; }
 
 /* KARTY MENU */
-.menu-container { position: relative; background: var(--card-bg); width: 800px; max-width: 90%; border-radius: 32px; padding: 50px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); backdrop-filter: blur(10px); text-align: center; margin-top: 40px; display: flex; flex-direction: column; align-items: center; }
+.menu-container { 
+    position: relative; 
+    background: var(--card-bg); 
+    width: 800px; 
+    max-width: 90%; 
+    border-radius: 32px; 
+    padding: 30px 30px 50px 30px; /* Zmniejszona góra, dodany dół */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4); 
+    border: 1px solid var(--border-color); 
+    backdrop-filter: blur(10px); 
+    text-align: center; 
+    margin-top: 40px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+}
 .game-title { font-weight: 900; font-size: 42px; text-transform: uppercase; letter-spacing: -1px; margin-top: 0; background: linear-gradient(to bottom, #fff 0%, #888 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 [data-theme="light"] .game-title { background: linear-gradient(to bottom, #000 0%, #666 100%); background-clip: text; -webkit-background-clip: text; }
 .title-lg { font-size: 32px; }
