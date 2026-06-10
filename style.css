@@ -534,7 +534,25 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .photo-container { width: 100px; height: 120px; margin: 0 auto; }
     #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3;}
     .team-path { width: 100%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; }
-    .path-boxes { width: 100%; max-width: 100%; overflow-x: auto; display: flex; flex-wrap: nowrap; justify-content: center; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+    .path-boxes { 
+        width: 100%; 
+        max-width: 100%; 
+        overflow-x: auto; 
+        display: flex; 
+        flex-wrap: nowrap; 
+        justify-content: flex-start; /* Zmiana z center, żeby scroll działał */
+        padding-bottom: 12px; /* Lekki margines dla paska przewijania */
+        -webkit-overflow-scrolling: touch; 
+    }
+    
+    .path-boxes::before, 
+    .path-boxes::after {
+        content: '';
+        margin: auto;
+    }
+    
+    .path-boxes::-webkit-scrollbar { height: 4px; }
+    .path-boxes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
     .post-game-actions { flex-direction: column; bottom: 10px; width: 95%; max-width: 95%; padding: 15px; }
     .post-game-actions button { width: 100%; margin-bottom: 8px; }
@@ -603,17 +621,27 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         justify-content: center; 
     }
     
-    .clubs-path-container { 
+.clubs-path-container { 
         width: 100%; 
-        max-width: 100%; 
+        max-width: 100vw; /* Zabezpieczenie przed rozsadzaniem ekranu */
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch; 
         display: flex; 
         flex-wrap: nowrap; 
-        padding: 8px 0; 
+        padding: 8px 10px; /* Dodatkowe miejsce po bokach */
         box-sizing: border-box; 
-        justify-content: center; /* Środkuje kluby na telefonie */
+        justify-content: flex-start; /* Zmiana z center */
     }
+    
+    .clubs-path-container::before, 
+    .clubs-path-container::after {
+        content: '';
+        margin: auto;
+    }
+    
+    /* Cienki pasek scrolla na iOS/Android */
+    .clubs-path-container::-webkit-scrollbar { height: 4px; }
+    .clubs-path-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
     /* Clash Mobile Responsive */
     .clash-grid { grid-template-columns: 50px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
