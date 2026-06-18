@@ -69,12 +69,14 @@ function setRandomBackground() {
     const randomIndex = Math.floor(Math.random() * stadiumBackgrounds.length);
     const bgUrl = stadiumBackgrounds[randomIndex];
     
-    document.body.style.backgroundImage = `linear-gradient(rgba(10, 10, 12, 0.75), rgba(10, 10, 12, 0.95)), ${bgUrl}`;
-    
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    
-    document.body.style.backgroundAttachment = 'fixed';
+    console.log("Ładowanie tła:", bgUrl); // To pokaże Ci w konsoli (F12), jaki plik próbuje wczytać!
+
+    // Ustawiamy właściwości bezpośrednio w stylu elementu body
+    document.body.style.setProperty('background-image', `linear-gradient(rgba(10, 10, 12, 0.75), rgba(10, 10, 12, 0.95)), ${bgUrl}`, 'important');
+    document.body.style.setProperty('background-size', 'cover', 'important');
+    document.body.style.setProperty('background-position', 'center', 'important');
+    document.body.style.setProperty('background-attachment', 'fixed', 'important');
+    document.body.style.setProperty('background-repeat', 'no-repeat', 'important');
 }
 
 // ==============================================
