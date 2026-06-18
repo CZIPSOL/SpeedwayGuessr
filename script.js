@@ -69,7 +69,7 @@ function setRandomBackground() {
     const randomIndex = Math.floor(Math.random() * stadiumBackgrounds.length);
     const bgUrl = stadiumBackgrounds[randomIndex];
     
-    console.log("Ładowanie tła:", bgUrl); // To pokaże Ci w konsoli (F12), jaki plik próbuje wczytać!
+    console.log("Ładowanie tła:", bgUrl);
 
     // Ustawiamy właściwości bezpośrednio w stylu elementu body
     document.body.style.setProperty('background-image', `linear-gradient(rgba(10, 10, 12, 0.75), rgba(10, 10, 12, 0.95)), ${bgUrl}`, 'important');
