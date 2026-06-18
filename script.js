@@ -69,7 +69,7 @@ function setRandomBackground() {
     const randomIndex = Math.floor(Math.random() * stadiumBackgrounds.length);
     const bgUrl = stadiumBackgrounds[randomIndex];
     
-    console.log("Ładowanie tła:", bgUrl);
+    console.log("Ładowanie tła:", bgUrl); // To pokaże Ci w konsoli (F12), jaki plik próbuje wczytać!
 
     // Ustawiamy właściwości bezpośrednio w stylu elementu body
     document.body.style.setProperty('background-image', `linear-gradient(rgba(10, 10, 12, 0.75), rgba(10, 10, 12, 0.95)), ${bgUrl}`, 'important');
@@ -672,8 +672,17 @@ function playSound(type) {
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
-window.onload = function() { loadStats(); initDailyMenu(); renderLastGames(); preloadHelmetImage(); setLang(currentLang); updateSoundBtn(); updateLeagueUI(); };
-
+window.onload = function() { 
+    setRandomBackground();
+    loadStats(); 
+    initDailyMenu(); 
+    renderLastGames(); 
+    preloadHelmetImage(); 
+    setLang(currentLang); 
+    updateSoundBtn(); 
+    updateLeagueUI(); 
+    checkUnseenUpdates();
+};
 function loadStats() {
     let saved = localStorage.getItem('speedwayStatsV2'); 
     if(saved) {
@@ -2708,5 +2717,6 @@ try {
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
     window.submitBugReport = submitBugReport;
+    
     
 } catch (e) {}
