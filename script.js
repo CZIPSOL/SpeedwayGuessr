@@ -78,6 +78,91 @@ function setRandomBackground() {
 }
 
 // ==============================================
+// ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
+// ==============================================
+
+const CURRENT_GAME_VERSION = "v1.1.0"; // Zmień to, gdy wypuszczasz duży update
+
+const changelog = [
+    {
+        version: "v1.1.0",
+        date: "Najnowsza aktualizacja",
+        changes: [
+            "💻 <b>Nowość:</b> Zupełnie nowe, profesjonalne menu główne dla graczy na komputerach (PC).",
+            "🏟️ <b>Tło:</b> Dodano losowe zdjęcia polskich stadionów w tle gry.",
+            "💡 <b>Podpowiedzi:</b> Po 5 nieudanych próbach możesz odkryć długość imienia i nazwiska.",
+            "📱 <b>Mobile:</b> Naprawiono błędy z rozjeżdżającym się ekranem przy zawodnikach z długą historią klubów (tzw. 'Efekt Holty').",
+            "📢 <b>Changelog:</b> Zakładka z aktualizacjami (ta, którą właśnie czytasz!)."
+        ]
+    },
+    {
+        version: "v1.0.5",
+        date: "Poprzednia aktualizacja",
+        changes: [
+            "⚔️ <b>Nowy Tryb: Speedway Clash!</b> Graj 1v1 ze znajomymi w systemie kółko i krzyżyk.",
+            "📈 <b>Rangi Ligowe:</b> Dodano system rang (Brąz - Legenda) dla trybu Clash.",
+            "🐛 <b>Formularze:</b> Dodano możliwość zgłaszania błędów oraz brakujących zawodników bezpośrednio z menu."
+        ]
+    }
+];
+
+function checkUnseenUpdates() {
+    const lastSeen = localStorage.getItem('speedwayLastSeenUpdate');
+    
+    // Szukamy kropek powiadomień w różnych miejscach (Mobile, Gra, PC)
+    const badgeMobile = document.getElementById('updateBadge'); 
+    const badgeGame = document.getElementById('updateBadgeGame');
+    const badgeDesktop = document.getElementById('updateBadgeDesktop');
+    
+    const isUnseen = lastSeen !== CURRENT_GAME_VERSION;
+    
+    if (badgeMobile) badgeMobile.style.display = isUnseen ? 'block' : 'none';
+    if (badgeGame) badgeGame.style.display = isUnseen ? 'block' : 'none';
+    if (badgeDesktop) badgeDesktop.style.display = isUnseen ? 'inline-block' : 'none';
+}
+
+function renderUpdates() {
+    const listEl = document.getElementById('updatesList');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    changelog.forEach((update, index) => {
+        let isLatest = index === 0;
+        let html = `
+            <div class="update-block" ${isLatest ? 'style="border-color: var(--green-neon); background: rgba(0, 255, 102, 0.05);"' : ''}>
+                <div class="update-version" ${isLatest ? 'style="color: var(--green-neon);"' : ''}>${update.version}</div>
+                <div class="update-date">${update.date}</div>
+                <ul class="update-list">
+                    ${update.changes.map(change => `<li>${change}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        listEl.innerHTML += html;
+    });
+}
+
+function openUpdates() {
+    renderUpdates();
+    const overlay = document.getElementById('updatesOverlay');
+    if(overlay) {
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+    }
+    
+    // Zapisz, że gracz widział ten update i ukryj czerwoną kropkę
+    localStorage.setItem('speedwayLastSeenUpdate', CURRENT_GAME_VERSION);
+    checkUnseenUpdates();
+}
+
+function closeUpdates() {
+    const overlay = document.getElementById('updatesOverlay');
+    if(overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+}
+
+// ==============================================
 // ====== AUTORYZACJA I PROFIL GRACZA ===========
 // ==============================================
 
