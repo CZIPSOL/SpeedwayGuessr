@@ -184,6 +184,88 @@
     <!-- ============================================== -->
     <!-- ====== MAIN MENU ====== -->
     <!-- ============================================== -->
+     <!-- ============================================== -->
+    <!-- ====== NOWE MENU PC (DESKTOP ONLY) ====== -->
+    <!-- ============================================== -->
+    <div id="desktopMainMenu" class="desktop-menu-wrapper">
+        
+        <!-- LEWA STRONA: Nawigacja -->
+        <div class="desktop-left">
+            <h1 class="desktop-logo">
+                <i>SPEEDWAY</i><br>
+                <i>GUESSR</i><br>
+                <span class="logo-sub">by: CZYPSOL</span>
+            </h1>
+
+            <nav class="desktop-nav">
+                <!-- DAILY GUESSR -->
+                <div class="nav-item group" onmouseenter="loadDesktopRanking('daily')">
+                    <div class="nav-main"><i>DAILY GUESSR ►</i></div>
+                    <div class="nav-sub">
+                        <span onclick="startDailyGame()"><i>DZISIEJSZA GRA ►</i></span>
+                        <span onclick="openCalendar()"><i>ARCHIWUM DAILY</i></span>
+                    </div>
+                </div>
+
+                <!-- ENDLESS GUESSR -->
+                <div class="nav-item" onmouseenter="loadDesktopRanking('alltime')">
+                    <div class="nav-main" onclick="startEndlessGame()"><i>ENDLESS GUESSR</i></div>
+                </div>
+
+                <!-- SPEEDWAY CLASH -->
+                <div class="nav-item group" onmouseenter="loadDesktopRanking('league')">
+                    <div class="nav-main text-clash"><i>SPEEDWAY CLASH ►</i></div>
+                    <div class="nav-sub">
+                        <span onclick="startLeagueMatchmaking()"><i>MECZ LIGOWY ►</i></span>
+                        <span onclick="openFriendlyLobby()"><i>MECZ TOWARZYSKI</i></span>
+                        <span onclick="openLocalClashLobby()"><i>GRA LOKALNA (1 PC)</i></span>
+                    </div>
+                </div>
+
+                <div class="nav-divider"></div>
+
+                <!-- MENU SYSTEMOWE -->
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openSettings()"><i>USTAWIENIA</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openProfile()"><i>PROFIL</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openUpdates()"><i>CHANGELOG <span id="updateBadgeDesktop" class="update-badge-desktop"></span></i></div>
+                </div>
+            </nav>
+
+            <div class="desktop-footer-links">
+                <span onclick="openSuggestion()">💡 Brak zawodnika?</span>
+                <span onclick="openBugReport()" style="color:var(--red-neon);">🐛 Zgłoś błąd</span>
+            </div>
+        </div>
+
+        <!-- PRAWA STRONA: Leaderboard wbudowany w menu -->
+        <div class="desktop-right">
+            <div class="desktop-leaderboard-panel">
+                <h2 id="desktopRankingTitle"><i>LEADERBOARD (DAILY)</i></h2>
+                
+                <div class="desktop-table-wrapper">
+                    <table class="ranking-table desktop-table">
+                        <thead id="desktopRankingHead"></thead>
+                        <tbody id="desktopRankingBody">
+                            <tr><td colspan="4" style="text-align:center; padding: 20px;">Wybierz tryb z menu po lewej...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Zakładki na dole rankingu -->
+                <div class="desktop-rank-tabs" id="desktopRankTabs">
+                    <span class="d-tab active" onclick="loadDesktopRanking('daily')">DAILY</span> |
+                    <span class="d-tab" onclick="loadDesktopRanking('weekly')">TYDZIEN</span> |
+                    <span class="d-tab" onclick="loadDesktopRanking('monthly')">MIESIAC</span> |
+                    <span class="d-tab" onclick="loadDesktopRanking('alltime')">OGOLNY</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="mainMenuContainer" class="menu-container">
         <div class="top-right-buttons">

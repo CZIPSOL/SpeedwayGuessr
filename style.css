@@ -458,11 +458,223 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .text-legend { color: #ff5fd7; }
 .history-list-container { max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px; }
 
+/* ============================================== */
+/* ====== NOWE MENU DESKTOP (PC ONLY) =========== */
+/* ============================================== */
+
+/* Ukrywamy stare mobilne menu na desktopie */
+#mainMenuContainer, #clashModeSelectContainer, #clashLobbyContainer, #clashLocalLobbyContainer {
+    display: none !important; 
+}
+
+/* Gładkie usunięcie standardowego tła z body, bo ładujemy zdjęcia z JS */
+body {
+    background-color: var(--bg-dark);
+}
+
+.desktop-menu-wrapper {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    padding: 60px 10vw;
+    box-sizing: border-box;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 5;
+}
+
+/* LEWA STRONA */
+.desktop-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 45%;
+    height: 100%;
+    border-right: 1px solid rgba(255,255,255,0.2); /* Linia podziału */
+    padding-right: 40px;
+    position: relative;
+}
+
+.desktop-logo {
+    font-size: 80px;
+    line-height: 0.85;
+    margin: 0 0 60px 0;
+    color: #fff;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    letter-spacing: -2px;
+}
+.logo-sub {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    font-style: italic;
+    letter-spacing: 2px;
+    display: block;
+    margin-top: 10px;
+}
+
+.desktop-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.nav-main {
+    font-size: 32px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.5);
+    transition: 0.2s;
+    letter-spacing: 1px;
+}
+
+.nav-main:hover, .nav-item.group:hover .nav-main {
+    color: #fff;
+    transform: translateX(10px);
+    text-shadow: 0 0 15px rgba(255,255,255,0.5);
+}
+
+.nav-main.text-clash:hover {
+    color: #3399ff;
+    text-shadow: 0 0 15px #ff3333;
+}
+
+/* SUBMENU - Pojawia się po najechaniu */
+.nav-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: absolute;
+    left: 100%;
+    margin-left: 30px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-20px);
+    transition: 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.nav-item.group:hover .nav-sub {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    pointer-events: all;
+}
+
+.nav-sub span {
+    font-size: 22px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.5);
+    transition: 0.2s;
+}
+
+.nav-sub span:hover {
+    color: var(--accent);
+    transform: translateX(10px);
+}
+
+.nav-divider {
+    height: 30px;
+}
+
+.desktop-footer-links {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+}
+.desktop-footer-links span { cursor: pointer; transition: 0.2s; }
+.desktop-footer-links span:hover { color: #fff; }
+
+.update-badge-desktop {
+    display: inline-block;
+    width: 12px; height: 12px;
+    background: var(--red-neon);
+    border-radius: 50%;
+    margin-left: 5px;
+    box-shadow: 0 0 10px var(--red-neon);
+}
+
+/* PRAWA STRONA - LEADERBOARD */
+.desktop-right {
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.desktop-leaderboard-panel {
+    background: rgba(40, 40, 45, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.desktop-leaderboard-panel h2 {
+    font-size: 32px;
+    color: var(--accent);
+    margin: 0 0 20px 0;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.desktop-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.desktop-table-wrapper::-webkit-scrollbar { width: 4px; }
+.desktop-table-wrapper::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+.desktop-table {
+    width: 100%;
+    text-align: left;
+    font-size: 15px;
+}
+.desktop-table th { color: rgba(255,255,255,0.5); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.desktop-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
+.desktop-table tr:hover td { background: rgba(255,255,255,0.05); }
+
+.desktop-rank-tabs {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    font-weight: 900;
+    font-size: 14px;
+    color: rgba(255,255,255,0.3);
+}
+.d-tab { cursor: pointer; transition: 0.2s; }
+.d-tab:hover, .d-tab.active { color: var(--accent); }
+
 /* ========================================= */
 /* --- RWD MOBILE (TELEFONY I TABLETY) --- */
 /* ========================================= */
 
 @media (max-width: 768px) {
+    /* Ukryj menu desktopowe, przywróć mobilne */
+    #desktopMainMenu { display: none !important; }
+    #mainMenuContainer { display: flex !important; }
     body { padding: 10px; overflow-x: hidden; }
     
     .menu-container { 

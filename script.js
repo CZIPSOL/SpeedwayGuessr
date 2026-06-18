@@ -44,6 +44,39 @@ if (!playerId) {
     localStorage.setItem('speedwayUserId', playerId);
 }
 
+
+// ==============================================
+// ====== LOSOWE TŁA (STADIONY) =================
+// ==============================================
+
+// Lista teł (podmień 'images/stadiony/' na taki folder, w jakim je masz)
+const stadiumBackgrounds = [
+    'url("images/stadiony/bydzia.png")',
+    'url("images/stadiony/czewa.png")',
+    'url("images/stadiony/gorzow.png")',
+    'url("images/stadiony/krosno.png")',
+    'url("images/stadiony/leszno.png")',
+    'url("images/stadiony/lodz.png")',
+    'url("images/stadiony/lublin.png")',
+    'url("images/stadiony/ostrow.png")',
+    'url("images/stadiony/torun.png")',
+    'url("images/stadiony/wroclaw.png")',
+    'url("images/stadiony/zg.png")',
+    'url("images/stadiony/pila.png")'
+];
+
+function setRandomBackground() {
+    const randomIndex = Math.floor(Math.random() * stadiumBackgrounds.length);
+    const bgUrl = stadiumBackgrounds[randomIndex];
+    
+    document.body.style.backgroundImage = `linear-gradient(rgba(10, 10, 12, 0.75), rgba(10, 10, 12, 0.95)), ${bgUrl}`;
+    
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    
+    document.body.style.backgroundAttachment = 'fixed';
+}
+
 // ==============================================
 // ====== AUTORYZACJA I PROFIL GRACZA ===========
 // ==============================================
@@ -750,6 +783,8 @@ function startDailyGame() {
         const gameContainer = document.getElementById('gameContainer');
         if (mainMenu) mainMenu.style.display = 'none';
         if (gameContainer) gameContainer.style.display = 'block';
+
+        document.getElementById('desktopMainMenu').style.display = 'none';
         initGame(); 
     });
 }
@@ -760,6 +795,8 @@ function startEndlessGame() {
     const gameContainer = document.getElementById('gameContainer');
     if (mainMenu) mainMenu.style.display = 'none';
     if (gameContainer) gameContainer.style.display = 'block';
+
+    document.getElementById('desktopMainMenu').style.display = 'none';
     initGame();
 }
 
@@ -2433,6 +2470,106 @@ async function submitBugReport() {
     }
 }
 
+// ==============================================
+// ====== DESKTOP MENU RANKING LOADER ===========
+// ==============================================
+
+async function loadDesktopRanking(type) {
+    const tbody = document.getElementById('desktopRankingBody'); 
+    const thead = document.getElementById('desktopRankingHead');
+    const title = document.getElementById('desktopRankingTitle');
+    const tabs = document.getElementById('desktopRankTabs');
+    
+    if (!tbody || !thead || !title) return;
+
+    // Obsługa zakładek i stylizacji tytułów
+    if (type === 'league') {
+        title.innerHTML = '<i>LEADERBOARD (CLASH)</i>';
+        title.style.color = '#3399ff';
+        tabs.style.display = 'none'; // W lidze nie ma podziału na dni
+    } else {
+        title.innerHTML = `<i>LEADERBOARD (${type.toUpperCase()})</i>`;
+        title.style.color = 'var(--accent)';
+        tabs.style.display = 'flex';
+        
+        document.querySelectorAll('.d-tab').forEach(tab => tab.classList.remove('active'));
+        if(type==='daily') tabs.children[0].classList.add('active');
+        if(type==='weekly') tabs.children[1].classList.add('active');
+        if(type==='monthly') tabs.children[2].classList.add('active');
+        if(type==='alltime') tabs.children[3].classList.add('active');
+    }
+
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie danych...</td></tr>';
+
+    try {
+        if (type === 'league') {
+            thead.innerHTML = `<tr><th>Poz.</th><th>Nick</th><th>Ranga</th><th>ELO</th></tr>`;
+            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
+            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            
+            tbody.innerHTML = '';
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+
+            let pos = 1;
+            scores.forEach((row) => {
+                if (row.provisional || row.matchesPlayed < 5) return; 
+                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+                let safeNick = escapeHTML(row.nick || "Gracz");
+                let isMe = safeNick === playerNickname ? 'style="color: var(--accent);"' : '';
+                
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td style="color:var(--accent); font-weight:900;">${pos}</td>
+                        <td>${safeNick}</td>
+                        <td style="font-size:10px;">${rangaText}</td>
+                        <td style="color:#3399ff;">${row.elo}</td>
+                    </tr>`;
+                pos++;
+            });
+        } else {
+            let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
+            thead.innerHTML = `<tr><th>Poz.</th><th>Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
+            
+            let snapshot;
+            if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
+            else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(20).get();
+            else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
+            else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
+            
+            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            scores.sort((a, b) => { 
+                let winsA = a.won !== undefined ? a.won : (a.wins || 0); 
+                let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
+                if (winsB !== winsA) return winsB - winsA; 
+                if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
+                let hintsA = a.hints || 0; let hintsB = b.hints || 0;
+                if (hintsA !== hintsB) return hintsA - hintsB;
+                return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
+            });
+            
+            tbody.innerHTML = '';
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+
+            scores.forEach((row, index) => {
+                let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
+                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
+                let safeNick = escapeHTML(row.nick || "Gracz");
+                let isMe = safeNick === playerNickname ? 'style="color: var(--accent);"' : '';
+                
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
+                        <td>${safeNick}</td>
+                        <td>${wonText}</td>
+                        <td style="color:var(--text-dim);">${row.guesses}</td>
+                    </tr>`;
+            });
+        }
+    } catch (e) { 
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
+    }
+}
+
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
     window.openProfile = openProfile;
@@ -2484,4 +2621,5 @@ try {
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
     window.submitBugReport = submitBugReport;
+    
 } catch (e) {}
