@@ -236,14 +236,15 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 [data-theme="light"] .game-title-small { background: linear-gradient(to bottom, #000 0%, #666 100%); background-clip: text; -webkit-background-clip: text; }
 #gameModeDisplay { color: var(--accent); margin: 5px 0 0 0; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .game-daily-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; }
-.input-section { margin-bottom: 20px; text-align: center; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto;}
-.search-box { display: flex; gap: 24px; justify-content: center; width: 100%; }
-.input-wrapper { position: relative; flex: 1; transition: 0.3s; width: 100%; max-width: 100%; box-sizing: border-box; }
+
+.input-section { margin-bottom: 20px; text-align: center; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto;}
+.search-box { display: flex; gap: 24px; justify-content: center; align-items: center; width: 100%; position: relative; }
+.input-wrapper { position: relative; flex: 1; transition: 0.3s; width: 100%; max-width: 100%; box-sizing: border-box; z-index: 2;}
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
-button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; }
-.hint-btn { border-color: var(--accent); color: var(--accent); padding: 0 15px; }
-.giveup-btn { border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px; }
+button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
+.hint-btn { position: absolute; left: -60px; border-color: var(--accent); color: var(--accent); padding: 0 15px; }
+.giveup-btn { position: absolute; right: -60px; border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px; }
 
 /* AUTOCOMPLETE */
 .autocomplete-items { position: absolute; top: 100%; left: 0; right: 0; border: 1px solid var(--border-color); border-radius: 14px; background-color: var(--card-bg); z-index: 99; max-height: 200px; overflow-y: auto; margin-top: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
@@ -349,7 +350,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .table-responsive { overflow-x: auto; width: 100%; }
 .ranking-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; color: var(--text-main); text-align: center; }
 .ranking-table th { color: var(--accent); padding: 12px 5px; border-bottom: 2px solid var(--border-color); text-transform: uppercase; font-weight: 900; }
-.ranking-table td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
+.ranking-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
 .ranking-table tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
 .rank-1 { color: #f1c40f; font-weight: 900; font-size: 16px; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
 .rank-2 { color: #bdc3c7; font-weight: 900; font-size: 15px; }
@@ -655,7 +656,7 @@ body {
 .desktop-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
 .desktop-table tr:hover td { background: rgba(255,255,255,0.05); }
 
-/* TRICK: Wymuszamy, aby TYLKO kolumna z Nickiem (druga) trzymała się lewej strony */
+/* Wymuszamy, aby TYLKO kolumna z Nickiem (druga) trzymała się lewej strony */
 .desktop-table th:nth-child(2), 
 .desktop-table td:nth-child(2) { 
     text-align: left; 
@@ -685,6 +686,8 @@ body {
 .ach-icon { font-size: 24px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
 .ach-title { font-size: 10px; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 2px;}
 .ach-desc { font-size: 8px; color: var(--text-dim); line-height: 1.2; }
+
+
 /* ============================================== */
 /* ====== UKŁAD GRY NA PC (WYŚRODKOWANY) ======== */
 /* ============================================== */
@@ -708,12 +711,12 @@ body {
         margin: 0 auto;
     }
     
-    /* Ułożenie zdjęcia i danych obok siebie w poziomie (wiersz) */
+    /* Ułożenie zdjęcia i danych obok siebie w poziomie */
     .header-section-centered {
         display: flex;
-        flex-direction: row; /* Zmiana z column na row */
-        justify-content: center; /* Całość na środku kontenera */
-        align-items: center; /* Równanie w pionie */
+        flex-direction: row; 
+        justify-content: center; 
+        align-items: center; 
         gap: 40px; /* Duży, ładny odstęp między zdjęciem a danymi */
         margin-bottom: 40px;
     }
@@ -732,7 +735,7 @@ body {
         align-items: flex-start; /* Ścieżka klubów zaczyna się od lewej */
         gap: 10px;
     }
-    
+
     .table-wrapper {
         width: 100%;
         overflow-x: auto; /* Włącz scrolla tylko gdy tabela nie mieści się na małym ekranie PC */
@@ -787,9 +790,18 @@ body {
     .game-title-small { font-size: 20px; margin-top: 0; }
     .glow-title { font-size: 28px; }
     
-    .search-box { display: flex; gap: 12px; justify-content: center; width: 100%; }
+    .search-box { flex-direction: column; width: 100%; gap: 10px; }
     .input-wrapper { width: 100%; flex: 1; }
     .search-box button { width: 100%; flex: none; }
+    
+    /* Zabezpieczenie przed absolutnymi przyciskami na mobile */
+    .hint-btn, .giveup-btn {
+        position: relative !important; 
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        padding: 12px !important;
+    }
     
     /* ======================================================== */
     /* PANCERNE KONTENERY - ZABEZPIECZENIE PRZED ROZPYCHANIEM */
@@ -801,10 +813,11 @@ body {
         max-width: 100%; 
         box-sizing: border-box; 
         overflow: hidden; 
-        min-width: 0; /* KLUCZ: wymusza kurczenie się flexboxa */
+        min-width: 0; 
     }
     
-    .header-section { 
+    /* Nadpisujemy zasady z PC (centrowanego widoku) z powrotem na kolumny */
+    .header-section-centered { 
         display: flex; 
         flex-direction: column; 
         align-items: center; 
@@ -815,19 +828,22 @@ body {
     }
     
     .photo-container { width: 100px; height: 120px; margin: 0 auto; }
-    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3;}
     
-    .info-container { 
+    .info-container-centered { 
         width: 100%; 
         max-width: 100%; 
         box-sizing: border-box; 
         min-width: 0; 
+        text-align: center;
+        align-items: center;
     }
 
-    .team-path { 
+    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3; width: 100%;}
+
+    .team-path-centered { 
         width: 100%; 
         min-width: 0; 
-        display: block; /* ODCINA flexboxa i usztywnia szerokość do 100% ekranu */
+        display: block; 
         text-align: center; 
         margin: 0; 
     }
@@ -847,7 +863,6 @@ body {
         -webkit-overflow-scrolling: touch; 
     }
 
-    /* Ten trick idealnie centruje kluby gdy jest ich mało i pozwala scrollować gdy jest ich dużo */
     .path-boxes::before,
     .path-boxes::after {
         content: '';
