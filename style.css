@@ -243,8 +243,44 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
 button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
-.hint-btn { position: absolute; left: -60px; border-color: var(--accent); color: var(--accent); padding: 0 15px; }
-.giveup-btn { position: absolute; right: -60px; border-color: var(--red-neon); color: var(--red-neon); padding: 0 15px; }
+/* --- PRZYCISKI BOCZNE (POWER-UPY) --- */
+.hint-btn, .giveup-btn {
+    position: absolute;
+    width: 52px; /* Idealny kwadrat */
+    height: 52px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(20, 20, 25, 0.8); /* Ciemne, szklane tło */
+    backdrop-filter: blur(5px);
+    border-radius: 14px;
+    font-size: 22px; /* Większa ikona */
+    padding: 0;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Sprężysta animacja */
+    cursor: pointer;
+}
+
+.hint-btn { 
+    left: -70px; 
+    border: 2px solid var(--accent); 
+    box-shadow: 0 4px 15px rgba(241, 196, 15, 0.15);
+}
+.hint-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    background: rgba(241, 196, 15, 0.15);
+    box-shadow: 0 8px 25px rgba(241, 196, 15, 0.4);
+}
+
+.giveup-btn { 
+    right: -70px; 
+    border: 2px solid var(--red-neon); 
+    box-shadow: 0 4px 15px rgba(255, 51, 51, 0.15);
+}
+.giveup-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    background: rgba(255, 51, 51, 0.15);
+    box-shadow: 0 8px 25px rgba(255, 51, 51, 0.4);
+}
 
 /* AUTOCOMPLETE */
 .autocomplete-items { position: absolute; top: 100%; left: 0; right: 0; border: 1px solid var(--border-color); border-radius: 14px; background-color: var(--card-bg); z-index: 99; max-height: 200px; overflow-y: auto; margin-top: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
@@ -971,6 +1007,20 @@ body {
     
     .icon-btn { padding: 6px 10px; font-size: 18px; }
     .icon-btn-small { font-size: 16px; padding: 4px; }
+
+    /* Zabezpieczenie przed absolutnymi przyciskami na mobile */
+    .hint-btn, .giveup-btn {
+        position: relative !important; 
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        height: auto !important; /* Reset wysokości z PC */
+        padding: 12px !important;
+        font-size: 16px !important; /* Reset rozmiaru ikonki */
+        background: transparent !important;
+        box-shadow: none !important;
+        transform: none !important; /* Wyłącza animację sprężystą na mobile */
+    }
 }
 
 /* Wymuszenie nadpisania dla ligi i podsumowań na mobile i desktopie */
