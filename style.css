@@ -512,13 +512,13 @@ body {
 .desktop-menu-wrapper {
     display: flex;
     width: 100vw;
-    height: 100vh;
-    padding: 60px 10vw;
+    min-height: 100vh; /* Zmienione z height: 100vh, pozwala rosnąć jeśli trzeba */
+    padding: 40px 5vw; /* Trochę mniejsze marginesy na wypadek małych ekranów */
     box-sizing: border-box;
-    justify-content: space-between;
+    justify-content: center; /* Zmienione z space-between na centrowanie całości */
+    gap: 5vw; /* Płynny odstęp między Lewą a Prawą stroną zamiast przyklejania do krawędzi */
     align-items: center;
-    position: fixed;
-    top: 0; left: 0;
+    position: relative; /* Zmienione z fixed. Pozwala na przewinięcie, jeśli ktoś ma mały monitor */
     z-index: 5;
 }
 
@@ -527,10 +527,10 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 55%;
-    height: 100%;
-    border-right: 1px solid rgba(255,255,255,0.2); /* Linia podziału */
-    padding-right: 60px;
+    width: 45%; /* Powrót do 45% */
+    max-width: 500px; /* Zabezpieczenie, żeby nie robiła się zbyt szeroka na dużych ekranach */
+    border-right: 1px solid rgba(255,255,255,0.2); 
+    padding-right: 40px; 
     position: relative;
 }
 
@@ -591,13 +591,15 @@ body {
     flex-direction: column;
     gap: 10px;
     position: absolute;
-    left: 380px; /* Sztywny punkt zaczepienia, dla idealnie równej kolumny */
+    /* Usunięto 'left: 380px' - teraz pozycjonuje się procentowo względem prawej krawędzi */
+    left: calc(100% + 40px); /* Zawsze zacznie się dokładnie za pionową kreską! */
     opacity: 0;
     visibility: hidden;
     transform: translateX(-20px);
     transition: 0.3s;
     pointer-events: none;
     white-space: nowrap;
+    z-index: 10; /* Powyżej tabeli */
 }
 
 .nav-item.group:hover .nav-sub {
@@ -647,7 +649,8 @@ body {
 
 /* PRAWA STRONA - LEADERBOARD */
 .desktop-right {
-    width: 45%;
+    width: 50%;
+    max-width: 600px; /* Zabezpieczenie przed rozciąganiem tabeli na kilometr */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -659,8 +662,8 @@ body {
     border-radius: 24px;
     padding: 30px;
     width: 100%;
-    max-width: 500px;
-    height: 60vh;
+    height: 70vh; /* Lekko zwiększone, by zmieścić całą topkę */
+    min-height: 450px; /* Zabezpieczenie dla małych pionowych ekranów */
     display: flex;
     flex-direction: column;
     backdrop-filter: blur(15px);
