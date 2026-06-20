@@ -461,13 +461,16 @@
     <!-- ====== GŁÓWNY INTERFEJS GRY (DAILY/ENDLESS) == -->
     <!-- ============================================== -->
 
+    <!-- ============================================== -->
+    <!-- ====== GŁÓWNY INTERFEJS GRY (DAILY/ENDLESS) == -->
+    <!-- ============================================== -->
+
     <div id="gameContainer" style="display: none;">
         <header class="game-header">
             <div class="top-right-buttons">
-                <!-- NOWY PRZYCISK POWROTU DO MENU -->
-                <button onclick="exitToMainMenu()" class="icon-btn" title="Powrót do menu">🔙</button>
+                <!-- TUTAJ dodajemy przycisk powrotu, wywołujący funkcję returnToMainMenu! -->
+                <button onclick="returnToMainMenu()" class="icon-btn" title="Menu Główne">🏠</button>
                 
-
                 <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
                     📢<span id="updateBadgeGame" class="update-badge"></span>
                 </button>
@@ -488,56 +491,47 @@
             <div id="livesContainer" class="lives-container" style="display: none;"></div>
         </header>
 
-        <!-- NOWY UKŁAD DASHBOARDU -->
-        <div class="main-card glass-panel">
-            <div class="game-layout-desktop">
-                
-                <!-- Lewa kolumna: Info o zawodniku i wpisywanie -->
-                <div class="game-left-col">
-                    <div class="header-section">
-                        <div class="photo-container" id="photoWrapper">
-                            <span id="mysteryPlaceholder">?</span>
-                            <img id="mysteryPhoto" src="" alt="Photo" style="display: none;">
-                        </div>
-                        <div class="info-container">
-                            <h2 id="mysteryName">???</h2>
-                            <div class="team-path">
-                                <span class="path-label" data-i18n="teams">Drużyny:</span>
-                                <div id="pathBoxes" class="path-boxes"></div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="input-section">
+            <div class="search-box">
+                <button id="btnHint" onclick="useHint()" class="icon-btn hint-btn" title="Użyj podpowiedzi" style="display: none;">💡</button>
+                <div class="input-wrapper">
+                    <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
+                </div>
+                <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn giveup-btn" title="Poddaj się" style="display: none;">🏳️</button>
+            </div>
+        </div>
 
-                    <div class="input-section">
-                        <div class="search-box">
-                            <button id="btnHint" onclick="useHint()" class="icon-btn hint-btn" title="Użyj podpowiedzi" style="display: none;">💡</button>
-                            <div class="input-wrapper">
-                                <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
-                            </div>
-                            <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
-                            <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn giveup-btn" title="Poddaj się" style="display: none;">🏳️</button>
-                        </div>
+        <!-- PRZYWRÓCONY, WYŚRODKOWANY UKŁAD + EFEKT SZKŁA -->
+        <div class="main-card glass-panel-centered">
+            <div class="header-section-centered">
+                <div class="photo-container" id="photoWrapper">
+                    <span id="mysteryPlaceholder">?</span>
+                    <img id="mysteryPhoto" src="" alt="Photo" style="display: none;">
+                </div>
+                <div class="info-container-centered">
+                    <h2 id="mysteryName">???</h2>
+                    <div class="team-path-centered">
+                        <span class="path-label" data-i18n="teams">Drużyny:</span>
+                        <div id="pathBoxes" class="path-boxes"></div>
                     </div>
                 </div>
+            </div>
 
-                <hr class="divider mobile-only">
+            <hr class="divider">
 
-                <!-- Prawa kolumna: Historia odpowiedzi -->
-                <div class="game-right-col">
-                    <div class="table-wrapper">
-                        <div class="table-headers">
-                            <div class="col-name" data-i18n="colName">Zawodnik</div>
-                            <div class="col-attr tooltip" data-i18n="colCountry" data-tip="Kraj pochodzenia">Kraj</div>
-                            <div class="col-attr tooltip" data-i18n="colYear" data-tip="Rok urodzenia">Rok ur.</div>
-                            <div class="col-attr tooltip" data-i18n="colGP" data-tip="Czy był w GP?">GP?</div>
-                            <div class="col-attr tooltip" data-i18n="colDMP" data-tip="Medale DMP">Medale DMP</div>
-                            <div class="col-attr tooltip" data-i18n="colStatus" data-tip="Status">Status</div>
-                            <div class="col-clubs-header tooltip" data-i18n="colClubs" data-tip="Historia">Historia Klubów</div>
-                        </div>
-                        <div id="results" class="results-container"></div>
-                    </div>
+            <div class="table-wrapper">
+                <div class="table-headers">
+                    <div class="col-name" data-i18n="colName">Zawodnik</div>
+                    <div class="col-attr tooltip" data-i18n="colCountry" data-tip="Kraj pochodzenia">Kraj</div>
+                    <div class="col-attr tooltip" data-i18n="colYear" data-tip="Rok urodzenia">Rok ur.</div>
+                    <div class="col-attr tooltip" data-i18n="colGP" data-tip="Czy był w GP?">GP?</div>
+                    <div class="col-attr tooltip" data-i18n="colDMP" data-tip="Medale DMP">Medale DMP</div>
+                    <div class="col-attr tooltip" data-i18n="colStatus" data-tip="Status">Status</div>
+                    <div class="col-clubs-header tooltip" data-i18n="colClubs" data-tip="Historia">Historia Klubów</div>
                 </div>
 
+                <div id="results" class="results-container"></div>
             </div>
         </div>
     </div>
