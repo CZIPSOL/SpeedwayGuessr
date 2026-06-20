@@ -92,6 +92,12 @@
                 <div class="stat-box"><span id="profileStatStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statStreak">Akt. Seria</span></div>
                 <div class="stat-box"><span id="profileStatMax" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza</span></div>
             </div>
+            
+            <!-- OSIĄGNIĘCIA -->
+            <h3 class="text-sm text-dim mb-10 mt-20" style="text-transform: uppercase;">Gablota Osiągnięć</h3>
+            <div id="achievementsGrid" class="achievements-grid">
+                <!-- Ładowane z JS -->
+            </div>
 
             <button onclick="closeProfile()" class="btn-close w-100 mt-20" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
@@ -268,14 +274,14 @@
     </div>
 
     <div id="mainMenuContainer" class="menu-container">
-        <div class="top-right-buttons">
-            <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
-                📢<span id="updateBadge" class="update-badge"></span>
-            </button>
-            <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
-            <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
-            <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
-        </div>
+<div class="top-right-buttons">
+                <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
+                    📢<span id="updateBadgeGame" class="update-badge"></span>
+                </button>
+                <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+                <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
+                <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
+            </div>
 
         <h1 class="game-title">Speedway Guessr</h1>
         <p class="alpha-tag">Alpha ver. 1.1.0</p>
@@ -458,6 +464,10 @@
     <div id="gameContainer" style="display: none;">
         <header class="game-header">
             <div class="top-right-buttons">
+                <!-- NOWY PRZYCISK POWROTU DO MENU -->
+                <button onclick="exitToMainMenu()" class="icon-btn" title="Powrót do menu">🔙</button>
+                
+
                 <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
                     📢<span id="updateBadgeGame" class="update-badge"></span>
                 </button>
@@ -466,7 +476,7 @@
                 <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
             </div>
             
-            <h1 class="game-title-small">Speedway Guessr</h1>
+            <h1 class="game-title-small">SPEEDWAY GUESSR</h1>
             <h3 id="gameModeDisplay"></h3>
             
             <div id="gameDailyControls" class="game-daily-controls" style="display: none;">
@@ -478,46 +488,56 @@
             <div id="livesContainer" class="lives-container" style="display: none;"></div>
         </header>
 
-        <div class="input-section">
-            <div class="search-box">
-                <button id="btnHint" onclick="useHint()" class="icon-btn hint-btn" title="Użyj podpowiedzi" style="display: none;">💡</button>
-                <div class="input-wrapper">
-                    <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
-                </div>
-                <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
-                <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn giveup-btn" title="Poddaj się" style="display: none;">🏳️</button>
-            </div>
-        </div>
+        <!-- NOWY UKŁAD DASHBOARDU -->
+        <div class="main-card glass-panel">
+            <div class="game-layout-desktop">
+                
+                <!-- Lewa kolumna: Info o zawodniku i wpisywanie -->
+                <div class="game-left-col">
+                    <div class="header-section">
+                        <div class="photo-container" id="photoWrapper">
+                            <span id="mysteryPlaceholder">?</span>
+                            <img id="mysteryPhoto" src="" alt="Photo" style="display: none;">
+                        </div>
+                        <div class="info-container">
+                            <h2 id="mysteryName">???</h2>
+                            <div class="team-path">
+                                <span class="path-label" data-i18n="teams">Drużyny:</span>
+                                <div id="pathBoxes" class="path-boxes"></div>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="main-card">
-            <div class="header-section">
-                <div class="photo-container" id="photoWrapper">
-                    <span id="mysteryPlaceholder">?</span>
-                    <img id="mysteryPhoto" src="" alt="Photo" style="display: none;">
-                </div>
-                <div class="info-container">
-                    <h2 id="mysteryName">???</h2>
-                    <div class="team-path">
-                        <span class="path-label" data-i18n="teams">Drużyny:</span>
-                        <div id="pathBoxes" class="path-boxes"></div>
+                    <div class="input-section">
+                        <div class="search-box">
+                            <button id="btnHint" onclick="useHint()" class="icon-btn hint-btn" title="Użyj podpowiedzi" style="display: none;">💡</button>
+                            <div class="input-wrapper">
+                                <input type="text" id="guessInput" data-i18n="searchPlaceholder" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
+                            </div>
+                            <button onclick="makeGuess()" data-i18n="btnGuess">ZGADNIJ</button>
+                            <button id="btnGiveUp" onclick="giveUpGame()" class="icon-btn giveup-btn" title="Poddaj się" style="display: none;">🏳️</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <hr class="divider">
+                <hr class="divider mobile-only">
 
-            <div class="table-wrapper">
-                <div class="table-headers">
-                    <div class="col-name" data-i18n="colName">Zawodnik</div>
-                    <div class="col-attr tooltip" data-i18n="colCountry" data-tip="Kraj pochodzenia">Kraj</div>
-                    <div class="col-attr tooltip" data-i18n="colYear" data-tip="Rok urodzenia">Rok ur.</div>
-                    <div class="col-attr tooltip" data-i18n="colGP" data-tip="Czy był w GP?">GP?</div>
-                    <div class="col-attr tooltip" data-i18n="colDMP" data-tip="Medale DMP">Medale DMP</div>
-                    <div class="col-attr tooltip" data-i18n="colStatus" data-tip="Status">Status</div>
-                    <div class="col-clubs-header tooltip" data-i18n="colClubs" data-tip="Historia">Historia Klubów</div>
+                <!-- Prawa kolumna: Historia odpowiedzi -->
+                <div class="game-right-col">
+                    <div class="table-wrapper">
+                        <div class="table-headers">
+                            <div class="col-name" data-i18n="colName">Zawodnik</div>
+                            <div class="col-attr tooltip" data-i18n="colCountry" data-tip="Kraj pochodzenia">Kraj</div>
+                            <div class="col-attr tooltip" data-i18n="colYear" data-tip="Rok urodzenia">Rok ur.</div>
+                            <div class="col-attr tooltip" data-i18n="colGP" data-tip="Czy był w GP?">GP?</div>
+                            <div class="col-attr tooltip" data-i18n="colDMP" data-tip="Medale DMP">Medale DMP</div>
+                            <div class="col-attr tooltip" data-i18n="colStatus" data-tip="Status">Status</div>
+                            <div class="col-clubs-header tooltip" data-i18n="colClubs" data-tip="Historia">Historia Klubów</div>
+                        </div>
+                        <div id="results" class="results-container"></div>
+                    </div>
                 </div>
 
-                <div id="results" class="results-container"></div>
             </div>
         </div>
     </div>

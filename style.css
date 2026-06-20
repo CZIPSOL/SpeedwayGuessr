@@ -666,6 +666,58 @@ body {
 }
 .d-tab { cursor: pointer; transition: 0.2s; }
 .d-tab:hover, .d-tab.active { color: var(--accent); }
+
+/* ============================================== */
+/* ====== OSIĄGNIĘCIA W PROFILU ================= */
+/* ============================================== */
+.achievements-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; overflow-y: auto; max-height: 180px; padding-right: 5px; }
+.achievements-grid::-webkit-scrollbar { width: 4px; }
+.achievements-grid::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+.ach-badge { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 10px 5px; background: rgba(0,0,0,0.3); border-radius: 12px; border: 1px solid var(--border-color); transition: 0.3s; }
+.ach-badge.locked { opacity: 0.4; filter: grayscale(100%); background: rgba(0,0,0,0.1); }
+.ach-badge:hover { transform: translateY(-2px); border-color: var(--accent); }
+.ach-icon { font-size: 24px; margin-bottom: 5px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+.ach-title { font-size: 10px; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 2px;}
+.ach-desc { font-size: 8px; color: var(--text-dim); line-height: 1.2; }
+
+/* ============================================== */
+/* ====== UKŁAD GRY NA PC (DASHBOARD) =========== */
+/* ============================================== */
+@media (min-width: 1024px) {
+    #gameContainer { max-width: 1400px; width: 95%; margin: 0 auto; }
+    
+    /* Efekt szronionego szkła i cienia, dzięki czemu tło stadionu super prześwituje */
+    .glass-panel { 
+        background: rgba(26, 26, 30, 0.45) !important; 
+        backdrop-filter: blur(15px); 
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255,255,255,0.1); 
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+    }
+    
+    .game-layout-desktop { display: flex; gap: 40px; align-items: flex-start; }
+    
+    /* Lewa kolumna (Zdjęcie, dane, wpisywanie zawodnika) */
+    .game-left-col { 
+        flex: 0 0 350px; /* Sztywna szerokość 350px */
+        position: sticky; 
+        top: 20px; /* Zatrzymuje się przy scrollowaniu wyników w dół */
+        display: flex; 
+        flex-direction: column; 
+        gap: 20px; 
+    }
+    
+    /* Prawa kolumna (Tabela wyników) */
+    .game-right-col { 
+        flex: 1; 
+        min-width: 0; 
+    }
+    
+    .header-section { flex-direction: column; text-align: center; margin-bottom: 0; }
+    .mobile-only { display: none; }
+    .input-section { margin: 0; width: 100%; max-width: 100%; }
+}
+
 /* ========================================= */
 /* --- RWD MOBILE (TELEFONY I TABLETY) --- */
 /* ========================================= */

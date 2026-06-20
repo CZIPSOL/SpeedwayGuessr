@@ -83,27 +83,39 @@ function setRandomBackground() {
 // ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
 // ==============================================
 
-const CURRENT_GAME_VERSION = "v1.1.0"; // Zmień to, gdy wypuszczasz duży update
+const CURRENT_GAME_VERSION = "Alpha v1.1.0"; // Zmień to, gdy wypuszczasz duży update
 
 const changelog = [
     {
-        version: "v1.1.0",
-        date: "Najnowsza aktualizacja",
+        version: "Alpha v1.1.0",
+        date: "20.06.2026",
         changes: [
             "💻 <b>Nowość:</b> Zupełnie nowe, profesjonalne menu główne dla graczy na komputerach (PC).",
+            "🏆 <b>Osiągnięcia:</b> Dodano w Profilu Gablotę Osiągnięć! Zdobądź m.in. 'Sokole Oko' czy rangę 'Legenda'.",
             "🏟️ <b>Tło:</b> Dodano losowe zdjęcia polskich stadionów w tle gry.",
             "💡 <b>Podpowiedzi:</b> Po 5 nieudanych próbach możesz odkryć długość imienia i nazwiska.",
             "📱 <b>Mobile:</b> Naprawiono błędy z rozjeżdżającym się ekranem przy zawodnikach z długą historią klubów (tzw. 'Efekt Holty').",
+            "💾 <b>Zapis:</b> Dodano możliwość zapisu postępu w trybie Daily w trakcie gry oraz przycisk powrotu 🏠.",
             "📢 <b>Changelog:</b> Zakładka z aktualizacjami (ta, którą właśnie czytasz!)."
         ]
     },
     {
-        version: "v1.0.5",
-        date: "Poprzednia aktualizacja",
+        version: "Alphav1.0.5",
+        date: "18.06.2026",
         changes: [
             "⚔️ <b>Nowy Tryb: Speedway Clash!</b> Graj 1v1 ze znajomymi w systemie kółko i krzyżyk.",
-            "📈 <b>Rangi Ligowe:</b> Dodano system rang (Brąz - Legenda) dla trybu Clash.",
-            "🐛 <b>Formularze:</b> Dodano możliwość zgłaszania błędów oraz brakujących zawodników bezpośrednio z menu."
+            "📈 <b>Rangi Ligowe:</b> Dodano system rang (od Brązu do Legendy) z punktacją ELO dla trybu Clash.",
+            "🐛 <b>Formularze:</b> Dodano możliwość zgłaszania błędów oraz brakujących zawodników bezpośrednio z menu.",
+            "🤝 <b>Gra Lokalna:</b> Możliwość grania w tryb Clash we dwójkę na jednym urządzeniu."
+        ]
+    },
+    {
+        version: "Alpha v1.0.0",
+        date: "12.06.2026",
+        changes: [
+            "🏁 <b>Premiera wersji Alpha!</b> Uruchomienie trybów Daily Guessr i Endless Guessr.",
+            "📊 <b>System statystyk:</b> Integracja z Firebase (tworzenie profilu za pomocą konta Google).",
+            "🗓️ <b>Archiwum:</b> Możliwość rozgrywania archiwalnych gier z kalendarza w trybie Daily."
         ]
     }
 ];
@@ -313,13 +325,83 @@ function openProfile() {
     document.getElementById('profileStatMax').innerText = userStats.maxStreak;
     document.getElementById('changeNickInput').value = playerNickname || "";
     
+    renderAchievements();
+    
     const overlay = document.getElementById('profileOverlay');
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+    
 }
 
 function closeProfile() {
     const overlay = document.getElementById('profileOverlay');
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+// ==============================================
+// ====== SYSTEM OSIĄGNIĘĆ (GABLOTA) ============
+// ==============================================
+
+const ACHIEVEMENTS_DB = [
+    { id: 'first_try', icon: '🦅', title: 'Sokole Oko', desc: 'Zgadnij zawodnika w 1. próbie' },
+    { id: 'streak_7', icon: '🔥', title: 'Weteran', desc: 'Osiągnij Win Streak równy 7' },
+    { id: 'no_hint_5', icon: '🧠', title: 'Bystrzak', desc: 'Wygraj 5 razy bez podpowiedzi' },
+    { id: 'clash_10', icon: '⚔️', title: 'Gladiator', desc: 'Wygraj 10 meczów w Clashu' },
+    { id: 'play_50', icon: '🕹️', title: 'Maniak', desc: 'Rozegraj łącznie 50 gier' },
+    { id: 'clash_legend', icon: '👑', title: 'Legenda', desc: 'Osiągnij rangę Legenda' }
+];
+
+function ensureAchievementsStats() {
+    if(!userStats.achievements) userStats.achievements = [];
+    if(!userStats.trackers) userStats.trackers = { winsNoHint: 0 };
+}
+
+// Funkcja sprawdzająca czy właśnie coś odblokowaliśmy
+function checkAchievements() {
+    ensureAchievementsStats();
+    let unlockedAny = false;
+
+    // Definicje warunków
+    const conditions = {
+        'first_try': () => hasWon && guessCount === 1,
+        'streak_7': () => userStats.currentStreak >= 7,
+        'no_hint_5': () => userStats.trackers.winsNoHint >= 5,
+        'clash_10': () => userStats.clashLeague.wins >= 10,
+        'play_50': () => userStats.played >= 50,
+        'clash_legend': () => userStats.clashLeague.elo >= 4001
+    };
+
+    Object.keys(conditions).forEach(id => {
+        if (!userStats.achievements.includes(id) && conditions[id]()) {
+            userStats.achievements.push(id);
+            const ach = ACHIEVEMENTS_DB.find(a => a.id === id);
+            // Piękne powiadomienie Toast!
+            setTimeout(() => showToast(`🏆 Osiągnięcie: ${ach.title}!`, 'success'), 1000);
+            unlockedAny = true;
+        }
+    });
+
+    if(unlockedAny) saveStats();
+}
+
+// Rysowanie gabloty w Profilu
+function renderAchievements() {
+    ensureAchievementsStats();
+    const container = document.getElementById('achievementsGrid');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    ACHIEVEMENTS_DB.forEach(ach => {
+        const isUnlocked = userStats.achievements.includes(ach.id);
+        const lockClass = isUnlocked ? '' : 'locked';
+        
+        container.innerHTML += `
+            <div class="ach-badge ${lockClass}" title="${ach.desc}">
+                <div class="ach-icon">${isUnlocked ? ach.icon : '🔒'}</div>
+                <div class="ach-title">${ach.title}</div>
+                <div class="ach-desc">${ach.desc}</div>
+            </div>
+        `;
+    });
 }
 
 // ==============================================
@@ -852,6 +934,11 @@ async function sendScoreToDatabase(isWin, attempts) {
 function updateStatsOnWin() {
     if(hasWon || hasLost) return; hasWon = true;
     userStats.played++; userStats.won++; userStats.currentStreak++;
+    
+    ensureAchievementsStats();
+    if (!hintActive) userStats.trackers.winsNoHint++;
+    checkAchievements();
+
     if(userStats.currentStreak > userStats.maxStreak) userStats.maxStreak = userStats.currentStreak;
     if (gameMode === 'daily') {
         userStats.dailyResults[selectedDailyDay] = 'win'; userStats.dailyHistory.push(true);
@@ -931,6 +1018,20 @@ function updateCounterDisplay() {
     }
 }
 
+function exitToMainMenu() {
+    window.location.reload(); // Najbezpieczniejszy powrót i reset stanu gry
+}
+
+async function submitLeagueSurrender(data) {
+    let opponentColor = myClashColor === 'red' ? 'blue' : 'red';
+    // Aktualizujemy bazę danych Firebase: zamykamy mecz i dajemy walkowera przeciwnikowi
+    await db.collection("clash_rooms").doc(currentClashRoom).update({
+        status: 'summary',
+        winner: opponentColor,
+        finishReason: 'surrender'
+    });
+}
+
 function clearGameBoard() {
     guessCount = 0; guessHistory = []; guessedPlayersNames = []; hasWon = false; hasLost = false; isRestoring = false;
     hintActive = false; hintsUsedCount = 0; // Reset podpowiedzi
@@ -992,8 +1093,18 @@ function initGame() {
         randomIndex = Math.floor(seededRandom(selectedDailyDay * 9999) * playersDB.length); targetPlayer = playersDB[randomIndex];
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
         
-        if (userStats.dailyResults[selectedDailyDay]) { inputSec.style.display = 'none'; restorePlayedGame(); } 
-        else { inputSec.style.display = 'block'; }
+        if (userStats.dailyResults[selectedDailyDay]) { 
+            // Gra zakończona (wygrana/przegrana)
+            inputSec.style.display = 'none'; 
+            restorePlayedGame(); 
+        } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) {
+            // Gra W TRAKCIE (gracz zaczął, ale wyszedł)
+            inputSec.style.display = 'block'; 
+            restoreInProgressDaily();
+        } else { 
+            // Czysta, nowa gra Daily
+            inputSec.style.display = 'block'; 
+        }
     } else {
         controls.style.display = 'none'; inputSec.style.display = 'block';
         let availablePlayers = playersDB.filter(p => !userStats.recentEndless.includes(p.id));
@@ -1004,6 +1115,31 @@ function initGame() {
         modeDisplay.innerText = i18n[currentLang].modeEndless;
     }
     if(inputSec.style.display !== 'none') { buildTeamPath(); setupAutocomplete(); updateCounterDisplay(); }
+}
+
+// Przywracanie wpisanych zawodników w niezakończonej grze Daily
+function restoreInProgressDaily() {
+    isRestoring = true; 
+    buildTeamPath(); 
+    const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
+    
+    pastGuesses.forEach(pName => { 
+        const p = playersDB.find(x => x.name === pName); 
+        if(p) { 
+            guessCount++; 
+            guessedPlayersNames.push(p.name); 
+            renderGuess(p, true); 
+            revealClubsOnPath(p); 
+        } 
+    });
+    
+    updateCounterDisplay(); 
+    
+    // Przywrócenie widoczności przycisków pomocniczych, jeśli gracz zdążył do nich dojść
+    if (guessCount >= 5 && !hintActive) document.getElementById('btnHint').style.display = 'inline-block';
+    if (guessCount >= 7) document.getElementById('btnGiveUp').style.display = 'inline-block';
+    
+    isRestoring = false;
 }
 
 function restorePlayedGame() {
@@ -1543,8 +1679,7 @@ function startClashGame() {
     });
 }
 function exitClashMenu() {
-    document.getElementById('clashModeSelectContainer').style.display = 'none';
-    document.getElementById('mainMenuContainer').style.display = 'flex';
+    window.location.reload();
 }
 function openFriendlyLobby() {
     document.getElementById('clashModeSelectContainer').style.display = 'none';
@@ -1731,7 +1866,7 @@ async function updateLeagueStats(gameData) {
         result: resultText,
         change: eloChange
     });
-
+    checkAchievements();
     saveStats();
     updateLeagueUI();
     
@@ -2717,6 +2852,13 @@ try {
     window.openBugReport = openBugReport;
     window.closeBugReport = closeBugReport;
     window.submitBugReport = submitBugReport;
+    window.openUpdates = openUpdates;
+    window.closeUpdates = closeUpdates;
+    window.loadDesktopRanking = loadDesktopRanking;
+    window.useHint = useHint;
+    window.returnToMainMenu = returnToMainMenu;
+    window.submitLeagueSurrender = submitLeagueSurrender;
     
-    
-} catch (e) {}
+} catch (e) {
+    console.error("Global export error:", e);
+}
