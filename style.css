@@ -237,7 +237,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 #gameModeDisplay { color: var(--accent); margin: 5px 0 0 0; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .game-daily-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 10px; }
 .input-section { margin-bottom: 20px; text-align: center; width: 100%; max-width: 500px; margin-left: auto; margin-right: auto;}
-.search-box { display: flex; gap: 12px; justify-content: center; width: 100%; }
+.search-box { display: flex; gap: 24px; justify-content: center; width: 100%; }
 .input-wrapper { position: relative; flex: 1; transition: 0.3s; width: 100%; max-width: 100%; box-sizing: border-box; }
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
@@ -648,12 +648,18 @@ body {
 
 .desktop-table {
     width: 100%;
-    text-align: left;
+    text-align: center; /* Zmieniono z left na center */
     font-size: 15px;
 }
 .desktop-table th { color: rgba(255,255,255,0.5); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
 .desktop-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
 .desktop-table tr:hover td { background: rgba(255,255,255,0.05); }
+
+/* TRICK: Wymuszamy, aby TYLKO kolumna z Nickiem (druga) trzymała się lewej strony */
+.desktop-table th:nth-child(2), 
+.desktop-table td:nth-child(2) { 
+    text-align: left; 
+}
 
 .desktop-rank-tabs {
     margin-top: 20px;
@@ -702,27 +708,31 @@ body {
         margin: 0 auto;
     }
     
-    /* Wyśrodkowanie głowy (zdjęcia) i informacji o zawodniku */
+    /* Ułożenie zdjęcia i danych obok siebie w poziomie (wiersz) */
     .header-section-centered {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 30px;
+        flex-direction: row; /* Zmiana z column na row */
+        justify-content: center; /* Całość na środku kontenera */
+        align-items: center; /* Równanie w pionie */
+        gap: 40px; /* Duży, ładny odstęp między zdjęciem a danymi */
+        margin-bottom: 40px;
     }
 
+    /* Tekst i kluby wyrównane do lewej strony obok zdjęcia */
     .info-container-centered {
-        text-align: center;
-        width: 100%;
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .team-path-centered {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start; /* Ścieżka klubów zaczyna się od lewej */
         gap: 10px;
     }
-
+    
     .table-wrapper {
         width: 100%;
         overflow-x: auto; /* Włącz scrolla tylko gdy tabela nie mieści się na małym ekranie PC */
@@ -777,7 +787,7 @@ body {
     .game-title-small { font-size: 20px; margin-top: 0; }
     .glow-title { font-size: 28px; }
     
-    .search-box { flex-direction: column; width: 100%; gap: 10px; }
+    .search-box { display: flex; gap: 12px; justify-content: center; width: 100%; }
     .input-wrapper { width: 100%; flex: 1; }
     .search-box button { width: 100%; flex: none; }
     
