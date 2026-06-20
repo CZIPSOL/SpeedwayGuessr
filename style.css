@@ -509,17 +509,23 @@ body {
     background-color: var(--bg-dark);
 }
 
+/* GŁÓWNY KONTENER MENU (Zabezpieczenie przed zachodzeniem za pomocą Grida) */
 .desktop-menu-wrapper {
-    display: flex;
+    display: grid;
+    /* Sztywny podział na dwie kolumny. Tabela NIGDY nie wjedzie na lewe menu. */
+    grid-template-columns: 450px 1fr; 
+    gap: 80px; /* Stały margines między menu a tabelą */
+    
     width: 100vw;
-    min-height: 100vh; /* Zmienione z height: 100vh, pozwala rosnąć jeśli trzeba */
-    padding: 40px 5vw; /* Trochę mniejsze marginesy na wypadek małych ekranów */
+    min-height: 100vh;
+    padding: 60px 5vw; /* Zwiększony górny padding na logo */
     box-sizing: border-box;
-    justify-content: center; /* Zmienione z space-between na centrowanie całości */
-    gap: 5vw; /* Płynny odstęp między Lewą a Prawą stroną zamiast przyklejania do krawędzi */
-    align-items: center;
-    position: relative; /* Zmienione z fixed. Pozwala na przewinięcie, jeśli ktoś ma mały monitor */
+    align-content: center; /* Wyśrodkowanie w pionie całego bloku */
+    justify-content: center;
+    position: relative;
     z-index: 5;
+    margin: 0 auto;
+    max-width: 1400px; /* Ograniczenie żeby na wielkich TV nie rozjechało się na krawędzie */
 }
 
 /* LEWA STRONA */
@@ -527,8 +533,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: 45%; /* Powrót do 45% */
-    max-width: 500px; /* Zabezpieczenie, żeby nie robiła się zbyt szeroka na dużych ekranach */
+    width: 100%;
+    height: auto; 
     border-right: 1px solid rgba(255,255,255,0.2); 
     padding-right: 40px; 
     position: relative;
@@ -585,14 +591,14 @@ body {
     text-shadow: 0 0 15px #ff3333;
 }
 
-/* SUBMENU - Pojawia się po najechaniu */
+/* POPRAWKA SUBMENU (Równiutko za pionową kreską) */
 .nav-sub {
     display: flex;
     flex-direction: column;
     gap: 10px;
     position: absolute;
-    /* Usunięto 'left: 380px' - teraz pozycjonuje się procentowo względem prawej krawędzi */
-    left: calc(100% + 40px); /* Zawsze zacznie się dokładnie za pionową kreską! */
+    /* Skoro 'desktop-left' ma 40px padding-right do kreski, zaczynamy submenu tuż za nią */
+    left: calc(100% + 40px); 
     opacity: 0;
     visibility: hidden;
     transform: translateX(-20px);
@@ -649,13 +655,14 @@ body {
 
 /* PRAWA STRONA - LEADERBOARD */
 .desktop-right {
-    width: 50%;
-    max-width: 600px; /* Zabezpieczenie przed rozciąganiem tabeli na kilometr */
     display: flex;
-    justify-content: center;
+    justify-content: flex-start; /* Zaczyna się od razu od lewej krawędzi swojej części Grida */
     align-items: center;
+    width: 100%;
+    max-width: 700px; /* Żeby tabela nie była monstrualnie szeroka */
 }
 
+/* KARTA TABELI (Więcej oddechu w pionie) */
 .desktop-leaderboard-panel {
     background: rgba(40, 40, 45, 0.6);
     border: 2px solid rgba(255, 255, 255, 0.1);
@@ -712,7 +719,6 @@ body {
 }
 .d-tab { cursor: pointer; transition: 0.2s; }
 .d-tab:hover, .d-tab.active { color: var(--accent); }
-
 /* ============================================== */
 /* ====== OSIĄGNIĘCIA W PROFILU ================= */
 /* ============================================== */
