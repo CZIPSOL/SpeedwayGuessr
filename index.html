@@ -208,8 +208,8 @@
                 <div class="nav-item group" onmouseenter="loadDesktopRanking('daily')">
                     <div class="nav-main"><i>DAILY GUESSR ►</i></div>
                     <div class="nav-sub">
-                        <span onclick="startDailyGame()"><i>DZISIEJSZA GRA ►</i></span>
-                        <span onclick="openCalendar()"><i>ARCHIWUM DAILY</i></span>
+                        <span onclick="startDailyGame()"><i data-i18n="dToday">DZISIEJSZA GRA ►</i></span>
+                        <span onclick="openCalendar()"><i data-i18n="dArchive">ARCHIWUM DAILY</i></span>
                     </div>
                 </div>
 
@@ -222,9 +222,9 @@
                 <div class="nav-item group" onmouseenter="loadDesktopRanking('league')">
                     <div class="nav-main text-clash"><i>SPEEDWAY CLASH ►</i></div>
                     <div class="nav-sub">
-                        <span onclick="startLeagueMatchmaking()"><i>MECZ LIGOWY ►</i></span>
-                        <span onclick="openFriendlyLobby()"><i>MECZ TOWARZYSKI</i></span>
-                        <span onclick="openLocalClashLobby()"><i>GRA LOKALNA (1 PC)</i></span>
+                        <span onclick="startLeagueMatchmaking()"><i data-i18n="dLeague">MECZ LIGOWY ►</i></span>
+                        <span onclick="openFriendlyLobby()"><i data-i18n="dFriendly">MECZ TOWARZYSKI</i></span>
+                        <span onclick="openLocalClashLobby()"><i data-i18n="dLocal">GRA LOKALNA (1 PC)</i></span>
                     </div>
                 </div>
 
@@ -232,10 +232,10 @@
 
                 <!-- MENU SYSTEMOWE -->
                 <div class="nav-item">
-                    <div class="nav-main" onclick="openSettings()"><i>USTAWIENIA</i></div>
+                    <div class="nav-main" onclick="openSettings()"><i data-i18n="dSettings">USTAWIENIA</i></div>
                 </div>
                 <div class="nav-item">
-                    <div class="nav-main" onclick="openProfile()"><i>PROFIL</i></div>
+                    <div class="nav-main" onclick="openProfile()"><i data-i18n="dProfile">PROFIL</i></div>
                 </div>
                 <div class="nav-item">
                     <div class="nav-main" onclick="openUpdates()"><i>CHANGELOG <span id="updateBadgeDesktop" class="update-badge-desktop"></span></i></div>
@@ -243,10 +243,9 @@
             </nav>
 
             <div class="desktop-footer-links">
-                <span onclick="openSuggestion()">💡 Brak zawodnika?</span>
-                <span onclick="openBugReport()" style="color:var(--red-neon);">🐛 Zgłoś błąd</span>
+                <span onclick="openSuggestion()" data-i18n="missingRider">💡 Brak zawodnika?</span>
+                <span onclick="openBugReport()" style="color:var(--red-neon);" data-i18n="reportBug">🐛 Zgłoś błąd</span>
             </div>
-        </div>
 
         <!-- PRAWA STRONA: Leaderboard wbudowany w menu -->
         <div class="desktop-right">
