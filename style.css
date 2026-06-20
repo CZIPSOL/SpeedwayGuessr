@@ -686,32 +686,48 @@ body {
 @media (min-width: 1024px) {
     #gameContainer { max-width: 1400px; width: 95%; margin: 0 auto; }
     
-    /* Efekt szronionego szkła i cienia, dzięki czemu tło stadionu super prześwituje */
+    /* Efekt szronionego szkła i cienia */
     .glass-panel { 
         background: rgba(26, 26, 30, 0.45) !important; 
         backdrop-filter: blur(15px); 
         -webkit-backdrop-filter: blur(15px);
         border: 1px solid rgba(255,255,255,0.1); 
         box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
+        padding: 40px; /* Dodajemy więcej oddechu na PC */
     }
     
-    .game-layout-desktop { display: flex; gap: 40px; align-items: flex-start; }
+    .game-layout-desktop { display: flex; gap: 40px; align-items: flex-start; width: 100%; }
     
     /* Lewa kolumna (Zdjęcie, dane, wpisywanie zawodnika) */
     .game-left-col { 
-        flex: 0 0 350px; /* Sztywna szerokość 350px */
+        flex: 0 0 380px; /* Poszerzona lewa kolumna z 350px na 380px */
         position: sticky; 
         top: 20px; /* Zatrzymuje się przy scrollowaniu wyników w dół */
         display: flex; 
         flex-direction: column; 
-        gap: 20px; 
+        gap: 25px; 
     }
     
     /* Prawa kolumna (Tabela wyników) */
     .game-right-col { 
         flex: 1; 
         min-width: 0; 
+        overflow-x: auto; /* KLUCZ: Jeśli tabela jest za szeroka, włączy się ładny scroll zamiast zgniatania! */
+        padding-bottom: 10px;
     }
+    
+    /* Zabezpieczenie przed zgnieceniem samej tabeli */
+    .table-wrapper {
+        min-width: 800px; /* Tabela nie zgniecie się poniżej 800px */
+    }
+
+    /* Zabezpieczenie komórek wewnątrz wiersza */
+    .guess-row { display: flex !important; flex-wrap: nowrap; }
+    .col-name { flex-shrink: 0; }
+    .col-attr { flex-shrink: 0; }
+    
+    /* Zabezpieczenie klubów przed pionowym zgnieceniem (to powodowało ten dziwny pasek na końcu) */
+    .club-logo-wrapper { flex-shrink: 0; }
     
     .header-section { flex-direction: column; text-align: center; margin-bottom: 0; }
     .mobile-only { display: none; }
