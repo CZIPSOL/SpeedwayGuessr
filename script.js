@@ -83,42 +83,73 @@ function setRandomBackground() {
 // ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
 // ==============================================
 
-const CURRENT_GAME_VERSION = "Alpha v1.1.0"; // Zmień to, gdy wypuszczasz duży update
+const CURRENT_GAME_VERSION = "Alpha v1.1.0";
 
-const changelog = [
-    {
-        version: "Alpha v1.1.0",
-        date: "20.06.2026",
-        changes: [
-            "💻 <b>Nowość:</b> Zupełnie nowe, profesjonalne menu główne dla graczy na komputerach (PC).",
-            "🏆 <b>Osiągnięcia:</b> Dodano w Profilu Gablotę Osiągnięć! Zdobądź m.in. 'Sokole Oko' czy rangę 'Legenda'.",
-            "🏟️ <b>Tło:</b> Dodano losowe zdjęcia polskich stadionów w tle gry.",
-            "💡 <b>Podpowiedzi:</b> Po 5 nieudanych próbach możesz odkryć długość imienia i nazwiska.",
-            "📱 <b>Mobile:</b> Naprawiono błędy z rozjeżdżającym się ekranem przy zawodnikach z długą historią klubów (tzw. 'Efekt Holty').",
-            "💾 <b>Zapis:</b> Dodano możliwość zapisu postępu w trybie Daily w trakcie gry oraz przycisk powrotu 🏠.",
-            "📢 <b>Changelog:</b> Zakładka z aktualizacjami (ta, którą właśnie czytasz!)."
-        ]
-    },
-    {
-        version: "Alphav1.0.5",
-        date: "18.06.2026",
-        changes: [
-            "⚔️ <b>Nowy Tryb: Speedway Clash!</b> Graj 1v1 ze znajomymi w systemie kółko i krzyżyk.",
-            "📈 <b>Rangi Ligowe:</b> Dodano system rang (od Brązu do Legendy) z punktacją ELO dla trybu Clash.",
-            "🐛 <b>Formularze:</b> Dodano możliwość zgłaszania błędów oraz brakujących zawodników bezpośrednio z menu.",
-            "🤝 <b>Gra Lokalna:</b> Możliwość grania w tryb Clash we dwójkę na jednym urządzeniu."
-        ]
-    },
-    {
-        version: "Alpha v1.0.0",
-        date: "12.06.2026",
-        changes: [
-            "🏁 <b>Premiera wersji Alpha!</b> Uruchomienie trybów Daily Guessr i Endless Guessr.",
-            "📊 <b>System statystyk:</b> Integracja z Firebase (tworzenie profilu za pomocą konta Google).",
-            "🗓️ <b>Archiwum:</b> Możliwość rozgrywania archiwalnych gier z kalendarza w trybie Daily."
-        ]
-    }
-];
+const changelog = {
+    pl: [
+        {
+            version: "Alpha v1.1.0", date: "20.06.2026",
+            changes: [
+                "💻 <b>Nowość:</b> Zupełnie nowe, profesjonalne menu główne dla graczy na komputerach (PC).",
+                "🏆 <b>Osiągnięcia:</b> Dodano w Profilu Gablotę Osiągnięć! Zdobądź m.in. 'Sokole Oko' czy rangę 'Legenda'.",
+                "🏟️ <b>Tło:</b> Dodano losowe zdjęcia polskich stadionów w tle gry.",
+                "💡 <b>Podpowiedzi:</b> Po 5 nieudanych próbach możesz odkryć długość imienia i nazwiska.",
+                "📱 <b>Mobile:</b> Naprawiono błędy z rozjeżdżającym się ekranem przy zawodnikach z długą historią klubów (tzw. 'Efekt Holty').",
+                "💾 <b>Zapis:</b> Dodano możliwość zapisu postępu w trybie Daily w trakcie gry oraz przycisk powrotu 🏠.",
+                "📢 <b>Changelog:</b> Zakładka z aktualizacjami (ta, którą właśnie czytasz!)."
+            ]
+        },
+        {
+            version: "Alpha v1.0.5", date: "18.06.2026",
+            changes: [
+                "⚔️ <b>Nowy Tryb: Speedway Clash!</b> Graj 1v1 ze znajomymi w systemie kółko i krzyżyk.",
+                "📈 <b>Rangi Ligowe:</b> Dodano system rang (od Brązu do Legendy) z punktacją ELO dla trybu Clash.",
+                "🐛 <b>Formularze:</b> Dodano możliwość zgłaszania błędów oraz brakujących zawodników bezpośrednio z menu.",
+                "🤝 <b>Gra Lokalna:</b> Możliwość grania w tryb Clash we dwójkę na jednym urządzeniu."
+            ]
+        },
+        {
+            version: "Alpha v1.0.0", date: "12.06.2026",
+            changes: [
+                "🏁 <b>Premiera wersji Alpha!</b> Uruchomienie trybów Daily Guessr i Endless Guessr.",
+                "📊 <b>System statystyk:</b> Integracja z Firebase (tworzenie profilu za pomocą konta Google).",
+                "🗓️ <b>Archiwum:</b> Możliwość rozgrywania archiwalnych gier z kalendarza w trybie Daily."
+            ]
+        }
+    ],
+    en: [
+        {
+            version: "Alpha v1.1.0", date: "20.06.2026",
+            changes: [
+                "💻 <b>New:</b> Completely new, professional main menu for PC players.",
+                "🏆 <b>Achievements:</b> Added an Achievement Showcase in Profile! Earn titles like 'Eagle Eye' or 'Legend'.",
+                "🏟️ <b>Background:</b> Added random background pictures of Polish stadiums.",
+                "💡 <b>Hints:</b> After 5 failed attempts, you can reveal the length of the rider's name.",
+                "📱 <b>Mobile:</b> Fixed screen-stretching bugs for riders with a long club history.",
+                "💾 <b>Saves:</b> Added ability to save Daily progress mid-game and a 'Return Home' button 🏠.",
+                "📢 <b>Changelog:</b> Added an updates tab (the one you are reading right now!)."
+            ]
+        },
+        {
+            version: "Alpha v1.0.5", date: "18.06.2026",
+            changes: [
+                "⚔️ <b>New Mode: Speedway Clash!</b> Play 1v1 tic-tac-toe with friends.",
+                "📈 <b>League Ranks:</b> Added an ELO-based ranking system (from Bronze to Legend) for Clash.",
+                "🐛 <b>Forms:</b> You can now report bugs and missing riders directly from the menu.",
+                "🤝 <b>Local Play:</b> Play Clash locally with two players on one device."
+            ]
+        },
+        {
+            version: "Alpha v1.0.0", date: "12.06.2026",
+            changes: [
+                "🏁 <b>Alpha Premiere!</b> Daily Guessr and Endless Guessr modes are now live.",
+                "📊 <b>Statistics:</b> Firebase integration (create profile via Google Account).",
+                "🗓️ <b>Archive:</b> Play previous Daily games from the calendar."
+            ]
+        }
+    ]
+    // Możesz w przyszłości dodać sv: [...] i da: [...] dla Szwedów i Duńczyków
+};
 
 function checkUnseenUpdates() {
     const lastSeen = localStorage.getItem('speedwayLastSeenUpdate');
@@ -140,7 +171,10 @@ function renderUpdates() {
     if (!listEl) return;
     listEl.innerHTML = '';
 
-    changelog.forEach((update, index) => {
+    // Sprawdzamy czy mamy tłumaczenie changelogu na obecny język, w innym wypadku bierzemy EN lub domyślnie PL
+    let currentChangelog = changelog[currentLang] || changelog['en'] || changelog['pl'];
+
+    currentChangelog.forEach((update, index) => {
         let isLatest = index === 0;
         let html = `
             <div class="update-block" ${isLatest ? 'style="border-color: var(--green-neon); background: rgba(0, 255, 102, 0.05);"' : ''}>
@@ -701,6 +735,8 @@ function setLang(lang) {
     try { console.log(`i18n: applied ${applied}/${nodes.length} elements; missing keys:`, Array.from(missing).slice(0,20)); } catch (e) {}
     updateDailyMenu(); updateSoundBtn(); updateAuthUI(auth.currentUser);
     if(document.getElementById('calendarOverlay').style.display === 'block') renderCalendar();
+    
+    renderUpdates();
     
     const modeDisplay = document.getElementById('gameModeDisplay');
     if (gameMode === 'daily') modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;

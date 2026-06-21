@@ -330,22 +330,27 @@ body {
 .nav-sub {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    position: absolute;
+    /* Ustawienie sztywno na prawo od rodzica (.nav-item) */
+    left: calc(100% + 20px); 
+    top: 50%; /* Wyśrodkowanie w pionie względem najechanego tekstu */
+    transform: translateY(-50%) translateX(-20px);
     
-    /* Ukryte domyślnie, ma wysokość 0, więc nie zajmuje miejsca */
-    max-height: 0;
-    overflow: hidden;
     opacity: 0;
-    margin-left: 20px; /* Lekkie wcięcie wizualne w prawo */
-    
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Płynna animacja "zjeżdżania" */
+    visibility: hidden;
+    transition: 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 10;
 }
 
 /* Po najechaniu rozwija się w dół odsłaniając opcje */
 .nav-item.group:hover .nav-sub {
-    max-height: 200px; /* Wystarczy, by pomieścić opcje */
     opacity: 1;
-    margin-top: 10px; /* Dodaje oddech po rozsunięciu */
+    visibility: visible;
+    transform: translateY(-50%) translateX(0); /* Pojawia się i wjeżdża */
+    pointer-events: all;
 }
 
 .nav-sub span {
