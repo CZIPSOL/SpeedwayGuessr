@@ -300,19 +300,19 @@ body {
 
 .nav-item {
     display: flex;
-    flex-direction: column; /* Żeby pomieścić podmenu POD tytułem */
-    align-items: flex-start;
+    align-items: center;
     cursor: pointer;
     position: relative;
-    width: 100%;
+    width: max-content;
 }
 
 .nav-main {
-    font-size: clamp(26px, 3vw, 32px); /* Zmieści się na każdym laptopie */
+    font-size: clamp(26px, 3vw, 32px);
     font-weight: 900;
     color: rgba(255,255,255,0.5);
     transition: 0.2s;
     letter-spacing: 1px;
+    padding-right: 15px;
 }
 
 .nav-main:hover, .nav-item.group:hover .nav-main {
