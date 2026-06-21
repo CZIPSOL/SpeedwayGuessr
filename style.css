@@ -180,7 +180,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 .btn-flat { background: transparent; color: var(--text-dim); border: 2px dashed rgba(255,255,255,0.2); box-shadow: none; }
 .menu-btn.disabled { opacity: 0.5; cursor: pointer; background: #666 !important; color: #fff !important; box-shadow: none !important; transform: none !important; outline: none; filter: none; }
 
-/* KARTY MENU */
+/* KARTY MENU (MOBILE/DOMYŚLNE) */
 .menu-container { position: relative; background: var(--card-bg); width: 800px; max-width: 90%; border-radius: 32px; padding: 30px 30px 50px 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); backdrop-filter: blur(10px); text-align: center; margin-top: 40px; display: flex; flex-direction: column; align-items: center; }
 .game-title { font-weight: 900; font-size: 42px; text-transform: uppercase; letter-spacing: -1px; margin-top: 0; background: linear-gradient(to bottom, #fff 0%, #888 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 [data-theme="light"] .game-title { background: linear-gradient(to bottom, #000 0%, #666 100%); background-clip: text; -webkit-background-clip: text; }
@@ -230,7 +230,231 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 .updates-modal { max-width: 500px; text-align: left; max-height: 85vh; display: flex; flex-direction: column; }
 .updates-list-container { overflow-y: auto; flex: 1; padding-right: 10px; }
 
-/* GAME HEADER & INPUT */
+/* ============================================== */
+/* ====== NOWE MENU DESKTOP (PC ONLY) =========== */
+/* ============================================== */
+
+/* Ukrywamy stare mobilne menu na desktopie */
+#mainMenuContainer, #clashModeSelectContainer, #clashLobbyContainer, #clashLocalLobbyContainer {
+    display: none !important; 
+}
+
+/* Gładkie usunięcie standardowego tła z body, bo ładujemy zdjęcia z JS */
+body {
+    background-color: var(--bg-dark);
+}
+
+/* GŁÓWNY KONTENER MENU */
+.desktop-menu-wrapper {
+    display: grid;
+    /* Tabela wyników bierze dla siebie twardo połowę ekranu (albo mniej jeśli to duży monitor) */
+    grid-template-columns: 1fr max(450px, 40%); 
+    gap: 40px; 
+    
+    width: 100vw;
+    min-height: 100vh;
+    padding: 40px 5vw; 
+    box-sizing: border-box;
+    align-content: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 5;
+    margin: 0 auto;
+    max-width: 1400px; 
+}
+
+/* LEWA STRONA */
+.desktop-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    height: auto; 
+    padding-right: 40px; 
+    position: relative;
+}
+
+.desktop-logo {
+    font-size: clamp(60px, 6vw, 80px); /* Skaluje się ładnie na małych laptopach */
+    line-height: 0.85;
+    margin: 0 0 40px 0;
+    color: #fff;
+    text-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    letter-spacing: -2px;
+}
+.logo-sub {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    font-style: italic;
+    letter-spacing: 2px;
+    display: block;
+    margin-top: 10px;
+}
+
+.desktop-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Delikatnie zmniejszony gap */
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column; /* Żeby pomieścić podmenu POD tytułem */
+    align-items: flex-start;
+    cursor: pointer;
+    position: relative;
+    width: 100%;
+}
+
+.nav-main {
+    font-size: clamp(26px, 3vw, 32px); /* Zmieści się na każdym laptopie */
+    font-weight: 900;
+    color: rgba(255,255,255,0.5);
+    transition: 0.2s;
+    letter-spacing: 1px;
+}
+
+.nav-main:hover, .nav-item.group:hover .nav-main {
+    color: #fff;
+    transform: translateX(10px);
+    text-shadow: 0 0 15px rgba(255,255,255,0.5);
+}
+
+.nav-main.text-clash:hover {
+    color: #3399ff;
+    text-shadow: 0 0 15px #ff3333;
+}
+
+/* ROZWIJANE SUBMENU JAKO AKORDEON (W DÓŁ) */
+.nav-sub {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    
+    /* Ukryte domyślnie, ma wysokość 0, więc nie zajmuje miejsca */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-left: 20px; /* Lekkie wcięcie wizualne w prawo */
+    
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Płynna animacja "zjeżdżania" */
+}
+
+/* Po najechaniu rozwija się w dół odsłaniając opcje */
+.nav-item.group:hover .nav-sub {
+    max-height: 200px; /* Wystarczy, by pomieścić opcje */
+    opacity: 1;
+    margin-top: 10px; /* Dodaje oddech po rozsunięciu */
+}
+
+.nav-sub span {
+    font-size: clamp(16px, 2vw, 22px);
+    font-weight: 900;
+    color: rgba(255,255,255,0.5);
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.nav-sub span:hover {
+    color: var(--accent);
+    transform: translateX(10px);
+}
+
+.nav-divider {
+    height: 20px;
+}
+
+.desktop-footer-links {
+    margin-top: 30px; /* Zmienione na zwykły margines, by nie zjadały ekranu z dołu */
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.5);
+}
+.desktop-footer-links span { cursor: pointer; transition: 0.2s; }
+.desktop-footer-links span:hover { color: #fff; }
+
+.update-badge-desktop {
+    display: inline-block;
+    width: 12px; height: 12px;
+    background: var(--red-neon);
+    border-radius: 50%;
+    margin-left: 5px;
+    box-shadow: 0 0 10px var(--red-neon);
+}
+
+/* PRAWA STRONA - LEADERBOARD */
+.desktop-right {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    max-width: 700px; 
+}
+
+/* KARTA TABELI */
+.desktop-leaderboard-panel {
+    background: rgba(40, 40, 45, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 30px;
+    width: 100%;
+    height: 70vh; 
+    min-height: 450px; 
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.desktop-leaderboard-panel h2 {
+    font-size: 32px;
+    color: var(--accent);
+    margin: 0 0 20px 0;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+}
+
+.desktop-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.desktop-table-wrapper::-webkit-scrollbar { width: 4px; }
+.desktop-table-wrapper::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+.desktop-table {
+    width: 100%;
+    text-align: center; /* Wyśrodkowanie danych w tabeli */
+    font-size: 15px;
+}
+.desktop-table th { color: rgba(255,255,255,0.5); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.desktop-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
+.desktop-table tr:hover td { background: rgba(255,255,255,0.05); }
+
+/* Wymuszamy, aby TYLKO kolumna z Nickiem (druga) trzymała się lewej strony */
+.desktop-table th:nth-child(2), 
+.desktop-table td:nth-child(2) { 
+    text-align: left; 
+}
+
+.desktop-rank-tabs {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    font-weight: 900;
+    font-size: 14px;
+    color: rgba(255,255,255,0.3);
+}
+.d-tab { cursor: pointer; transition: 0.2s; }
+.d-tab:hover, .d-tab.active { color: var(--accent); }
+
+/* ============================================== */
+/* ====== GAME HEADER & INPUT =================== */
+/* ============================================== */
 .game-header { text-align: center; margin-bottom: 25px; position: relative; width: 100%; max-width: 1150px; }
 .game-title-small { font-weight: 900; font-size: 28px; text-transform: uppercase; margin: 0; background: linear-gradient(to bottom, #fff 0%, #888 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 [data-theme="light"] .game-title-small { background: linear-gradient(to bottom, #000 0%, #666 100%); background-clip: text; -webkit-background-clip: text; }
@@ -243,6 +467,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
 button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
+
 /* --- PRZYCISKI BOCZNE (POWER-UPY) --- */
 .hint-btn, .giveup-btn {
     position: absolute;
@@ -290,7 +515,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .autocomplete-items div:last-child { border-bottom: none; }
 .autocomplete-items div:hover { background-color: rgba(241, 196, 15, 0.2); color: var(--accent); font-weight: 600; }
 
-/* MAIN CARD (INFO) */
+/* MAIN CARD (INFO) - Default Mobile */
 .main-card { background: var(--card-bg); width: 100%; max-width: 1150px; border-radius: 32px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); border: 1px solid var(--border-color); backdrop-filter: blur(10px); box-sizing: border-box; }
 .header-section { display: flex; align-items: center; gap: 30px; margin-bottom: 25px; width: 100%; box-sizing: border-box; }
 .photo-container { width: 120px; height: 140px; flex-shrink: 0; border: 2px solid rgba(128,128,128,0.3); border-radius: 20px; display: flex; justify-content: center; align-items: center; background: var(--photo-bg-gradient); overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.2); font-size: 80px; font-weight: 900; color: var(--photo-text-color); transition: background 0.3s ease; }
@@ -377,348 +602,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .btn-google { background: #4285F4; color: white; border: none; font-weight: 900; padding: 12px 20px; border-radius: 12px; cursor: pointer; text-transform: uppercase; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; font-size: 13px; }
 .btn-google:hover { background: #357ae8; transform: scale(1.02); }
 
-/* RANKING & TABELE */
-.tabs-container { display: flex; gap: 5px; justify-content: center; margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 5px; border-radius: 12px; flex-wrap: wrap; }
-.rank-tab { flex: 1; background: transparent; color: var(--text-dim); border: none; padding: 8px 5px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-.rank-tab:hover { color: var(--text-main); }
-.rank-tab.active { background: var(--accent); color: #000; }
-.tab-gold { background: linear-gradient(135deg, #ffd700, #b8860b); color: #000; font-weight: 900; }
-.table-responsive { overflow-x: auto; width: 100%; }
-.ranking-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; color: var(--text-main); text-align: center; }
-.ranking-table th { color: var(--accent); padding: 12px 5px; border-bottom: 2px solid var(--border-color); text-transform: uppercase; font-weight: 900; }
-.ranking-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
-.ranking-table tr:hover td { background-color: rgba(255, 255, 255, 0.02); }
-.rank-1 { color: #f1c40f; font-weight: 900; font-size: 16px; text-shadow: 0 0 10px rgba(241,196,15,0.5); }
-.rank-2 { color: #bdc3c7; font-weight: 900; font-size: 15px; }
-.rank-3 { color: #cd7f32; font-weight: 900; font-size: 14px; }
-.rank-nick { text-transform: uppercase; text-align: left; }
-.rank-won { color: var(--green-neon); font-weight: 900; }
-.rank-lost { color: var(--red-neon); font-weight: 900; }
-
-/* CALENDAR */
-.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 10px; }
-.calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; font-size: 12px; font-weight: 700; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; }
-.calendar-grid-real { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-.cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; background: var(--attr-box-bg); border: 1px solid var(--attr-box-border); color: var(--text-main); transition: 0.2s; }
-.cal-day.empty { background: transparent; border: none; cursor: default; }
-.cal-day.playable:hover { transform: scale(1.1); border-color: var(--accent); }
-.cal-day.win { background: rgba(0, 255, 102, 0.1); border-color: var(--green-neon); color: var(--green-neon); }
-.cal-day.loss { background: rgba(255, 51, 51, 0.1); border-color: var(--red-neon); color: var(--red-neon); }
-.cal-day.disabled { opacity: 0.2; cursor: not-allowed; }
-.cal-day.disabled:hover { transform: none; border-color: inherit; }
-
-/* POST GAME & FOOTER */
-.post-game-actions { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: var(--card-bg); padding: 12px 20px; border-radius: 20px; border: 2px solid var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); gap: 10px; flex-wrap: wrap; justify-content: center; width: max-content; max-width: 95vw; }
-.game-footer { margin-top: auto; padding-top: 40px; width: 100%; display: flex; justify-content: center; padding-bottom: 10px;}
-.footer-content { display: flex; flex-direction: column; align-items: center; width: 100%; }
-.copyright p { font-size: 12px; color: var(--text-dim); margin: 0; }
-
-/* RANGI LIGOWE */
-#leagueRankDisplay { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 14px; border-radius: 999px; margin: 0 auto 14px auto; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.8px; border: 1px solid transparent; background: rgba(255, 255, 255, 0.04); }
-.rank-calibration { color: var(--text-dim); border-color: rgba(142, 142, 147, 0.35); background: rgba(142, 142, 147, 0.08); }
-.rank-bronze { color: #b87333; border-color: rgba(184, 115, 51, 0.45); background: rgba(184, 115, 51, 0.12); text-shadow: 0 0 8px rgba(184, 115, 51, 0.2); }
-.rank-silver { color: #d8d8d8; border-color: rgba(216, 216, 216, 0.45); background: rgba(216, 216, 216, 0.12); text-shadow: 0 0 8px rgba(216, 216, 216, 0.2); }
-.rank-gold { color: #f1c40f; border-color: rgba(241, 196, 15, 0.5); background: rgba(241, 196, 15, 0.12); text-shadow: 0 0 8px rgba(241, 196, 15, 0.25); }
-.rank-emerald { color: #2ecc71; border-color: rgba(46, 204, 113, 0.5); background: rgba(46, 204, 113, 0.12); text-shadow: 0 0 8px rgba(46, 204, 113, 0.25); }
-.rank-diamond { color: #6fffe9; border-color: rgba(111, 255, 233, 0.5); background: rgba(111, 255, 233, 0.12); text-shadow: 0 0 8px rgba(111, 255, 233, 0.25); }
-.rank-legend { color: #ff5fd7; border-color: rgba(255, 95, 215, 0.5); background: rgba(255, 95, 215, 0.12); text-shadow: 0 0 10px rgba(255, 95, 215, 0.3); }
-
-/* --- SPEEDWAY CLASH --- */
-.clash-screen { width: min(100%, 920px); min-height: calc(100vh - 80px); text-align: center; margin: 20px auto 0; padding: 28px; box-sizing: border-box; position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); backdrop-filter: blur(10px); }
-.clash-timer-box { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); }
-.clash-timer-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 900; }
-.clash-timer-value { font-size: 32px; font-weight: 900; color: #fff; transition: 0.3s; }
-.clash-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 15px 30px; border-radius: 20px; border: 1px solid var(--border-color); margin-bottom: 30px; }
-.clash-player { font-size: 16px; font-weight: 900; opacity: 0.3; transition: 0.3s; padding: 12px 20px; border-radius: 12px; border: 2px solid transparent; text-transform: uppercase;}
-.clash-player.active { opacity: 1; transform: scale(1.1); box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-.clash-player#clashPlayer1.active { border-color: #ff3333; background: rgba(255,51,51,0.2); text-shadow: 0 0 10px #ff3333; }
-.clash-player#clashPlayer2.active { border-color: #3399ff; background: rgba(51,153,255,0.2); text-shadow: 0 0 10px #3399ff; }
-.clash-grid { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; gap: 8px; width: 100%; max-width: 550px; margin: 0 auto; box-sizing: border-box; }
-.clash-cell { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; aspect-ratio: unset; min-height: 80px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; text-align: center; transition: 0.2s; overflow: hidden; padding: 5px; flex-direction: column; box-sizing: border-box;}
-.clash-header-cell { background: rgba(0,0,0,0.4); border-color: transparent; color: var(--accent); font-size: 11px; text-transform: uppercase; padding: 5px; display: flex; flex-direction: column; justify-content: center; align-items: center;}
-.clash-header-cell.empty { background: transparent; border: none; }
-.clash-playable { cursor: pointer; position: relative; }
-.clash-playable:hover { transform: scale(1.05); border-color: var(--accent); box-shadow: 0 0 15px rgba(241,196,15,0.3); z-index: 5; }
-.clash-playable.claimed-red { background: rgba(200, 0, 0, 0.8); border-color: #ff3333; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-.clash-playable.claimed-blue { background: rgba(0, 100, 200, 0.8); border-color: #3399ff; cursor: default; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-.clash-playable.claimed-red:hover, .clash-playable.claimed-blue:hover { transform: none; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); z-index: 1; }
-.clash-player-name { font-size: 12px; font-weight: 900; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,1); word-break: break-word; line-height: 1.2; }
-
-/* MONETA 3D */
-.coin-modal { background: transparent; border: none; box-shadow: none; display: flex; flex-direction: column; align-items: center; }
-.coin-container { width: 180px; height: 180px; margin: 0 auto; perspective: 1000px; }
-.coin { width: 100%; height: 100%; position: relative; transition: transform 3s cubic-bezier(0.1, 0.8, 0.2, 1); transform-style: preserve-3d; }
-.coin-face { position: absolute; width: 100%; height: 100%; border-radius: 50%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; font-size: 90px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); border: 8px solid rgba(255,255,255,0.2); }
-.coin-front { background: radial-gradient(circle at 30% 30%, #ff6666, #cc0000); transform: rotateY(0deg); }
-.coin-back { background: radial-gradient(circle at 30% 30%, #66b2ff, #0066cc); transform: rotateY(180deg); }
-.coin-result-text { color: #fff; text-shadow: 0 0 15px rgba(0,0,0,1); margin-top: 40px; font-size: 28px; font-weight: 900; opacity: 0; transition: 0.5s; }
-
-/* INNE ELEMENTY CLASH */
-.room-code-input { text-transform: uppercase; font-weight: 900; text-align: center; font-size: 18px; padding: 12px; border-radius: 12px; }
-.room-code-display { font-size: 60px; color: var(--accent); margin: 0; letter-spacing: 5px; font-weight: 900; text-shadow: 0 0 20px rgba(241,196,15,0.4); }
-.p1-status { color: #ff3333; opacity: 0.5; }
-.p2-status { color: #3399ff; opacity: 0.5; }
-.top-right-absolute { position: absolute; top: 15px; right: 15px; }
-.local-player-input { width: 100%; padding: 12px; border-radius: 10px; background: rgba(0,0,0,0.5); color: #fff; font-weight: bold; font-size: 16px; text-align: center; }
-
-.vs-screen-content { display: flex; align-items: center; justify-content: center; gap: 4vw; width: 100%; height: 100%; padding: 20px; }
-.vs-player { text-align: center; flex: 1; }
-.vs-player.p1 { color: #ff3333; }
-.vs-player.p2 { color: #3399ff; }
-.vs-icon { font-size: 80px; }
-.drop-shadow-red { filter: drop-shadow(0 0 20px #ff3333); }
-.drop-shadow-blue { filter: drop-shadow(0 0 20px #3399ff); }
-.vs-name { font-weight: 900; font-size: 24px; text-transform: uppercase; word-break: break-word; }
-.vs-separator { font-size: 40px; color: white; font-style: italic; opacity: 0.5; }
-
-.clash-score-display { display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 28px; font-weight: 900; margin: 15px 0 30px 0; }
-.score-name { flex: 1; }
-.score-name.p1 { color: #ff3333; text-align: right; }
-.score-name.p2 { color: #3399ff; text-align: left; }
-.score-badge { background: rgba(255,255,255,0.1); padding: 5px 15px; border-radius: 12px; color: var(--accent); }
-.title-xl { font-size: 32px; }
-
-.clash-search-desc { font-size: 14px; font-weight: 900; color: #fff; margin-bottom: 20px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 12px; }
-.rules-list { font-size: 13px; color: var(--text-main); padding-left: 20px; line-height: 1.6; margin-bottom: 20px; font-weight: 600; }
-.rules-list li { margin-bottom: 10px; }
-.rule-highlight { background: rgba(0,255,102,0.1); padding: 5px; border-radius: 5px; border-left: 3px solid var(--green-neon); }
-.modal-divider { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0; }
-.ranks-list { font-size: 13px; font-weight: 700; display: flex; flex-direction: column; gap: 8px; margin-bottom: 25px; }
-.rank-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 8px; border: 1px solid; }
-.rank-icon { height: 20px; vertical-align: middle; margin-right: 5px; }
-.rank-item.bronze { background: rgba(184, 115, 51, 0.15); border-color: rgba(184, 115, 51, 0.4); }
-.rank-item.silver { background: rgba(216, 216, 216, 0.15); border-color: rgba(216, 216, 216, 0.4); }
-.rank-item.gold { background: rgba(241, 196, 15, 0.15); border-color: rgba(241, 196, 15, 0.4); }
-.rank-item.emerald { background: rgba(46, 204, 113, 0.15); border-color: rgba(46, 204, 113, 0.4); }
-.rank-item.diamond { background: rgba(111, 255, 233, 0.15); border-color: rgba(111, 255, 233, 0.4); }
-.rank-item.legend { background: rgba(255, 95, 215, 0.15); border-color: rgba(255, 95, 215, 0.5); box-shadow: 0 0 10px rgba(255, 95, 215, 0.2); }
-.text-legend { color: #ff5fd7; }
-.history-list-container { max-height: 300px; overflow-y: auto; text-align: left; font-size: 13px; color: #fff; margin-bottom: 20px; }
-
-/* ============================================== */
-/* ====== NOWE MENU DESKTOP (PC ONLY) =========== */
-/* ============================================== */
-
-/* Ukrywamy stare mobilne menu na desktopie */
-#mainMenuContainer, #clashModeSelectContainer, #clashLobbyContainer, #clashLocalLobbyContainer {
-    display: none !important; 
-}
-
-/* Gładkie usunięcie standardowego tła z body, bo ładujemy zdjęcia z JS */
-body {
-    background-color: var(--bg-dark);
-}
-
-/* GŁÓWNY KONTENER MENU (Zabezpieczenie przed zachodzeniem za pomocą Grida) */
-.desktop-menu-wrapper {
-    display: grid;
-    /* Sztywny podział na dwie kolumny. Tabela NIGDY nie wjedzie na lewe menu. */
-    grid-template-columns: 450px 1fr; 
-    gap: 80px; /* Stały margines między menu a tabelą */
-    
-    width: 100vw;
-    min-height: 100vh;
-    padding: 60px 5vw; /* Zwiększony górny padding na logo */
-    box-sizing: border-box;
-    align-content: center; /* Wyśrodkowanie w pionie całego bloku */
-    justify-content: center;
-    position: relative;
-    z-index: 5;
-    margin: 0 auto;
-    max-width: 1400px; /* Ograniczenie żeby na wielkich TV nie rozjechało się na krawędzie */
-}
-
-/* LEWA STRONA */
-.desktop-left {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    width: 100%;
-    height: auto; 
-    border-right: 1px solid rgba(255,255,255,0.2); 
-    padding-right: 40px; 
-    position: relative;
-}
-
-.desktop-logo {
-    font-size: 80px;
-    line-height: 0.85;
-    margin: 0 0 60px 0;
-    color: #fff;
-    text-shadow: 0 5px 15px rgba(0,0,0,0.8);
-    letter-spacing: -2px;
-}
-.logo-sub {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--accent);
-    font-style: italic;
-    letter-spacing: 2px;
-    display: block;
-    margin-top: 10px;
-}
-
-.desktop-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    position: relative;
-    width: 100%;
-}
-
-.nav-main {
-    font-size: 32px;
-    font-weight: 900;
-    color: rgba(255,255,255,0.5);
-    transition: 0.2s;
-    letter-spacing: 1px;
-}
-
-.nav-main:hover, .nav-item.group:hover .nav-main {
-    color: #fff;
-    transform: translateX(10px);
-    text-shadow: 0 0 15px rgba(255,255,255,0.5);
-}
-
-.nav-main.text-clash:hover {
-    color: #3399ff;
-    text-shadow: 0 0 15px #ff3333;
-}
-
-/* POPRAWKA SUBMENU (Równiutko za pionową kreską) */
-.nav-sub {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    position: absolute;
-    /* Skoro 'desktop-left' ma 40px padding-right do kreski, zaczynamy submenu tuż za nią */
-    left: calc(100% + 40px); 
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-20px);
-    transition: 0.3s;
-    pointer-events: none;
-    white-space: nowrap;
-    z-index: 10; /* Powyżej tabeli */
-}
-
-.nav-item.group:hover .nav-sub {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0);
-    pointer-events: all;
-}
-
-.nav-sub span {
-    font-size: 22px;
-    font-weight: 900;
-    color: rgba(255,255,255,0.5);
-    transition: 0.2s;
-}
-
-.nav-sub span:hover {
-    color: var(--accent);
-    transform: translateX(10px);
-}
-
-.nav-divider {
-    height: 30px;
-}
-
-.desktop-footer-links {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    display: flex;
-    gap: 20px;
-    font-size: 14px;
-    font-weight: 700;
-    color: rgba(255,255,255,0.5);
-}
-.desktop-footer-links span { cursor: pointer; transition: 0.2s; }
-.desktop-footer-links span:hover { color: #fff; }
-
-.update-badge-desktop {
-    display: inline-block;
-    width: 12px; height: 12px;
-    background: var(--red-neon);
-    border-radius: 50%;
-    margin-left: 5px;
-    box-shadow: 0 0 10px var(--red-neon);
-}
-
-/* PRAWA STRONA - LEADERBOARD */
-.desktop-right {
-    display: flex;
-    justify-content: flex-start; /* Zaczyna się od razu od lewej krawędzi swojej części Grida */
-    align-items: center;
-    width: 100%;
-    max-width: 700px; /* Żeby tabela nie była monstrualnie szeroka */
-}
-
-/* KARTA TABELI (Więcej oddechu w pionie) */
-.desktop-leaderboard-panel {
-    background: rgba(40, 40, 45, 0.6);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
-    padding: 30px;
-    width: 100%;
-    height: 70vh; /* Lekko zwiększone, by zmieścić całą topkę */
-    min-height: 450px; /* Zabezpieczenie dla małych pionowych ekranów */
-    display: flex;
-    flex-direction: column;
-    backdrop-filter: blur(15px);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-}
-
-.desktop-leaderboard-panel h2 {
-    font-size: 32px;
-    color: var(--accent);
-    margin: 0 0 20px 0;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
-}
-
-.desktop-table-wrapper {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-.desktop-table-wrapper::-webkit-scrollbar { width: 4px; }
-.desktop-table-wrapper::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-
-.desktop-table {
-    width: 100%;
-    text-align: center; /* Zmieniono z left na center */
-    font-size: 15px;
-}
-.desktop-table th { color: rgba(255,255,255,0.5); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-.desktop-table td { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-weight: 600; }
-.desktop-table tr:hover td { background: rgba(255,255,255,0.05); }
-
-/* Wymuszamy, aby TYLKO kolumna z Nickiem (druga) trzymała się lewej strony */
-.desktop-table th:nth-child(2), 
-.desktop-table td:nth-child(2) { 
-    text-align: left; 
-}
-
-.desktop-rank-tabs {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    font-weight: 900;
-    font-size: 14px;
-    color: rgba(255,255,255,0.3);
-}
-.d-tab { cursor: pointer; transition: 0.2s; }
-.d-tab:hover, .d-tab.active { color: var(--accent); }
 /* ============================================== */
 /* ====== OSIĄGNIĘCIA W PROFILU ================= */
 /* ============================================== */
@@ -845,7 +728,12 @@ body {
         left: auto !important;
         right: auto !important;
         width: 100% !important;
+        height: auto !important; /* Reset wysokości z PC */
         padding: 12px !important;
+        font-size: 16px !important; /* Reset rozmiaru ikonki */
+        background: transparent !important;
+        box-shadow: none !important;
+        transform: none !important; /* Wyłącza animację sprężystą na mobile */
     }
     
     /* ======================================================== */
