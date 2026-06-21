@@ -1051,6 +1051,15 @@ function clearGameBoard() {
     document.getElementById('btnHint').style.display = 'none';
 }
 
+async function returnToMainMenu() {
+    // Pytamy tylko jeśli gracz zaczął wpisywać i gra nie jest zakończona
+    if (!hasWon && !hasLost && guessCount > 0) {
+        const conf = await appConfirm("Czy na pewno chcesz wrócić do menu? Zapiszemy Twój postęp w Daily, ale w trybie Endless stracisz tę grę.", { title: "Powrót do menu", danger: true, confirmText: "WRÓĆ DO MENU" });
+        if (!conf) return;
+    }
+    window.location.reload();
+}
+
 // Generowanie tekstu podpowiedzi
 function updateHintDisplay() {
     if (!hintActive) return;
