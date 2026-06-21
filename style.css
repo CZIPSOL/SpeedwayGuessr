@@ -332,9 +332,11 @@ body {
     flex-direction: column;
     gap: 10px;
     position: absolute;
-    /* Ustawienie sztywno na prawo od rodzica (.nav-item) */
-    left: calc(100% + 20px); 
-    top: 50%; /* Wyśrodkowanie w pionie względem najechanego tekstu */
+    
+
+    left: calc(100% + 15px);
+    
+    top: 50%;
     transform: translateY(-50%) translateX(-20px);
     
     opacity: 0;
@@ -349,7 +351,7 @@ body {
 .nav-item.group:hover .nav-sub {
     opacity: 1;
     visibility: visible;
-    transform: translateY(-50%) translateX(0); /* Pojawia się i wjeżdża */
+    transform: translateY(-50%) translateX(0);
     pointer-events: all;
 }
 
