@@ -188,9 +188,6 @@
 
 
     <!-- ============================================== -->
-    <!-- ====== MAIN MENU ====== -->
-    <!-- ============================================== -->
-     <!-- ============================================== -->
     <!-- ====== NOWE MENU PC (DESKTOP ONLY) ====== -->
     <!-- ============================================== -->
     <div id="desktopMainMenu" class="desktop-menu-wrapper">
@@ -219,8 +216,8 @@
                 </div>
 
                 <!-- SPEEDWAY CLASH -->
-                <div class="nav-item" onmouseenter="loadDesktopRanking('league')">
-                    <div class="nav-main text-clash" onclick="startClashGame()"><i>SPEEDWAY CLASH</i></div>
+                <div class="nav-item group" onmouseenter="loadDesktopRanking('league')">
+                    <div class="nav-main text-clash" onclick="startClashGame()"><i>SPEEDWAY CLASH ►</i></div>
                 </div>
 
                 <div class="nav-divider"></div>
@@ -268,15 +265,19 @@
         </div>
     </div>
 
+
+    <!-- ============================================== -->
+    <!-- ====== MENU MOBILNE (DOMYŚLNE) ====== -->
+    <!-- ============================================== -->
     <div id="mainMenuContainer" class="menu-container">
-<div class="top-right-buttons">
-                <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
-                    📢<span id="updateBadgeGame" class="update-badge"></span>
-                </button>
-                <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
-                <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
-                <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
-            </div>
+        <div class="top-right-buttons">
+            <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
+                📢<span id="updateBadgeGame" class="update-badge"></span>
+            </button>
+            <button onclick="openRanking()" class="icon-btn" title="Ranking">🏆</button>
+            <button onclick="openProfile()" class="icon-btn" title="Profil">👤</button>
+            <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
+        </div>
 
         <h1 class="game-title">Speedway Guessr</h1>
         <p class="alpha-tag">Alpha ver. 1.1.0</p>
@@ -312,7 +313,7 @@
             
             <button class="menu-btn btn-clash mt-15" onclick="startClashGame()">
                 <span class="btn-icon text-shadow">⚔️</span>
-                <span class="btn-text text-shadow">SPEEDWAY CLASH <small>(Nowość!)</small></span>
+                <span class="btn-text text-shadow">SPEEDWAY CLASH</span>
             </button>
         </div>
 
@@ -323,9 +324,10 @@
     </div>
 
 
-<!-- ============================================== -->
-    <!-- ====== EKRAN CLASH (DESKTOP) ====== -->
     <!-- ============================================== -->
+    <!-- ====== EKRAN WCHODZENIA W CLASH ====== -->
+    <!-- ============================================== -->
+    <!-- Ten widok pokazuje się PO KLIKNIĘCIU "Speedway Clash" w menu głównym/PC -->
     <div id="clashModeSelectContainer" class="desktop-menu-wrapper" style="display: none;">
         
         <!-- LEWA STRONA: Nawigacja Clasha -->
@@ -351,7 +353,7 @@
             <!-- MENU CLASHA -->
             <nav class="desktop-nav">
                 <div class="nav-item">
-                    <span id="btnLeagueModeDesktop" onclick="startLeagueMatchmaking()"><i data-i18n="dLeague">MECZ LIGOWY ►</i></span>
+                    <div class="nav-main text-clash" onclick="startLeagueMatchmaking()" id="btnLeagueModeDesktop"><i>MECZ LIGOWY ►</i></div>
                 </div>
                 <div class="nav-item">
                     <div class="nav-main" onclick="openFriendlyLobby()"><i>MECZ TOWARZYSKI</i></div>
@@ -397,6 +399,8 @@
             </div>
         </div>
     </div>
+
+
     <!-- ============================================== -->
     <!-- ====== EKRAN 2: LOBBY TOWARZYSKIE ====== -->
     <!-- ============================================== -->
@@ -457,6 +461,7 @@
         </div>
     </div>
 
+
     <!-- ============================================== -->
     <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->
     <!-- ============================================== -->
@@ -473,10 +478,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ============================================== -->
-    <!-- ====== GŁÓWNY INTERFEJS GRY (DAILY/ENDLESS) == -->
-    <!-- ============================================== -->
 
     <!-- ============================================== -->
     <!-- ====== GŁÓWNY INTERFEJS GRY (DAILY/ENDLESS) == -->
