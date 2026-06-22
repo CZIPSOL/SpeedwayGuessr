@@ -351,7 +351,7 @@
             <!-- MENU CLASHA -->
             <nav class="desktop-nav">
                 <div class="nav-item">
-                    <div class="nav-main text-clash" onclick="startLeagueMatchmaking()" id="btnLeagueModeDesktop"><i>MECZ LIGOWY ►</i></div>
+                    <span id="btnLeagueModeDesktop" onclick="startLeagueMatchmaking()"><i data-i18n="dLeague">MECZ LIGOWY ►</i></span>
                 </div>
                 <div class="nav-item">
                     <div class="nav-main" onclick="openFriendlyLobby()"><i>MECZ TOWARZYSKI</i></div>
@@ -628,47 +628,70 @@
 
     <!-- CLASH: ZASADY GRY -->
     <div id="clashInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
-        <div class="stats-modal modal-md text-left overflow-y-auto max-h-90vh">
+        <div class="stats-modal text-left overflow-y-auto max-h-90vh" style="max-width: 800px; padding: 40px;">
             
-            <h3 class="text-accent mb-15 font-black text-center uppercase">Zasady gry: Speedway Clash ⚔️</h3>
-            <ul class="rules-list">
-                <li>Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk".</li>
-                <li>Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował <b>oba krzyżujące się kluby</b>.</li>
-                <li>Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).</li>
-                <li class="rule-highlight">
-                    <b>DODATKOWY WYMÓG:</b> Czasami pod herbem klubu w górnym rzędzie pojawi się zielona nazwa kraju (np. <span class="text-green">[Dania]</span>). Oznacza to, że odgadywany zawodnik w tej kolumnie musi dodatkowo pochodzić z tego państwa!
-                </li>
-                <li>Masz <b>2 minuty</b> na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę na rzecz przeciwnika.</li>
-                <li>Wygrywa gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (pion, poziom lub skos)!</li>
-            </ul>
+            <h2 class="text-accent font-black text-center uppercase" style="font-size: 32px; letter-spacing: 2px;">Zasady gry: Speedway Clash ⚔️</h2>
+            <p class="text-center text-dim mb-30">Poznaj mechanikę i system rankingowy przed wejściem na tor!</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                
+                <!-- KROK 1 -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🎯</div>
+                    <h4 class="text-white font-black uppercase mb-10">Cel Gry</h4>
+                    <p class="text-dim text-sm line-h-1-4">Gra toczy się na planszy 3x3 na zasadach "Kółko i Krzyżyk". Wygrywa ten gracz, który jako pierwszy połączy <b>3 swoje pola w jednej linii</b> (w pionie, poziomie lub na ukos).</p>
+                </div>
+
+                <!-- KROK 2 -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🤝</div>
+                    <h4 class="text-white font-black uppercase mb-10">Przejmowanie Pól</h4>
+                    <p class="text-dim text-sm line-h-1-4">Kliknij w wolne pole i podaj zawodnika, który w swojej karierze <b>reprezentował oba krzyżujące się kluby</b>. Zła odpowiedź to strata tury!</p>
+                </div>
+
+                <!-- KROK 3 -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">⏳</div>
+                    <h4 class="text-white font-black uppercase mb-10">Zasady i Czas</h4>
+                    <p class="text-dim text-sm line-h-1-4">Liczy się tylko polska historia ligowa. Na przemyślenie ruchu masz równe <b>2 minuty</b>. Jeśli licznik spadnie do zera, tracisz swoją kolejkę!</p>
+                </div>
+
+                <!-- KROK 4 -->
+                <div style="background: rgba(0, 255, 102, 0.1); border: 1px solid var(--green-neon); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🌍</div>
+                    <h4 class="text-green font-black uppercase mb-10">Dodatkowy Wymóg (Hardcore)</h4>
+                    <p class="text-white text-sm line-h-1-4">Czasami pod herbem klubu w górnym rzędzie pojawi się zielona flaga/nazwa kraju (np. <span class="text-green font-bold">[Dania]</span>). Zawodnik wpisany w tę kolumnę <b>MUSI dodatkowo pochodzić z tego państwa!</b></p>
+                </div>
+
+            </div>
 
             <hr class="modal-divider">
 
-            <h3 class="text-accent mb-15 font-black text-center uppercase">System Rang</h3>
-            <p class="text-xs text-dim text-center mt-neg-10 mb-15">Wygrywaj mecze ligowe, by awansować!</p>
+            <h3 class="text-accent mb-15 font-black text-center uppercase">Rangi Ligowe</h3>
+            <p class="text-sm text-dim text-center mt-neg-10 mb-20">Wygrywaj mecze z losowymi przeciwnikami i zdobywaj punkty ELO, by awansować!</p>
             
-            <div class="ranks-list">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 25px;">
                 <div class="rank-item bronze">
-                    <span><img src="images/rangi/ranga_braz5.png" class="rank-icon"> BRĄZ (1-5)</span> <span class="text-dim">ELO: 0 - 475</span>
+                    <span><img src="images/rangi/ranga_braz5.png" class="rank-icon"> BRĄZ (1-5)</span> <span class="text-dim">0 - 475</span>
                 </div>
                 <div class="rank-item silver">
-                    <span><img src="images/rangi/ranga_srebro5.png" class="rank-icon"> SREBRO (1-5)</span> <span class="text-dim">ELO: 476 - 950</span>
+                    <span><img src="images/rangi/ranga_srebro5.png" class="rank-icon"> SREBRO (1-5)</span> <span class="text-dim">476 - 950</span>
                 </div>
                 <div class="rank-item gold">
-                    <span><img src="images/rangi/ranga_zloto5.png" class="rank-icon"> ZŁOTO (1-5)</span> <span class="text-dim">ELO: 951 - 1500</span>
+                    <span><img src="images/rangi/ranga_zloto5.png" class="rank-icon"> ZŁOTO (1-5)</span> <span class="text-dim">951 - 1500</span>
                 </div>
                 <div class="rank-item emerald">
-                    <span><img src="images/rangi/ranga_szmaragd5.png" class="rank-icon"> SZMARAGD (1-5)</span> <span class="text-dim">ELO: 1501 - 2750</span>
+                    <span><img src="images/rangi/ranga_szmaragd5.png" class="rank-icon"> SZMARAGD (1-5)</span> <span class="text-dim">1501 - 2750</span>
                 </div>
                 <div class="rank-item diamond">
-                    <span><img src="images/rangi/ranga_diament3.png" class="rank-icon"> DIAMENT (1-3)</span> <span class="text-dim">ELO: 2751 - 4000</span>
+                    <span><img src="images/rangi/ranga_diament3.png" class="rank-icon"> DIAMENT (1-3)</span> <span class="text-dim">2751 - 4000</span>
                 </div>
-                <div class="rank-item legend">
-                    <span class="text-legend font-black"><img src="images/rangi/ranga_legenda.png" class="rank-icon"> LEGENDA</span> <span class="text-legend opacity-80">ELO: 4001+</span>
+                <div class="rank-item legend" style="grid-column: 1 / -1; justify-content: center; gap: 20px;">
+                    <span class="text-legend font-black"><img src="images/rangi/ranga_legenda.png" class="rank-icon"> LEGENDA</span> <span class="text-legend opacity-80 font-bold">4001+ ELO</span>
                 </div>
             </div>
 
-            <button onclick="closeClashInfo()" class="btn-close w-100 mt-20">ZROZUMIANO</button>
+            <button onclick="closeClashInfo()" class="btn-reset w-100 mt-10 p-15 text-lg">ZROZUMIANO, WCHODZĘ DO GRY!</button>
         </div>
     </div>
 
