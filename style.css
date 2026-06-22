@@ -303,7 +303,7 @@ body {
     align-items: center;
     cursor: pointer;
     position: relative;
-    width: max-content;
+    width: 100%;
 }
 
 .nav-main {
@@ -332,13 +332,9 @@ body {
     flex-direction: column;
     gap: 10px;
     position: absolute;
-    
-
-    left: calc(100% + 15px);
-    
+    left: calc(100% + 20px); /* Odsunięcie za pionową kreską */
     top: 50%;
     transform: translateY(-50%) translateX(-20px);
-    
     opacity: 0;
     visibility: hidden;
     transition: 0.3s;
@@ -347,7 +343,6 @@ body {
     z-index: 10;
 }
 
-/* Po najechaniu rozwija się w dół odsłaniając opcje */
 .nav-item.group:hover .nav-sub {
     opacity: 1;
     visibility: visible;

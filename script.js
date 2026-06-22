@@ -1727,6 +1727,7 @@ function hasBothClashPlayers(data) {
 function startClashGame() {
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
+        document.getElementById('desktopMainMenu').style.display = 'none'; // <- DODANA LINIA
         document.getElementById('clashModeSelectContainer').style.display = 'flex';
         updateLeagueUI();
     });
