@@ -208,7 +208,7 @@
                 <div class="nav-item group" onmouseenter="loadDesktopRanking('daily')">
                     <div class="nav-main"><i>DAILY GUESSR ►</i></div>
                     <div class="nav-sub">
-                        <span onclick="startDailyGame()"><i data-i18n="dToday">DZISIEJSZA GRA ►</i></span>
+                        <span onclick="startDailyGame()"><i data-i18n="dToday">DZISIEJSZA GRA</i></span>
                         <span onclick="openCalendar()"><i data-i18n="dArchive">ARCHIWUM DAILY</i></span>
                     </div>
                 </div>
@@ -220,7 +220,7 @@
 
                 <!-- SPEEDWAY CLASH -->
                 <div class="nav-item" onmouseenter="loadDesktopRanking('league')">
-                    <div class="nav-main text-clash" onclick="startClashGame()"><i>SPEEDWAY CLASH ►</i></div>
+                    <div class="nav-main text-clash" onclick="startClashGame()"><i>SPEEDWAY CLASH</i></div>
                 </div>
 
                 <div class="nav-divider"></div>
@@ -323,58 +323,80 @@
     </div>
 
 
+<!-- ============================================== -->
+    <!-- ====== EKRAN CLASH (DESKTOP) ====== -->
     <!-- ============================================== -->
-    <!-- ====== EKRAN 1: WYBÓR TRYBU CLASH ====== -->
-    <!-- ============================================== -->
-    <div id="clashModeSelectContainer" class="menu-container" style="display: none; z-index: 50;">
-        <div class="top-right-buttons">
-            <button onclick="openRanking('league')" class="icon-btn" title="Ranking Ligowy">🏆</button>
-            <button onclick="showClashInfo()" class="icon-btn" title="Jak grać?">ℹ️</button>
-            <button onclick="exitClashMenu()" class="icon-btn" title="Powrót">🔙</button>
-        </div>
-
-        <h1 class="game-title glow-title" data-i18n="clashTitle">⚔️ SPEEDWAY CLASH</h1>
+    <div id="clashModeSelectContainer" class="desktop-menu-wrapper" style="display: none;">
         
-        <div class="clash-history-card">
-            <span class="clash-history-title">OSTATNIE MECZE LIGOWE:</span>
-            <div class="flex-row items-center gap-10">
-                <div id="lastLeagueList" class="daily-tiles-container m-0"></div>
-                <button onclick="openClashHistory()" class="icon-btn-small history-btn" title="Historia Ligowa">📜</button>
+        <!-- LEWA STRONA: Nawigacja Clasha -->
+        <div class="desktop-left">
+            <h1 class="desktop-logo" style="margin-bottom: 20px;">
+                <i>SPEEDWAY</i><br>
+                <i>CLASH</i><br>
+                <span class="logo-sub">by: CZIPSOL</span>
+            </h1>
+
+            <!-- KARTA GRACZA (Nick, Ranga, Ostatnie Gry) -->
+            <div style="background: rgba(40, 40, 45, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; display: flex; justify-content: space-between; margin-bottom: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <span id="clashMenuNick" style="font-size: 20px; font-weight: 900; color: #fff;">GRACZ</span>
+                    <span id="leagueRankDisplay" style="font-size: 12px; font-weight: 700; color: var(--accent);">ŁADOWANIE RANGI...</span>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                    <span style="font-size: 11px; color: var(--text-dim); font-weight: 700;">LAST GAMES</span>
+                    <div id="lastLeagueList" class="daily-tiles-container m-0" style="cursor: pointer;" onclick="openClashHistory()"></div>
+                </div>
+            </div>
+
+            <!-- MENU CLASHA -->
+            <nav class="desktop-nav">
+                <div class="nav-item">
+                    <div class="nav-main text-clash" onclick="startLeagueMatchmaking()" id="btnLeagueModeDesktop"><i>MECZ LIGOWY ►</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openFriendlyLobby()"><i>MECZ TOWARZYSKI</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openLocalClashLobby()"><i>MECZ LOKALNY</i></div>
+                </div>
+                
+                <div class="nav-divider"></div>
+
+                <div class="nav-item">
+                    <div class="nav-main" onclick="showClashInfo()"><i>JAK GRAĆ?</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openSettings()"><i>USTAWIENIA</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openProfile()"><i>PROFIL</i></div>
+                </div>
+            </nav>
+
+            <!-- Powrót na dół -->
+            <div class="desktop-footer-links">
+                <span onclick="exitClashMenu()">🔙 POWRÓT DO MENU GŁÓWNEGO</span>
             </div>
         </div>
 
-        <div class="clash-divider"></div>
-
-        <h2 class="clash-subtitle" data-i18n="clashChooseMode">Wybierz tryb gry</h2>
-
-        <div class="menu-modes clash-modes">
-            <button id="btnLeagueMode" class="menu-btn btn-gold" onclick="startLeagueMatchmaking()">
-                <span class="btn-icon text-shadow-lg">🏆</span>
-                <span class="btn-text align-left w-100 flex-col gap-4">
-                    <span class="font-black text-lg tracking-wide">MECZ LIGOWY</span>
-                    <small id="leagueRankDisplay" class="rank-badge">ŁADOWANIE RANGI...</small>
-                </span>
-            </button>
-
-            <button class="menu-btn btn-green mt-10" onclick="openFriendlyLobby()">
-                <span class="btn-icon">🤝</span>
-                <span class="btn-text align-left flex-col">
-                    <span>MECZ TOWARZYSKI</span>
-                    <small class="lowercase-opacity">Graj ze znajomym na kod</small>
-                </span>
-            </button>
-
-            <button class="menu-btn btn-flat mt-10" onclick="openLocalClashLobby()">
-                <span class="btn-icon">🖥️</span>
-                <span class="btn-text align-left flex-col">
-                    <span class="text-white">GRAJ NA JEDNYM PC</span>
-                    <small class="lowercase-opacity">Lokalny multiplayer</small>
-                </span>
-            </button>
+        <!-- PRAWA STRONA: Leaderboard (LIGA) wbudowany na sztywno -->
+        <div class="desktop-right">
+            <div class="desktop-leaderboard-panel">
+                <h2 style="color: #3399ff;"><i>LEADERBOARD (CLASH)</i></h2>
+                
+                <div class="desktop-table-wrapper">
+                    <table class="ranking-table desktop-table">
+                        <thead id="desktopRankingHeadClash">
+                            <tr><th>Poz.</th><th>Nick</th><th>Ranga</th><th>ELO</th></tr>
+                        </thead>
+                        <tbody id="desktopRankingBodyClash">
+                            <tr><td colspan="4" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-
-
     <!-- ============================================== -->
     <!-- ====== EKRAN 2: LOBBY TOWARZYSKIE ====== -->
     <!-- ============================================== -->

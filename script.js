@@ -1663,19 +1663,21 @@ function getLeagueImageTag(elo, matchesPlayed, size = 24) {
 }
 
 function updateLeagueUI() {
-    const display = document.getElementById('leagueRankDisplay');
-    if (display && userStats.clashLeague) {
+    const displays = [document.getElementById('leagueRankDisplay'), document.getElementById('leagueRankDisplayMobile')];
+    
+    if (userStats.clashLeague) {
         const played = userStats.clashLeague.matchesPlayed || 0;
         const elo = userStats.clashLeague.elo || 1000;
+        const rank = getLeagueRankName(elo, played);
+        const imgTag = getLeagueImageTag(elo, played, 24); 
         
-        if (played < 5) {
-            display.innerText = `KALIBRACJA (${played}/5)`;
-        } else {
-            const rank = getLeagueRankName(elo, played);
-            const imgTag = getLeagueImageTag(elo, played, 24); 
-            display.innerHTML = `${imgTag} <span style="vertical-align: middle;">${rank} | ELO: ${Math.round(elo)}</span>`;
-        }
-        display.className = getRankClass(elo, played);
+        displays.forEach(display => {
+            if (display) {
+                if (played < 5) display.innerText = `KALIBRACJA (${played}/5) | ELO: ${Math.round(elo)}`;
+                else display.innerHTML = `${imgTag} <span style="vertical-align: middle;">${rank} | ELO: ${Math.round(elo)}</span>`;
+                display.className = getRankClass(elo, played);
+            }
+        });
     }
     renderLeagueHistory();
 }
@@ -1727,11 +1729,52 @@ function hasBothClashPlayers(data) {
 function startClashGame() {
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
-        document.getElementById('desktopMainMenu').style.display = 'none'; // <- DODANA LINIA
-        document.getElementById('clashModeSelectContainer').style.display = 'flex';
+        document.getElementById('desktopMainMenu').style.display = 'none'; 
+        
+        // Wyświetlenie nowego ekranu Clasha
+        document.getElementById('clashModeSelectContainer').style.display = 'grid'; 
+        
+        // Odświeżenie danych na nowej karcie gracza
+        const nickDisplay = document.getElementById('clashMenuNick');
+        if(nickDisplay) nickDisplay.innerText = playerNickname || "GRACZ";
         updateLeagueUI();
+        
+        // Automatyczne załadowanie rankingu Clasha do nowej tabeli na prawo
+        loadClashRankingOnly();
     });
 }
+
+async function loadClashRankingOnly() {
+    const tbody = document.getElementById('desktopRankingBodyClash'); 
+    if (!tbody) return;
+    try {
+        let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
+        let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+        
+        tbody.innerHTML = '';
+        if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników. Zagraj pierwszy!</td></tr>`; return; }
+
+        let pos = 1;
+        scores.forEach((row) => {
+            if (row.provisional || row.matchesPlayed < 5) return; 
+            let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+            let safeNick = escapeHTML(row.nick || "Gracz");
+            let isMe = safeNick === playerNickname ? 'style="color: var(--accent);"' : '';
+            
+            tbody.innerHTML += `
+                <tr ${isMe}>
+                    <td style="color:var(--accent); font-weight:900;">${pos}</td>
+                    <td>${safeNick}</td>
+                    <td style="font-size:10px;">${rangaText}</td>
+                    <td style="color:#3399ff;">${row.elo}</td>
+                </tr>`;
+            pos++;
+        });
+    } catch (e) { 
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
+    }
+}
+
 function exitClashMenu() {
     window.location.reload();
 }
@@ -1845,15 +1888,19 @@ async function startLeagueMatchmaking() {
 }
 
 function resetLeagueButton(btn) {
-    btn.innerHTML = `
-        <span class="btn-icon" style="font-size: 28px;">🏆</span>
-        <span class="btn-text" style="text-align: left; width: 100%;">
-            <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
-            <small id="leagueRankDisplay">ŁADOWANIE RANGI...</small>
-        </span>
-    `;
-    btn.style.background = "linear-gradient(135deg, #ffd700, #b8860b)";
-    btn.style.boxShadow = "0 0 20px rgba(255,215,0,0.3)";
+    if (btn.id === 'btnLeagueModeDesktop') {
+        btn.innerHTML = `<i>MECZ LIGOWY ►</i>`;
+        btn.style.color = "rgba(255,255,255,0.5)";
+    } else {
+        btn.innerHTML = `
+            <span class="btn-icon" style="font-size: 28px;">🏆</span>
+            <span class="btn-text" style="text-align: left; width: 100%;">
+                <span style="display:block; font-size: 18px; font-weight: 900;">MECZ LIGOWY</span>
+                <small id="leagueRankDisplayMobile">ŁADOWANIE RANGI...</small>
+            </span>`;
+        btn.style.background = "linear-gradient(135deg, #ffd700, #b8860b)";
+        btn.style.boxShadow = "0 0 20px rgba(255,215,0,0.3)";
+    }
     btn.disabled = false;
     updateLeagueUI();
 }
@@ -2870,6 +2917,7 @@ try {
     window.startDailyGame = startDailyGame;
     window.startEndlessGame = startEndlessGame;
     window.startClashGame = startClashGame;
+    window.loadClashRankingOnly = loadClashRankingOnly;
     window.exitClashMenu = exitClashMenu;
     window.openFriendlyLobby = openFriendlyLobby;
     window.backToClashModeSelect = backToClashModeSelect;
