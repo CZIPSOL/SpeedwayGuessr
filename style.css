@@ -235,9 +235,10 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 /* ============================================== */
 
 /* Ukrywamy stare mobilne menu na desktopie */
-#mainMenuContainer, #clashModeSelectContainer, #clashLobbyContainer, #clashLocalLobbyContainer {
+#mainMenuContainer {
     display: none !important; 
 }
+
 
 /* Gładkie usunięcie standardowego tła z body, bo ładujemy zdjęcia z JS */
 body {
@@ -303,7 +304,7 @@ body {
     align-items: center;
     cursor: pointer;
     position: relative;
-    width: 100%;
+    width: max-content;
 }
 
 .nav-main {
