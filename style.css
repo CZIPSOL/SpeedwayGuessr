@@ -231,6 +231,92 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 .updates-list-container { overflow-y: auto; flex: 1; padding-right: 10px; }
 
 /* ============================================== */
+/* ====== KALENDARZ ARCHIWUM DAILY ============= */
+/* ============================================== */
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 15px;
+    font-weight: 900;
+    color: var(--text-dim);
+    text-transform: uppercase;
+}
+.calendar-grid-real {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+.cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-main);
+}
+.cal-day:not(.empty):not(.disabled):hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent);
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(241, 196, 15, 0.2);
+}
+.cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-day.disabled { opacity: 0.2; cursor: not-allowed; }
+.cal-day.win { background: rgba(0, 255, 102, 0.15); border-color: var(--green-neon); color: var(--green-neon); }
+.cal-day.loss { background: rgba(255, 51, 51, 0.15); border-color: var(--red-neon); color: var(--red-neon); }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+
+/* ============================================== */
+/* ====== WYGLĄD RANG W "JAK GRAĆ" (CLASH) ====== */
+/* ============================================== */
+.rank-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-weight: 900;
+    font-size: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.rank-item:hover { transform: translateY(-3px); }
+.rank-item .rank-icon { height: 28px; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); vertical-align: middle; }
+.rank-item span { display: flex; align-items: center; }
+
+/* Kolory poszczególnych lig */
+.rank-item.bronze { border-left: 4px solid #b87333; }
+.rank-item.bronze:hover { box-shadow: 0 5px 15px rgba(184, 115, 51, 0.3); }
+.rank-item.silver { border-left: 4px solid #d8d8d8; }
+.rank-item.silver:hover { box-shadow: 0 5px 15px rgba(216, 216, 216, 0.3); }
+.rank-item.gold { border-left: 4px solid #f1c40f; }
+.rank-item.gold:hover { box-shadow: 0 5px 15px rgba(241, 196, 15, 0.3); }
+.rank-item.emerald { border-left: 4px solid #2ecc71; }
+.rank-item.emerald:hover { box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
+.rank-item.diamond { border-left: 4px solid #3498db; }
+.rank-item.diamond:hover { box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3); }
+.rank-item.legend { 
+    background: linear-gradient(135deg, rgba(155,89,182,0.15), rgba(231,76,60,0.15)); 
+    border: 1px solid #e74c3c; 
+    border-left: 4px solid #e74c3c; 
+    padding: 15px 20px;
+}
+.rank-item.legend:hover { box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4); }
+.text-legend { 
+    background: linear-gradient(90deg, #9b59b6, #e74c3c, #f1c40f); 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+}
+
+/* ============================================== */
 /* ====== NOWE MENU DESKTOP (PC ONLY) =========== */
 /* ============================================== */
 
@@ -333,9 +419,11 @@ body {
     flex-direction: column;
     gap: 10px;
     position: absolute;
-    left: calc(100% + 20px); /* Odsunięcie za pionową kreską */
+    /* Zmiana z calc(100% + 20px) na 100% i dodanie paddingu tworzy "niewidzialny most" dla kursora */
+    left: 100%; 
+    padding-left: 20px; 
     top: 50%;
-    transform: translateY(-50%) translateX(-20px);
+    transform: translateY(-50%) translateX(-10px);
     opacity: 0;
     visibility: hidden;
     transition: 0.3s;
