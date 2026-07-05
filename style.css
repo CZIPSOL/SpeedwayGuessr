@@ -1037,25 +1037,39 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         display: block; 
     }
     
+    /* Pasek ułatwiający przewijanie na telefonach */
     .clubs-path-container { 
         width: 100%; 
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch; 
         display: flex; 
         flex-wrap: nowrap; 
-        padding: 8px 0; 
+        padding: 10px 0; /* Więcej miejsca */
         box-sizing: border-box; 
+        border: 2px solid var(--border-color); /* Ramka pokazująca że to okno na dane */
+        border-radius: 12px;
     }
 
-    .clubs-path-container::before,
-    .clubs-path-container::after {
-        content: '';
-        margin: auto;
+    /* Na telefonach wymuszamy, aby pasek przesuwania był ZAWSZE lekko widoczny na dole */
+    .clubs-path-container::-webkit-scrollbar { 
+        height: 8px; /* Troszkę grubszy żeby łatwiej złapać/zobaczyć */
+        background: rgba(0,0,0,0.2); 
+        border-radius: 4px;
+    }
+    
+    .clubs-path-container::-webkit-scrollbar-thumb { 
+        background: var(--accent); /* Złoty wyraźny kolor scrollbara */
+        border-radius: 4px; 
     }
 
-    .clubs-path-container::-webkit-scrollbar { height: 4px; }
-    .clubs-path-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
+    /* To samo ulepszenie dla małych pasków "Drużyny" pod zdjęciem */
+    .path-boxes {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 12px;
+    }
+    .path-boxes::-webkit-scrollbar { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; }
+    .path-boxes::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.4); border-radius: 3px; }
     /* Clash Mobile Responsive */
     .clash-grid { grid-template-columns: 50px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
     .clash-screen { width: 100%; min-height: calc(100vh - 20px); margin-top: 0; padding: 16px 10px; border-radius: 18px; }

@@ -88,6 +88,14 @@ const CURRENT_GAME_VERSION = "Alpha v1.1.0";
 const changelog = {
     pl: [
         {
+            version: "Alpha v1.2.0", date: "05.07.2026",
+            changes: [
+                "⏱️ <b>Klimat Clash:</b> Dodano efekt dźwiękowy bicia serca 🫀, gdy w trybie ligowym zostaje 10 sekund czasu na odpowiedź!",
+                "🔨 <b>System Banów:</b> Wprowadzono eskalujące kary czasowe (od 5 minut do nawet 7 dni!) za ucieczkę z meczu ligowego oraz wychodzenie z karty przeglądarki.",
+                "📱 <b>Mobile:</b> Ulepszono pasek przewijania historii klubów zawodnika na mniejszych ekranach telefonów."
+            ]
+        },
+        {
             version: "Alpha v1.1.0", date: "20.06.2026",
             changes: [
                 "💻 <b>Nowość:</b> Zupełnie nowe, profesjonalne menu główne dla graczy na komputerach (PC).",
@@ -293,6 +301,37 @@ function ensureLeagueStats(stats) {
     if (typeof stats.clashLeague.draws !== 'number') stats.clashLeague.draws = 0;
     if (typeof stats.clashLeague.elo !== 'number') stats.clashLeague.elo = 1000;
     return stats;
+}
+// Zmiana w ensureLeagueStats - dodajemy zmienne dla banów
+function ensureLeagueStats(stats) {
+    if (!stats.clashLeague) stats.clashLeague = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 };
+    if (typeof stats.clashLeague.abandons !== 'number') stats.clashLeague.abandons = 0; // Licznik przewinień
+    if (typeof stats.clashLeague.banUntil !== 'number') stats.clashLeague.banUntil = 0; // Czas trwania bana
+    return stats;
+}
+
+// System przyznawania banów
+function applyMatchmakingBan(reasonText) {
+    ensureLeagueStats(userStats);
+    userStats.clashLeague.abandons++;
+    
+    let banMinutes = 0;
+    const offenses = userStats.clashLeague.abandons;
+    
+    // Eskalacja Kar
+    if (offenses === 1) banMinutes = 5;          // 1 wyjście = 5 min
+    else if (offenses === 2) banMinutes = 30;    // 2 wyjścia = 30 min
+    else if (offenses === 3) banMinutes = 120;   // 3 wyjścia = 2 godziny
+    else if (offenses === 4) banMinutes = 1440;  // 4 wyjścia = 24 godziny
+    else banMinutes = 10080;                     // 5+ wyjść = 7 DNI
+
+    userStats.clashLeague.banUntil = Date.now() + (banMinutes * 60000);
+    saveStats();
+
+    setTimeout(() => {
+        let czasTxt = banMinutes >= 1440 ? `${banMinutes/1440} dni` : (banMinutes >= 60 ? `${banMinutes/60} godz.` : `${banMinutes} min.`);
+        appAlert(`KARA ZA NIESPORTOWE ZACHOWANIE ⚠️\n\nPowód: ${reasonText}\nTwoje konto ligowe zostało zablokowane na: ${czasTxt}.\nKolejne przewinienia będą surowiej karane!`, "KARA CZASOWA");
+    }, 1000);
 }
 
 function getLeagueRankName(elo, matchesPlayed) {
@@ -795,6 +834,18 @@ function playSound(type) {
         osc.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
         osc.start(now); osc.stop(now + 0.5);
     }
+     else if (type === 'heartbeat') {
+        // Głębokie uderzenie serca (2 tąpnięcia)
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(50, now); osc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+        gain.gain.setValueAtTime(0.6, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.3);
+
+        const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
+        osc2.type = 'sine'; osc2.frequency.setValueAtTime(55, now + 0.3); osc2.frequency.exponentialRampToValueAtTime(35, now + 0.4);
+        gain2.gain.setValueAtTime(0.5, now + 0.3); gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        osc2.connect(gain2); gain2.connect(audioCtx.destination); osc2.start(now + 0.3); osc2.stop(now + 0.6);
+    }
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
@@ -1068,12 +1119,13 @@ function exitToMainMenu() {
 
 async function submitLeagueSurrender(data) {
     let opponentColor = myClashColor === 'red' ? 'blue' : 'red';
-    // Aktualizujemy bazę danych Firebase: zamykamy mecz i dajemy walkowera przeciwnikowi
     await db.collection("clash_rooms").doc(currentClashRoom).update({
         status: 'summary',
         winner: opponentColor,
         finishReason: 'surrender'
     });
+    // Nakładamy bana za opuszczenie aktywnego meczu:
+    applyMatchmakingBan("Opuszczenie aktywnego meczu ligowego.");
 }
 
 function clearGameBoard() {
@@ -1688,6 +1740,11 @@ document.addEventListener('visibilitychange', () => {
         if (clashTurn === myClashColor) {
             alert("⚠️ Wykryto zmianę karty! Tracisz turę za podejrzenie oszukiwania.");
             skipClashTurn("Opuścił okno gry (KARA)");
+            
+            // Nakładamy bana jeśli gracz oszukiwał (zmieniał karty) w meczu LIGOWYM
+            if (currentClashData && currentClashData.type === 'league') {
+                applyMatchmakingBan("Oszukiwanie - Opuszczenie karty przeglądarki.");
+            }
         }
     }
 });
@@ -1806,8 +1863,17 @@ let isSearchingLeague = false;
 let currentQueueId = null;
 
 async function startLeagueMatchmaking() {
-    const btn = document.getElementById('btnLeagueMode');
+    const btn = document.getElementById('btnLeagueModeDesktop') || document.getElementById('btnLeagueMode');
     if (!btn) return;
+
+    // BLOKADA MATCHMAKINGU JESLI JEST BAN
+    ensureLeagueStats(userStats);
+    if (Date.now() < userStats.clashLeague.banUntil) {
+        const remaining = Math.ceil((userStats.clashLeague.banUntil - Date.now()) / 60000);
+        let czasTxt = remaining >= 1440 ? `${Math.round(remaining/1440)} dni` : (remaining >= 60 ? `${Math.round(remaining/60)} godz.` : `${remaining} min.`);
+        appAlert(`Masz tymczasową blokadę na mecze ligowe za wychodzenie z gier lub AFK.\n\nKara minie za: ${czasTxt}`, "BLOKADA KONTA");
+        return;
+    }
 
     if (isSearchingLeague) {
         isSearchingLeague = false;
@@ -2320,8 +2386,14 @@ function startClashTimer(deadlineTime) {
         }
         let totalSeconds = Math.floor(diff / 1000); let m = Math.floor(totalSeconds / 60).toString().padStart(2, '0'); let s = (totalSeconds % 60).toString().padStart(2, '0');
         display.innerText = `${m}:${s}`;
-        if(totalSeconds <= 10 && (clashTurn === myClashColor || isLocalClash)) { display.style.color = "var(--red-neon)"; playSound('flip'); }
-        else { display.style.color = "#fff"; }
+        
+        // BICIE SERCA PONIZEJ 10 SEKUND
+        if(totalSeconds <= 10 && (clashTurn === myClashColor || isLocalClash)) { 
+            display.style.color = "var(--red-neon)"; 
+            playSound('heartbeat'); // Nowy dźwięk!
+        } else { 
+            display.style.color = "#fff"; 
+        }
     }, 1000);
 }
 
@@ -2901,6 +2973,26 @@ async function loadDesktopRanking(type) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
     }
 }
+
+// ==============================================
+// ====== OBSŁUGA KLAWIATURY (ENTER) ============
+// ==============================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        // Zgadywanie w normalnej grze (Endless/Daily)
+        if (document.activeElement.id === 'guessInput') {
+            makeGuess();
+        }
+        // Zgadywanie w trybie Clash
+        if (document.activeElement.id === 'clashGuessInput') {
+            submitClashGuess();
+        }
+        // Potwierdzanie nicku przy starcie
+        if (document.activeElement.id === 'nickInput') {
+            saveNick();
+        }
+    }
+});
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
