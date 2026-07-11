@@ -678,7 +678,8 @@ const clubAbbreviations = {
     "ostrovia ostrów": "OST", "stal rzeszów": "RZE", "row rybnik": "RYB", "psż poznań": "POZ",
     "kolejarz opole": "OPO", "orzeł łódź": "LOD", "polonia piła": "PIŁ", "start gniezno": "GNI",
     "kolejarz rawicz": "RAW", "landshut devils": "LAN", "wilki krosno": "KRO", "lokomotiv daugavpils": "DAU",
-    "brak klubu": "🚫", "brak": "🚫", "zawieszenie": "⛔", "kontuzja": "🚑", "koniec kariery": "🛑"
+    "speedway kraków": "KRA", "gwardia warszawa": "WAR",
+    "brak klubu": "➖", "brak": "➖", "zawieszenie": "🚫", "kontuzja": "🚑", "koniec kariery": "❌"
 };
 
 const countryToCode = { "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", "Australia": "au", "Szwecja": "se", "Słowacja": "sk", "Rosja": "ru", "Łotwa": "lv", "Niemcy": "de", "Francja": "fr", "Słowenia": "si", "USA": "us", "Norwegia": "no", "Ukraina": "ua", "Finlandia": "fi", "Czechy": "cz", "Włochy": "it", "Hiszpania": "es" };
@@ -1256,8 +1257,28 @@ function restorePlayedGame() {
 }
 
 function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ'; const noAccents = 'acelnoszzACELNOSZZ'; return str.split('').map(char => { const index = accents.indexOf(char); return index !== -1 ? noAccents[index] : char; }).join(''); }
-function getCleanClubName(clubName) { return clubName ? clubName.replace(" (W)", "").trim() : ""; }
-function getClubAbbr(clubName) { if (!clubName) return "---"; let cleanName = getCleanClubName(clubName).toLowerCase(); if (clubAbbreviations[cleanName]) return clubAbbreviations[cleanName]; let words = cleanName.split(' '); return removePolishAccents(words[words.length - 1].substring(0, 3)).toUpperCase(); }
+
+function getCleanClubName(clubName) { 
+    if (!clubName) return "";
+    // Usuwamy (W), (G) oraz ujednolicamy [Zawieszenie] do Zawieszenie
+    return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").trim(); 
+}
+
+function getClubAbbr(clubName) { 
+    if (!clubName) return "---"; 
+    let cleanName = getCleanClubName(clubName).toLowerCase(); 
+    if (clubAbbreviations[cleanName]) return clubAbbreviations[cleanName]; 
+    let words = cleanName.split(' '); 
+    return removePolishAccents(words[words.length - 1].substring(0, 3)).toUpperCase(); 
+}
+
+// NOWA FUNKCJA POMOCNICZA DO RENDEROWANIA (W) oraz (G)
+function getClubBadgeHTML(rawClubName) {
+    if (!rawClubName) return "";
+    if (rawClubName.includes("(W)")) return '<div class="loan-badge">W</div>';
+    if (rawClubName.includes("(G)")) return '<div class="loan-badge">G</div>';
+    return "";
+}
 
 document.addEventListener("click", function (e) { if (e.target.id !== "guessInput" && e.target.id !== "clashGuessInput") closeAllLists(); });
 
@@ -1343,7 +1364,7 @@ function revealClubsOnPath(guessedPlayer) {
         if (guessedClubs.includes(getCleanClubName(box.dataset.club)) && box.innerText === '?') {
             let cleanC = getCleanClubName(box.dataset.club).toLowerCase();
             if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
-            box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`;
+            box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${getClubBadgeHTML(box.dataset.club)}`;
             box.classList.add('found'); box.setAttribute('title', box.dataset.club);        }
     });
     if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.")) {
@@ -1375,12 +1396,12 @@ function renderGuess(player, isRestore = false) {
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-    let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
+let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
-        let isLoan = c.includes("(W)"); let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
+        let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
         let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
-        // Zamiana CSSowego Tooltipa na niezawodny natywny `title=""` ze względu na z-index i ucinanie na telefonach
-        return `<div class="club-logo-wrapper" title="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${isLoan ? '<div class="loan-badge">W</div>' : ''}</div>`;
+        // Korzystamy z nowej funkcji dla odznak:
+        return `<div class="club-logo-wrapper" title="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${getClubBadgeHTML(c)}</div>`;
     }).join('<div class="club-divider"></div>');
 
     let d1 = isRestore ? 0 : 0.1; let d2 = isRestore ? 0 : 0.3; let d3 = isRestore ? 0 : 0.5; let d4 = isRestore ? 0 : 0.7; let d5 = isRestore ? 0 : 0.9; let d6 = isRestore ? 0 : 1.1;
@@ -1430,7 +1451,7 @@ function revealTargetInfoUI() {
         if (!box.dataset.club) return;
         let cleanC = getCleanClubName(box.dataset.club).toLowerCase(); if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
         // Zamiast data-tip
-box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${box.dataset.club.includes("(W)") ? '<div class="loan-badge">W</div>' : ''}`; box.classList.add('found'); box.setAttribute('title', box.dataset.club);
+box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${getClubBadgeHTML(box.dataset.club)}`; box.classList.add('found'); box.setAttribute('title', box.dataset.club);
     });
     const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
 }
