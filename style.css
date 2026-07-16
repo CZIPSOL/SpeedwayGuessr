@@ -320,9 +320,11 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 /* ====== NOWE MENU DESKTOP (PC ONLY) =========== */
 /* ============================================== */
 
-/* Ukrywamy stare mobilne menu na desktopie */
-#mainMenuContainer {
-    display: none !important; 
+/* Ukrywamy stare mobilne menu na desktopie (Tylko dla szerokich ekranów!) */
+@media (min-width: 769px) {
+    #mainMenuContainer {
+        display: none !important; 
+    }
 }
 
 
@@ -847,10 +849,34 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 /* ========================================= */
 
 @media (max-width: 768px) {
-    /* Ukryj menu desktopowe, przywróć mobilne */
+    /* Ukryj menu desktopowe */
     #desktopMainMenu { display: none !important; }
-    #mainMenuContainer { display: flex !important; }
+    /* USUNIĘTO #mainMenuContainer { display: flex !important; } - dzięki temu gra sama ukryje to menu! */
     body { padding: 10px; overflow-x: hidden; }
+    
+    /* DODANE: Naprawa ułożenia menu trybu Clash (1 kolumna zamiast 2 na telefonie) */
+    .desktop-menu-wrapper {
+        grid-template-columns: 1fr !important;
+        padding: 20px 10px !important;
+        gap: 30px !important;
+    }
+    .desktop-left {
+        padding-right: 0 !important;
+        align-items: center;
+        text-align: center;
+    }
+    .desktop-logo {
+        font-size: 44px !important;
+        margin-bottom: 20px !important;
+    }
+    .desktop-right {
+        max-width: 100% !important;
+    }
+    .desktop-leaderboard-panel {
+        height: auto !important;
+        min-height: 350px !important;
+        padding: 15px !important;
+    }
     
     .menu-container { 
         padding: 25px 15px 35px 15px; 
