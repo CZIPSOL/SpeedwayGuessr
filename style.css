@@ -928,55 +928,37 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         transform: none !important; /* Wyłącza animację sprężystą na mobile */
     }
     
-    /* ======================================================== */
+/* ======================================================== */
     /* PANCERNE KONTENERY - ZABEZPIECZENIE PRZED ROZPYCHANIEM */
     /* ======================================================== */
+    
+    /* Input - pole wyszukiwania */
+    .input-section { 
+        width: 100%; 
+        max-width: 500px !important; /* Stała szerokość */
+        margin: 0 auto 20px auto !important; /* Centrowanie na środku */
+        padding: 0 10px; 
+        box-sizing: border-box; 
+    }
+
+    /* Główna karta z pytajnikiem */
     .main-card { 
         padding: 15px; 
         border-radius: 20px; 
         width: 100%; 
-        max-width: 100%; 
+        max-width: 500px !important; /* Stała szerokość */
+        margin: 0 auto !important; /* Centrowanie na środku */
         box-sizing: border-box; 
         overflow: hidden; 
         min-width: 0; 
     }
     
-    /* Nadpisujemy zasady z PC (centrowanego widoku) z powrotem na kolumny */
-    .header-section-centered { 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center; 
-        gap: 15px; 
-        margin-bottom: 20px; 
-        width: 100%; 
-        min-width: 0; 
-    }
-    
+    .header-section-centered { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; }
     .photo-container { width: 100px; height: 120px; margin: 0 auto; }
-    
-    .info-container-centered { 
-        width: 100%; 
-        max-width: 100%; 
-        box-sizing: border-box; 
-        min-width: 0; 
-        text-align: center;
-        align-items: center;
-    }
-
-    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3; width: 100%;}
-
-    .team-path-centered { 
-        width: 100%; 
-        min-width: 0; 
-        display: block; 
-        text-align: center; 
-        margin: 0; 
-    }
-    
-    .path-label {
-        display: block;
-        margin-bottom: 8px;
-    }
+    .info-container-centered { width: 100%; max-width: 100%; box-sizing: border-box; text-align: center; }
+    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3; width: 100%; }
+    .team-path-centered { width: 100%; display: block; text-align: center; margin: 0; }
+    .path-label { display: block; margin-bottom: 8px; }
 
     /* SCROLL DLA GÓRNYCH KLUBÓW (POD ZNAKIEM ZAPYTANIA) */
     .path-boxes { 
@@ -986,15 +968,15 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         flex-wrap: nowrap; 
         padding-bottom: 12px; 
         -webkit-overflow-scrolling: touch; 
+        justify-content: flex-start; /* Ważne: psuło scrolla, teraz działa normalnie */
     }
 
-    .path-boxes::before,
-    .path-boxes::after {
-        content: '';
-        margin: auto;
-    }
-
-    .path-boxes::-webkit-scrollbar { height: 4px; }
+    /* Usunięcie zepsutego centrowania z pseudo-elementów */
+    .path-boxes::before, .path-boxes::after { display: none !important; }
+    
+    /* Blokada kurczenia = Wymuszenie poziomego scrolla! */
+    .path-box, .path-arrow { flex-shrink: 0 !important; }
+    .path-boxes::-webkit-scrollbar { height: 6px; }
     .path-boxes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
     /* Modale i tabele */
@@ -1010,91 +992,58 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .guess-row { 
         display: grid !important; 
         grid-template-columns: repeat(5, 1fr); 
-        gap: 8px; 
+        gap: 4px !important; /* Zmniejszony odstęp między kwadratami! */
         width: 100%; 
-        max-width: 100%; 
+        max-width: 500px !important; /* Stała szerokość */
+        margin: 0 auto 10px auto !important; /* Centrowanie wyniku */
         padding: 15px 10px; 
         box-sizing: border-box; 
         border-radius: 15px; 
         background: rgba(128, 128, 128, 0.05); 
         border: 1px solid var(--border-color); 
-        margin-bottom: 10px; 
     }
     
-    .col-name { 
-        grid-column: 1 / -1; 
-        width: 100%; 
-        text-align: center; 
-        padding: 0; 
-        font-size: 16px; 
-        font-weight: 900; 
-        margin-bottom: 5px; 
-    }
+    .col-name { grid-column: 1 / -1; width: 100%; text-align: center; padding: 0; font-size: 16px; font-weight: 900; margin-bottom: 5px; }
+    .col-attr { width: 100%; padding: 0; display: flex; justify-content: center; }
     
-    .col-attr { 
-        width: 100%; 
-        padding: 0; 
-        display: flex; 
-        justify-content: center; 
-    }
-    
+    /* Zmniejszenie kwadratów atrybutów */
     .attr-box { 
         width: 100%; 
-        max-width: 55px; 
-        height: 55px; 
+        max-width: 50px !important; 
+        height: 50px !important; 
         border-radius: 10px; 
         padding: 2px; 
+        margin: 0 auto;
     }
     
     .val-num { font-size: 14px; }
     .status-icon { font-size: 16px; }
-    .tile-flag, .tile-flag-dual { width: 38px; height: 38px; }
+    .tile-flag, .tile-flag-dual { width: 36px !important; height: 36px !important; }
 
     /* SCROLL DLA DOLNYCH KLUBÓW (HISTORIA ODP) */
-    .col-clubs { 
-        grid-column: 1 / -1; 
-        width: 100%; 
-        max-width: 100%; 
-        min-width: 0; 
-        padding: 0; 
-        margin-top: 5px; 
-        overflow: hidden; 
-        display: block; 
-    }
+    .col-clubs { grid-column: 1 / -1; width: 100%; max-width: 100%; min-width: 0; padding: 0; margin-top: 5px; overflow: hidden; display: block; }
     
-    /* Pasek ułatwiający przewijanie na telefonach */
     .clubs-path-container { 
         width: 100%; 
         overflow-x: auto; 
         -webkit-overflow-scrolling: touch; 
         display: flex; 
         flex-wrap: nowrap; 
-        padding: 10px 0; /* Więcej miejsca */
+        padding: 10px; 
         box-sizing: border-box; 
-        border: 2px solid var(--border-color); /* Ramka pokazująca że to okno na dane */
+        border: 2px solid var(--border-color); 
         border-radius: 12px;
+        justify-content: flex-start; /* Ważne dla poprawnego scrolla */
     }
 
-    /* Na telefonach wymuszamy, aby pasek przesuwania był ZAWSZE lekko widoczny na dole */
-    .clubs-path-container::-webkit-scrollbar { 
-        height: 8px; /* Troszkę grubszy żeby łatwiej złapać/zobaczyć */
-        background: rgba(0,0,0,0.2); 
-        border-radius: 4px;
-    }
-    
-    .clubs-path-container::-webkit-scrollbar-thumb { 
-        background: var(--accent); /* Złoty wyraźny kolor scrollbara */
-        border-radius: 4px; 
-    }
+    /* Usunięcie zepsutego centrowania z pseudo-elementów */
+    .clubs-path-container::before, .clubs-path-container::after { display: none !important; }
 
-    /* To samo ulepszenie dla małych pasków "Drużyny" pod zdjęciem */
-    .path-boxes {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 12px;
-    }
-    .path-boxes::-webkit-scrollbar { height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; }
-    .path-boxes::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.4); border-radius: 3px; }
+    /* Blokada kurczenia = Wymuszenie poziomego scrolla! */
+    .club-logo-wrapper, .club-divider { flex-shrink: 0 !important; }
+
+    .clubs-path-container::-webkit-scrollbar { height: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; }
+    .clubs-path-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
     /* Clash Mobile Responsive */
     .clash-grid { grid-template-columns: 50px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
     .clash-screen { width: 100%; min-height: calc(100vh - 20px); margin-top: 0; padding: 16px 10px; border-radius: 18px; }
