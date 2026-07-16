@@ -51,18 +51,11 @@ if (!playerId) {
 
 // Lista teł (podmień 'images/stadiony/' na taki folder, w jakim je masz)
 const stadiumBackgrounds = [
-    'url("images/stadiony/bydzia.png")',
-    'url("images/stadiony/czewa.png")',
     'url("images/stadiony/gorzow.png")',
-    'url("images/stadiony/krosno.png")',
     'url("images/stadiony/leszno.png")',
-    'url("images/stadiony/lodz.png")',
-    'url("images/stadiony/lublin.png")',
-    'url("images/stadiony/ostrow.png")',
     'url("images/stadiony/torun.png")',
     'url("images/stadiony/wroclaw.png")',
     'url("images/stadiony/zg.png")',
-    'url("images/stadiony/pila.png")'
 ];
 
 function setRandomBackground() {

@@ -925,14 +925,30 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     
     .header-section-centered { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; width: 100%; }
     .photo-container { width: 90px; height: 110px; margin: 0 auto; }
-    .info-container-centered { width: 100%; max-width: 100%; box-sizing: border-box; text-align: center; }
-    #mysteryName { font-size: 18px; text-align: center; margin: 0; line-height: 1.3; width: 100%; }
-    .team-path-centered { width: 100%; display: block; text-align: center; margin: 0; }
+.info-container-centered { 
+        width: 100%; 
+        max-width: 100%; 
+        min-width: 0; /* To kluczowe! Zatrzymuje rozszerzanie się bloku */
+        box-sizing: border-box; 
+        text-align: center; 
+    }
+    #mysteryName { font-size: 18px; text-align: center; margin: 0; line-height: 1.3; width: 100%; word-wrap: break-word; }
+    .team-path-centered { 
+        width: 100%; 
+        max-width: 100%; 
+        min-width: 0; /* To kluczowe! */
+        display: flex; 
+        flex-direction: column;
+        align-items: center; 
+        margin: 0; 
+    }
     .path-label { display: block; margin-bottom: 5px; font-size: 11px; }
 
     /* SCROLL DLA GÓRNYCH KLUBÓW (POD ZNAKIEM ZAPYTANIA) */
     .path-boxes { 
         width: 100%; 
+        max-width: 100%; /* Wymusza ograniczenie do ekranu telefonu */
+        box-sizing: border-box;
         overflow-x: auto; 
         display: flex; 
         flex-wrap: nowrap; 
@@ -942,8 +958,8 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         gap: 5px;
     }
 
-    .path-box { width: 35px; height: 35px; font-size: 11px; } /* Jeszcze mniejsze kwadraty z pytajnikami */
-    .path-arrow { font-size: 14px; }
+    .path-box { width: 35px; height: 35px; font-size: 11px; flex-shrink: 0 !important; }
+    .path-arrow { font-size: 14px; flex-shrink: 0 !important; }
 
     .path-boxes::before, .path-boxes::after { display: none !important; }
     .path-box, .path-arrow { flex-shrink: 0 !important; }
