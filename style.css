@@ -851,114 +851,84 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 @media (max-width: 768px) {
     /* Ukryj menu desktopowe */
     #desktopMainMenu { display: none !important; }
-    /* USUNIĘTO #mainMenuContainer { display: flex !important; } - dzięki temu gra sama ukryje to menu! */
-    body { padding: 10px; overflow-x: hidden; }
+    body { padding: 10px 5px; overflow-x: hidden; width: 100vw; max-width: 100%; box-sizing: border-box; }
     
     /* DODANE: Naprawa ułożenia menu trybu Clash (1 kolumna zamiast 2 na telefonie) */
-    .desktop-menu-wrapper {
-        grid-template-columns: 1fr !important;
-        padding: 20px 10px !important;
-        gap: 30px !important;
-    }
-    .desktop-left {
-        padding-right: 0 !important;
-        align-items: center;
-        text-align: center;
-    }
-    .desktop-logo {
-        font-size: 44px !important;
-        margin-bottom: 20px !important;
-    }
-    .desktop-right {
-        max-width: 100% !important;
-    }
-    .desktop-leaderboard-panel {
-        height: auto !important;
-        min-height: 350px !important;
-        padding: 15px !important;
-    }
+    .desktop-menu-wrapper { grid-template-columns: 1fr !important; padding: 20px 10px !important; gap: 30px !important; width: 100%; max-width: 100%; }
+    .desktop-left { padding-right: 0 !important; align-items: center; text-align: center; }
+    .desktop-logo { font-size: 40px !important; margin-bottom: 20px !important; }
+    .desktop-right { max-width: 100% !important; width: 100%; }
+    .desktop-leaderboard-panel { height: auto !important; min-height: 350px !important; padding: 15px !important; width: 100%; }
     
-    .menu-container { 
-        padding: 25px 15px 35px 15px; 
-        width: 100%; 
-        max-width: 100%; 
-        margin-top: 10px; 
-        border-radius: 20px; 
-        box-sizing: border-box; 
-    }
+    .menu-container { padding: 25px 15px 35px 15px; width: 100%; max-width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
     
     /* NAPRAWA IKONEK (Usunięcie nachodzenia na tytuł) */
-    .top-right-buttons { 
-        position: relative; 
-        right: auto; 
-        top: auto; 
-        justify-content: center; 
-        width: 100%; 
-        margin-bottom: 20px; 
-        z-index: 10; 
-    }
+    .top-right-buttons { position: relative; right: auto; top: auto; justify-content: center; width: 100%; margin-bottom: 20px; z-index: 10; }
     
-    .game-header { 
-        width: 100%; 
-        max-width: 100%; 
-        padding: 0 10px; 
-        box-sizing: border-box; 
-        padding-top: 10px; 
-    }
-    
-    .game-title { font-size: 26px; margin-bottom: 10px; }
-    .game-title-small { font-size: 20px; margin-top: 0; }
-    .glow-title { font-size: 28px; }
-    
-    .search-box { flex-direction: column; width: 100%; gap: 10px; }
-    .input-wrapper { width: 100%; flex: 1; }
-    .search-box button { width: 100%; flex: none; }
-    
-    /* Zabezpieczenie przed absolutnymi przyciskami na mobile */
-    .hint-btn, .giveup-btn {
-        position: relative !important; 
-        left: auto !important;
-        right: auto !important;
-        width: 100% !important;
-        height: auto !important; /* Reset wysokości z PC */
-        padding: 12px !important;
-        font-size: 16px !important; /* Reset rozmiaru ikonki */
-        background: transparent !important;
-        box-shadow: none !important;
-        transform: none !important; /* Wyłącza animację sprężystą na mobile */
-    }
-    
-/* ======================================================== */
+    .game-header { width: 100%; max-width: 100%; padding: 0 5px; box-sizing: border-box; padding-top: 10px; }
+    .game-title { font-size: 24px; margin-bottom: 10px; }
+    .game-title-small { font-size: 18px; margin-top: 0; }
+    .glow-title { font-size: 24px; }
+
+    /* ======================================================== */
     /* PANCERNE KONTENERY - ZABEZPIECZENIE PRZED ROZPYCHANIEM */
     /* ======================================================== */
     
     /* Input - pole wyszukiwania */
     .input-section { 
         width: 100%; 
-        max-width: 500px !important; /* Stała szerokość */
-        margin: 0 auto 20px auto !important; /* Centrowanie na środku */
-        padding: 0 10px; 
+        max-width: 100% !important; 
+        margin: 0 auto 15px auto !important; 
+        padding: 0 5px; 
         box-sizing: border-box; 
+    }
+
+    .search-box { 
+        display: flex; 
+        flex-direction: row; /* Zmieniamy na układ poziomy z małym przyciskiem Zgadnij */
+        width: 100%; 
+        gap: 5px; 
+        align-items: stretch;
+    }
+    
+    .input-wrapper { width: 100%; flex: 1; min-width: 0; }
+    
+    /* Mniejsze pole tekstowe i przycisk, by zmieścić power-upy */
+    .search-box input { padding: 12px 15px; font-size: 13px; height: 100%; }
+    .search-box button[onclick="makeGuess()"] { padding: 0 15px; font-size: 13px; height: auto; flex-shrink: 0; }
+
+    /* --- NOWY, BEZPIECZNY WYGLĄD PRZYCISKÓW POWER-UP (Brak rozpychania) --- */
+    .hint-btn, .giveup-btn {
+        position: relative !important; 
+        left: auto !important;
+        right: auto !important;
+        width: 44px !important; /* Małe, urocze kwadraty */
+        height: 44px !important; 
+        padding: 0 !important;
+        font-size: 20px !important; 
+        flex-shrink: 0;
+        border-radius: 12px !important;
+        transform: none !important; /* Wyłącza animację sprężystą na mobile */
     }
 
     /* Główna karta z pytajnikiem */
     .main-card { 
-        padding: 15px; 
+        padding: 15px 10px; /* Zmniejszone marginesy wewnętrzne */
         border-radius: 20px; 
         width: 100%; 
-        max-width: 500px !important; /* Stała szerokość */
-        margin: 0 auto !important; /* Centrowanie na środku */
+        max-width: 100% !important; 
+        margin: 0 auto !important; 
         box-sizing: border-box; 
         overflow: hidden; 
         min-width: 0; 
     }
     
-    .header-section-centered { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 20px; width: 100%; }
-    .photo-container { width: 100px; height: 120px; margin: 0 auto; }
+    .header-section-centered { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; width: 100%; }
+    .photo-container { width: 90px; height: 110px; margin: 0 auto; }
     .info-container-centered { width: 100%; max-width: 100%; box-sizing: border-box; text-align: center; }
-    #mysteryName { font-size: 20px; text-align: center; margin: 0; line-height: 1.3; width: 100%; }
+    #mysteryName { font-size: 18px; text-align: center; margin: 0; line-height: 1.3; width: 100%; }
     .team-path-centered { width: 100%; display: block; text-align: center; margin: 0; }
-    .path-label { display: block; margin-bottom: 8px; }
+    .path-label { display: block; margin-bottom: 5px; font-size: 11px; }
 
     /* SCROLL DLA GÓRNYCH KLUBÓW (POD ZNAKIEM ZAPYTANIA) */
     .path-boxes { 
@@ -966,15 +936,16 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         overflow-x: auto; 
         display: flex; 
         flex-wrap: nowrap; 
-        padding-bottom: 12px; 
+        padding-bottom: 8px; 
         -webkit-overflow-scrolling: touch; 
-        justify-content: flex-start; /* Ważne: psuło scrolla, teraz działa normalnie */
+        justify-content: flex-start; 
+        gap: 5px;
     }
 
-    /* Usunięcie zepsutego centrowania z pseudo-elementów */
+    .path-box { width: 35px; height: 35px; font-size: 11px; } /* Jeszcze mniejsze kwadraty z pytajnikami */
+    .path-arrow { font-size: 14px; }
+
     .path-boxes::before, .path-boxes::after { display: none !important; }
-    
-    /* Blokada kurczenia = Wymuszenie poziomego scrolla! */
     .path-box, .path-arrow { flex-shrink: 0 !important; }
     .path-boxes::-webkit-scrollbar { height: 6px; }
     .path-boxes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -986,39 +957,41 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .calendar-weekdays { font-size: 10px; }
     .cal-day { font-size: 12px; }
     .table-headers { display: none; } 
-    .table-wrapper { width: 100%; max-width: 100%; }
+    .table-wrapper { width: 100%; max-width: 100%; overflow: hidden; } /* Blokada rozlewania tabeli */
 
     /* UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
     .guess-row { 
         display: grid !important; 
         grid-template-columns: repeat(5, 1fr); 
-        gap: 4px !important; /* Zmniejszony odstęp między kwadratami! */
+        gap: 4px !important; 
         width: 100%; 
-        max-width: 500px !important; /* Stała szerokość */
-        margin: 0 auto 10px auto !important; /* Centrowanie wyniku */
-        padding: 15px 10px; 
+        max-width: 100% !important; 
+        margin: 0 auto 10px auto !important; 
+        padding: 10px 5px; /* Minimalny padding */
         box-sizing: border-box; 
-        border-radius: 15px; 
+        border-radius: 12px; 
         background: rgba(128, 128, 128, 0.05); 
         border: 1px solid var(--border-color); 
     }
     
-    .col-name { grid-column: 1 / -1; width: 100%; text-align: center; padding: 0; font-size: 16px; font-weight: 900; margin-bottom: 5px; }
+    .col-name { grid-column: 1 / -1; width: 100%; text-align: center; padding: 0; font-size: 14px; font-weight: 900; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .col-attr { width: 100%; padding: 0; display: flex; justify-content: center; }
     
-    /* Zmniejszenie kwadratów atrybutów */
+    /* Ekstremalne zmniejszenie kwadratów atrybutów, aby uniknąć psujących szerokość elementów! */
     .attr-box { 
         width: 100%; 
-        max-width: 50px !important; 
-        height: 50px !important; 
-        border-radius: 10px; 
+        max-width: 48px !important; 
+        height: 48px !important; 
+        border-radius: 8px; 
         padding: 2px; 
         margin: 0 auto;
     }
     
-    .val-num { font-size: 14px; }
-    .status-icon { font-size: 16px; }
-    .tile-flag, .tile-flag-dual { width: 36px !important; height: 36px !important; }
+    .val-num { font-size: 12px; }
+    .status-icon { font-size: 14px; }
+    .tile-flag { width: 30px !important; height: 30px !important; }
+    /* Flaga dla podwójnych narodowości musi się zwęzić i nie wystawać */
+    .tile-flag-dual { width: 30px !important; height: 30px !important; border-radius: 50% !important; overflow: hidden; display: flex; }
 
     /* SCROLL DLA DOLNYCH KLUBÓW (HISTORIA ODP) */
     .col-clubs { grid-column: 1 / -1; width: 100%; max-width: 100%; min-width: 0; padding: 0; margin-top: 5px; overflow: hidden; display: block; }
@@ -1029,50 +1002,36 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         -webkit-overflow-scrolling: touch; 
         display: flex; 
         flex-wrap: nowrap; 
-        padding: 10px; 
+        padding: 10px 5px; 
         box-sizing: border-box; 
         border: 2px solid var(--border-color); 
-        border-radius: 12px;
-        justify-content: flex-start; /* Ważne dla poprawnego scrolla */
+        border-radius: 10px;
+        justify-content: flex-start; 
+        gap: 4px;
     }
 
-    /* Usunięcie zepsutego centrowania z pseudo-elementów */
-    .clubs-path-container::before, .clubs-path-container::after { display: none !important; }
+    .club-abbr-box { width: 36px; height: 36px; font-size: 11px; border-radius: 6px; } /* Mniejsze klocki z klubami */
 
-    /* Blokada kurczenia = Wymuszenie poziomego scrolla! */
+    .clubs-path-container::before, .clubs-path-container::after { display: none !important; }
     .club-logo-wrapper, .club-divider { flex-shrink: 0 !important; }
 
     .clubs-path-container::-webkit-scrollbar { height: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; }
     .clubs-path-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-    /* Clash Mobile Responsive */
-    .clash-grid { grid-template-columns: 50px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
-    .clash-screen { width: 100%; min-height: calc(100vh - 20px); margin-top: 0; padding: 16px 10px; border-radius: 18px; }
-    .clash-cell { min-height: 50px; font-size: 10px; padding: 3px; }
-    .clash-header-cell { font-size: 8px; padding: 3px; }
-    .clash-player-name { font-size: 9px; }
-    .clash-header { padding: 10px; flex-direction: column; gap: 8px; }
-    .clash-player { width: 100%; text-align: center; font-size: 14px; }
-    
-    .stats-modal { width: 95%; max-width: 95%; padding: 25px 20px; max-height: 90vh; overflow-y: auto; }
-    .app-modal-actions { flex-direction: column-reverse; }
-    .input-section { width: 100%; max-width: 100%; padding: 0 10px; box-sizing: border-box; }
-    
-    .icon-btn { padding: 6px 10px; font-size: 18px; }
-    .icon-btn-small { font-size: 16px; padding: 4px; }
 
-    /* Zabezpieczenie przed absolutnymi przyciskami na mobile */
-    .hint-btn, .giveup-btn {
-        position: relative !important; 
-        left: auto !important;
-        right: auto !important;
-        width: 100% !important;
-        height: auto !important; /* Reset wysokości z PC */
-        padding: 12px !important;
-        font-size: 16px !important; /* Reset rozmiaru ikonki */
-        background: transparent !important;
-        box-shadow: none !important;
-        transform: none !important; /* Wyłącza animację sprężystą na mobile */
-    }
+    /* Clash Mobile Responsive */
+    .clash-grid { grid-template-columns: 40px 1fr 1fr 1fr; gap: 4px; max-width: 100%; }
+    .clash-screen { width: 100%; min-height: calc(100vh - 20px); margin-top: 0; padding: 10px 5px; border-radius: 18px; }
+    .clash-cell { min-height: 40px; font-size: 9px; padding: 2px; }
+    .clash-header-cell { font-size: 8px; padding: 2px; }
+    .clash-player-name { font-size: 8px; }
+    .clash-header { padding: 5px; flex-direction: column; gap: 5px; }
+    .clash-player { width: 100%; text-align: center; font-size: 13px; }
+    
+    .stats-modal { width: 95%; max-width: 95%; padding: 25px 15px; max-height: 90vh; overflow-y: auto; }
+    .app-modal-actions { flex-direction: column-reverse; }
+    
+    .icon-btn { padding: 6px 10px; font-size: 16px; }
+    .icon-btn-small { font-size: 16px; padding: 4px; }
 }
 
 /* Wymuszenie nadpisania dla ligi i podsumowań na mobile i desktopie */
