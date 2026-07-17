@@ -556,7 +556,32 @@ body {
 
 .input-section { margin-bottom: 20px; text-align: center; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto;}
 .search-box { display: flex; gap: 24px; justify-content: center; align-items: center; width: 100%; position: relative; }
-.input-wrapper { position: relative; flex: 1; transition: 0.3s; width: 100%; max-width: 100%; box-sizing: border-box; z-index: 2;}
+/* ZAMIEŃ TE DWIE KLASY: */
+
+.input-wrapper { 
+    position: relative; 
+    flex: 1; 
+    transition: 0.3s; 
+    width: 100%; 
+    max-width: 100%; 
+    box-sizing: border-box; 
+    z-index: 100; /* ZWIĘKSZONY Z-INDEX: Wyrzuca całe pole z podpowiedziami nad przyciski! */
+}
+
+.autocomplete-items { 
+    position: absolute; 
+    top: 100%; 
+    left: 0; 
+    right: 0; 
+    border: 1px solid var(--border-color); 
+    border-radius: 14px; 
+    background-color: var(--input-bg); /* ZMIANA: Tło solidne zamiast przezroczystego, by nie przebijały przyciski */
+    z-index: 999; /* Mocno na wierzch */
+    max-height: 200px; 
+    overflow-y: auto; 
+    margin-top: 5px; 
+    box-shadow: 0 15px 30px rgba(0,0,0,0.8); /* Wzmocniony cień dla lepszego efektu 3D */
+}
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
 button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
