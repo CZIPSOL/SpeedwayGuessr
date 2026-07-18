@@ -84,8 +84,6 @@ const changelog = {
             version: "Beta v1.0.0", date: "18.07.2026",
             changes: [
                 "🚀 <b>Przechodzimy do fazy BETA!</b> Gra jest w pełni stabilna i gotowa na szersze testy przez graczy.",
-                "⏱️ <b>Klimat Clash:</b> Dodano efekt dźwiękowy bicia serca 🫀, gdy w trybie ligowym zostaje 10 sekund czasu na odpowiedź!",
-                "🔨 <b>System Banów:</b> Wprowadzono eskalujące kary czasowe (od 5 min. do 7 dni!) za ucieczki z meczu ligowego oraz opuszczanie okna przeglądarki.",
                 "🛡️ <b>Anti-Cheat:</b> Uszczelniono system losowania graczy. Nie da się już 'podejrzeć' zawodnika w kodzie strony. 😎",
                 "⌨️ <b>Wygoda gry (QoL):</b> Dodano możliwość szybkiego zatwierdzania odpowiedzi klawiszem ENTER.",
                 "📱 <b>Mobile UI:</b> Ostatecznie załatano błąd, który powodował rozjeżdżanie się paska z historią klubów na ekranach telefonów. Dodano wyraźny poziomy scroll.",
@@ -135,8 +133,6 @@ const changelog = {
             version: "Beta v1.0.0", date: "18.07.2026",
             changes: [
                 "🚀 <b>Welcome to BETA!</b> The game is fully stable and ready for wider testing by players.",
-                "⏱️ <b>Clash Atmosphere:</b> Added a heartbeat sound effect 🫀 when there are 10 seconds left to answer in league mode!",
-                "🔨 <b>Ban System:</b> Introduced escalating time penalties (from 5 mins to 7 days!) for leaving a league match or switching browser tabs.",
                 "🛡️ <b>Anti-Cheat:</b> Secured the player drawing system. It is no longer possible to 'peek' at the rider in the site's code. 😎",
                 "⌨️ <b>QoL:</b> Added the ability to quickly submit answers using the ENTER key.",
                 "📱 <b>Mobile UI:</b> Fixed the bug causing the club history bar to stretch out of bounds on mobile screens. Added a visible horizontal scroll.",
