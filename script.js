@@ -2,7 +2,7 @@
 // ====== ZMIENNE GLOBALNE I KONFIGURACJA =======
 // ==============================================
 
-let targetPlayer; let gameMode = 'endless'; let guessCount = 0;
+let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
 let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
@@ -81,6 +81,18 @@ const CURRENT_GAME_VERSION = "Alpha v1.1.0";
 const changelog = {
     pl: [
         {
+            version: "Beta v1.0.0", date: "18.07.2026",
+            changes: [
+                "🚀 <b>Przechodzimy do fazy BETA!</b> Gra jest w pełni stabilna i gotowa na szersze testy przez graczy.",
+                "⏱️ <b>Klimat Clash:</b> Dodano efekt dźwiękowy bicia serca 🫀, gdy w trybie ligowym zostaje 10 sekund czasu na odpowiedź!",
+                "🔨 <b>System Banów:</b> Wprowadzono eskalujące kary czasowe (od 5 min. do 7 dni!) za ucieczki z meczu ligowego oraz opuszczanie okna przeglądarki.",
+                "🛡️ <b>Anti-Cheat:</b> Uszczelniono system losowania graczy. Nie da się już 'podejrzeć' zawodnika w kodzie strony. 😎",
+                "⌨️ <b>Wygoda gry (QoL):</b> Dodano możliwość szybkiego zatwierdzania odpowiedzi klawiszem ENTER.",
+                "📱 <b>Mobile UI:</b> Ostatecznie załatano błąd, który powodował rozjeżdżanie się paska z historią klubów na ekranach telefonów. Dodano wyraźny poziomy scroll.",
+                "💾 <b>Autozapis:</b> Odtworzenie niedokończonej gry w trybie Daily przywraca teraz w pełni wygląd paska 'Drużyny'."
+            ]
+        },
+        {
             version: "Alpha v1.2.0", date: "05.07.2026",
             changes: [
                 "⏱️ <b>Klimat Clash:</b> Dodano efekt dźwiękowy bicia serca 🫀, gdy w trybie ligowym zostaje 10 sekund czasu na odpowiedź!",
@@ -119,6 +131,26 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.0.0", date: "18.07.2026",
+            changes: [
+                "🚀 <b>Welcome to BETA!</b> The game is fully stable and ready for wider testing by players.",
+                "⏱️ <b>Clash Atmosphere:</b> Added a heartbeat sound effect 🫀 when there are 10 seconds left to answer in league mode!",
+                "🔨 <b>Ban System:</b> Introduced escalating time penalties (from 5 mins to 7 days!) for leaving a league match or switching browser tabs.",
+                "🛡️ <b>Anti-Cheat:</b> Secured the player drawing system. It is no longer possible to 'peek' at the rider in the site's code. 😎",
+                "⌨️ <b>QoL:</b> Added the ability to quickly submit answers using the ENTER key.",
+                "📱 <b>Mobile UI:</b> Fixed the bug causing the club history bar to stretch out of bounds on mobile screens. Added a visible horizontal scroll.",
+                "💾 <b>Auto-save:</b> Restoring an unfinished Daily game now fully repopulates the 'Teams' bar."
+            ]
+        },
+        {
+            version: "Alpha v1.2.0", date: "05.07.2026",
+            changes: [
+                "⏱️ <b>Clash Atmosphere:</b> Added a heartbeat sound effect 🫀 when there are 10 seconds left to answer in league mode!",
+                "🔨 <b>Ban System:</b> Introduced escalating time penalties (from 5 mins to 7 days!) for leaving a league match or switching browser tabs.",
+                "📱 <b>Mobile:</b> Improved the club history scrolling bar on smaller phone screens."
+            ]
+        },
         {
             version: "Alpha v1.1.0", date: "20.06.2026",
             changes: [
@@ -1145,7 +1177,7 @@ async function returnToMainMenu() {
 // Generowanie tekstu podpowiedzi
 function updateHintDisplay() {
     if (!hintActive) return;
-    const parts = targetPlayer.name.split(' ');
+    const parts = GameEngine.getTargetInfo().name.split(' ');
     let result = [];
     
     parts.forEach((part, partIndex) => {
@@ -1183,13 +1215,34 @@ function resetBoardAndPlay() {
 
 function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.floor(x); }
 
+// ==============================================
+// ====== SEJF ZAWODNIKA (ANTI-PODGLĄDANIE)======
+// ==============================================
+const GameEngine = (function() {
+    let secretTargetPlayer = null;
+
+    return {
+        setTarget: function(player) {
+            secretTargetPlayer = player;
+        },
+        getTargetInfo: function() {
+            return secretTargetPlayer;
+        },
+
+        checkGuess: function(guessedName) {
+            if (!secretTargetPlayer) return false;
+            return guessedName.toLowerCase() === secretTargetPlayer.name.toLowerCase();
+        }
+    };
+})();
+
 function initGame() {
     let randomIndex; const modeDisplay = document.getElementById('gameModeDisplay'); const controls = document.getElementById('gameDailyControls'); const inputSec = document.querySelector('.input-section');
     if (!modeDisplay || !controls || !inputSec) return;
     
     if (gameMode === 'daily') {
         controls.style.display = 'flex'; dailyNumberGlobal = getDailyDateString(selectedDailyDay);
-        randomIndex = Math.floor(seededRandom(selectedDailyDay * 9999) * playersDB.length); targetPlayer = playersDB[randomIndex];
+        randomIndex = Math.floor(seededRandom(selectedDailyDay * 9999) * playersDB.length); GameEngine.setTarget(playersDB[randomIndex]);
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
         
         if (userStats.dailyResults[selectedDailyDay]) { 
@@ -1208,9 +1261,9 @@ function initGame() {
         controls.style.display = 'none'; inputSec.style.display = 'block';
         let availablePlayers = playersDB.filter(p => !userStats.recentEndless.includes(p.id));
         if (availablePlayers.length < 15) { userStats.recentEndless = []; availablePlayers = playersDB; }
-        randomIndex = Math.floor(Math.random() * availablePlayers.length); targetPlayer = availablePlayers[randomIndex];
+        randomIndex = Math.floor(Math.random() * availablePlayers.length); GameEngine.setTarget(availablePlayers[randomIndex]);
         
-        userStats.recentEndless.push(targetPlayer.id); if (userStats.recentEndless.length > 60) userStats.recentEndless.shift(); saveStats();
+        userStats.recentEndless.push(GameEngine.getTargetInfo().id); if (userStats.recentEndless.length > 60) userStats.recentEndless.shift(); saveStats();
         modeDisplay.innerText = i18n[currentLang].modeEndless;
     }
     if(inputSec.style.display !== 'none') { buildTeamPath(); setupAutocomplete(); updateCounterDisplay(); }
@@ -1322,11 +1375,11 @@ function setupAutocomplete() {
 
 function buildTeamPath() {
     const pathContainer = document.getElementById('pathBoxes'); pathContainer.innerHTML = ''; 
-    targetPlayer.pastClubs.forEach((club, index) => {
+    GameEngine.getTargetInfo().pastClubs.forEach((club, index) => {
         const box = document.createElement('div'); box.className = 'path-box'; box.innerText = '?'; box.dataset.club = club; pathContainer.appendChild(box);
-        if (index < targetPlayer.pastClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
+        if (index < GameEngine.getTargetInfo().pastClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
     });
-    if (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.") { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); }
+    if (GameEngine.getTargetInfo().status.toLowerCase().includes("koniec") || GameEngine.getTargetInfo().status === "Ś.P.") { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); }
 }
 
 function makeGuess() {
@@ -1341,7 +1394,7 @@ function makeGuess() {
     guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); document.getElementById('guessInput').value = "";
     
     // LOGIKA POJAWIANIA SIĘ PRZYCISKÓW (Zmienione zasady)
-    if (guessCount === 5 && !hintActive && guessedPlayer.name !== targetPlayer.name) {
+    if (guessCount === 5 && !hintActive && guessedPlayer.name !== GameEngine.getTargetInfo().name) {
         document.getElementById('btnHint').style.display = 'inline-block';
         showToast("Możesz użyć podpowiedzi!", "normal");
     }
@@ -1351,11 +1404,11 @@ function makeGuess() {
     }
 
     // Aktualizacja widoku podpowiedzi (jeśli użyto)
-    if (hintActive && guessedPlayer.name !== targetPlayer.name) {
+    if (hintActive && guessedPlayer.name !== GameEngine.getTargetInfo().name) {
         updateHintDisplay();
     }
 
-    if (guessedPlayer.name !== targetPlayer.name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
+    if (guessedPlayer.name !== GameEngine.getTargetInfo().name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
 }
 
 async function giveUpGame() {
@@ -1387,36 +1440,36 @@ function revealClubsOnPath(guessedPlayer) {
             box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${getClubBadgeHTML(box.dataset.club)}`;
             box.classList.add('found'); box.setAttribute('title', box.dataset.club);        }
     });
-    if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (targetPlayer.status.toLowerCase().includes("koniec") || targetPlayer.status === "Ś.P.")) {
+    if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (GameEngine.getTargetInfo().status.toLowerCase().includes("koniec") || GameEngine.getTargetInfo().status === "Ś.P.")) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
 
 function renderGuess(player, isRestore = false) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
-    const isTargetGP = targetPlayer.gp === true || targetPlayer.gp === "Tak" || targetPlayer.gp === "tak"; const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
+    const isTargetGP = GameEngine.getTargetInfo().gp === true || GameEngine.getTargetInfo().gp === "Tak" || GameEngine.getTargetInfo().gp === "tak"; const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const yearCls = (player.year === targetPlayer.year) ? "green" : "red";
+    const yearCls = (player.year === GameEngine.getTargetInfo().year) ? "green" : "red";
     let yearTitle = "";
-    if (player.year > targetPlayer.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
-    else if (player.year < targetPlayer.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
+    if (player.year > GameEngine.getTargetInfo().year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
+    else if (player.year < GameEngine.getTargetInfo().year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
     else yearTitle = "Dokładnie ten sam rocznik!";
 
     let yearContent = `<span>${player.year}</span>`;
-    if (player.year > targetPlayer.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
-    else if (player.year < targetPlayer.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
+    if (player.year > GameEngine.getTargetInfo().year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
+    else if (player.year < GameEngine.getTargetInfo().year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
 
-    const dmpCls = (player.dmp === targetPlayer.dmp) ? "green" : "red";
+    const dmpCls = (player.dmp === GameEngine.getTargetInfo().dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
-    if (player.dmp > targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; else if (player.dmp < targetPlayer.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
+    if (player.dmp > GameEngine.getTargetInfo().dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; else if (player.dmp < GameEngine.getTargetInfo().dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
 
-    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = targetPlayer.country.split("/").map(c => c.trim());
-    let countryCls = "red"; if (player.country === targetPlayer.country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === targetPlayer.region) countryCls = "yellow";
+    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = GameEngine.getTargetInfo().country.split("/").map(c => c.trim());
+    let countryCls = "red"; if (player.country === GameEngine.getTargetInfo().country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === GameEngine.getTargetInfo().region) countryCls = "yellow";
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
+let targetCleanClubs = GameEngine.getTargetInfo().pastClubs.map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
         let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
         let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
@@ -1432,7 +1485,7 @@ let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
         <div class="col-attr" title="${yearTitle}"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${player.status === targetPlayer.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
+        <div class="col-attr"><div class="attr-box ${player.status === GameEngine.getTargetInfo().status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
         <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
@@ -1441,11 +1494,11 @@ let targetCleanClubs = targetPlayer.pastClubs.map(getCleanClubName);
     
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
-        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === targetPlayer.year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === targetPlayer.dmp) c = "green"; else if (attr === 'status' && player.status === targetPlayer.status) c = "green";
+        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === GameEngine.getTargetInfo().year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === GameEngine.getTargetInfo().dmp) c = "green"; else if (attr === 'status' && player.status === GameEngine.getTargetInfo().status) c = "green";
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
-    if (!isRestore && player.name === targetPlayer.name) { updateStatsOnWin(); setTimeout(handleWin, 1400); }
+    if (!isRestore && player.name === GameEngine.getTargetInfo().name) { updateStatsOnWin(); setTimeout(handleWin, 1400); }
 }
 
 function handleWin() {
@@ -1465,7 +1518,7 @@ function handleLoss() {
 
 function revealTargetInfoUI() {
     document.getElementById('mysteryPlaceholder').style.display = 'none'; const photoImg = document.getElementById('mysteryPhoto'); photoImg.src = `images/riders/image_0.png`; photoImg.style.display = 'block';
-    document.getElementById('photoWrapper').classList.add('revealed'); document.getElementById('mysteryName').innerText = targetPlayer.name;
+    document.getElementById('photoWrapper').classList.add('revealed'); document.getElementById('mysteryName').innerText = GameEngine.getTargetInfo().name;
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.club) return;
