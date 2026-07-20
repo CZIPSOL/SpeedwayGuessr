@@ -1178,7 +1178,7 @@ async function returnToMainMenu() {
 // Generowanie tekstu podpowiedzi
 function updateHintDisplay() {
     if (!hintActive) return;
-    const parts = GameEngine.getHintNameArray(); 
+    const parts = serverHintNameArray.length > 0 ? serverHintNameArray : getTargetInfoFallback().name.split(' '); 
     let result = [];
     
     parts.forEach((part, partIndex) => {
@@ -1224,6 +1224,30 @@ let currentEndlessSeed = Math.random() * 10000;
 let serverTargetClubs = [];
 let serverTargetStatus = "";
 let serverHintNameArray = [];
+let currentTargetInfo = null;
+
+function getTargetInfoFallback() {
+    return currentTargetInfo || {
+        name: "???",
+        gp: "Nie",
+        year: 0,
+        dmp: 0,
+        country: "",
+        region: "",
+        status: "",
+        pastClubs: []
+    };
+}
+
+function isTargetGPValue(targetInfo) {
+    return targetInfo && (targetInfo.gp === true || targetInfo.gp === "Tak" || targetInfo.gp === "tak");
+}
+
+function isCorrectTargetName(playerName, targetInfo) {
+    const activeTarget = targetInfo || getTargetInfoFallback();
+    if (!activeTarget.name) return false;
+    return removePolishAccents(playerName.trim().toLowerCase()) === removePolishAccents(activeTarget.name.trim().toLowerCase());
+}
 
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
@@ -1255,6 +1279,7 @@ async function initGame() {
 
         serverTargetClubs = response.data.pastClubs;
         serverTargetStatus = response.data.status;
+        currentTargetInfo = response.data.targetStats || response.data || currentTargetInfo;
 
         // Jeśli to Daily i gracz już w nie grał, przywracamy
         if (gameMode === 'daily') {
@@ -1293,7 +1318,7 @@ function restoreInProgressDaily() {
         if(p) { 
             guessCount++; 
             guessedPlayersNames.push(p.name); 
-            renderGuess(p, true); // True oznacza że przywracamy (nie grają dźwięki)
+            renderGuess(p, null, true); // True oznacza że przywracamy (nie grają dźwięki)
             
             // KLUCZOWY MOMENT: Wywołujemy funkcję sprawdzającą, która na bieżąco 
             // odkrywa kluby na górnym pasku na podstawie przywróconego zawodnika!
@@ -1323,7 +1348,7 @@ function restorePlayedGame() {
             if(p) { 
                 guessCount++; 
                 guessedPlayersNames.push(p.name); 
-                renderGuess(p, true); 
+                renderGuess(p, null, true); 
                 revealClubsOnPath(p); // TUTAJ RÓWNIEŻ ODKRYWAMY KLUBY!
             } 
         }); 
@@ -1425,6 +1450,7 @@ async function makeGuess() {
 
         const result = response.data;
         serverHintNameArray = result.hintNameArray; // Aktualizujemy podpowiedź z serwera
+        currentTargetInfo = result.targetStats || currentTargetInfo;
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
@@ -1511,30 +1537,31 @@ function revealClubsOnPath(guessedPlayer) {
 }
 function renderGuess(player, targetStats = null, isRestore = false) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
-    const isTargetGP = targetStats ? targetStats.gp === true || targetStats.gp === "Tak" || targetStats.gp === "tak" : GameEngine.getTargetInfo().gp === true || GameEngine.getTargetInfo().gp === "Tak" || GameEngine.getTargetInfo().gp === "tak";
+    const activeTarget = targetStats || getTargetInfoFallback();
+    const isTargetGP = isTargetGPValue(activeTarget);
     const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const yearCls = (player.year === (targetStats ? targetStats.year : GameEngine.getTargetInfo().year)) ? "green" : "red";
+    const yearCls = (player.year === activeTarget.year) ? "green" : "red";
     let yearTitle = "";
-    if (player.year > GameEngine.getTargetInfo().year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
-    else if (player.year < GameEngine.getTargetInfo().year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
+    if (player.year > activeTarget.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
+    else if (player.year < activeTarget.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
     else yearTitle = "Dokładnie ten sam rocznik!";
 
     let yearContent = `<span>${player.year}</span>`;
-    if (player.year > GameEngine.getTargetInfo().year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
-    else if (player.year < GameEngine.getTargetInfo().year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
+    if (player.year > activeTarget.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
+    else if (player.year < activeTarget.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
 
-    const dmpCls = (player.dmp === GameEngine.getTargetInfo().dmp) ? "green" : "red";
+    const dmpCls = (player.dmp === activeTarget.dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
-    if (player.dmp > GameEngine.getTargetInfo().dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; else if (player.dmp < GameEngine.getTargetInfo().dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
+    if (player.dmp > activeTarget.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; else if (player.dmp < activeTarget.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
 
-    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = GameEngine.getTargetInfo().country.split("/").map(c => c.trim());
-    let countryCls = "red"; if (player.country === GameEngine.getTargetInfo().country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === GameEngine.getTargetInfo().region) countryCls = "yellow";
+    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = (activeTarget.country || "").split("/").map(c => c.trim()).filter(Boolean);
+    let countryCls = "red"; if (player.country === activeTarget.country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === activeTarget.region) countryCls = "yellow";
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-let targetCleanClubs = GameEngine.getTargetInfo().pastClubs.map(getCleanClubName);
+    let targetCleanClubs = (activeTarget.pastClubs || []).map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
         let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
         let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
@@ -1550,7 +1577,7 @@ let targetCleanClubs = GameEngine.getTargetInfo().pastClubs.map(getCleanClubName
         <div class="col-attr" title="${yearTitle}"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${player.status === GameEngine.getTargetInfo().status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
+        <div class="col-attr"><div class="attr-box ${player.status === activeTarget.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
         <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
@@ -1559,12 +1586,12 @@ let targetCleanClubs = GameEngine.getTargetInfo().pastClubs.map(getCleanClubName
     
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
-        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === GameEngine.getTargetInfo().year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === GameEngine.getTargetInfo().dmp) c = "green"; else if (attr === 'status' && player.status === GameEngine.getTargetInfo().status) c = "green";
+        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === activeTarget.year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === activeTarget.dmp) c = "green"; else if (attr === 'status' && player.status === activeTarget.status) c = "green";
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
 
-     if (!isRestore && GameEngine.isCorrectName(player.name)) { 
+     if (!isRestore && isCorrectTargetName(player.name, activeTarget)) { 
         updateStatsOnWin(); setTimeout(handleWin, 1400); 
     }
 }
@@ -1586,7 +1613,7 @@ function handleLoss() {
 
 function revealTargetInfoUI() {
     document.getElementById('mysteryPlaceholder').style.display = 'none'; const photoImg = document.getElementById('mysteryPhoto'); photoImg.src = `images/riders/image_0.png`; photoImg.style.display = 'block';
-    document.getElementById('photoWrapper').classList.add('revealed'); document.getElementById('mysteryName').innerText = GameEngine.getTargetInfo().name;
+    document.getElementById('photoWrapper').classList.add('revealed'); document.getElementById('mysteryName').innerText = getTargetInfoFallback().name;
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.club) return;
