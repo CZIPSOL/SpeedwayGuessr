@@ -885,19 +885,30 @@ window.onload = async function() {
     
     // === SPRAWDZANIE PRZERWY TECHNICZNEJ ===
     try {
+        // Sprawdzamy czy w adresie URL jest tajne hasło administratora
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('admin') === 'czipsol'; // TU ZNAJDUJE SIĘ TAJNE HASŁO
+
         const getConfigFunc = functions.httpsCallable('getConfig');
         const configResponse = await getConfigFunc();
         
-        if (configResponse.data && configResponse.data.maintenanceMode === true) {
-            // Pokazujemy czerwony ekran i wyłączamy ładowanie reszty skryptów!
+        // Jeśli jest przerwa, a Ty NIE masz tajnego linku: zablokuj.
+        if (configResponse.data && configResponse.data.maintenanceMode === true && !isAdmin) {
             document.getElementById('maintenanceOverlay').style.display = 'block';
             document.getElementById('maintenanceOverlay').style.opacity = '1';
             
-            // Ukrywamy menu
             if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
             if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
             return; // Zatrzymuje dalsze ładowanie gry
         }
+        
+        // Opcjonalnie: Jeśli jesteś adminem podczas przerwy, wywal tosta z info
+        if (configResponse.data && configResponse.data.maintenanceMode === true && isAdmin) {
+            setTimeout(() => {
+                showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success");
+            }, 1000);
+        }
+        
     } catch(e) {
         console.warn("Nie udało się połączyć z serwerem, by sprawdzić status.", e);
     }
