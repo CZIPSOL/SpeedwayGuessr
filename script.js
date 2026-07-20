@@ -1261,7 +1261,9 @@ async function initGame() {
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
     } else {
         controls.style.display = 'none';
-        currentEndlessSeed = Math.random() * 10000; // Nowy losowy seed
+        currentEndlessSeed = (window.crypto && crypto.getRandomValues)
+            ? crypto.getRandomValues(new Uint32Array(1))[0]
+            : Math.floor(Math.random() * 1000000000); // Silniejszy seed dla endless
         modeDisplay.innerText = i18n[currentLang].modeEndless;
     }
 
@@ -1479,23 +1481,25 @@ async function makeGuess() {
         guessCount++; 
         updateCounterDisplay(); 
         
+        const isWinningGuess = result.isWin || (serverTargetName && guessedPlayerLocal.name === serverTargetName);
+
         // Renderujemy wynik, przekazując statystyki celu z serwera
-        renderGuess(guessedPlayerLocal, result.targetStats, false, result.isWin); 
+        renderGuess(guessedPlayerLocal, result.targetStats, false, isWinningGuess); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
-        if (guessCount === 5 && !hintActive && !result.isWin) {
+        if (guessCount === 5 && !hintActive && !isWinningGuess) {
             document.getElementById('btnHint').style.display = 'inline-block';
             showToast("Możesz użyć podpowiedzi!", "normal");
         }
         if (guessCount >= 7) {
             document.getElementById('btnGiveUp').style.display = 'inline-block';
         }
-        if (hintActive && !result.isWin) {
+        if (hintActive && !isWinningGuess) {
             updateHintDisplay();
         }
 
-        if (result.isWin) { 
+        if (isWinningGuess) { 
             serverTargetName = guessedPlayerLocal.name;
             updateStatsOnWin(); 
             setTimeout(() => handleWin(guessedPlayerLocal.name), 1400); 
