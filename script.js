@@ -890,7 +890,7 @@ window.onload = async function() {
         
         if (configResponse.data && configResponse.data.maintenanceMode === true) {
             // Pokazujemy czerwony ekran i wyłączamy ładowanie reszty skryptów!
-            document.getElementById('maintenanceOverlay').style.display = 'flex';
+            document.getElementById('maintenanceOverlay').style.display = 'block';
             document.getElementById('maintenanceOverlay').style.opacity = '1';
             
             // Ukrywamy menu
