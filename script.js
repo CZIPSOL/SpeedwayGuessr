@@ -1475,53 +1475,103 @@ async function makeGuess() {
     }
 }
 
-async function giveUpGame() {
-    if (hasWon || hasLost) return;
+async function makeGuess() {
+    if(hasWon || hasLost) return; 
+    const input = document.getElementById('guessInput').value.trim();
+    if (!input) { triggerErrorShake(); return; }
     
-    const confirmed = await appConfirm(
-        "Czy na pewno chcesz się poddać i odkryć zawodnika?", 
-        { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" }
-    );
-    if (!confirmed) return;
+    const guessedPlayerLocal = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
+    if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
     
-    // Ustawiamy od razu limit 10 prób, jako karę za poddanie się
-    guessCount = GUESS_LIMIT;
-    hintsUsedCount = 1; // Poddanie liczy się jako najgorszy wynik
-    updateCounterDisplay();
-    
-    document.getElementById('btnGiveUp').innerText = "⏳";
-    try {
-        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId: playerId });
-        serverTargetName = ans.data.name;
-    } catch(e) {}
+    // Blokada przycisku podczas ładowania
+    const btn = document.querySelector('.search-box button');
+    const originalBtnText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "SPRAWDZAM...";
 
-    updateStatsOnLoss();
-    handleLoss();
-    
-    document.getElementById('btnGiveUp').style.display = 'none';
+    try {
+        // PYTAMY SERWER CZY ZGADLIŚMY
+        const checkGuessFunc = functions.httpsCallable('checkGuess');
+        const response = await checkGuessFunc({
+            guessedPlayerId: guessedPlayerLocal.id,
+            gameMode: gameMode,
+            dailyDay: selectedDailyDay,
+            endlessSeed: currentEndlessSeed,
+            playerId: playerId,
+            guessCount: guessCount
+        });
+
+        const result = response.data;
+        currentTargetInfo = result.targetStats || currentTargetInfo;
+        if (result.targetName) {
+            serverTargetName = result.targetName;
+        }
+
+        guessedPlayersNames.push(guessedPlayerLocal.name); 
+        playSound('guess');
+        
+        if (gameMode === 'daily') { 
+            if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
+            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
+            saveStats(); 
+        }
+        
+        guessCount++; 
+        updateCounterDisplay(); 
+        
+        const resolvedTargetName = (result.targetName || serverTargetName || "").trim();
+        const isWinningGuess = result.isWin || (resolvedTargetName && guessedPlayerLocal.name === resolvedTargetName);
+
+        // Renderujemy wynik
+        renderGuess(guessedPlayerLocal, result.targetStats, false, isWinningGuess); 
+        revealClubsOnPath(guessedPlayerLocal); 
+        document.getElementById('guessInput').value = "";
+        
+        if (guessCount === 5 && !hintActive && !isWinningGuess) {
+            document.getElementById('btnHint').style.display = 'inline-block';
+            showToast("Możesz użyć podpowiedzi!", "normal");
+        }
+        if (guessCount >= 7 && !isWinningGuess) {
+            document.getElementById('btnGiveUp').style.display = 'inline-block';
+        }
+        
+        // ZMIANA: TUTAJ NAPRAWIONO BŁĄD PODPOWIEDZI! Zamiast szukać funkcji, aktualizujemy tekst bezpośrednio.
+        if (hintActive && !isWinningGuess) {
+            document.getElementById('mysteryName').innerText = result.hintText;
+        }
+
+        if (isWinningGuess) { 
+            serverTargetName = guessedPlayerLocal.name;
+            updateStatsOnWin(); 
+            setTimeout(() => handleWin(), 1400); 
+        } else if (guessCount >= GUESS_LIMIT) { 
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+            serverTargetName = ans.data.name;
+            updateStatsOnLoss(); 
+            setTimeout(handleLoss, 1400); 
+        }
+
+    } catch(e) {
+        console.error("Błąd sprawdzania:", e);
+        showToast("Błąd serwera. Spróbuj ponownie.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalBtnText;
+    }
 }
 
 async function useHint() {
     if (hintActive) return;
-    hintActive = true;
-    hintsUsedCount = 1;
-    document.getElementById('btnHint').style.display = 'none'; // Ukrywamy po kliknięciu
+    hintActive = true; hintsUsedCount = 1;
+    document.getElementById('btnHint').style.display = 'none'; 
     showToast("Pobieram podpowiedź...", "normal");
     
     try {
-        const ans = await functions.httpsCallable('getHint')({ 
-            gameMode, 
-            dailyDay: selectedDailyDay, 
-            endlessSeed: currentEndlessSeed, 
-            guessCount, 
-            playerId: playerId 
-        });
+        const ans = await functions.httpsCallable('getHint')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, guessCount, playerId });
         document.getElementById('mysteryName').innerText = ans.data.hintText;
         showToast("Użyto podpowiedzi!", "success");
     } catch(e) {
-        showToast("Błąd pobierania podpowiedzi", "error"); 
-        hintActive = false; 
-        document.getElementById('btnHint').style.display = 'inline-block';
+        showToast("Błąd pobierania podpowiedzi", "error"); hintActive = false; document.getElementById('btnHint').style.display = 'inline-block';
     }
 }
 
