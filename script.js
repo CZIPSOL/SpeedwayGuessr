@@ -33,16 +33,17 @@ const firebaseConfig = {
     measurementId: "G-QSWL3N5CHG"
 };
 
-firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
+const functions = firebase.functions(); 
 
 let playerId = localStorage.getItem('speedwayUserId');
 if (!playerId) {
     playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('speedwayUserId', playerId);
 }
+
 
 
 // ==============================================
@@ -1173,7 +1174,7 @@ async function returnToMainMenu() {
 // Generowanie tekstu podpowiedzi
 function updateHintDisplay() {
     if (!hintActive) return;
-    const parts = GameEngine.getHintNameArray();
+    const parts = GameEngine.getHintNameArray(); 
     let result = [];
     
     parts.forEach((part, partIndex) => {
@@ -1214,80 +1215,66 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 // ==============================================
 // ====== SEJF ZAWODNIKA (ANTI-PODGLĄDANIE)======
 // ==============================================
-const GameEngine = (function() {
-    let secretTargetPlayer = null;
+// ZMIENNE SERWEROWE
+let currentEndlessSeed = Math.random() * 10000;
+let serverTargetClubs = [];
+let serverTargetStatus = "";
+let serverHintNameArray = [];
 
-    return {
-        setTarget: function(player) {
-            secretTargetPlayer = player;
-        },
-        // Zwraca pełne info TYLKO gdy gra się skończyła
-        getTargetInfo: function() {
-            if (hasWon || hasLost) {
-                return secretTargetPlayer;
-            }
-            // Zwracamy okrojoną wersję w trakcie gry (BEZ IMIENIA I NAZWISKA!)
-            return {
-                id: secretTargetPlayer.id,
-                pastClubs: secretTargetPlayer.pastClubs,
-                currentClub: secretTargetPlayer.currentClub,
-                status: secretTargetPlayer.status,
-                year: secretTargetPlayer.year,
-                dmp: secretTargetPlayer.dmp,
-                country: secretTargetPlayer.country,
-                region: secretTargetPlayer.region,
-                gp: secretTargetPlayer.gp
-            };
-        },
-        // Służy tylko do porównania zgadywanego hasła (nie zwraca imienia)
-        checkGuess: function(guessedName) {
-            if (!secretTargetPlayer) return false;
-            return guessedName.toLowerCase() === secretTargetPlayer.name.toLowerCase();
-        },
-        // Specjalna funkcja tylko dla systemu podpowiedzi
-        getHintNameArray: function() {
-            if (!secretTargetPlayer) return [];
-            return secretTargetPlayer.name.split(' ');
-        },
-        // Potrzebne, żeby np. w funkcji makeGuess wiedzieć, czy wpisano dobre nazwisko
-        isCorrectName: function(nameToCheck) {
-             if (!secretTargetPlayer) return false;
-             return secretTargetPlayer.name === nameToCheck;
-        }
-    };
-})();
-
-function initGame() {
-    let randomIndex; const modeDisplay = document.getElementById('gameModeDisplay'); const controls = document.getElementById('gameDailyControls'); const inputSec = document.querySelector('.input-section');
+async function initGame() {
+    const modeDisplay = document.getElementById('gameModeDisplay'); 
+    const controls = document.getElementById('gameDailyControls'); 
+    const inputSec = document.querySelector('.input-section');
     if (!modeDisplay || !controls || !inputSec) return;
-    
+
+    inputSec.style.display = 'none'; // Ukrywamy input na czas pobierania
+    document.getElementById('mysteryName').innerText = "Ładowanie gry...";
+
     if (gameMode === 'daily') {
-        controls.style.display = 'flex'; dailyNumberGlobal = getDailyDateString(selectedDailyDay);
-        randomIndex = Math.floor(seededRandom(selectedDailyDay * 9999) * playersDB.length); GameEngine.setTarget(playersDB[randomIndex]);
+        controls.style.display = 'flex'; 
+        dailyNumberGlobal = getDailyDateString(selectedDailyDay);
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
-        
-        if (userStats.dailyResults[selectedDailyDay]) { 
-            // Gra zakończona (wygrana/przegrana)
-            inputSec.style.display = 'none'; 
-            restorePlayedGame(); 
-        } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) {
-            // Gra W TRAKCIE (gracz zaczął, ale wyszedł)
-            inputSec.style.display = 'block'; 
-            restoreInProgressDaily();
-        } else { 
-            // Czysta, nowa gra Daily
-            inputSec.style.display = 'block'; 
-        }
     } else {
-        controls.style.display = 'none'; inputSec.style.display = 'block';
-        let availablePlayers = playersDB.filter(p => !userStats.recentEndless.includes(p.id));
-        if (availablePlayers.length < 15) { userStats.recentEndless = []; availablePlayers = playersDB; }
-        randomIndex = Math.floor(Math.random() * availablePlayers.length); GameEngine.setTarget(availablePlayers[randomIndex]);
-        
-        userStats.recentEndless.push(GameEngine.getTargetInfo().id); if (userStats.recentEndless.length > 60) userStats.recentEndless.shift(); saveStats();
+        controls.style.display = 'none';
+        currentEndlessSeed = Math.random() * 10000; // Nowy losowy seed
         modeDisplay.innerText = i18n[currentLang].modeEndless;
     }
-    if(inputSec.style.display !== 'none') { buildTeamPath(); setupAutocomplete(); updateCounterDisplay(); }
+
+    try {
+        // ZAPYtANIE DO SERWERA O KLUBY
+        const initGameDataFunc = functions.httpsCallable('initGameData');
+        const response = await initGameDataFunc({
+            gameMode: gameMode,
+            dailyDay: selectedDailyDay,
+            endlessSeed: currentEndlessSeed
+        });
+
+        serverTargetClubs = response.data.pastClubs;
+        serverTargetStatus = response.data.status;
+
+        // Jeśli to Daily i gracz już w nie grał, przywracamy
+        if (gameMode === 'daily') {
+            if (userStats.dailyResults[selectedDailyDay]) { 
+                restorePlayedGame(); 
+                return;
+            } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) {
+                inputSec.style.display = 'block'; 
+                restoreInProgressDaily();
+                return;
+            }
+        }
+
+        // Czysta nowa gra
+        buildTeamPath();
+        setupAutocomplete(); 
+        updateCounterDisplay();
+        document.getElementById('mysteryName').innerText = "???";
+        inputSec.style.display = 'block'; // Pokazujemy input
+
+    } catch (e) {
+        console.error("Błąd pobierania danych gry:", e);
+        showToast("Błąd połączenia z serwerem", "error");
+    }
 }
 
 // Przywracanie wpisanych zawodników w niezakończonej grze Daily
@@ -1396,42 +1383,87 @@ function setupAutocomplete() {
 
 function buildTeamPath() {
     const pathContainer = document.getElementById('pathBoxes'); pathContainer.innerHTML = ''; 
-    GameEngine.getTargetInfo().pastClubs.forEach((club, index) => {
-        const box = document.createElement('div'); box.className = 'path-box'; box.innerText = '?'; box.dataset.index = index; pathContainer.appendChild(box);
-        if (index < GameEngine.getTargetInfo().pastClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
+    serverTargetClubs.forEach((club, index) => { // ZMIANA
+        const box = document.createElement('div'); box.className = 'path-box'; box.innerText = '?'; 
+        box.dataset.index = index; 
+        pathContainer.appendChild(box);
+        if (index < serverTargetClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
     });
-    if (GameEngine.getTargetInfo().status.toLowerCase().includes("koniec") || GameEngine.getTargetInfo().status === "Ś.P.") { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); }
+    if (serverTargetStatus.toLowerCase().includes("koniec") || serverTargetStatus === "Ś.P.") { // ZMIANA
+        const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); 
+        const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); 
+    }
 }
 
-function makeGuess() {
-    if(hasWon || hasLost) return; const input = document.getElementById('guessInput').value.trim();
+async function makeGuess() {
+    if(hasWon || hasLost) return; 
+    const input = document.getElementById('guessInput').value.trim();
     if (!input) { triggerErrorShake(); return; }
-    const guessedPlayer = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
-    if (!guessedPlayer || guessedPlayersNames.includes(guessedPlayer?.name)) { triggerErrorShake(); return; }
     
-    guessedPlayersNames.push(guessedPlayer.name); playSound('guess');
-    if (gameMode === 'daily') { if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; userStats.dailyGuesses[selectedDailyDay].push(guessedPlayer.name); saveStats(); }
+    const guessedPlayerLocal = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
+    if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
     
-    guessCount++; updateCounterDisplay(); renderGuess(guessedPlayer); revealClubsOnPath(guessedPlayer); document.getElementById('guessInput').value = "";
-    
-    // LOGIKA POJAWIANIA SIĘ PRZYCISKÓW (Zmienione zasady)
-    if (guessCount === 5 && !hintActive && guessedPlayer.name !== GameEngine.getTargetInfo().name) {
-        document.getElementById('btnHint').style.display = 'inline-block';
-        showToast("Możesz użyć podpowiedzi!", "normal");
-    }
-    
-    if (guessCount >= 7) {
-        document.getElementById('btnGiveUp').style.display = 'inline-block';
-    }
+    // Blokada przycisku podczas ładowania
+    const btn = document.querySelector('.search-box button');
+    const originalBtnText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "SPRAWDZAM...";
 
-    // Aktualizacja widoku podpowiedzi (jeśli użyto)
-    if (hintActive && guessedPlayer.name !== GameEngine.getTargetInfo().name) {
-        updateHintDisplay();
-    }
+    try {
+        // PYTAMY SERWER CZY ZGADLIŚMY
+        const checkGuessFunc = functions.httpsCallable('checkGuess');
+        const response = await checkGuessFunc({
+            guessedPlayerId: guessedPlayerLocal.id,
+            gameMode: gameMode,
+            dailyDay: selectedDailyDay,
+            endlessSeed: currentEndlessSeed
+        });
 
-    if (!GameEngine.isCorrectName(guessedPlayer.name) && guessCount >= GUESS_LIMIT) { 
-    updateStatsOnLoss(); 
-    setTimeout(handleLoss, 1400); 
+        const result = response.data;
+        serverHintNameArray = result.hintNameArray; // Aktualizujemy podpowiedź z serwera
+
+        guessedPlayersNames.push(guessedPlayerLocal.name); 
+        playSound('guess');
+        
+        if (gameMode === 'daily') { 
+            if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
+            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
+            saveStats(); 
+        }
+        
+        guessCount++; 
+        updateCounterDisplay(); 
+        
+        // Renderujemy wynik, przekazując statystyki celu z serwera
+        renderGuess(guessedPlayerLocal, result.targetStats); 
+        revealClubsOnPath(guessedPlayerLocal); 
+        document.getElementById('guessInput').value = "";
+        
+        if (guessCount === 5 && !hintActive && !result.isWin) {
+            document.getElementById('btnHint').style.display = 'inline-block';
+            showToast("Możesz użyć podpowiedzi!", "normal");
+        }
+        if (guessCount >= 7) {
+            document.getElementById('btnGiveUp').style.display = 'inline-block';
+        }
+        if (hintActive && !result.isWin) {
+            updateHintDisplay();
+        }
+
+        if (result.isWin) { 
+            updateStatsOnWin(); 
+            setTimeout(() => handleWin(guessedPlayerLocal.name), 1400); // Przekazujemy imię do wygranej
+        } else if (guessCount >= GUESS_LIMIT) { 
+            updateStatsOnLoss(); 
+            setTimeout(handleLoss, 1400); 
+        }
+
+    } catch(e) {
+        console.error("Błąd sprawdzania:", e);
+        showToast("Błąd serwera. Spróbuj ponownie.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalBtnText;
     }
 }
 
@@ -1455,34 +1487,31 @@ async function giveUpGame() {
 }
 
 function revealClubsOnPath(guessedPlayer) {
-    const boxes = document.querySelectorAll('.path-box'); let guessedClubs = guessedPlayer.pastClubs.map(getCleanClubName);
+    const boxes = document.querySelectorAll('.path-box'); 
+    let guessedClubs = guessedPlayer.pastClubs.map(getCleanClubName);
+    
     boxes.forEach(box => {
-    if (!box.dataset.index) return;
-    
-    // Pobieramy prawdziwy klub z GameEngine na podstawie indeksu
-    let trueClub = GameEngine.getTargetInfo().pastClubs[box.dataset.index];
-    
-    if (guessedClubs.includes(getCleanClubName(trueClub)) && box.innerText === '?') {
-        let cleanC = getCleanClubName(trueClub).toLowerCase();
-        if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { 
-            box.classList.add('club-special'); 
+        if (!box.dataset.index) return;
+        let trueClub = serverTargetClubs[box.dataset.index]; // ZMIANA
+        
+        if (guessedClubs.includes(getCleanClubName(trueClub)) && box.innerText === '?') {
+            let cleanC = getCleanClubName(trueClub).toLowerCase();
+            if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
+            box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`;
+            box.classList.add('found'); box.setAttribute('title', trueClub);        
         }
-        box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`;
-        box.classList.add('found'); 
-        box.setAttribute('title', trueClub);        
-    }
-});
-    if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (GameEngine.getTargetInfo().status.toLowerCase().includes("koniec") || GameEngine.getTargetInfo().status === "Ś.P.")) {
+    });
+    if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (serverTargetStatus.toLowerCase().includes("koniec") || serverTargetStatus === "Ś.P.")) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
-
-function renderGuess(player, isRestore = false) {
+function renderGuess(player, targetStats = null, isRestore = false) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
-    const isTargetGP = GameEngine.getTargetInfo().gp === true || GameEngine.getTargetInfo().gp === "Tak" || GameEngine.getTargetInfo().gp === "tak"; const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
+    const isTargetGP = targetStats ? targetStats.gp === true || targetStats.gp === "Tak" || targetStats.gp === "tak" : GameEngine.getTargetInfo().gp === true || GameEngine.getTargetInfo().gp === "Tak" || GameEngine.getTargetInfo().gp === "tak";
+    const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const yearCls = (player.year === GameEngine.getTargetInfo().year) ? "green" : "red";
+    const yearCls = (player.year === (targetStats ? targetStats.year : GameEngine.getTargetInfo().year)) ? "green" : "red";
     let yearTitle = "";
     if (player.year > GameEngine.getTargetInfo().year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
     else if (player.year < GameEngine.getTargetInfo().year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
@@ -1531,9 +1560,8 @@ let targetCleanClubs = GameEngine.getTargetInfo().pastClubs.map(getCleanClubName
     });
     guessHistory.push(rowEmojis);
 
-    if (!isRestore && GameEngine.isCorrectName(player.name)) { 
-    updateStatsOnWin(); 
-    setTimeout(handleWin, 1400); 
+     if (!isRestore && GameEngine.isCorrectName(player.name)) { 
+        updateStatsOnWin(); setTimeout(handleWin, 1400); 
     }
 }
 
