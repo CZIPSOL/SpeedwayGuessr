@@ -1402,7 +1402,7 @@ async function makeGuess() {
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
             playerId: playerId,
-            guessCount: guessCount // Wysyłamy do serwera, ile prób już zrobiono
+            guessCount: guessCount
         });
 
         const result = response.data;
@@ -1420,14 +1420,15 @@ async function makeGuess() {
         guessCount++; 
         updateCounterDisplay(); 
         
-        // Zabezpieczenie przed błędem z Firebase (serwer daje nam id trafionego w isWin!)
-        const isWinningGuess = result.isWin;
+        // POTĘŻNE ZABEZPIECZENIE: Używamy twardego ID zawodnika zamiast ciągów znaków
+        // Zabezpiecza to przed wszelkimi błędami wynikającymi z polskich znaków / powtórzeń
+        const isWinningGuess = result.isWin || (String(result.targetId) === String(guessedPlayerLocal.id));
 
         renderGuess(guessedPlayerLocal, result.targetStats, false, isWinningGuess); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
-        // Zarządzanie podpowiedziami (Przycisk)
+        // ZARZĄDZANIE PODPOWIEDZIAMI
         if (guessCount === 5 && !hintActive && !isWinningGuess) {
             document.getElementById('btnHint').style.display = 'inline-block';
             showToast("Możesz użyć podpowiedzi!", "normal");
@@ -1436,18 +1437,24 @@ async function makeGuess() {
             document.getElementById('btnGiveUp').style.display = 'inline-block';
         }
 
-        // Aktualizacja tekstu podpowiedzi
+        // Aktualizacja znaków podpowiedzi po pudle
         if (hintActive && !isWinningGuess && result.hintText) {
             document.getElementById('mysteryName').innerText = result.hintText;
         }
 
         if (isWinningGuess) { 
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+            // Pobierz imię zwycięzcy dopiero gdy wygramy
+            const ans = await functions.httpsCallable('getAnswer')({ 
+                gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId 
+            });
             serverTargetName = ans.data.name;
             updateStatsOnWin(); 
             setTimeout(() => handleWin(), 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+            // Pobierz imię przy porażce (gdy 10 prób)
+            const ans = await functions.httpsCallable('getAnswer')({ 
+                gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId 
+            });
             serverTargetName = ans.data.name;
             updateStatsOnLoss(); 
             setTimeout(handleLoss, 1400); 
@@ -1539,7 +1546,7 @@ function revealClubsOnPath(guessedPlayer) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
-function renderGuess(player, currentStats = null, isRestore = false) {
+function renderGuess(player, currentStats = null, isRestore = false, isWinningGuess = false) {
     const stats = currentStats || serverTargetStats; 
     if (!stats) return;
 
@@ -1580,7 +1587,8 @@ function renderGuess(player, currentStats = null, isRestore = false) {
     let targetCleanClubs = serverTargetClubs.map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
         let cleanC = getCleanClubName(c); 
-        let isMatch = targetCleanClubs.includes(cleanC); 
+        // BARDZO WAŻNA LINIA PONIŻEJ! Upewnia się, że nie mruga zielonym kolorem jeśli to pudło!
+        let isMatch = isWinningGuess || targetCleanClubs.includes(cleanC); 
         let matchClass = isMatch ? 'club-match' : 'club-dim';
         let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); 
         let specialClass = isSpecial ? ' club-special' : '';
