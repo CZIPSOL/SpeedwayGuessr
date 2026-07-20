@@ -1175,30 +1175,6 @@ async function returnToMainMenu() {
     window.location.reload();
 }
 
-// Generowanie tekstu podpowiedzi
-function updateHintDisplay() {
-    if (!hintActive) return;
-    const parts = Array.isArray(serverHintNameArray) && serverHintNameArray.length > 0
-        ? serverHintNameArray
-        : (serverTargetName ? serverTargetName.split(' ') : []);
-    let result = [];
-    
-    parts.forEach((part, partIndex) => {
-        let word = "";
-        for (let i = 0; i < part.length; i++) {
-            // Pierwsza litera imienia (od 6 próby)
-            if (partIndex === 0 && i === 0 && guessCount >= 6) word += part[i];
-            // Pierwsza litera nazwiska (od 7 próby)
-            else if (partIndex === 1 && i === 0 && guessCount >= 7) word += part[i];
-            // Kreska
-            else word += "_";
-        }
-        // Wstawiamy wąską spację między litery dla czytelności
-        result.push(word.split('').join('\u200A'));
-    });
-    
-    document.getElementById('mysteryName').innerText = result.join(' \u00A0\u00A0 ');
-}
 
 // Aktywacja podpowiedzi z przycisku
 function useHint() {
@@ -1225,26 +1201,8 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 let currentEndlessSeed = Math.random() * 10000;
 let serverTargetClubs = [];
 let serverTargetStatus = "";
-let serverHintNameArray = [];
+let serverTargetStats = null;
 let serverTargetName = "";
-let currentTargetInfo = null;
-
-function getTargetInfoFallback() {
-    return currentTargetInfo || {
-        name: "???",
-        gp: "Nie",
-        year: 0,
-        dmp: 0,
-        country: "",
-        region: "",
-        status: "",
-        pastClubs: []
-    };
-}
-
-function isTargetGPValue(targetInfo) {
-    return targetInfo && (targetInfo.gp === true || targetInfo.gp === "Tak" || targetInfo.gp === "tak");
-}
 
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
@@ -1273,33 +1231,27 @@ async function initGame() {
         const response = await initGameDataFunc({
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
-            endlessSeed: currentEndlessSeed
+            endlessSeed: currentEndlessSeed,
+            playerId: playerId // <--- TO NAPRAWIA PROBLEM ROZJAZDU ZAWODNIKÓW!
         });
 
         serverTargetClubs = response.data.pastClubs;
         serverTargetStatus = response.data.status;
-        currentTargetInfo = response.data.targetStats || response.data || currentTargetInfo;
+        serverTargetStats = response.data.targetStats;
+        
         try {
             const answerResponse = await functions.httpsCallable('getAnswer')({
-                gameMode: gameMode,
-                dailyDay: selectedDailyDay,
-                endlessSeed: currentEndlessSeed
+                gameMode: gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId: playerId
             });
             serverTargetName = answerResponse.data.name || "";
-        } catch (answerError) {
-            console.error("Błąd pobierania nazwy celu:", answerError);
-            serverTargetName = "";
-        }
+        } catch (e) { serverTargetName = ""; }
 
         // Jeśli to Daily i gracz już w nie grał, przywracamy
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
-                restorePlayedGame(); 
-                return;
+                restorePlayedGame(); return;
             } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) {
-                inputSec.style.display = 'block'; 
-                restoreInProgressDaily();
-                return;
+                inputSec.style.display = 'block'; restoreInProgressDaily(); return;
             }
         }
 
@@ -1308,7 +1260,7 @@ async function initGame() {
         setupAutocomplete(); 
         updateCounterDisplay();
         document.getElementById('mysteryName').innerText = "???";
-        inputSec.style.display = 'block'; // Pokazujemy input
+        inputSec.style.display = 'block'; 
 
     } catch (e) {
         console.error("Błąd pobierania danych gry:", e);
@@ -1352,7 +1304,7 @@ async function restorePlayedGame() {
     
     try {
         // Musimy też pobrać Imię z serwera, skoro gra jest zakończona
-        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
         serverTargetName = ans.data.name;
     } catch(e) { console.error(e); }
 
@@ -1387,8 +1339,7 @@ function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁ�
 
 function getCleanClubName(clubName) { 
     if (!clubName) return "";
-    // Usuwamy (W), (G) oraz ujednolicamy [Zawieszenie] do Zawieszenie
-    return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").trim(); 
+    return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").trim().toLowerCase(); 
 }
 
 function getClubAbbr(clubName) { 
@@ -1447,75 +1398,90 @@ async function makeGuess() {
     if (!input) { triggerErrorShake(); return; }
     
     const guessedPlayerLocal = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
-    if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
+    if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal.name)) { triggerErrorShake(); return; }
     
-    // Blokada przycisku podczas ładowania
     const btn = document.querySelector('.search-box button');
     const originalBtnText = btn.innerText;
-    btn.disabled = true;
-    btn.innerText = "SPRAWDZAM...";
+    btn.disabled = true; btn.innerText = "SPRAWDZAM...";
 
     try {
-        // PYTAMY SERWER CZY ZGADLIŚMY
         const checkGuessFunc = functions.httpsCallable('checkGuess');
         const response = await checkGuessFunc({
-            guessedPlayerId: guessedPlayerLocal.id,
-            gameMode: gameMode,
-            dailyDay: selectedDailyDay,
-            endlessSeed: currentEndlessSeed
+            guessedPlayerId: guessedPlayerLocal.id, 
+            gameMode: gameMode, 
+            dailyDay: selectedDailyDay, 
+            endlessSeed: currentEndlessSeed, 
+            guessCount: guessCount,
+            playerId: playerId // <--- NAPRAWA
         });
 
         const result = response.data;
-        serverHintNameArray = Array.isArray(result.hintNameArray) ? result.hintNameArray : [];
-        currentTargetInfo = result.targetStats || currentTargetInfo;
-
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
         
         if (gameMode === 'daily') { 
             if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
-            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
-            saveStats(); 
+            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); saveStats(); 
         }
         
-        guessCount++; 
-        updateCounterDisplay(); 
+        guessCount++; updateCounterDisplay(); 
         
-        const isWinningGuess = result.isWin || (serverTargetName && guessedPlayerLocal.name === serverTargetName);
-
-        // Renderujemy wynik, przekazując statystyki celu z serwera
-        renderGuess(guessedPlayerLocal, result.targetStats, false, isWinningGuess); 
+        renderGuess(guessedPlayerLocal, result.targetStats || serverTargetStats); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
-        if (guessCount === 5 && !hintActive && !isWinningGuess) {
-            document.getElementById('btnHint').style.display = 'inline-block';
-            showToast("Możesz użyć podpowiedzi!", "normal");
+        if (guessCount === 5 && !hintActive && !result.isWin) {
+            document.getElementById('btnHint').style.display = 'inline-block'; showToast("Możesz użyć podpowiedzi!", "normal");
         }
-        if (guessCount >= 7) {
-            document.getElementById('btnGiveUp').style.display = 'inline-block';
-        }
-        if (hintActive && !isWinningGuess) {
-            updateHintDisplay();
+        if (guessCount >= 7 && !result.isWin) document.getElementById('btnGiveUp').style.display = 'inline-block';
+        
+        if (hintActive && !result.isWin) {
+            document.getElementById('mysteryName').innerText = result.hintText;
         }
 
-        if (isWinningGuess) { 
+        if (result.isWin) { 
             serverTargetName = guessedPlayerLocal.name;
-            updateStatsOnWin(); 
-            setTimeout(() => handleWin(guessedPlayerLocal.name), 1400); 
+            updateStatsOnWin(); setTimeout(handleWin, 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
             serverTargetName = ans.data.name;
-            updateStatsOnLoss(); 
-            setTimeout(handleLoss, 1400); 
+            updateStatsOnLoss(); setTimeout(handleLoss, 1400); 
         }
 
     } catch(e) {
-        console.error("Błąd sprawdzania:", e);
-        showToast("Błąd serwera. Spróbuj ponownie.", "error");
+        console.error(e); showToast("Błąd serwera. Spróbuj ponownie.", "error");
     } finally {
-        btn.disabled = false;
-        btn.innerText = originalBtnText;
+        btn.disabled = false; btn.innerText = originalBtnText;
+    }
+}
+
+async function giveUpGame() {
+    if (hasWon || hasLost) return;
+    const confirmed = await appConfirm("Czy na pewno chcesz się poddać?", { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" });
+    if (!confirmed) return;
+    
+    document.getElementById('btnGiveUp').innerText = "⏳";
+    try {
+        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+        serverTargetName = ans.data.name;
+    } catch(e) {}
+
+    guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss();
+    document.getElementById('btnGiveUp').style.display = 'none';
+}
+
+async function useHint() {
+    if (hintActive) return;
+    hintActive = true; hintsUsedCount = 1;
+    document.getElementById('btnHint').style.display = 'none'; 
+    showToast("Pobieram podpowiedź...", "normal");
+    
+    try {
+        const ans = await functions.httpsCallable('getHint')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, guessCount, playerId });
+        document.getElementById('mysteryName').innerText = ans.data.hintText;
+        showToast("Użyto podpowiedzi!", "success");
+    } catch(e) {
+        showToast("Błąd pobierania podpowiedzi", "error"); hintActive = false; document.getElementById('btnHint').style.display = 'inline-block';
     }
 }
 
@@ -1557,37 +1523,51 @@ function revealClubsOnPath(guessedPlayer) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
-function renderGuess(player, targetStats = null, isRestore = false, isWin = false) {
-    const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
-    const activeTarget = targetStats || getTargetInfoFallback();
-    const isTargetGP = isTargetGPValue(activeTarget);
+function renderGuess(player, currentStats = null, isRestore = false) {
+    const stats = currentStats || serverTargetStats; 
+    if (!stats) return;
+
+    const resultsDiv = document.getElementById('results'); 
+    const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
+    
+    const isTargetGP = stats.gp === true || stats.gp === "Tak" || stats.gp === "tak";
     const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const yearCls = (player.year === activeTarget.year) ? "green" : "red";
+    const yearCls = (player.year === stats.year) ? "green" : "red";
     let yearTitle = "";
-    if (player.year > activeTarget.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
-    else if (player.year < activeTarget.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
+    if (player.year > stats.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
+    else if (player.year < stats.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
     else yearTitle = "Dokładnie ten sam rocznik!";
 
     let yearContent = `<span>${player.year}</span>`;
-    if (player.year > activeTarget.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
-    else if (player.year < activeTarget.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
+    if (player.year > stats.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
+    else if (player.year < stats.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
 
-    const dmpCls = (player.dmp === activeTarget.dmp) ? "green" : "red";
+    const dmpCls = (player.dmp === stats.dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
-    if (player.dmp > activeTarget.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; else if (player.dmp < activeTarget.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
+    if (player.dmp > stats.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; 
+    else if (player.dmp < stats.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
 
-    const pCountries = player.country.split("/").map(c => c.trim()); const tCountries = (activeTarget.country || "").split("/").map(c => c.trim()).filter(Boolean);
-    let countryCls = "red"; if (player.country === activeTarget.country) countryCls = "green"; else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; else if (player.region === activeTarget.region) countryCls = "yellow";
+    const pCountries = player.country.split("/").map(c => c.trim()); 
+    const tCountries = (stats.country || "").split("/").map(c => c.trim());
+    let countryCls = "red"; 
+    if (player.country === stats.country) countryCls = "green"; 
+    else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; 
+    else if (player.region === stats.region) countryCls = "yellow";
+    
     let c1 = countryToCode[pCountries[0]] || 'pl';
-    let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
+    let countryContent = pCountries.length > 1 
+        ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
+        : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-    let targetCleanClubs = ((activeTarget.pastClubs && activeTarget.pastClubs.length > 0) ? activeTarget.pastClubs : serverTargetClubs).map(getCleanClubName);
+    let targetCleanClubs = serverTargetClubs.map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
-        let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
-        let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
-        // Korzystamy z nowej funkcji dla odznak:
+        let cleanC = getCleanClubName(c); 
+        let isMatch = targetCleanClubs.includes(cleanC); 
+        let matchClass = isMatch ? 'club-match' : 'club-dim';
+        let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); 
+        let specialClass = isSpecial ? ' club-special' : '';
         return `<div class="club-logo-wrapper" title="${c}"><div class="club-abbr-box ${matchClass}${specialClass}">${getClubAbbr(c)}</div>${getClubBadgeHTML(c)}</div>`;
     }).join('<div class="club-divider"></div>');
 
@@ -1599,7 +1579,7 @@ function renderGuess(player, targetStats = null, isRestore = false, isWin = fals
         <div class="col-attr" title="${yearTitle}"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${player.status === activeTarget.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
+        <div class="col-attr"><div class="attr-box ${player.status === stats.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
         <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
@@ -1608,14 +1588,14 @@ function renderGuess(player, targetStats = null, isRestore = false, isWin = fals
     
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
-        if (attr === 'country') c = countryCls; else if (attr === 'year' && player.year === activeTarget.year) c = "green"; else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; else if (attr === 'dmp' && player.dmp === activeTarget.dmp) c = "green"; else if (attr === 'status' && player.status === activeTarget.status) c = "green";
+        if (attr === 'country') c = countryCls; 
+        else if (attr === 'year' && player.year === stats.year) c = "green"; 
+        else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; 
+        else if (attr === 'dmp' && player.dmp === stats.dmp) c = "green"; 
+        else if (attr === 'status' && player.status === stats.status) c = "green";
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
-
-     if (!isRestore && isWin) { 
-        updateStatsOnWin(); setTimeout(handleWin, 1400); 
-    }
 }
 
 function handleWin() {
