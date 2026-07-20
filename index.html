@@ -25,6 +25,14 @@
     </script>
 </head>
 <body>
+    <!-- PRZERWA TECHNICZNA OVERLAY -->
+    <div id="maintenanceOverlay" class="win-overlay" style="display: none; z-index: 999999; background: rgba(10, 10, 12, 0.98); backdrop-filter: blur(15px);">
+        <div style="background: rgba(0,0,0,0.5); border: 2px solid var(--red-neon); padding: 50px; border-radius: 20px; text-align: center; box-shadow: 0 0 50px rgba(255, 51, 51, 0.3);">
+            <div style="font-size: 60px; margin-bottom: 20px;">🛠️</div>
+            <h1 class="text-red font-black uppercase m-0" style="font-size: 32px; letter-spacing: 2px;">PRZERWA TECHNICZNA</h1>
+            <p class="text-dim font-bold mt-15" style="font-size: 16px; line-height: 1.5;">Trwają prace konserwacyjne serwera.<br>Gra jest w tym momencie wyłączona.<br>Zajrzyj ponownie za chwilę!</p>
+        </div>
+    </div>
 
     <!-- KONTENER NA POWIADOMIENIA TOAST -->
     <div id="toastContainer" class="toast-container"></div>

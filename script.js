@@ -880,8 +880,29 @@ function playSound(type) {
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
-window.onload = function() { 
+window.onload = async function() { 
     setRandomBackground();
+    
+    // === SPRAWDZANIE PRZERWY TECHNICZNEJ ===
+    try {
+        const getConfigFunc = functions.httpsCallable('getConfig');
+        const configResponse = await getConfigFunc();
+        
+        if (configResponse.data && configResponse.data.maintenanceMode === true) {
+            // Pokazujemy czerwony ekran i wyłączamy ładowanie reszty skryptów!
+            document.getElementById('maintenanceOverlay').style.display = 'flex';
+            document.getElementById('maintenanceOverlay').style.opacity = '1';
+            
+            // Ukrywamy menu
+            if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+            if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+            return; // Zatrzymuje dalsze ładowanie gry
+        }
+    } catch(e) {
+        console.warn("Nie udało się połączyć z serwerem, by sprawdzić status.", e);
+    }
+    // ========================================
+
     loadStats(); 
     initDailyMenu(); 
     renderLastGames(); 
