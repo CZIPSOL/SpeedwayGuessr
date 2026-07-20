@@ -1178,7 +1178,9 @@ async function returnToMainMenu() {
 // Generowanie tekstu podpowiedzi
 function updateHintDisplay() {
     if (!hintActive) return;
-    const parts = serverHintNameArray.length > 0 ? serverHintNameArray : getTargetInfoFallback().name.split(' '); 
+    const parts = Array.isArray(serverHintNameArray) && serverHintNameArray.length > 0
+        ? serverHintNameArray
+        : (serverTargetName ? serverTargetName.split(' ') : []);
     let result = [];
     
     parts.forEach((part, partIndex) => {
@@ -1224,6 +1226,7 @@ let currentEndlessSeed = Math.random() * 10000;
 let serverTargetClubs = [];
 let serverTargetStatus = "";
 let serverHintNameArray = [];
+let serverTargetName = "";
 let currentTargetInfo = null;
 
 function getTargetInfoFallback() {
@@ -1241,12 +1244,6 @@ function getTargetInfoFallback() {
 
 function isTargetGPValue(targetInfo) {
     return targetInfo && (targetInfo.gp === true || targetInfo.gp === "Tak" || targetInfo.gp === "tak");
-}
-
-function isCorrectTargetName(playerName, targetInfo) {
-    const activeTarget = targetInfo || getTargetInfoFallback();
-    if (!activeTarget.name) return false;
-    return removePolishAccents(playerName.trim().toLowerCase()) === removePolishAccents(activeTarget.name.trim().toLowerCase());
 }
 
 async function initGame() {
@@ -1280,6 +1277,17 @@ async function initGame() {
         serverTargetClubs = response.data.pastClubs;
         serverTargetStatus = response.data.status;
         currentTargetInfo = response.data.targetStats || response.data || currentTargetInfo;
+        try {
+            const answerResponse = await functions.httpsCallable('getAnswer')({
+                gameMode: gameMode,
+                dailyDay: selectedDailyDay,
+                endlessSeed: currentEndlessSeed
+            });
+            serverTargetName = answerResponse.data.name || "";
+        } catch (answerError) {
+            console.error("Błąd pobierania nazwy celu:", answerError);
+            serverTargetName = "";
+        }
 
         // Jeśli to Daily i gracz już w nie grał, przywracamy
         if (gameMode === 'daily') {
@@ -1335,11 +1343,17 @@ function restoreInProgressDaily() {
     isRestoring = false;
 }
 
-function restorePlayedGame() {
+async function restorePlayedGame() {
     isRestoring = true; 
     buildTeamPath(); 
     const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
+    try {
+        // Musimy też pobrać Imię z serwera, skoro gra jest zakończona
+        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+        serverTargetName = ans.data.name;
+    } catch(e) { console.error(e); }
+
     if (pastGuesses.length === 0) { 
         document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Brak zapisu dla tego dnia.</div>`; 
     } else { 
@@ -1348,8 +1362,9 @@ function restorePlayedGame() {
             if(p) { 
                 guessCount++; 
                 guessedPlayersNames.push(p.name); 
+                // Podajemy null jako drugi argument, aby renderGuess pobrało zaktualizowane serverTargetStats
                 renderGuess(p, null, true); 
-                revealClubsOnPath(p); // TUTAJ RÓWNIEŻ ODKRYWAMY KLUBY!
+                revealClubsOnPath(p); 
             } 
         }); 
     }
@@ -1357,7 +1372,7 @@ function restorePlayedGame() {
     updateCounterDisplay(); 
     hasWon = userStats.dailyResults[selectedDailyDay] === 'win'; 
     hasLost = userStats.dailyResults[selectedDailyDay] === 'loss'; 
-    revealTargetInfoUI(); // Całkowite odkrycie panelu po zakończeniu
+    revealTargetInfoUI(); 
     
     document.getElementById('btnSharePost').style.display = 'inline-block'; 
     document.getElementById('btnPlayAgainPost').innerText = i18n[currentLang].btnPlayEndless; 
@@ -1449,7 +1464,7 @@ async function makeGuess() {
         });
 
         const result = response.data;
-        serverHintNameArray = result.hintNameArray; // Aktualizujemy podpowiedź z serwera
+        serverHintNameArray = Array.isArray(result.hintNameArray) ? result.hintNameArray : [];
         currentTargetInfo = result.targetStats || currentTargetInfo;
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
@@ -1465,7 +1480,7 @@ async function makeGuess() {
         updateCounterDisplay(); 
         
         // Renderujemy wynik, przekazując statystyki celu z serwera
-        renderGuess(guessedPlayerLocal, result.targetStats); 
+        renderGuess(guessedPlayerLocal, result.targetStats, false, result.isWin); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
@@ -1481,9 +1496,12 @@ async function makeGuess() {
         }
 
         if (result.isWin) { 
+            serverTargetName = guessedPlayerLocal.name;
             updateStatsOnWin(); 
-            setTimeout(() => handleWin(guessedPlayerLocal.name), 1400); // Przekazujemy imię do wygranej
+            setTimeout(() => handleWin(guessedPlayerLocal.name), 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            serverTargetName = ans.data.name;
             updateStatsOnLoss(); 
             setTimeout(handleLoss, 1400); 
         }
@@ -1535,7 +1553,7 @@ function revealClubsOnPath(guessedPlayer) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
-function renderGuess(player, targetStats = null, isRestore = false) {
+function renderGuess(player, targetStats = null, isRestore = false, isWin = false) {
     const resultsDiv = document.getElementById('results'); const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
     const activeTarget = targetStats || getTargetInfoFallback();
     const isTargetGP = isTargetGPValue(activeTarget);
@@ -1561,7 +1579,7 @@ function renderGuess(player, targetStats = null, isRestore = false) {
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-    let targetCleanClubs = (activeTarget.pastClubs || []).map(getCleanClubName);
+    let targetCleanClubs = ((activeTarget.pastClubs && activeTarget.pastClubs.length > 0) ? activeTarget.pastClubs : serverTargetClubs).map(getCleanClubName);
     let clubsHTML = player.pastClubs.map(c => {
         let isMatch = targetCleanClubs.includes(getCleanClubName(c)); let matchClass = isMatch ? 'club-match' : 'club-dim';
         let cleanC = getCleanClubName(c).toLowerCase(); let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); let specialClass = isSpecial ? ' club-special' : '';
@@ -1591,7 +1609,7 @@ function renderGuess(player, targetStats = null, isRestore = false) {
     });
     guessHistory.push(rowEmojis);
 
-     if (!isRestore && isCorrectTargetName(player.name, activeTarget)) { 
+     if (!isRestore && isWin) { 
         updateStatsOnWin(); setTimeout(handleWin, 1400); 
     }
 }
@@ -1613,7 +1631,7 @@ function handleLoss() {
 
 function revealTargetInfoUI() {
     document.getElementById('mysteryPlaceholder').style.display = 'none'; const photoImg = document.getElementById('mysteryPhoto'); photoImg.src = `images/riders/image_0.png`; photoImg.style.display = 'block';
-    document.getElementById('photoWrapper').classList.add('revealed'); document.getElementById('mysteryName').innerText = getTargetInfoFallback().name;
+    document.getElementById('photoWrapper').classList.add('revealed'); document.getElementById('mysteryName').innerText = serverTargetName || getTargetInfoFallback().name || "???";
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.club) return;
