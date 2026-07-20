@@ -1232,9 +1232,22 @@ async function initGame() {
         const response = await initGameDataFunc({ 
             gameMode: gameMode, 
             dailyDay: selectedDailyDay, 
-            endlessSeed: currentEndlessSeed, 
-            playerId: playerId 
+            endlessSeed: currentEndlessSeed
         });
+
+        // --- ZABEZPIECZENIE PRZED POWTÓRKAMI W ENDLESS NA FRONCIE ---
+        if (gameMode === 'endless') {
+            if (!userStats.recentEndless) userStats.recentEndless = [];
+            
+            // Jeśli wylosowało zawodnika z ostatnich 50 gier - powtórz losowanie!
+            if (userStats.recentEndless.includes(response.data.targetId)) {
+                return initGame(); 
+            } else {
+                userStats.recentEndless.push(response.data.targetId);
+                if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
+                saveStats();
+            }
+        }
 
         serverTargetClubs = response.data.pastClubs; 
         serverTargetStatus = response.data.status; 
@@ -1254,7 +1267,9 @@ async function initGame() {
         document.getElementById('mysteryName').innerText = "???"; 
         inputSec.style.display = 'block'; 
 
-    } catch (e) { showToast("Błąd połączenia z serwerem", "error"); }
+    } catch (e) { 
+        showToast("Błąd połączenia z serwerem", "error"); 
+    }
 }
 
 // Przywracanie wpisanych zawodników w niezakończonej grze Daily
