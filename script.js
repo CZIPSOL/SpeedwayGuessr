@@ -33,6 +33,10 @@ const firebaseConfig = {
     measurementId: "G-QSWL3N5CHG"
 };
 
+// TEJ LINIJKI CI BRAKUJE (Ona włącza Firebase):
+firebase.initializeApp(firebaseConfig);
+
+// Dopiero po włączeniu, możemy pobrać bazę i funkcje:
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
