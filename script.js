@@ -1173,7 +1173,7 @@ async function returnToMainMenu() {
 // Generowanie tekstu podpowiedzi
 function updateHintDisplay() {
     if (!hintActive) return;
-    const parts = GameEngine.getTargetInfo().name.split(' ');
+    const parts = GameEngine.getHintNameArray();
     let result = [];
     
     parts.forEach((part, partIndex) => {
@@ -1221,13 +1221,38 @@ const GameEngine = (function() {
         setTarget: function(player) {
             secretTargetPlayer = player;
         },
+        // Zwraca pełne info TYLKO gdy gra się skończyła
         getTargetInfo: function() {
-            return secretTargetPlayer;
+            if (hasWon || hasLost) {
+                return secretTargetPlayer;
+            }
+            // Zwracamy okrojoną wersję w trakcie gry (BEZ IMIENIA I NAZWISKA!)
+            return {
+                id: secretTargetPlayer.id,
+                pastClubs: secretTargetPlayer.pastClubs,
+                currentClub: secretTargetPlayer.currentClub,
+                status: secretTargetPlayer.status,
+                year: secretTargetPlayer.year,
+                dmp: secretTargetPlayer.dmp,
+                country: secretTargetPlayer.country,
+                region: secretTargetPlayer.region,
+                gp: secretTargetPlayer.gp
+            };
         },
-
+        // Służy tylko do porównania zgadywanego hasła (nie zwraca imienia)
         checkGuess: function(guessedName) {
             if (!secretTargetPlayer) return false;
             return guessedName.toLowerCase() === secretTargetPlayer.name.toLowerCase();
+        },
+        // Specjalna funkcja tylko dla systemu podpowiedzi
+        getHintNameArray: function() {
+            if (!secretTargetPlayer) return [];
+            return secretTargetPlayer.name.split(' ');
+        },
+        // Potrzebne, żeby np. w funkcji makeGuess wiedzieć, czy wpisano dobre nazwisko
+        isCorrectName: function(nameToCheck) {
+             if (!secretTargetPlayer) return false;
+             return secretTargetPlayer.name === nameToCheck;
         }
     };
 })();
@@ -1372,7 +1397,7 @@ function setupAutocomplete() {
 function buildTeamPath() {
     const pathContainer = document.getElementById('pathBoxes'); pathContainer.innerHTML = ''; 
     GameEngine.getTargetInfo().pastClubs.forEach((club, index) => {
-        const box = document.createElement('div'); box.className = 'path-box'; box.innerText = '?'; box.dataset.club = club; pathContainer.appendChild(box);
+        const box = document.createElement('div'); box.className = 'path-box'; box.innerText = '?'; box.dataset.index = index; pathContainer.appendChild(box);
         if (index < GameEngine.getTargetInfo().pastClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
     });
     if (GameEngine.getTargetInfo().status.toLowerCase().includes("koniec") || GameEngine.getTargetInfo().status === "Ś.P.") { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); }
@@ -1404,7 +1429,10 @@ function makeGuess() {
         updateHintDisplay();
     }
 
-    if (guessedPlayer.name !== GameEngine.getTargetInfo().name && guessCount >= GUESS_LIMIT) { updateStatsOnLoss(); setTimeout(handleLoss, 1400); }
+    if (!GameEngine.isCorrectName(guessedPlayer.name) && guessCount >= GUESS_LIMIT) { 
+    updateStatsOnLoss(); 
+    setTimeout(handleLoss, 1400); 
+    }
 }
 
 async function giveUpGame() {
@@ -1429,13 +1457,21 @@ async function giveUpGame() {
 function revealClubsOnPath(guessedPlayer) {
     const boxes = document.querySelectorAll('.path-box'); let guessedClubs = guessedPlayer.pastClubs.map(getCleanClubName);
     boxes.forEach(box => {
-        if (!box.dataset.club) return;
-        if (guessedClubs.includes(getCleanClubName(box.dataset.club)) && box.innerText === '?') {
-            let cleanC = getCleanClubName(box.dataset.club).toLowerCase();
-            if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
-            box.innerHTML = `<span>${getClubAbbr(box.dataset.club)}</span>${getClubBadgeHTML(box.dataset.club)}`;
-            box.classList.add('found'); box.setAttribute('title', box.dataset.club);        }
-    });
+    if (!box.dataset.index) return;
+    
+    // Pobieramy prawdziwy klub z GameEngine na podstawie indeksu
+    let trueClub = GameEngine.getTargetInfo().pastClubs[box.dataset.index];
+    
+    if (guessedClubs.includes(getCleanClubName(trueClub)) && box.innerText === '?') {
+        let cleanC = getCleanClubName(trueClub).toLowerCase();
+        if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { 
+            box.classList.add('club-special'); 
+        }
+        box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`;
+        box.classList.add('found'); 
+        box.setAttribute('title', trueClub);        
+    }
+});
     if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (GameEngine.getTargetInfo().status.toLowerCase().includes("koniec") || GameEngine.getTargetInfo().status === "Ś.P.")) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
@@ -1494,7 +1530,11 @@ let targetCleanClubs = GameEngine.getTargetInfo().pastClubs.map(getCleanClubName
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
-    if (!isRestore && player.name === GameEngine.getTargetInfo().name) { updateStatsOnWin(); setTimeout(handleWin, 1400); }
+
+    if (!isRestore && GameEngine.isCorrectName(player.name)) { 
+    updateStatsOnWin(); 
+    setTimeout(handleWin, 1400); 
+    }
 }
 
 function handleWin() {
