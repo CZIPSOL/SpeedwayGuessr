@@ -1223,59 +1223,38 @@ async function initGame() {
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
     } else {
         controls.style.display = 'none';
-        // Generujemy zupełnie nowy seed za każdym uruchomieniem Endless!
-        currentEndlessSeed = Math.floor(Math.random() * 2147483647); 
+        currentEndlessSeed = Math.floor(Math.random() * 2147483647);
         modeDisplay.innerText = i18n[currentLang].modeEndless;
     }
 
     try {
         const initGameDataFunc = functions.httpsCallable('initGameData');
-        const response = await initGameDataFunc({
-            gameMode: gameMode,
-            dailyDay: selectedDailyDay,
-            endlessSeed: currentEndlessSeed
+        const response = await initGameDataFunc({ 
+            gameMode: gameMode, 
+            dailyDay: selectedDailyDay, 
+            endlessSeed: currentEndlessSeed, 
+            playerId: playerId 
         });
 
-        // ==========================================
-        // SYSTEM BLOKADY POWTÓREK W TRYBIE ENDLESS!
-        // ==========================================
-        if (gameMode === 'endless') {
-            if (!userStats.recentEndless) userStats.recentEndless = [];
-            // Jeśli wylosowało kogoś, kogo zgadywaliśmy niedawno...
-            if (userStats.recentEndless.includes(response.data.targetId)) {
-                // Zatrzymujemy to losowanie i uruchamiamy funkcję ponownie z nowym seedem!
-                return initGame(); 
-            } else {
-                // Jeśli to ktoś nowy, dodajemy go do pamięci przeglądarki
-                userStats.recentEndless.push(response.data.targetId);
-                // Pamiętamy maksymalnie ostatnich 50 wylosowanych!
-                if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
-                saveStats();
-            }
-        }
-
-        serverTargetClubs = response.data.pastClubs;
-        serverTargetStatus = response.data.status;
+        serverTargetClubs = response.data.pastClubs; 
+        serverTargetStatus = response.data.status; 
         serverTargetStats = response.data.targetStats;
         
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
-                restorePlayedGame(); return;
-            } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) {
-                inputSec.style.display = 'block'; restoreInProgressDaily(); return;
+                restorePlayedGame(); return; 
+            } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) { 
+                inputSec.style.display = 'block'; restoreInProgressDaily(); return; 
             }
         }
 
-        buildTeamPath();
+        buildTeamPath(); 
         setupAutocomplete(); 
-        updateCounterDisplay();
-        document.getElementById('mysteryName').innerText = "???";
+        updateCounterDisplay(); 
+        document.getElementById('mysteryName').innerText = "???"; 
         inputSec.style.display = 'block'; 
 
-    } catch (e) {
-        console.error("Błąd pobierania danych gry:", e);
-        showToast("Błąd połączenia z serwerem", "error");
-    }
+    } catch (e) { showToast("Błąd połączenia z serwerem", "error"); }
 }
 
 // Przywracanie wpisanych zawodników w niezakończonej grze Daily
@@ -1422,12 +1401,13 @@ async function makeGuess() {
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
-            guessCount: guessCount // Wysyłamy do serwera ilość naszych BŁĘDÓW!
+            playerId: playerId,
+            guessCount: guessCount // Wysyłamy do serwera, ile prób już zrobiono
         });
 
         const result = response.data;
         currentTargetInfo = result.targetStats || currentTargetInfo;
-        
+
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
         
@@ -1437,17 +1417,17 @@ async function makeGuess() {
             saveStats(); 
         }
         
-        // Zwiększamy liczbę prób!
         guessCount++; 
         updateCounterDisplay(); 
         
+        // Zabezpieczenie przed błędem z Firebase (serwer daje nam id trafionego w isWin!)
         const isWinningGuess = result.isWin;
 
         renderGuess(guessedPlayerLocal, result.targetStats, false, isWinningGuess); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
-        // ZARZĄDZANIE PODPOWIEDZIAMI
+        // Zarządzanie podpowiedziami (Przycisk)
         if (guessCount === 5 && !hintActive && !isWinningGuess) {
             document.getElementById('btnHint').style.display = 'inline-block';
             showToast("Możesz użyć podpowiedzi!", "normal");
@@ -1455,21 +1435,19 @@ async function makeGuess() {
         if (guessCount >= 7 && !isWinningGuess) {
             document.getElementById('btnGiveUp').style.display = 'inline-block';
         }
-        
-        // Aktualizacja znaków podpowiedzi po pudle (jeśli podpowiedź jest włączona)
+
+        // Aktualizacja tekstu podpowiedzi
         if (hintActive && !isWinningGuess && result.hintText) {
             document.getElementById('mysteryName').innerText = result.hintText;
         }
 
         if (isWinningGuess) { 
-            // Wygrałeś! Pobieramy imię
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
             serverTargetName = ans.data.name;
             updateStatsOnWin(); 
             setTimeout(() => handleWin(), 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
-            // Przegrałeś (10 prób). Pobieramy imię
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
             serverTargetName = ans.data.name;
             updateStatsOnLoss(); 
             setTimeout(handleLoss, 1400); 
@@ -1485,25 +1463,45 @@ async function makeGuess() {
 
 async function giveUpGame() {
     if (hasWon || hasLost) return;
-    
-    const confirmed = await appConfirm(
-        "Czy na pewno chcesz się poddać i odkryć zawodnika?", 
-        { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" }
-    );
+    const confirmed = await appConfirm("Czy na pewno chcesz się poddać i odkryć zawodnika?", { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" });
     if (!confirmed) return;
     
-    // POBIERAMY NAZWĘ, ZEBY NIE BYŁO STAREJ OSOBY (NP. KUBERY)
+    // Zabezpieczenie przed niewłaściwym graczem przy poddaniu
     const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
     serverTargetName = ans.data.name;
 
-    // Ustawiamy od razu limit 10 prób
-    guessCount = GUESS_LIMIT;
-    hintsUsedCount = 1; 
-    updateCounterDisplay();
-    updateStatsOnLoss();
-    handleLoss();
-    
+    guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss();
     document.getElementById('btnGiveUp').style.display = 'none';
+}
+
+function revealTargetInfoUI() {
+    document.getElementById('mysteryPlaceholder').style.display = 'none'; 
+    const photoImg = document.getElementById('mysteryPhoto'); 
+    photoImg.src = `images/riders/image_0.png`; 
+    photoImg.style.display = 'block';
+    document.getElementById('photoWrapper').classList.add('revealed'); 
+    
+    document.getElementById('mysteryName').innerText = serverTargetName || "???";
+    
+    if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
+    
+    document.querySelectorAll('.path-box').forEach(box => {
+        if (!box.dataset.index) return;
+        let trueClub = serverTargetClubs[box.dataset.index];
+        let cleanC = getCleanClubName(trueClub).toLowerCase(); 
+        if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
+        box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
+        box.classList.add('found'); 
+        box.setAttribute('title', trueClub);
+    });
+    
+    const endBox = document.getElementById('pathBox-retired'); 
+    if (endBox) { 
+        endBox.innerText = '❌'; 
+        endBox.classList.add('found'); 
+        endBox.style.border = 'none'; 
+        endBox.style.background = 'transparent'; 
+    }
 }
 
 
