@@ -1286,7 +1286,7 @@ async function initGame() {
         serverTargetStatus = response.data.status; 
         serverTargetStats = response.data.targetStats;
         serverTargetId = response.data.targetId;
-        serverTargetName = response.data.targetName;
+        serverTargetName = response.data.targetName; // TUTAJ ZAPISUJEMY IMIĘ!
         
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
@@ -1447,8 +1447,10 @@ async function makeGuess() {
     try {
         const checkGuessFunc = functions.httpsCallable('checkGuess');
         const response = await checkGuessFunc({
-            guessedPlayerName: guessedPlayerLocal.name, // Wysyłamy string z imieniem
-            targetName: serverTargetName,               // Wysyłamy cel jako string!
+            guessedPlayerId: guessedPlayerLocal.id,
+            guessedPlayerName: guessedPlayerLocal.name, 
+            targetId: serverTargetId,
+            targetName: serverTargetName,               
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
@@ -1457,9 +1459,15 @@ async function makeGuess() {
         });
 
         const result = response.data;
-        console.log(`[FRONT] isWin: ${result.isWin}, Cel: ${serverTargetName}, Strzał: ${guessedPlayerLocal.name}`);
         
-        currentTargetInfo = result.targetStats || currentTargetInfo;
+        // OSTATECZNE ZABEZPIECZENIE (Frontend Override)
+        const isWinningGuess = result.isWin || 
+            (serverTargetName && serverTargetName.trim().toLowerCase() === guessedPlayerLocal.name.trim().toLowerCase());
+
+        console.log(`[FRONT] isWin serwer: ${result.isWin} | isWin WYMUSZONY: ${isWinningGuess} | Cel: ${serverTargetName} | Strzał: ${guessedPlayerLocal.name}`);
+        
+        let statsToRender = isWinningGuess ? serverTargetStats : result.targetStats;
+        currentTargetInfo = statsToRender || currentTargetInfo;
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
@@ -1473,11 +1481,7 @@ async function makeGuess() {
         guessCount++; 
         updateCounterDisplay(); 
         
-        // POTĘŻNE ZABEZPIECZENIE: Używamy twardego ID zawodnika zamiast ciągów znaków
-        // Zabezpiecza to przed wszelkimi błędami wynikającymi z polskich znaków / powtórzeń
-        const isWinningGuess = result.isWin || (String(result.targetId) === String(guessedPlayerLocal.id));
-
-        renderGuess(guessedPlayerLocal, result.targetStats, false, isWinningGuess); 
+        renderGuess(guessedPlayerLocal, statsToRender, false, isWinningGuess); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
@@ -1490,27 +1494,14 @@ async function makeGuess() {
             document.getElementById('btnGiveUp').style.display = 'inline-block';
         }
 
-        // Aktualizacja znaków podpowiedzi po pudle
         if (hintActive && !isWinningGuess && result.hintText) {
             document.getElementById('mysteryName').innerText = result.hintText;
         }
 
         if (isWinningGuess) { 
-            // Pobierz imię zwycięzcy dopiero gdy wygramy
-            const ans = await functions.httpsCallable('getAnswer')({ 
-                targetId: serverTargetId,
-                gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId 
-            });
-            serverTargetName = ans.data.name;
             updateStatsOnWin(); 
             setTimeout(() => handleWin(), 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
-            // Pobierz imię przy porażce (gdy 10 prób)
-            const ans = await functions.httpsCallable('getAnswer')({ 
-                targetId: serverTargetId,
-                gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId 
-            });
-            serverTargetName = ans.data.name;
             updateStatsOnLoss(); 
             setTimeout(handleLoss, 1400); 
         }
@@ -1528,10 +1519,6 @@ async function giveUpGame() {
     const confirmed = await appConfirm("Czy na pewno chcesz się poddać i odkryć zawodnika?", { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" });
     if (!confirmed) return;
     
-    // Zabezpieczenie przed niewłaściwym graczem przy poddaniu
-    const ans = await functions.httpsCallable('getAnswer')({ targetId: serverTargetId, gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
-    serverTargetName = ans.data.name;``
-
     guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss();
     document.getElementById('btnGiveUp').style.display = 'none';
 }
