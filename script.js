@@ -1479,8 +1479,10 @@ async function makeGuess() {
 
         console.log(`[FRONT] isWin serwer: ${result.isWin} | isWin WYMUSZONY: ${isWinningGuess} | Cel: ${serverTargetName} | Strzał: ${guessedPlayerLocal.name}`);
         
-        let statsToRender = isWinningGuess ? serverTargetStats : result.targetStats;
-        currentTargetInfo = statsToRender || currentTargetInfo;
+        // ZMIANA: Zawsze używamy oryginalnych statystyk z początku gry! 
+        // Ignorujemy "result.targetStats" od serwera, bo bywają błędne.
+        let statsToRender = serverTargetStats;
+        currentTargetInfo = serverTargetStats;
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
