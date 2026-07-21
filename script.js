@@ -1340,8 +1340,15 @@ async function initGame() {
 // Przywracanie wpisanych zawodników w niezakończonej grze Daily
 function restoreInProgressDaily() {
     isRestoring = true; 
-    buildTeamPath(); // Najpierw budujemy czystą ścieżkę z pytajnikami
     
+    // Pobieramy target z sejfu (lub awaryjnie go generujemy)
+    let target = _unlockTarget();
+    if (!target && gameMode === 'daily') {
+        target = _generateDailyTarget(selectedDailyDay);
+        _lockTarget(target.id);
+    }
+    
+    buildTeamPath(); 
     const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
     pastGuesses.forEach(pName => { 
@@ -1349,17 +1356,12 @@ function restoreInProgressDaily() {
         if(p) { 
             guessCount++; 
             guessedPlayersNames.push(p.name); 
-            renderGuess(p, null, true); // True oznacza że przywracamy (nie grają dźwięki)
-            
-            // KLUCZOWY MOMENT: Wywołujemy funkcję sprawdzającą, która na bieżąco 
-            // odkrywa kluby na górnym pasku na podstawie przywróconego zawodnika!
+            renderGuess(p, target, true); // Przekazujemy target!
             revealClubsOnPath(p); 
         } 
     });
     
     updateCounterDisplay(); 
-    
-    // Przywrócenie widoczności przycisków pomocniczych, jeśli gracz zdążył do nich dojść w trakcie tej gry
     if (guessCount >= 5 && !hintActive) document.getElementById('btnHint').style.display = 'inline-block';
     if (guessCount >= 7) document.getElementById('btnGiveUp').style.display = 'inline-block';
     
@@ -1522,20 +1524,23 @@ async function giveUpGame() {
 }
 
 
-function revealTargetInfoUI() {
+function revealTargetInfoUI(finalName) {
+    let target = _unlockTarget();
+    if (!target && gameMode === 'daily') target = _generateDailyTarget(selectedDailyDay);
+
     document.getElementById('mysteryPlaceholder').style.display = 'none'; 
     const photoImg = document.getElementById('mysteryPhoto'); 
     photoImg.src = `images/riders/image_0.png`; 
     photoImg.style.display = 'block';
     document.getElementById('photoWrapper').classList.add('revealed'); 
     
-    document.getElementById('mysteryName').innerText = serverTargetName || "???";
+    document.getElementById('mysteryName').innerText = finalName || (target ? target.name : "???");
     
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     
     document.querySelectorAll('.path-box').forEach(box => {
-        if (!box.dataset.index) return;
-        let trueClub = serverTargetClubs[box.dataset.index];
+        if (!box.dataset.index || !target) return;
+        let trueClub = target.pastClubs[box.dataset.index]; // Zamiast serverTargetClubs
         let cleanC = getCleanClubName(trueClub).toLowerCase(); 
         if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
         box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
@@ -1582,48 +1587,46 @@ function revealClubsOnPath(guessedPlayer) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
-function renderGuess(player, currentStats = null, isRestore = false, isWinningGuess = false) {
-    const stats = currentStats;
-    if (!stats) return;
+function renderGuess(player, target, isRestore = false, isWinningGuess = false) {
+    if (!target) return;
 
     const resultsDiv = document.getElementById('results'); 
     const row = document.createElement('div'); row.className = 'guess-row'; let rowEmojis = "";
     
-    const isTargetGP = stats.gp === true || stats.gp === "Tak" || stats.gp === "tak";
+    const isTargetGP = target.gp === true || target.gp === "Tak" || target.gp === "tak";
     const isGuessGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
     const gpCls = (isGuessGP === isTargetGP) ? "green" : "red"; const gpIcon = isGuessGP ? "✅" : "❌";
     
-    const yearCls = (player.year === stats.year) ? "green" : "red";
+    const yearCls = (player.year === target.year) ? "green" : "red";
     let yearTitle = "";
-    if (player.year > stats.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
-    else if (player.year < stats.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
+    if (player.year > target.year) yearTitle = "Szukany zawodnik jest starszy (urodził się wcześniej)";
+    else if (player.year < target.year) yearTitle = "Szukany zawodnik jest młodszy (urodził się później)";
     else yearTitle = "Dokładnie ten sam rocznik!";
 
     let yearContent = `<span>${player.year}</span>`;
-    if (player.year > stats.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
-    else if (player.year < stats.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
+    if (player.year > target.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬇️</span>`; 
+    else if (player.year < target.year) yearContent += `<span class="val-arrow" title="${yearTitle}">⬆️</span>`;
 
-    const dmpCls = (player.dmp === stats.dmp) ? "green" : "red";
+    const dmpCls = (player.dmp === target.dmp) ? "green" : "red";
     let dmpContent = `<span>${player.dmp}</span>`;
-    if (player.dmp > stats.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; 
-    else if (player.dmp < stats.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
+    if (player.dmp > target.dmp) dmpContent += `<span class="val-arrow" title="Mniej medali">⬇️</span>`; 
+    else if (player.dmp < target.dmp) dmpContent += `<span class="val-arrow" title="Więcej medali">⬆️</span>`;
 
     const pCountries = player.country.split("/").map(c => c.trim()); 
-    const tCountries = (stats.country || "").split("/").map(c => c.trim());
+    const tCountries = (target.country || "").split("/").map(c => c.trim());
     let countryCls = "red"; 
-    if (player.country === stats.country) countryCls = "green"; 
+    if (player.country === target.country) countryCls = "green"; 
     else if (pCountries.some(c => tCountries.includes(c))) countryCls = "half"; 
-    else if (player.region === stats.region) countryCls = "yellow";
+    else if (player.region === target.region) countryCls = "yellow";
     
     let c1 = countryToCode[pCountries[0]] || 'pl';
     let countryContent = pCountries.length > 1 
         ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
         : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-    let targetCleanClubs = serverTargetClubs.map(getCleanClubName);
+    let targetCleanClubs = target.pastClubs.map(getCleanClubName); // Zamiast serverTargetClubs
     let clubsHTML = player.pastClubs.map(c => {
         let cleanC = getCleanClubName(c); 
-        // BARDZO WAŻNA LINIA PONIŻEJ! Upewnia się, że nie mruga zielonym kolorem jeśli to pudło!
         let isMatch = isWinningGuess || targetCleanClubs.includes(cleanC); 
         let matchClass = isMatch ? 'club-match' : 'club-dim';
         let isSpecial = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC); 
@@ -1639,7 +1642,7 @@ function renderGuess(player, currentStats = null, isRestore = false, isWinningGu
         <div class="col-attr" title="${yearTitle}"><div class="attr-box ${yearCls} flip-anim" style="animation-delay: ${d2}s">${yearContent}</div></div>
         <div class="col-attr"><div class="attr-box ${gpCls} flip-anim" style="animation-delay: ${d3}s; font-size: 24px;">${gpIcon}</div></div>
         <div class="col-attr"><div class="attr-box ${dmpCls} flip-anim" style="animation-delay: ${d4}s">${dmpContent}</div></div>
-        <div class="col-attr"><div class="attr-box ${player.status === stats.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
+        <div class="col-attr"><div class="attr-box ${player.status === target.status ? 'green' : 'red'} flip-anim" style="animation-delay: ${d5}s">${player.status === 'Aktywny' ? '✅' : '❌'}</div></div>
         <div class="col-clubs flip-anim" style="animation-delay: ${d6}s"><div class="clubs-path-container">${clubsHTML}</div></div>
     `;
     resultsDiv.insertBefore(row, resultsDiv.firstChild);
@@ -1649,10 +1652,10 @@ function renderGuess(player, currentStats = null, isRestore = false, isWinningGu
     ['country', 'year', 'gp', 'dmp', 'status'].forEach(attr => {
         let c = "red";
         if (attr === 'country') c = countryCls; 
-        else if (attr === 'year' && player.year === stats.year) c = "green"; 
+        else if (attr === 'year' && player.year === target.year) c = "green"; 
         else if (attr === 'gp' && isGuessGP === isTargetGP) c = "green"; 
-        else if (attr === 'dmp' && player.dmp === stats.dmp) c = "green"; 
-        else if (attr === 'status' && player.status === stats.status) c = "green";
+        else if (attr === 'dmp' && player.dmp === target.dmp) c = "green"; 
+        else if (attr === 'status' && player.status === target.status) c = "green";
         rowEmojis += c === "green" ? "🟩" : (c === "yellow" || c === "half") ? "🟨" : "🟥";
     });
     guessHistory.push(rowEmojis);
