@@ -964,20 +964,65 @@ window.onload = async function() {
             return; 
         }
 
-         // 3. BANNER INFORMACYJNY (Pulsący, nie blokujący klikania)
+        // 3. BANNER INFORMACYJNY (Elegancki, pulsujący, nieblokujący klikania)
         if (configResponse.data && configResponse.data.infoMode === true) {
-            // Dodajemy style animacji jeśli ich nie ma
+            
+            // Dodajemy nowoczesne style CSS
             if (!document.getElementById('infoPulseAnim')) {
                 const style = document.createElement('style');
                 style.id = 'infoPulseAnim';
-                style.innerHTML = `@keyframes infoPulse { 0% { opacity: 0.8; background:rgba(201, 204, 6, 0.9); } 50% { opacity: 1; background:rgb(165, 141, 3); text-shadow: 0 0 5px rgba(255,255,255,0.5); } 100% { opacity: 0.8; background:rgba(141, 120, 3, 0.9); } }`;
+                style.innerHTML = `
+                    @keyframes infoSlideDown {
+                        0% { transform: translate(-50%, -50px); opacity: 0; }
+                        100% { transform: translate(-50%, 15px); opacity: 1; }
+                    }
+                    @keyframes infoGlow {
+                        0% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+                        50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); }
+                        100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+                    }
+                    .modern-info-banner {
+                        position: fixed;
+                        top: 0;
+                        left: 50%;
+                        transform: translate(-50%, 15px);
+                        background: rgba(20, 20, 25, 0.9);
+                        backdrop-filter: blur(8px);
+                        border: 1px solid #f1c40f;
+                        color: #eaeaea;
+                        padding: 10px 20px;
+                        border-radius: 30px;
+                        font-size: 13px;
+                        font-weight: 500;
+                        text-align: left;
+                        z-index: 999999;
+                        pointer-events: none;
+                        animation: infoSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, infoGlow 2s infinite ease-in-out;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        max-width: 90%;
+                        width: fit-content;
+                        line-height: 1.4;
+                    }
+                    .modern-info-banner b {
+                        color: #f1c40f;
+                        letter-spacing: 0.5px;
+                    }
+                    .modern-info-icon {
+                        font-size: 20px;
+                        filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.8));
+                    }
+                `;
                 document.head.appendChild(style);
             }
 
             const banner = document.createElement('div');
-            banner.innerHTML = "⚠️ <b>UWAGA!</b> Osoby, które zagrały dziś w Daily i przez błąd nie zaliczyły wyniku, mogą ponownie zagrać w Daily. Wystarczy odświeżyć stronę.";
-            // cssText dodaje wygląd na sztywno + pointer-events: none (klikanie przechodzi przez banner)
-            banner.style.cssText = "position:fixed; top:0; left:0; width:100%; background:rgba(201, 204, 6, 0.9); color:white; text-align:center; padding:6px 10px; font-size:11px; font-weight:400; z-index:999999; pointer-events:none; animation: infoPulse 2s infinite; letter-spacing: 0.5px; border-bottom: 2px solid #ff4d4d;";
+            banner.className = 'modern-info-banner';
+            banner.innerHTML = `
+                <div class="modern-info-icon">💡</div> 
+                <div><b>INFORMACJA:</b> Osoby, którym przez błąd nie zaliczyło dziś gry Daily, mogą zagrać ponownie. Wystarczy odświeżyć stronę!</div>
+            `;
             document.body.appendChild(banner);
         }
         
