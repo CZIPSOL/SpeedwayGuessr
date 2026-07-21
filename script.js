@@ -1,4 +1,50 @@
 // ==============================================
+// ====== SEJF ZAWODNIKA (ZABEZPIECZENIE) =======
+// ==============================================
+let _gVault = null; // Zmienna przechowująca zaszyfrowany klucz
+
+// Szyfruje ID gracza (wzór matematyczny + Base64)
+function _lockTarget(playerId) {
+    const salted = (playerId * 13) + 77;
+    _gVault = btoa(salted.toString());
+}
+
+// Odszyfrowuje i zwraca obiekt gracza tylko wtedy, gdy gra tego potrzebuje
+function _unlockTarget() {
+    if (!_gVault) return null;
+    const unsalted = (parseInt(atob(_gVault)) - 77) / 13;
+    return playersDB.find(p => p.id === unsalted);
+}
+
+// Generator gracza Daily
+function _generateDailyTarget(dayNumber) {
+    let seed = (Number(dayNumber) || 1) * 73891247;
+    let x = seed;
+    for (let i = 0; i < 12; i++) {
+        x = Math.imul(x ^ (x >>> 30), 0x6D2B79F5);
+        x = x ^ (x >>> 27);
+        x = Math.imul(x, 0xA2E8D4C3);
+    }
+    return playersDB[Math.abs(x) % playersDB.length];
+}
+
+function _getSafeHint(name, currentGuessCount) {
+    if (!name) return "";
+    const parts = name.split(' ');
+    let result = [];
+    parts.forEach((part, partIndex) => {
+        let word = "";
+        for (let i = 0; i < part.length; i++) {
+            if (partIndex === 0 && i === 0 && currentGuessCount >= 5) word += part[i];
+            else if (partIndex === 1 && i === 0 && currentGuessCount >= 6) word += part[i];
+            else word += "_";
+        }
+        result.push(word.split('').join('\u200A'));
+    });
+    return result.join(' \u00A0\u00A0 ');
+}
+
+// ==============================================
 // ====== ZMIENNE GLOBALNE I KONFIGURACJA =======
 // ==============================================
 
@@ -1243,13 +1289,6 @@ function resetBoardAndPlay() {
 
 function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.floor(x); }
 
-// ==============================================
-// ====== SEJF ZAWODNIKA (ANTI-PODGLĄDANIE)======
-// ==============================================
-let currentEncTarget = null; // Token szyfrowy celu
-let serverTargetClubs = [];
-let serverTargetStatus = "";
-let serverTargetStats = null;
 
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
@@ -1258,58 +1297,44 @@ async function initGame() {
     if (!modeDisplay || !controls || !inputSec) return;
 
     inputSec.style.display = 'none'; 
-    document.getElementById('mysteryName').innerText = "Ładowanie gry...";
 
+    let target;
     if (gameMode === 'daily') {
         controls.style.display = 'flex'; 
         dailyNumberGlobal = getDailyDateString(selectedDailyDay);
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
+        target = _generateDailyTarget(selectedDailyDay);
     } else {
         controls.style.display = 'none';
         modeDisplay.innerText = i18n[currentLang].modeEndless;
-    }
-
-    try {
-        const initGameDataFunc = functions.httpsCallable('initGameData');
-        const response = await initGameDataFunc({ 
-            gameMode: gameMode, 
-            dailyDay: selectedDailyDay
-        });
-
-        // W endless zapisujemy zaszyfrowany Token w histori, żeby nie trafić dwa razy tego samego
-        if (gameMode === 'endless') {
-            if (!userStats.recentEndless) userStats.recentEndless = [];
-            if (userStats.recentEndless.includes(response.data.encId)) {
-                return initGame(); 
-            } else {
-                userStats.recentEndless.push(response.data.encId);
-                if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
-                saveStats();
-            }
-        }
-
-        serverTargetClubs = response.data.pastClubs; 
-        serverTargetStatus = response.data.status; 
-        serverTargetStats = response.data.targetStats; 
-        currentEncTarget = response.data.encId; // Pobieramy i zapisujemy szyfr
         
-        if (gameMode === 'daily') {
-            if (userStats.dailyResults[selectedDailyDay]) { 
-                restorePlayedGame(); return; 
-            } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) { 
-                inputSec.style.display = 'block'; restoreInProgressDaily(); return; 
-            }
+        // Endless losuje na froncie i odrzuca zawodników z historii
+        if (!userStats.recentEndless) userStats.recentEndless = [];
+        let validTarget = false;
+        while (!validTarget) {
+            target = playersDB[Math.floor(Math.random() * playersDB.length)];
+            if (!userStats.recentEndless.includes(target.id)) validTarget = true;
         }
-
-        buildTeamPath(); 
-        setupAutocomplete(); 
-        updateCounterDisplay(); 
-        document.getElementById('mysteryName').innerText = "???"; 
-        inputSec.style.display = 'block'; 
-
-    } catch (e) { 
-        showToast("Błąd połączenia z serwerem", "error"); 
+        userStats.recentEndless.push(target.id);
+        if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
+        saveStats();
     }
+
+    _lockTarget(target.id); // Zamykamy gracza w sejfie
+
+    if (gameMode === 'daily') {
+        if (userStats.dailyResults[selectedDailyDay]) { 
+            restorePlayedGame(); return; 
+        } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) { 
+            inputSec.style.display = 'block'; restoreInProgressDaily(); return; 
+        }
+    }
+
+    buildTeamPath(); 
+    setupAutocomplete(); 
+    updateCounterDisplay(); 
+    document.getElementById('mysteryName').innerText = "???"; 
+    inputSec.style.display = 'block'; 
 }
 
 // Przywracanie wpisanych zawodników w niezakończonej grze Daily
@@ -1341,18 +1366,13 @@ function restoreInProgressDaily() {
     isRestoring = false;
 }
 
-async function restorePlayedGame() {
+function restorePlayedGame() {
     isRestoring = true; 
-    buildTeamPath(); 
-    const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
-    let finalName = "???";
-    let targetStats = null;
-    try {
-        const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
-        finalName = ans.data.name;
-        targetStats = ans.data.stats; 
-    } catch(e) { console.error(e); }
+    const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
+    const target = _generateDailyTarget(selectedDailyDay);
+    _lockTarget(target.id);
+    buildTeamPath(); 
 
     if (pastGuesses.length === 0) { 
         document.getElementById('results').innerHTML = `<div style="text-align: center; margin-top: 30px; color: var(--text-dim); font-weight: 600;">Brak zapisu dla tego dnia.</div>`; 
@@ -1362,7 +1382,7 @@ async function restorePlayedGame() {
             if(p) { 
                 guessCount++; 
                 guessedPlayersNames.push(p.name); 
-                renderGuess(p, targetStats, true); 
+                renderGuess(p, target, true); 
                 revealClubsOnPath(p); 
             } 
         }); 
@@ -1371,7 +1391,7 @@ async function restorePlayedGame() {
     updateCounterDisplay(); 
     hasWon = userStats.dailyResults[selectedDailyDay] === 'win'; 
     hasLost = userStats.dailyResults[selectedDailyDay] === 'loss'; 
-    revealTargetInfoUI(finalName); 
+    revealTargetInfoUI(target.name); 
     
     document.getElementById('btnSharePost').style.display = 'inline-block'; 
     document.getElementById('btnPlayAgainPost').innerText = i18n[currentLang].btnPlayEndless; 
@@ -1379,6 +1399,7 @@ async function restorePlayedGame() {
     
     isRestoring = false;
 }
+
 
 function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ'; const noAccents = 'acelnoszzACELNOSZZ'; return str.split('').map(char => { const index = accents.indexOf(char); return index !== -1 ? noAccents[index] : char; }).join(''); }
 
@@ -1424,14 +1445,17 @@ function setupAutocomplete() {
 }
 
 function buildTeamPath() {
+    const target = _unlockTarget();
+    if (!target) return;
+    
     const pathContainer = document.getElementById('pathBoxes'); pathContainer.innerHTML = ''; 
-    serverTargetClubs.forEach((club, index) => { // ZMIANA
+    target.pastClubs.forEach((club, index) => { 
         const box = document.createElement('div'); box.className = 'path-box'; box.innerText = '?'; 
         box.dataset.index = index; 
         pathContainer.appendChild(box);
-        if (index < serverTargetClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
+        if (index < target.pastClubs.length - 1) { const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); }
     });
-    if (serverTargetStatus.toLowerCase().includes("koniec") || serverTargetStatus === "Ś.P.") { // ZMIANA
+    if (target.status.toLowerCase().includes("koniec") || target.status === "Ś.P.") { 
         const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; pathContainer.appendChild(arrow); 
         const endIcon = document.createElement('div'); endIcon.className = 'path-box'; endIcon.id = 'pathBox-retired'; endIcon.innerText = '?'; pathContainer.appendChild(endIcon); 
     }
@@ -1445,68 +1469,45 @@ async function makeGuess() {
     const guessedPlayerLocal = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
     if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
     
-    const btn = document.querySelector('.search-box button');
-    const originalBtnText = btn.innerText;
-    btn.disabled = true;
-    btn.innerText = "SPRAWDZAM...";
+    const target = _unlockTarget(); // Wyciągamy gracza na moment sprawdzenia
+    const isWinningGuess = (target.id === guessedPlayerLocal.id);
 
-    try {
-        const checkGuessFunc = functions.httpsCallable('checkGuess');
-        const response = await checkGuessFunc({
-            guessedPlayerId: guessedPlayerLocal.id,
-            encId: currentEncTarget, // Wysyłamy serwerowi szyfr
-            guessCount: guessCount
-        });
+    guessedPlayersNames.push(guessedPlayerLocal.name); 
+    playSound('guess');
+    
+    if (gameMode === 'daily') { 
+        if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
+        userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
+        saveStats(); 
+    }
+    
+    guessCount++; 
+    updateCounterDisplay(); 
+    
+    renderGuess(guessedPlayerLocal, target, false, isWinningGuess); 
+    revealClubsOnPath(guessedPlayerLocal); 
+    document.getElementById('guessInput').value = "";
+    
+    if (guessCount === 5 && !hintActive && !isWinningGuess) {
+        document.getElementById('btnHint').style.display = 'inline-block';
+        showToast("Możesz użyć podpowiedzi!", "normal");
+    }
+    if (guessCount >= 7 && !isWinningGuess) {
+        document.getElementById('btnGiveUp').style.display = 'inline-block';
+    }
 
-        const result = response.data;
-        const isWinningGuess = result.isWin;
+    if (hintActive && !isWinningGuess) {
+        document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
+    }
 
-        guessedPlayersNames.push(guessedPlayerLocal.name); 
-        playSound('guess');
-        
-        if (gameMode === 'daily') { 
-            if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
-            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
-            saveStats(); 
-        }
-        
-        guessCount++; 
-        updateCounterDisplay(); 
-        
-        // Front ZAWSZE maluje kwadraty używając swoich początkowych statsów = zero glitchy
-        renderGuess(guessedPlayerLocal, serverTargetStats, false, isWinningGuess); 
-        revealClubsOnPath(guessedPlayerLocal); 
-        document.getElementById('guessInput').value = "";
-        
-        if (guessCount === 5 && !hintActive && !isWinningGuess) {
-            document.getElementById('btnHint').style.display = 'inline-block';
-            showToast("Możesz użyć podpowiedzi!", "normal");
-        }
-        if (guessCount >= 7 && !isWinningGuess) {
-            document.getElementById('btnGiveUp').style.display = 'inline-block';
-        }
-
-        if (hintActive && !isWinningGuess && result.hintText) {
-            document.getElementById('mysteryName').innerText = result.hintText;
-        }
-
-        if (isWinningGuess) { 
-            const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
-            document.getElementById('mysteryName').innerText = ans.data.name;
-            updateStatsOnWin(); 
-            setTimeout(() => handleWin(ans.data.name), 1400); 
-        } else if (guessCount >= GUESS_LIMIT) { 
-            const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
-            document.getElementById('mysteryName').innerText = ans.data.name;
-            updateStatsOnLoss(); 
-            setTimeout(() => handleLoss(ans.data.name), 1400); 
-        }
-
-    } catch(e) {
-        showToast("Błąd serwera. Spróbuj ponownie.", "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = originalBtnText;
+    if (isWinningGuess) { 
+        document.getElementById('mysteryName').innerText = target.name;
+        updateStatsOnWin(); 
+        setTimeout(() => handleWin(target.name), 1400); 
+    } else if (guessCount >= GUESS_LIMIT) { 
+        document.getElementById('mysteryName').innerText = target.name;
+        updateStatsOnLoss(); 
+        setTimeout(() => handleLoss(target.name), 1400); 
     }
 }
 
@@ -1515,10 +1516,11 @@ async function giveUpGame() {
     const confirmed = await appConfirm("Czy na pewno chcesz się poddać i odkryć zawodnika?", { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" });
     if (!confirmed) return;
     
-    const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
-    guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss(ans.data.name);
+    const target = _unlockTarget();
+    guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss(target.name);
     document.getElementById('btnGiveUp').style.display = 'none';
 }
+
 
 function revealTargetInfoUI() {
     document.getElementById('mysteryPlaceholder').style.display = 'none'; 
@@ -1551,28 +1553,23 @@ function revealTargetInfoUI() {
 }
 
 
-async function useHint() {
+function useHint() {
     if (hintActive) return;
+    const target = _unlockTarget();
     hintActive = true; hintsUsedCount = 1;
     document.getElementById('btnHint').style.display = 'none'; 
-    showToast("Pobieram podpowiedź...", "normal");
-    
-    try {
-        const ans = await functions.httpsCallable('getHint')({ encId: currentEncTarget, guessCount });
-        document.getElementById('mysteryName').innerText = ans.data.hintText;
-        showToast("Użyto podpowiedzi!", "success");
-    } catch(e) {
-        showToast("Błąd pobierania podpowiedzi", "error"); hintActive = false; document.getElementById('btnHint').style.display = 'inline-block';
-    }
+    document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
+    showToast("Użyto podpowiedzi!", "success");
 }
 
 function revealClubsOnPath(guessedPlayer) {
+    const target = _unlockTarget();
     const boxes = document.querySelectorAll('.path-box'); 
     let guessedClubs = guessedPlayer.pastClubs.map(getCleanClubName);
     
     boxes.forEach(box => {
         if (!box.dataset.index) return;
-        let trueClub = serverTargetClubs[box.dataset.index]; // ZMIANA
+        let trueClub = target.pastClubs[box.dataset.index];
         
         if (guessedClubs.includes(getCleanClubName(trueClub)) && box.innerText === '?') {
             let cleanC = getCleanClubName(trueClub).toLowerCase();
@@ -1581,7 +1578,7 @@ function revealClubsOnPath(guessedPlayer) {
             box.classList.add('found'); box.setAttribute('title', trueClub);        
         }
     });
-    if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (serverTargetStatus.toLowerCase().includes("koniec") || serverTargetStatus === "Ś.P.")) {
+    if ((guessedPlayer.status.toLowerCase().includes("koniec") || guessedPlayer.status === "Ś.P.") && (target.status.toLowerCase().includes("koniec") || target.status === "Ś.P.")) {
         const endBox = document.getElementById('pathBox-retired'); if (endBox) { endBox.innerText = '❌'; endBox.classList.add('found'); endBox.style.border = 'none'; endBox.style.background = 'transparent'; }
     }
 }
@@ -1677,6 +1674,7 @@ function handleLoss(finalName) {
 }
 
 function revealTargetInfoUI(finalName) {
+    const target = _unlockTarget();
     document.getElementById('mysteryPlaceholder').style.display = 'none'; 
     const photoImg = document.getElementById('mysteryPhoto'); 
     photoImg.src = `images/riders/image_0.png`; 
@@ -1689,7 +1687,7 @@ function revealTargetInfoUI(finalName) {
     
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.index) return;
-        let trueClub = serverTargetClubs[box.dataset.index];
+        let trueClub = target.pastClubs[box.dataset.index];
         let cleanC = getCleanClubName(trueClub).toLowerCase(); 
         if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
         box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
