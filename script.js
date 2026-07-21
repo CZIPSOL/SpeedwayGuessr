@@ -1246,10 +1246,10 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 // ==============================================
 // ====== SEJF ZAWODNIKA (ANTI-PODGLĄDANIE)======
 // ==============================================
-// ZMIENNE SERWEROWE
-let currentEndlessSeed = Math.random() * 10000;
+let currentEncTarget = null; // Token szyfrowy celu
 let serverTargetClubs = [];
 let serverTargetStatus = "";
+let serverTargetStats = null;
 
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
@@ -1266,7 +1266,6 @@ async function initGame() {
         modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
     } else {
         controls.style.display = 'none';
-        currentEndlessSeed = Math.floor(Math.random() * 2147483647);
         modeDisplay.innerText = i18n[currentLang].modeEndless;
     }
 
@@ -1274,25 +1273,25 @@ async function initGame() {
         const initGameDataFunc = functions.httpsCallable('initGameData');
         const response = await initGameDataFunc({ 
             gameMode: gameMode, 
-            dailyDay: selectedDailyDay, 
-            endlessSeed: currentEndlessSeed
+            dailyDay: selectedDailyDay
         });
 
-        // W Endless zapobiegamy powtórkom (zapisujemy ukryty ID tylko do historii przeglądarki)
+        // W endless zapisujemy zaszyfrowany Token w histori, żeby nie trafić dwa razy tego samego
         if (gameMode === 'endless') {
             if (!userStats.recentEndless) userStats.recentEndless = [];
-            if (userStats.recentEndless.includes(response.data.hiddenTargetId)) {
+            if (userStats.recentEndless.includes(response.data.encId)) {
                 return initGame(); 
             } else {
-                userStats.recentEndless.push(response.data.hiddenTargetId);
+                userStats.recentEndless.push(response.data.encId);
                 if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
                 saveStats();
             }
         }
 
-        // Zapisujemy TYLKO to, co gracz ma prawo widzieć (kluby i ewentualny status oznaczający koniec kariery)
         serverTargetClubs = response.data.pastClubs; 
         serverTargetStatus = response.data.status; 
+        serverTargetStats = response.data.targetStats; 
+        currentEncTarget = response.data.encId; // Pobieramy i zapisujemy szyfr
         
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
@@ -1350,9 +1349,9 @@ async function restorePlayedGame() {
     let finalName = "???";
     let targetStats = null;
     try {
-        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+        const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
         finalName = ans.data.name;
-        targetStats = ans.data.stats; // Pobieramy statystyki przywracanego zawodnika z serwera
+        targetStats = ans.data.stats; 
     } catch(e) { console.error(e); }
 
     if (pastGuesses.length === 0) { 
@@ -1453,18 +1452,14 @@ async function makeGuess() {
 
     try {
         const checkGuessFunc = functions.httpsCallable('checkGuess');
-        // Wysyłamy TYLKO nasz strzał oraz parametry sesji (seed/dailyDay). Resztą zajmuje się serwer.
         const response = await checkGuessFunc({
-            guessedPlayerName: guessedPlayerLocal.name, 
-            gameMode: gameMode,
-            dailyDay: selectedDailyDay,
-            endlessSeed: currentEndlessSeed,
+            guessedPlayerId: guessedPlayerLocal.id,
+            encId: currentEncTarget, // Wysyłamy serwerowi szyfr
             guessCount: guessCount
         });
 
         const result = response.data;
         const isWinningGuess = result.isWin;
-        const targetStatsFromServer = result.targetStats; // Serwer zwraca statystyki dopiero po strzale!
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
@@ -1478,8 +1473,8 @@ async function makeGuess() {
         guessCount++; 
         updateCounterDisplay(); 
         
-        // Renderujemy wynik bazując na statystykach bezpiecznie zwróconych z serwera dla tego strzału
-        renderGuess(guessedPlayerLocal, targetStatsFromServer, false, isWinningGuess); 
+        // Front ZAWSZE maluje kwadraty używając swoich początkowych statsów = zero glitchy
+        renderGuess(guessedPlayerLocal, serverTargetStats, false, isWinningGuess); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
@@ -1496,13 +1491,12 @@ async function makeGuess() {
         }
 
         if (isWinningGuess) { 
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
-            // Odblokowujemy i renderujemy imię dopiero przy wygranej/przegranej
+            const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
             document.getElementById('mysteryName').innerText = ans.data.name;
             updateStatsOnWin(); 
             setTimeout(() => handleWin(ans.data.name), 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
-            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
             document.getElementById('mysteryName').innerText = ans.data.name;
             updateStatsOnLoss(); 
             setTimeout(() => handleLoss(ans.data.name), 1400); 
@@ -1521,7 +1515,7 @@ async function giveUpGame() {
     const confirmed = await appConfirm("Czy na pewno chcesz się poddać i odkryć zawodnika?", { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" });
     if (!confirmed) return;
     
-    const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+    const ans = await functions.httpsCallable('getAnswer')({ encId: currentEncTarget });
     guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss(ans.data.name);
     document.getElementById('btnGiveUp').style.display = 'none';
 }
@@ -1564,7 +1558,7 @@ async function useHint() {
     showToast("Pobieram podpowiedź...", "normal");
     
     try {
-        const ans = await functions.httpsCallable('getHint')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, guessCount });
+        const ans = await functions.httpsCallable('getHint')({ encId: currentEncTarget, guessCount });
         document.getElementById('mysteryName').innerText = ans.data.hintText;
         showToast("Użyto podpowiedzi!", "success");
     } catch(e) {
