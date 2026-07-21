@@ -1239,6 +1239,7 @@ let serverTargetClubs = [];
 let serverTargetStatus = "";
 let serverTargetStats = null;
 let serverTargetName = "";
+let serverTargetId = null; //
 
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
@@ -1284,6 +1285,7 @@ async function initGame() {
         serverTargetClubs = response.data.pastClubs; 
         serverTargetStatus = response.data.status; 
         serverTargetStats = response.data.targetStats;
+        serverTargetId = response.data.targetId;
         
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
@@ -1340,7 +1342,7 @@ async function restorePlayedGame() {
     
     try {
         // Musimy też pobrać Imię z serwera, skoro gra jest zakończona
-        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+        const ans = await functions.httpsCallable('getAnswer')({ targetId: serverTargetId, gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
         serverTargetName = ans.data.name;
     } catch(e) { console.error(e); }
 
@@ -1445,6 +1447,7 @@ async function makeGuess() {
         const checkGuessFunc = functions.httpsCallable('checkGuess');
         const response = await checkGuessFunc({
             guessedPlayerId: guessedPlayerLocal.id,
+            targetId: serverTargetId,
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
@@ -1495,6 +1498,7 @@ async function makeGuess() {
         if (isWinningGuess) { 
             // Pobierz imię zwycięzcy dopiero gdy wygramy
             const ans = await functions.httpsCallable('getAnswer')({ 
+                targetId: serverTargetId,
                 gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId 
             });
             serverTargetName = ans.data.name;
@@ -1503,6 +1507,7 @@ async function makeGuess() {
         } else if (guessCount >= GUESS_LIMIT) { 
             // Pobierz imię przy porażce (gdy 10 prób)
             const ans = await functions.httpsCallable('getAnswer')({ 
+                targetId: serverTargetId,
                 gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId 
             });
             serverTargetName = ans.data.name;
@@ -1524,8 +1529,8 @@ async function giveUpGame() {
     if (!confirmed) return;
     
     // Zabezpieczenie przed niewłaściwym graczem przy poddaniu
-    const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
-    serverTargetName = ans.data.name;
+    const ans = await functions.httpsCallable('getAnswer')({ targetId: serverTargetId, gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+    serverTargetName = ans.data.name;``
 
     guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss();
     document.getElementById('btnGiveUp').style.display = 'none';
@@ -1569,7 +1574,7 @@ async function useHint() {
     showToast("Pobieram podpowiedź...", "normal");
     
     try {
-        const ans = await functions.httpsCallable('getHint')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, guessCount, playerId });
+        const ans = await functions.httpsCallable('getAnswer')({ targetId: serverTargetId, gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
         document.getElementById('mysteryName').innerText = ans.data.hintText;
         showToast("Użyto podpowiedzi!", "success");
     } catch(e) {
