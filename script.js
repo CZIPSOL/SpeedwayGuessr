@@ -1447,10 +1447,8 @@ async function makeGuess() {
     try {
         const checkGuessFunc = functions.httpsCallable('checkGuess');
         const response = await checkGuessFunc({
-            guessedPlayerId: guessedPlayerLocal.id,
-            guessedPlayerName: guessedPlayerLocal.name, // <--- DODANO
-            targetId: serverTargetId,
-            targetName: serverTargetName, // <--- DODANO (Wymuszamy na serwerze kogo ma sprawdzić!)
+            guessedPlayerName: guessedPlayerLocal.name, // Wysyłamy string z imieniem
+            targetName: serverTargetName,               // Wysyłamy cel jako string!
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
@@ -1459,12 +1457,8 @@ async function makeGuess() {
         });
 
         const result = response.data;
+        console.log(`[FRONT] isWin: ${result.isWin}, Cel: ${serverTargetName}, Strzał: ${guessedPlayerLocal.name}`);
         
-        // Zabezpieczenie danych na wypadek gdyby serwer coś poprawił
-        serverTargetId = result.targetId;
-        serverTargetName = result.targetName;
-        
-        console.log(`[FRONT] isWin z serwera: ${result.isWin}, Cel: ${serverTargetName}`);
         currentTargetInfo = result.targetStats || currentTargetInfo;
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
