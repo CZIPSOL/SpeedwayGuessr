@@ -54,7 +54,7 @@ let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2024-01-01T00:00:00');
+const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; // Wpłynie na pozycję w rankingu
