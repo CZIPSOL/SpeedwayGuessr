@@ -963,6 +963,23 @@ window.onload = async function() {
             if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
             return; 
         }
+
+         // 3. BANNER INFORMACYJNY (Pulsący, nie blokujący klikania)
+        if (configResponse.data && configResponse.data.infoMode === true) {
+            // Dodajemy style animacji jeśli ich nie ma
+            if (!document.getElementById('infoPulseAnim')) {
+                const style = document.createElement('style');
+                style.id = 'infoPulseAnim';
+                style.innerHTML = `@keyframes infoPulse { 0% { opacity: 0.8; background:rgba(201, 204, 6, 0.9); } 50% { opacity: 1; background:rgb(165, 141, 3); text-shadow: 0 0 5px rgba(255,255,255,0.5); } 100% { opacity: 0.8; background:rgba(141, 120, 3, 0.9); } }`;
+                document.head.appendChild(style);
+            }
+
+            const banner = document.createElement('div');
+            banner.innerHTML = "⚠️ <b>UWAGA!</b> Osoby, które zagrały dziś w Daily i przez błąd nie zaliczyły wyniku, mogą ponownie zagrać w Daily. Wystarczy odświeżyć stronę.";
+            // cssText dodaje wygląd na sztywno + pointer-events: none (klikanie przechodzi przez banner)
+            banner.style.cssText = "position:fixed; top:0; left:0; width:100%; background:rgba(201, 204, 6, 0.9); color:white; text-align:center; padding:6px 10px; font-size:11px; font-weight:400; z-index:999999; pointer-events:none; animation: infoPulse 2s infinite; letter-spacing: 0.5px; border-bottom: 2px solid #ff4d4d;";
+            document.body.appendChild(banner);
+        }
         
         if (configResponse.data && configResponse.data.maintenanceMode === true && isAdmin) {
             setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
