@@ -1286,6 +1286,7 @@ async function initGame() {
         serverTargetStatus = response.data.status; 
         serverTargetStats = response.data.targetStats;
         serverTargetId = response.data.targetId;
+        serverTargetName = response.data.targetName;
         
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
@@ -1447,7 +1448,9 @@ async function makeGuess() {
         const checkGuessFunc = functions.httpsCallable('checkGuess');
         const response = await checkGuessFunc({
             guessedPlayerId: guessedPlayerLocal.id,
+            guessedPlayerName: guessedPlayerLocal.name, // <--- DODANO
             targetId: serverTargetId,
+            targetName: serverTargetName, // <--- DODANO (Wymuszamy na serwerze kogo ma sprawdzić!)
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
@@ -1455,9 +1458,12 @@ async function makeGuess() {
             guessCount: guessCount
         });
 
-
-
         const result = response.data;
+        
+        // Zabezpieczenie danych na wypadek gdyby serwer coś poprawił
+        serverTargetId = result.targetId;
+        serverTargetName = result.targetName;
+        
         console.log(`[FRONT] isWin z serwera: ${result.isWin}, Cel: ${serverTargetName}`);
         currentTargetInfo = result.targetStats || currentTargetInfo;
 
