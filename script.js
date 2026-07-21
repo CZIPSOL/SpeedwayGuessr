@@ -1250,9 +1250,6 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 let currentEndlessSeed = Math.random() * 10000;
 let serverTargetClubs = [];
 let serverTargetStatus = "";
-let serverTargetStats = null;
-let serverTargetName = "";
-let serverTargetId = null; //
 
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
@@ -1281,25 +1278,21 @@ async function initGame() {
             endlessSeed: currentEndlessSeed
         });
 
-        // --- ZABEZPIECZENIE PRZED POWTÓRKAMI W ENDLESS NA FRONCIE ---
+        // W Endless zapobiegamy powtórkom (zapisujemy ukryty ID tylko do historii przeglądarki)
         if (gameMode === 'endless') {
             if (!userStats.recentEndless) userStats.recentEndless = [];
-            
-            // Jeśli wylosowało zawodnika z ostatnich 50 gier - powtórz losowanie!
-            if (userStats.recentEndless.includes(response.data.targetId)) {
+            if (userStats.recentEndless.includes(response.data.hiddenTargetId)) {
                 return initGame(); 
             } else {
-                userStats.recentEndless.push(response.data.targetId);
+                userStats.recentEndless.push(response.data.hiddenTargetId);
                 if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
                 saveStats();
             }
         }
 
+        // Zapisujemy TYLKO to, co gracz ma prawo widzieć (kluby i ewentualny status oznaczający koniec kariery)
         serverTargetClubs = response.data.pastClubs; 
         serverTargetStatus = response.data.status; 
-        serverTargetStats = response.data.targetStats;
-        serverTargetId = response.data.targetId;
-        serverTargetName = response.data.targetName; // TUTAJ ZAPISUJEMY IMIĘ!
         
         if (gameMode === 'daily') {
             if (userStats.dailyResults[selectedDailyDay]) { 
@@ -1354,10 +1347,12 @@ async function restorePlayedGame() {
     buildTeamPath(); 
     const pastGuesses = userStats.dailyGuesses[selectedDailyDay] || [];
     
+    let finalName = "???";
+    let targetStats = null;
     try {
-        // Musimy też pobrać Imię z serwera, skoro gra jest zakończona
-        const ans = await functions.httpsCallable('getAnswer')({ targetId: serverTargetId, gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
-        serverTargetName = ans.data.name;
+        const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+        finalName = ans.data.name;
+        targetStats = ans.data.stats; // Pobieramy statystyki przywracanego zawodnika z serwera
     } catch(e) { console.error(e); }
 
     if (pastGuesses.length === 0) { 
@@ -1368,8 +1363,7 @@ async function restorePlayedGame() {
             if(p) { 
                 guessCount++; 
                 guessedPlayersNames.push(p.name); 
-                // Podajemy null jako drugi argument, aby renderGuess pobrało zaktualizowane serverTargetStats
-                renderGuess(p, null, true); 
+                renderGuess(p, targetStats, true); 
                 revealClubsOnPath(p); 
             } 
         }); 
@@ -1378,7 +1372,7 @@ async function restorePlayedGame() {
     updateCounterDisplay(); 
     hasWon = userStats.dailyResults[selectedDailyDay] === 'win'; 
     hasLost = userStats.dailyResults[selectedDailyDay] === 'loss'; 
-    revealTargetInfoUI(); 
+    revealTargetInfoUI(finalName); 
     
     document.getElementById('btnSharePost').style.display = 'inline-block'; 
     document.getElementById('btnPlayAgainPost').innerText = i18n[currentLang].btnPlayEndless; 
@@ -1459,30 +1453,18 @@ async function makeGuess() {
 
     try {
         const checkGuessFunc = functions.httpsCallable('checkGuess');
+        // Wysyłamy TYLKO nasz strzał oraz parametry sesji (seed/dailyDay). Resztą zajmuje się serwer.
         const response = await checkGuessFunc({
-            guessedPlayerId: guessedPlayerLocal.id,
             guessedPlayerName: guessedPlayerLocal.name, 
-            targetId: serverTargetId,
-            targetName: serverTargetName,               
             gameMode: gameMode,
             dailyDay: selectedDailyDay,
             endlessSeed: currentEndlessSeed,
-            playerId: playerId,
             guessCount: guessCount
         });
 
         const result = response.data;
-        
-        // OSTATECZNE ZABEZPIECZENIE (Frontend Override)
-        const isWinningGuess = result.isWin || 
-            (serverTargetName && serverTargetName.trim().toLowerCase() === guessedPlayerLocal.name.trim().toLowerCase());
-
-        console.log(`[FRONT] isWin serwer: ${result.isWin} | isWin WYMUSZONY: ${isWinningGuess} | Cel: ${serverTargetName} | Strzał: ${guessedPlayerLocal.name}`);
-        
-        // ZMIANA: Zawsze używamy oryginalnych statystyk z początku gry! 
-        // Ignorujemy "result.targetStats" od serwera, bo bywają błędne.
-        let statsToRender = serverTargetStats;
-        currentTargetInfo = serverTargetStats;
+        const isWinningGuess = result.isWin;
+        const targetStatsFromServer = result.targetStats; // Serwer zwraca statystyki dopiero po strzale!
 
         guessedPlayersNames.push(guessedPlayerLocal.name); 
         playSound('guess');
@@ -1496,11 +1478,11 @@ async function makeGuess() {
         guessCount++; 
         updateCounterDisplay(); 
         
-        renderGuess(guessedPlayerLocal, statsToRender, false, isWinningGuess); 
+        // Renderujemy wynik bazując na statystykach bezpiecznie zwróconych z serwera dla tego strzału
+        renderGuess(guessedPlayerLocal, targetStatsFromServer, false, isWinningGuess); 
         revealClubsOnPath(guessedPlayerLocal); 
         document.getElementById('guessInput').value = "";
         
-        // ZARZĄDZANIE PODPOWIEDZIAMI
         if (guessCount === 5 && !hintActive && !isWinningGuess) {
             document.getElementById('btnHint').style.display = 'inline-block';
             showToast("Możesz użyć podpowiedzi!", "normal");
@@ -1514,11 +1496,16 @@ async function makeGuess() {
         }
 
         if (isWinningGuess) { 
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            // Odblokowujemy i renderujemy imię dopiero przy wygranej/przegranej
+            document.getElementById('mysteryName').innerText = ans.data.name;
             updateStatsOnWin(); 
-            setTimeout(() => handleWin(), 1400); 
+            setTimeout(() => handleWin(ans.data.name), 1400); 
         } else if (guessCount >= GUESS_LIMIT) { 
+            const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+            document.getElementById('mysteryName').innerText = ans.data.name;
             updateStatsOnLoss(); 
-            setTimeout(handleLoss, 1400); 
+            setTimeout(() => handleLoss(ans.data.name), 1400); 
         }
 
     } catch(e) {
@@ -1534,7 +1521,8 @@ async function giveUpGame() {
     const confirmed = await appConfirm("Czy na pewno chcesz się poddać i odkryć zawodnika?", { title: "Poddajesz się?", danger: true, confirmText: "TAK, PODDAJĘ SIĘ" });
     if (!confirmed) return;
     
-    guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss();
+    const ans = await functions.httpsCallable('getAnswer')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed });
+    guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss(ans.data.name);
     document.getElementById('btnGiveUp').style.display = 'none';
 }
 
@@ -1576,7 +1564,7 @@ async function useHint() {
     showToast("Pobieram podpowiedź...", "normal");
     
     try {
-        const ans = await functions.httpsCallable('getAnswer')({ targetId: serverTargetId, gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, playerId });
+        const ans = await functions.httpsCallable('getHint')({ gameMode, dailyDay: selectedDailyDay, endlessSeed: currentEndlessSeed, guessCount });
         document.getElementById('mysteryName').innerText = ans.data.hintText;
         showToast("Użyto podpowiedzi!", "success");
     } catch(e) {
@@ -1604,7 +1592,7 @@ function revealClubsOnPath(guessedPlayer) {
     }
 }
 function renderGuess(player, currentStats = null, isRestore = false, isWinningGuess = false) {
-    const stats = currentStats || serverTargetStats; 
+    const stats = currentStats;
     if (!stats) return;
 
     const resultsDiv = document.getElementById('results'); 
@@ -1679,30 +1667,29 @@ function renderGuess(player, currentStats = null, isRestore = false, isWinningGu
     guessHistory.push(rowEmojis);
 }
 
-function handleWin() {
-    playSound('win'); revealTargetInfoUI(); launchConfetti();
+function handleWin(finalName) {
+    playSound('win'); revealTargetInfoUI(finalName); launchConfetti();
     const overlay = document.getElementById('winOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
     const btnPlayAgainPost = document.getElementById('btnPlayAgainPost');
     if (gameMode === 'daily') { document.getElementById('btnSharePost').style.display = 'inline-block'; btnPlayAgainPost.innerText = i18n[currentLang].btnPlayEndless; } else { document.getElementById('btnSharePost').style.display = 'none'; btnPlayAgainPost.innerText = i18n[currentLang].btnPlayAgain; }
     setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; document.getElementById('postGameActions').style.display = 'flex'; }, 200); }, 1500);
 }
 
-function handleLoss() {
-    playSound('lose'); revealTargetInfoUI();
+function handleLoss(finalName) {
+    playSound('lose'); revealTargetInfoUI(finalName);
     const overlay = document.getElementById('loseOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
     document.getElementById('btnSharePost').style.display = 'none'; document.getElementById('btnPlayAgainPost').innerText = gameMode === 'daily' ? i18n[currentLang].btnPlayEndless : i18n[currentLang].btnPlayAgain;
     setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; document.getElementById('postGameActions').style.display = 'flex'; }, 200); }, 1500);
 }
 
-function revealTargetInfoUI() {
+function revealTargetInfoUI(finalName) {
     document.getElementById('mysteryPlaceholder').style.display = 'none'; 
     const photoImg = document.getElementById('mysteryPhoto'); 
     photoImg.src = `images/riders/image_0.png`; 
     photoImg.style.display = 'block';
     document.getElementById('photoWrapper').classList.add('revealed'); 
     
-    // TUTAJ BYŁ BŁĄD - poprawione:
-    document.getElementById('mysteryName').innerText = serverTargetName || "???";
+    document.getElementById('mysteryName').innerText = finalName || "???";
     
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     
