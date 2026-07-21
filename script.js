@@ -883,30 +883,43 @@ const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.s
 window.onload = async function() { 
     setRandomBackground();
     
-    // === SPRAWDZANIE PRZERWY TECHNICZNEJ ===
+    // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
     try {
-        // Sprawdzamy czy w adresie URL jest tajne hasło administratora
         const urlParams = new URLSearchParams(window.location.search);
-        const isAdmin = urlParams.get('admin') === 'czipsol'; // TU ZNAJDUJE SIĘ TAJNE HASŁO
+        const isAdmin = urlParams.get('admin') === 'czipsol'; 
 
         const getConfigFunc = functions.httpsCallable('getConfig');
         const configResponse = await getConfigFunc();
         
-        // Jeśli jest przerwa, a Ty NIE masz tajnego linku: zablokuj.
+        // 1. BANNER O PRACACH NA ŻYWO (Pulsący, nie blokujący klikania)
+        if (configResponse.data && configResponse.data.warningMode === true) {
+            // Dodajemy style animacji jeśli ich nie ma
+            if (!document.getElementById('warningPulseAnim')) {
+                const style = document.createElement('style');
+                style.id = 'warningPulseAnim';
+                style.innerHTML = `@keyframes warningPulse { 0% { opacity: 0.8; background:rgba(220, 38, 38, 0.9); } 50% { opacity: 1; background:rgba(185, 28, 28, 1); text-shadow: 0 0 5px rgba(255,255,255,0.5); } 100% { opacity: 0.8; background:rgba(220, 38, 38, 0.9); } }`;
+                document.head.appendChild(style);
+            }
+
+            const banner = document.createElement('div');
+            banner.innerHTML = "⚠️ <b>UWAGA!</b> Trwają prace serwisowe (na serwerze). Niektóre funkcje gry mogą tymczasowo nie działać. Cały czas pracujemy nad naprawą, za utrudnienia przepraszamy! 🛠️";
+            // cssText dodaje wygląd na sztywno + pointer-events: none (klikanie przechodzi przez banner)
+            banner.style.cssText = "position:fixed; top:0; left:0; width:100%; background:rgba(220, 38, 38, 0.9); color:white; text-align:center; padding:6px 10px; font-size:11px; font-weight:400; z-index:999999; pointer-events:none; animation: warningPulse 2s infinite; letter-spacing: 0.5px; border-bottom: 2px solid #ff4d4d;";
+            document.body.appendChild(banner);
+        }
+
+        // 2. CAŁKOWITA PRZERWA TECHNICZNA
         if (configResponse.data && configResponse.data.maintenanceMode === true && !isAdmin) {
             document.getElementById('maintenanceOverlay').style.display = 'block';
             document.getElementById('maintenanceOverlay').style.opacity = '1';
             
             if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
             if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-            return; // Zatrzymuje dalsze ładowanie gry
+            return; 
         }
         
-        // Opcjonalnie: Jeśli jesteś adminem podczas przerwy, wywal tosta z info
         if (configResponse.data && configResponse.data.maintenanceMode === true && isAdmin) {
-            setTimeout(() => {
-                showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success");
-            }, 1000);
+            setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
         }
         
     } catch(e) {
