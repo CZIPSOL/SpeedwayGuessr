@@ -88,7 +88,16 @@
     <div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal modal-sm">
             <h2 class="text-accent mb-20" data-i18n="account">TWÓJ PROFIL</h2>
-            
+
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="font-size: 14px; color: var(--text-dim); margin-bottom: 10px;">POWIĄZANE KONTA</h3>
+                
+            <!-- DISCORD -->
+                <button id="btnLinkDiscord" onclick="startDiscordLinking()" class="menu-btn" style="background-color: #5865F2; padding: 10px; width: 100%; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM
+                </button>
+            </div>
             <!-- KONTO GOOGLE -->
             <div class="setting-block google-block">
                 <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google w-100" data-i18n="btnLoginGoogle">
@@ -96,6 +105,8 @@
                 </button>
                 <div id="userInfoDisplayProfile" class="user-info-text text-green text-xs font-bold mt-10" style="display:none;"></div>
             </div>
+
+            
 
             <!-- ZMIANA NICKU -->
             <div class="setting-block mb-25 w-100">
@@ -260,7 +271,12 @@
                 <span onclick="openSuggestion()" data-i18n="missingRider">💡 Brak zawodnika?</span>
                 <span onclick="openBugReport()" style="color:var(--red-neon);" data-i18n="reportBug">🐛 Zgłoś błąd</span>
             </div>
+            <a href="LINK_DO_ZAPROSZENIA_DISCORD" target="_blank" class="menu-btn discord-btn" style="background-color: #5865F2; color: white;">
+                <span class="btn-icon">👾</span>
+                <span class="btn-text">DOŁĄCZ DO DISCORDA</span>
+            </a>
         </div>
+        
 
         <!-- PRAWA STRONA: Leaderboard wbudowany w menu -->
         <div class="desktop-right">
@@ -302,7 +318,7 @@
         </div>
 
         <h1 class="game-title">Speedway Guessr</h1>
-        <p class="alpha-tag">Alpha ver. 1.1.0</p>
+        <p class="alpha-tag">BETA ver. 1.0.0</p>
         <h2 class="menu-subtitle" data-i18n="subtitle">Edycja Żużlowa</h2>
         
         <!-- NOWA KARTA DAILY -->
@@ -343,6 +359,10 @@
             <button onclick="openSuggestion()" class="utility-btn hint-hover">💡 Brak zawodnika?</button>
             <button onclick="openBugReport()" class="utility-btn bug-hover">🐛 Zgłoś Błąd</button>
         </div>
+        <a href="LINK_DO_ZAPROSZENIA_DISCORD" target="_blank" class="menu-btn discord-btn" style="background-color: #5865F2; color: white;">
+            <span class="btn-icon">👾</span>
+            <span class="btn-text">DOŁĄCZ DO DISCORDA</span>
+        </a>
     </div>
 
 

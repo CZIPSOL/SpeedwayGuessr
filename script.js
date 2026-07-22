@@ -54,7 +54,7 @@ let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
+const DAILY_START_DATE = new Date('2024-01-01T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; // Wpłynie na pozycję w rankingu
@@ -466,6 +466,68 @@ async function syncLeagueScoreToFirebase() {
         }, { merge: true });
     } catch (e) { console.error('League leaderboard sync error:', e); }
 }
+
+// --- SYSTEM ŁĄCZENIA Z DISCORDEM ---
+
+const DISCORD_CLIENT_ID_FRONTEND = "1529508407441100840";
+// UWAGA: Musi być dokładnie ten sam, z ukosnikiem na końcu!
+const DISCORD_REDIRECT_URI = encodeURIComponent("https://speedwayguessr.firebaseapp.com/"); 
+
+function startDiscordLinking() {
+    if (!auth.currentUser) {
+        appAlert("Musisz być najpierw zalogowany w grze (Google), aby połączyć konto Discord!", "Błąd");
+        return;
+    }
+    
+    // Generujemy link logowania i otwieramy go na tej samej karcie
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID_FRONTEND}&redirect_uri=${DISCORD_REDIRECT_URI}&response_type=code&scope=identify`;
+    window.location.href = authUrl; 
+}
+
+// Ta funkcja uruchomi się sama, gdy strona załaduje się ponownie po powrocie z Discorda
+async function handleDiscordCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+
+    if (code) {
+        // Czyścimy link, żeby kod zniknął z paska adresu
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        if (!auth.currentUser) {
+            // Jeśli Firebase jeszcze nie zdążył załadować sesji gracza, czekamy chwilę
+            setTimeout(() => handleDiscordCallback(), 1000);
+            return;
+        }
+
+        showToast("Łączenie z kontem Discord... ⏳", "normal");
+
+        try {
+            const linkFunc = functions.httpsCallable('linkDiscordAccount');
+            const response = await linkFunc({ code: code });
+            
+            if (response.data.success) {
+                appAlert(`Pomyślnie połączono z kontem Discord: ${response.data.discordUsername}! 👾\nTwoje rangi ligowe będą teraz aktualizowane na serwerze!`, "Sukces");
+                userStats.discordLinked = true;
+                userStats.discordUsername = response.data.discordUsername;
+                saveStats();
+            }
+        } catch (error) {
+            console.error(error);
+            appAlert("Wystąpił problem przy łączeniu konta. Spróbuj ponownie później.", "Błąd");
+        }
+    }
+}
+
+// Dodajemy nasłuchiwacz, aby zawsze sprawdzić, czy nie wracamy właśnie z logowania
+window.addEventListener('load', () => {
+    // Sprawdza callback tylko jeśli w linku jest "?code="
+    if (window.location.search.includes('code=')) {
+        // Czekamy na załadowanie auth Firebase
+        auth.onAuthStateChanged((user) => {
+            if (user) handleDiscordCallback();
+        });
+    }
+});
 
 function openProfile() {
     document.getElementById('profileStatPlayed').innerText = userStats.played; 
@@ -937,20 +999,65 @@ window.onload = async function() {
         const getConfigFunc = functions.httpsCallable('getConfig');
         const configResponse = await getConfigFunc();
         
-        // 1. BANNER O PRACACH NA ŻYWO (Pulsący, nie blokujący klikania)
+        // 1. BANNER O PRACACH NA ŻYWO (Elegancki, pulsujący na czerwono, nieblokujący klikania)
         if (configResponse.data && configResponse.data.warningMode === true) {
-            // Dodajemy style animacji jeśli ich nie ma
+            
+            // Dodajemy nowoczesne style CSS dla wersji ostrzegawczej
             if (!document.getElementById('warningPulseAnim')) {
                 const style = document.createElement('style');
                 style.id = 'warningPulseAnim';
-                style.innerHTML = `@keyframes warningPulse { 0% { opacity: 0.8; background:rgba(220, 38, 38, 0.9); } 50% { opacity: 1; background:rgba(185, 28, 28, 1); text-shadow: 0 0 5px rgba(255,255,255,0.5); } 100% { opacity: 0.8; background:rgba(220, 38, 38, 0.9); } }`;
+                style.innerHTML = `
+                    @keyframes warningSlideDown {
+                        0% { transform: translate(-50%, -50px); opacity: 0; }
+                        100% { transform: translate(-50%, 15px); opacity: 1; }
+                    }
+                    @keyframes warningGlow {
+                        0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); }
+                        50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); }
+                        100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); }
+                    }
+                    .modern-warning-banner {
+                        position: fixed;
+                        top: 0;
+                        left: 50%;
+                        transform: translate(-50%, 15px);
+                        background: rgba(20, 20, 25, 0.9);
+                        backdrop-filter: blur(8px);
+                        border: 1px solid #dc2626;
+                        color: #eaeaea;
+                        padding: 10px 20px;
+                        border-radius: 30px;
+                        font-size: 13px;
+                        font-weight: 500;
+                        text-align: left;
+                        z-index: 999999;
+                        pointer-events: none;
+                        animation: warningSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, warningGlow 2s infinite ease-in-out;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        max-width: 90%;
+                        width: fit-content;
+                        line-height: 1.4;
+                    }
+                    .modern-warning-banner b {
+                        color: #ff4d4d;
+                        letter-spacing: 0.5px;
+                    }
+                    .modern-warning-icon {
+                        font-size: 20px;
+                        filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.8));
+                    }
+                `;
                 document.head.appendChild(style);
             }
 
             const banner = document.createElement('div');
-            banner.innerHTML = "⚠️ <b>UWAGA!</b> Trwają prace serwisowe (na serwerze). Niektóre funkcje gry mogą tymczasowo nie działać. Cały czas pracujemy nad naprawą, za utrudnienia przepraszamy! 🛠️";
-            // cssText dodaje wygląd na sztywno + pointer-events: none (klikanie przechodzi przez banner)
-            banner.style.cssText = "position:fixed; top:0; left:0; width:100%; background:rgba(220, 38, 38, 0.9); color:white; text-align:center; padding:6px 10px; font-size:11px; font-weight:400; z-index:999999; pointer-events:none; animation: warningPulse 2s infinite; letter-spacing: 0.5px; border-bottom: 2px solid #ff4d4d;";
+            banner.className = 'modern-warning-banner';
+            banner.innerHTML = `
+                <div class="modern-warning-icon">⚠️</div> 
+                <div><b>PRACE SERWISOWE:</b> Trwają prace nad serwerem. Niektóre funkcje mogą tymczasowo nie działać. Przepraszamy za utrudnienia! 🛠️</div>
+            `;
             document.body.appendChild(banner);
         }
 
@@ -2393,7 +2500,16 @@ async function updateLeagueStats(gameData) {
     updateLeagueUI();
     
     appAlert(`Mecz ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`, "Mecz ligowy");
+ 
+    try {
+        const updateDiscord = functions.httpsCallable('updateDiscordRank');
+        updateDiscord({ elo: league.elo, matchesPlayed: league.matchesPlayed })
+            .then(res => console.log("Status Discord:", res.data))
+            .catch(e => console.error("Discord Sync Error", e));
+    } catch(e) {}
+    // ----------------------------
 }
+
 // LOCAL MULTIPLAYER:
 let isLocalClash = false;
 let localClashData = null;
