@@ -362,6 +362,7 @@ async function syncStatsFromFirebase() {
             ensureLeagueStats(userStats);
             localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
             updateLeagueUI();
+            updateDiscordButtonUI();
         }
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
 }
@@ -485,6 +486,30 @@ function startDiscordLinking() {
     window.location.href = authUrl; 
 }
 
+// Aktualizuje wygląd przycisku Discorda w Profilu
+function updateDiscordButtonUI() {
+    const btn = document.getElementById('btnLinkDiscord');
+    if (!btn) return;
+
+    if (userStats.discordLinked && userStats.discordUsername) {
+        // Jeśli połączono: Zmień na zielony i zablokuj klikanie
+        btn.innerHTML = `<span style="font-size: 18px;">✅</span> POŁĄCZONO: ${userStats.discordUsername}`;
+        btn.style.background = "rgba(46, 204, 113, 0.15)"; 
+        btn.style.border = "1px solid #2ecc71";
+        btn.style.color = "#2ecc71";
+        btn.style.cursor = "default";
+        btn.onclick = () => { showToast("Konto jest już połączone!", "normal"); };
+    } else {
+        // Jeśli nie połączono: Domyślny, fioletowy przycisk
+        btn.innerHTML = `<span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM`;
+        btn.style.background = "#5865F2";
+        btn.style.border = "none";
+        btn.style.color = "white";
+        btn.style.cursor = "pointer";
+        btn.onclick = startDiscordLinking;
+    }
+}
+
 async function handleDiscordCallback(savedCode = null) {
     const urlParams = new URLSearchParams(window.location.search);
     const code = savedCode || urlParams.get('code');
@@ -529,6 +554,7 @@ async function handleDiscordCallback(savedCode = null) {
                 userStats.discordLinked = true;
                 userStats.discordUsername = response.data.discordUsername;
                 saveStats();
+                updateDiscordButtonUI();
             }
         } catch (error) {
             console.error("Szczegóły błędu łączenia:", error);
@@ -1180,6 +1206,7 @@ function loadStats() {
         ensureLeagueStats(userStats);
     }
     ensureLeagueStats(userStats);
+    updateDiscordButtonUI();
     
     setTimeout(() => {
         syncLeagueScoreToFirebase();
