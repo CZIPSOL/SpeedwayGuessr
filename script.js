@@ -2880,9 +2880,14 @@ function listenToClashRoom() {
         }
         const data = doc.data();
         currentClashData = data;
-        clashStatus = data.status; clashTurn = data.turn; clashBoardState = data.board;
-        clashGuessedPlayers = data.guessedPlayers || []; clashRows = data.rows; clashCols = data.cols;
+        clashStatus = data.status; 
+        clashTurn = data.turn; 
+        clashBoardState = data.board;
+        clashGuessedPlayers = data.guessedPlayers || []; 
+        clashRows = data.rows; 
+        clashCols = data.cols;
 
+        // Renderowanie nagłówków klubów (osi X i Y)
         for (let i = 0; i < 3; i++) {
             const colHeader = document.getElementById(`col${i}`);
             if (colHeader) {
@@ -2896,6 +2901,7 @@ function listenToClashRoom() {
             if (rowHeader) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
         }
 
+        // Aktualizacja ligi na zakończenie meczu
         if (data.status === 'summary' && data.type === 'league' && !window.hasUpdatedLeague) {
             updateLeagueStats(data);
         }
@@ -2903,6 +2909,8 @@ function listenToClashRoom() {
         if (clashStatus === 'waiting') {
             if (data.p2) {
                 isSearchingLeague = false;
+                
+                // Pancerne chowanie okna szukania na PC i Telefonach
                 ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop'].forEach(id => {
                     let el = document.getElementById(id);
                     if(el) { el.style.display = 'none'; el.style.opacity = '0'; }
@@ -2925,9 +2933,9 @@ function listenToClashRoom() {
                     p2ReadyStatus.innerText = data.p2Ready ? `🔵 ${data.p2.nick} (Gotowy)` : `🔵 ${data.p2.nick}`;
                 }
 
-                // HOST LOGIC (zabezpieczenie przed dublowaniem wysyłki)
+                // HOST LOGIC (zabezpieczenie przed dublowaniem wysyłki vsScreen)
                 if (data.type === 'league' && myClashColor === 'red' && !window.vsScreenTriggered) {
-                    window.vsScreenTriggered = true; // Zabezpieczenie frontu
+                    window.vsScreenTriggered = true; 
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                     if (data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(() => {});
                 }
@@ -2961,21 +2969,28 @@ function listenToClashRoom() {
         }
 
         // ==========================================================
-        // 🚨 MAGICZNY FIX: ODPALAMY ANIMACJE TYLKO RAZ DLA DANEGO EKRANU 
+        // OSTATECZNY FIX WIZUALNY: ZAWSZE RYSYJEMY PLANSZĘ
+        // To sprawia, że ostatni (wygrywający) punkt zostanie narysowany na ekranie
+        // zanim zdąży wysunąć się duże okienko "Wygrał X".
         // ==========================================================
+        if (clashStatus === 'playing' || clashStatus === 'summary') {
+            updateClashBoardUI(data); 
+        }
+
+        // Odpalamy okna animowane i przejścia ekranów tylko RAZ
         if (clashStatus !== window.lastRenderedClashStatus) {
             window.lastRenderedClashStatus = clashStatus; 
             
             if(clashStatus === 'vsScreen') showVsScreen(data);
             if(clashStatus === 'coinToss') playCoinToss(data);
-            if(clashStatus === 'playing') updateClashBoardUI(data);
             
+            // Logika końca gry
             if(clashStatus === 'summary') {
-                updateClashBoardUI(data); // <--- DODAJ TĄ LINIJKĘ! Wymusza narysowanie OSTATNIEGO ruchu na planszy!
-                
                 const summaryOverlay = document.getElementById('clashSummaryOverlay');
                 if (summaryOverlay && summaryOverlay.style.display === 'none') {
-                    handleClashEnd(data);
+                    // Lekkie 500ms opóźnienie, aby narysowany sekundę wcześniej "zwycięski kafel" 
+                    // wybrzmiał, zanim okienko go zasłoni!
+                    setTimeout(() => { handleClashEnd(data); }, 500);
                 }
             }
         }
@@ -3082,13 +3097,15 @@ function playCoinToss(data) {
 function updateClashBoardUI(data) {
     const clashContainer = document.getElementById('clashContainer');
     if (!clashContainer) return;
-    
-    // Upewniamy się, że jesteśmy w widoku Clasha
-    setElementDisplay('mainMenuContainer', 'none');
-    setElementDisplay('gameContainer', 'none');
-    setElementDisplay('clashModeSelectContainer', 'none');
-    setElementDisplay('clashLobbyContainer', 'none');
-    setElementDisplay('clashContainer', 'block');
+
+    // Zabezpieczenie: Jeśli oglądamy planszę PO MECZU, nie mieszaj w oknach
+    if (clashStatus !== 'viewing') {
+        setElementDisplay('mainMenuContainer', 'none');
+        setElementDisplay('gameContainer', 'none');
+        setElementDisplay('clashModeSelectContainer', 'none');
+        setElementDisplay('clashLobbyContainer', 'none');
+        setElementDisplay('clashContainer', 'block');
+    }
     
     closeClashSearch();
 
@@ -3113,18 +3130,27 @@ function updateClashBoardUI(data) {
     updateClashTurnUI();
     
     // ===================================
-    // BLOKOWANIE UI JEŚLI TO TYLKO PODGLĄD
+    // BLOKOWANIE TIMERA W PODGLĄDZIE / NA KOŃCU
     // ===================================
     if (clashStatus === 'viewing' || clashStatus === 'summary') {
         document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
         document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
         if(clashTimerInterval) clearInterval(clashTimerInterval);
-        return; // Zatrzymuje zegary i komunikaty
+        return; // WAŻNE: Tu musi być return, by uciąć funkcję
     }
 
-    if(clashTurn === myClashColor || isLocalClash) { document.getElementById('clashTimerDisplay').style.color = '#00ff66'; playSound('flip'); } 
-    else { document.getElementById('clashTimerDisplay').style.color = '#fff'; }
+    if(clashTurn === myClashColor || isLocalClash) { 
+        document.getElementById('clashTimerDisplay').style.color = '#00ff66'; 
+        // Dźwięk pikania tylko dla Hosta w localu lub gdy zmienia się nasza tura online
+        if (isLocalClash || (window.lastTurnColor !== clashTurn)) {
+            playSound('flip');
+            window.lastTurnColor = clashTurn;
+        }
+    } else { 
+        document.getElementById('clashTimerDisplay').style.color = '#fff'; 
+    }
 
+    // Tost z błędem wroga
     if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
         setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
         if (isLocalClash) {
@@ -3132,12 +3158,14 @@ function updateClashBoardUI(data) {
         } else {
             db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
         }
-    } else if (data.turn === myClashColor && clashStatus === 'playing') {
+    } else if (data.turn === myClashColor && clashStatus === 'playing' && window.lastTurnColor !== clashTurn) {
         showToast("TWÓJ RUCH!", "normal");
     }
 
     startClashTimer(data.deadline);
 }
+
+
 let lastHeartbeatSecond = -1; // Zmienna zapobiegająca nakładaniu się dźwięku
 
 function startClashTimer(deadlineTime) {
