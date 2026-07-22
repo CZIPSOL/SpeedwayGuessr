@@ -2894,7 +2894,18 @@ function listenToClashRoom() {
         }
 
         if (clashStatus === 'waiting') {
+            // JEŚLI JEST PRZECIWNIK W POKOJU:
             if (data.p2) {
+                
+                // ====================================================================
+                // 🚨 NATYCHMIASTOWE UBICIE OKIENKA WYSZUKIWANIA DLA HOSTA 🚨
+                // ====================================================================
+                isSearchingLeague = false;
+                ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop'].forEach(id => {
+                    let el = document.getElementById(id);
+                    if(el) { el.style.display = 'none'; el.style.opacity = '0'; }
+                });
+
                 const waitingText = document.getElementById('waitingText');
                 if (waitingText) waitingText.style.display = 'none';
                 const readyPlayersDiv = document.getElementById('readyPlayersDiv');
@@ -2912,6 +2923,7 @@ function listenToClashRoom() {
                     p2ReadyStatus.innerText = data.p2Ready ? `🔵 ${data.p2.nick} (Gotowy)` : `🔵 ${data.p2.nick}`;
                 }
 
+                // Logika Hosta (uruchamiana, gdy kogoś znajdzie)
                 if (data.type === 'league' && myClashColor === 'red') {
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                     if (data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(() => {});
