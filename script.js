@@ -470,8 +470,6 @@ async function syncLeagueScoreToFirebase() {
 // --- SYSTEM ŁĄCZENIA Z DISCORDEM ---
 
 const DISCORD_CLIENT_ID_FRONTEND = "1529508407441100840";
-// UWAGA: Musi być dokładnie ten sam, z ukosnikiem na końcu!
-const DISCORD_REDIRECT_URI = encodeURIComponent("https://speedwayguessr.pl/"); 
 
 function startDiscordLinking() {
     if (!auth.currentUser) {
@@ -479,31 +477,40 @@ function startDiscordLinking() {
         return;
     }
     
-    // Generujemy link logowania i otwieramy go na tej samej karcie
-    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID_FRONTEND}&redirect_uri=${DISCORD_REDIRECT_URI}&response_type=code&scope=identify`;
+    // Dynamiczny adres (zawsze poprawny, z www lub bez)
+    let currentUrl = window.location.origin + "/";
+    let dynamicRedirectUri = encodeURIComponent(currentUrl);
+    
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID_FRONTEND}&redirect_uri=${dynamicRedirectUri}&response_type=code&scope=identify`;
     window.location.href = authUrl; 
 }
 
-// Ta funkcja uruchomi się sama, gdy strona załaduje się ponownie po powrocie z Discorda
-async function handleDiscordCallback() {
+async function handleDiscordCallback(savedCode = null) {
     const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
+    const code = savedCode || urlParams.get('code');
 
     if (code) {
-        // Czyścimy link, żeby kod zniknął z paska adresu
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
         if (!auth.currentUser) {
-            // Jeśli Firebase jeszcze nie zdążył załadować sesji gracza, czekamy chwilę
-            setTimeout(() => handleDiscordCallback(), 1000);
+            // Jeśli Firebase jeszcze nie odzyskał sesji po przeładowaniu strony, czekamy i próbujemy znów
+            setTimeout(() => handleDiscordCallback(code), 500);
             return;
         }
 
+        // Gdy już jesteśmy na 100% pewni, że gracz jest zalogowany, czyścimy pasek adresu
+        window.history.replaceState({}, document.title, window.location.pathname);
         showToast("Łączenie z kontem Discord... ⏳", "normal");
 
         try {
+            // WYMUSZAMY odświeżenie sesji Firebase przed kontaktem z serwerem (naprawia błąd 401)
+            await auth.currentUser.getIdToken(true);
+
             const linkFunc = functions.httpsCallable('linkDiscordAccount');
-            const response = await linkFunc({ code: code });
+            const currentUrl = window.location.origin + "/"; 
+            
+            const response = await linkFunc({ 
+                code: code,
+                redirectUri: currentUrl // Podajemy serwerowi z jakiego adresu wróciliśmy
+            });
             
             if (response.data.success) {
                 appAlert(`Pomyślnie połączono z kontem Discord: ${response.data.discordUsername}! 👾\nTwoje rangi ligowe będą teraz aktualizowane na serwerze!`, "Sukces");
@@ -512,17 +519,15 @@ async function handleDiscordCallback() {
                 saveStats();
             }
         } catch (error) {
-            console.error(error);
+            console.error("Szczegóły błędu łączenia:", error);
             appAlert("Wystąpił problem przy łączeniu konta. Spróbuj ponownie później.", "Błąd");
         }
     }
 }
 
-// Dodajemy nasłuchiwacz, aby zawsze sprawdzić, czy nie wracamy właśnie z logowania
+// Nasłuchujemy logowania Firebase'a, by odpalić funkcję
 window.addEventListener('load', () => {
-    // Sprawdza callback tylko jeśli w linku jest "?code="
     if (window.location.search.includes('code=')) {
-        // Czekamy na załadowanie auth Firebase
         auth.onAuthStateChanged((user) => {
             if (user) handleDiscordCallback();
         });
