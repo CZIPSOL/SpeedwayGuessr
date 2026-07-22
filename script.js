@@ -54,7 +54,7 @@ let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2024-01-01T00:00:00');
+const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; // Wpłynie na pozycję w rankingu
@@ -2480,7 +2480,6 @@ async function cancelLeagueMatchmaking() {
 }
 
 async function startLeagueMatchmaking() {
-    // BLOKADA MATCHMAKINGU JESLI JEST BAN
     ensureLeagueStats(userStats);
     if (Date.now() < userStats.clashLeague.banUntil) {
         const remaining = Math.ceil((userStats.clashLeague.banUntil - Date.now()) / 60000);
@@ -2492,7 +2491,6 @@ async function startLeagueMatchmaking() {
     promptForNick(async () => {
         isSearchingLeague = true;
         
-        // POKAŻ NOWY MODAL
         const overlay = document.getElementById('clashMatchmakingOverlay');
         const statusText = document.getElementById('matchmakingStatusText');
         if (overlay && statusText) {
@@ -2506,7 +2504,7 @@ async function startLeagueMatchmaking() {
             const snapshot = await queueRef.where("status", "==", "open").limit(1).get();
 
             if (!snapshot.empty && isSearchingLeague) {
-                // ZNALEZIONO ISTNIEJĄCY POKÓJ
+                // KTOŚ JUŻ CZEKA W KOLEJCE (ZNALEZIONO POKÓJ)
                 const queueDoc = snapshot.docs[0];
                 const roomData = queueDoc.data();
                 
@@ -2514,27 +2512,48 @@ async function startLeagueMatchmaking() {
                     if (statusText) statusText.innerText = "Łączenie z graczem...";
                     
                     const roomCode = roomData.roomCode;
-                    await db.collection("clash_rooms").doc(roomCode).update({
-                        p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'blue' },
-                        p2Ready: true
-                    });
-                    await queueRef.doc(queueDoc.id).update({ status: "matched", guestId: playerId });
 
-                    myClashColor = 'blue'; currentClashRoom = roomCode;
-                    listenToClashRoom();
-                    isSearchingLeague = false;
-                    
-                    // Schowaj modal bo znaleziono
-                    setTimeout(() => { if(overlay) { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); } }, 500);
-                    return;
+                    // 🚨 ZABEZPIECZENIE PRZED POKOJEM-WIDMEM 🚨
+                    try {
+                        await db.collection("clash_rooms").doc(roomCode).update({
+                            p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'blue' },
+                            p2Ready: true
+                        });
+                        
+                        await queueRef.doc(queueDoc.id).update({ status: "matched", guestId: playerId });
+
+                        myClashColor = 'blue'; currentClashRoom = roomCode;
+                        listenToClashRoom();
+                        isSearchingLeague = false;
+                        
+                        setTimeout(() => { if(overlay) { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); } }, 500);
+                        return; // Pomyślnie podłączono do istniejącego pokoju, zamykamy funkcję.
+                        
+                    } catch (updateError) {
+                        // Jeśli wyrzuciło błąd (pokój już nie istnieje mimo wpisu w kolejce)
+                        console.warn("Wykryto pokój-widmo w kolejce. Usuwam i tworzę własny...", updateError);
+                        await queueRef.doc(queueDoc.id).delete().catch(() => {}); // Kasujemy wpis zepsutego bota
+                        // Gra przejdzie po prostu niżej i wykona logikę tworzenia nowego pokoju!
+                    }
                 }
             }
 
             if (!isSearchingLeague) return; 
 
-            // NIE ZNALEZIONO, TWORZYMY NOWY POKÓJ I CZEKAMY
+            // ===========================================
+            // NIE ZNALEZIONO / LUB ZNALEZIONO POKÓJ WIDMO
+            // TWORZYMY WŁASNY NOWY POKÓJ I CZEKAMY
+            // ===========================================
+            if (statusText) statusText.innerText = "Tworzenie pokoju oczekiwania...";
             const roomCode = generateRoomCode(); myClashColor = 'red'; currentClashRoom = roomCode;
-            let allClubs = getCleanClubsList(); tryGenerateBoard(allClubs, 2, 500);
+            
+            let allClubs = getCleanClubsList(); 
+            // Najpierw szukamy 3 pasujących, jak nie to tniemy trudność do 2 pasujących (zapobiega crashom u graczy)
+            let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
+            if (!validBoard) { 
+                clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; 
+                clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; 
+            }
 
             let constraints = null;
             if (Math.random() > 0.5) {
@@ -2559,6 +2578,7 @@ async function startLeagueMatchmaking() {
             currentQueueId = queueDoc.id;
             await db.collection("clash_rooms").doc(roomCode).update({ queueId: currentQueueId });
             
+            if (statusText) statusText.innerText = "Czekamy na przeciwnika...";
             listenToClashRoom();
 
         } catch (e) {
