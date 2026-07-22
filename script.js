@@ -471,7 +471,7 @@ async function syncLeagueScoreToFirebase() {
 
 const DISCORD_CLIENT_ID_FRONTEND = "1529508407441100840";
 // UWAGA: Musi być dokładnie ten sam, z ukosnikiem na końcu!
-const DISCORD_REDIRECT_URI = encodeURIComponent("https://speedwayguessr.firebaseapp.com/"); 
+const DISCORD_REDIRECT_URI = encodeURIComponent("https://speedwayguessr.pl/"); 
 
 function startDiscordLinking() {
     if (!auth.currentUser) {
