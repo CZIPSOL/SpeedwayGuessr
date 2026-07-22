@@ -2459,12 +2459,21 @@ let currentQueueId = null;
 
 // NOWA FUNKCJA: Anulowanie wyszukiwania przez gracza
 async function cancelLeagueMatchmaking() {
-    isSearchingLeague = false;
-    const overlay = document.getElementById('clashMatchmakingOverlay');
-    if(overlay) {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.style.display = 'none', 300);
+    // Chowamy okienka wyszukiwania (mobilne i desktopowe jeśli istnieją)
+    ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop'].forEach(id => {
+        const overlay = document.getElementById(id);
+        if(overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+    });
+    
+    // JEŚLI GRA JUŻ TRWA (isSearchingLeague == false) TO NIE WYŁĄCZAJ POKOJU
+    if (!isSearchingLeague) {
+        return; 
     }
+
+    isSearchingLeague = false;
     
     if (currentQueueId) {
         await db.collection("clash_queue").doc(currentQueueId).delete().catch(()=>{});
@@ -2973,15 +2982,32 @@ async function cancelLeagueMatchmaking() {
 function showVsScreen(data) {
     if (data.type === 'league') window.hasUpdatedLeague = false;
     
-    // OSTATECZNE UBICIE OKIENKA WYSZUKIWANIA
-    const matchOverlay = document.getElementById('clashMatchmakingOverlay');
-    if(matchOverlay) { matchOverlay.style.display = 'none'; matchOverlay.style.opacity = '0'; }
-    isSearchingLeague = false; // Przerywamy status wyszukiwania (uruchamia blokadę usuwania w cancel)
+    // ====================================================
+    // PANCERNE UBICIE WSZYSTKICH OKIENEK (MOBILE ORAZ PC)
+    // ====================================================
+    isSearchingLeague = false; 
+    
+    // Lista potencjalnych ID do schowania (na wypadek, gdybyś miał osobne ID dla PC)
+    const elementsToHide = [
+        'clashMatchmakingOverlay', 
+        'clashMatchmakingOverlayDesktop', // Gdyby istniał taki na PC
+        'clashModeSelectContainer', 
+        'clashLobbyContainer', 
+        'clashContainer', 
+        'clashSummaryOverlay',
+        'mainMenuContainer',              // Chowa menu mobilne
+        'desktopMainMenu'                 // Chowa GŁÓWNE MENU PC! (To prawdopodobnie tu był problem)
+    ];
 
-    setElementDisplay('clashModeSelectContainer', 'none');
-    document.getElementById('clashLobbyContainer').style.display = 'none';
-    document.getElementById('clashContainer').style.display = 'none';
-    document.getElementById('clashSummaryOverlay').style.display = 'none'; 
+    elementsToHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.opacity = '0';
+            el.style.display = 'none';
+        }
+    });
+    // ====================================================
+
     const vsOverlay = document.getElementById('clashVsOverlay');
     
     let p1NickHTML = data.p1.nick; let p2NickHTML = data.p2.nick;
@@ -3055,6 +3081,17 @@ function updateClashBoardUI(data) {
     }
 
     updateClashTurnUI();
+    
+    // ===================================
+    // BLOKOWANIE UI JEŚLI TO TYLKO PODGLĄD
+    // ===================================
+    if (clashStatus === 'viewing' || clashStatus === 'summary') {
+        document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
+        document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
+        if(clashTimerInterval) clearInterval(clashTimerInterval);
+        return; // Zatrzymuje zegary i komunikaty
+    }
+
     if(clashTurn === myClashColor || isLocalClash) { document.getElementById('clashTimerDisplay').style.color = '#00ff66'; playSound('flip'); } 
     else { document.getElementById('clashTimerDisplay').style.color = '#fff'; }
 
@@ -3190,27 +3227,58 @@ function checkWinCondition(board, color) {
 
 async function executeValidClashMove(playerName) {
     let turnColor = isLocalClash ? clashTurn : myClashColor;
-    let newBoard = [...clashBoardState]; newBoard[clashActiveCellIdx] = turnColor;
+    let newBoard = [...clashBoardState]; 
+    newBoard[clashActiveCellIdx] = turnColor;
+    
     let newGuessed = clashGuessedPlayers.length === 9 ? [...clashGuessedPlayers] : Array(9).fill(null);
     newGuessed[clashActiveCellIdx] = playerName;
 
-    closeClashSearch(); playSound('guess');
+    closeClashSearch(); 
+    playSound('guess');
     let nextTurn = turnColor === 'red' ? 'blue' : 'red';
 
-    if(checkWinCondition(newBoard, turnColor)) {
-        if(isLocalClash) {
-            let p1Score = localClashData.score.p1 + (turnColor === 'red' ? 1 : 0);
-            let p2Score = localClashData.score.p2 + (turnColor === 'blue' ? 1 : 0);
-            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: turnColor, score: {p1: p1Score, p2: p2Score} });
+    let gameStatus = 'playing';
+    let winnerObj = null;
+
+    // 1. Sprawdzamy czy ułożono klasyczne 3 w linii
+    if (checkWinCondition(newBoard, turnColor)) {
+        gameStatus = 'summary';
+        winnerObj = turnColor;
+    } 
+    // 2. Jeśli nie ułożono 3 w linii, sprawdzamy czy CAŁA plansza jest już pełna
+    else if (!newBoard.includes(null)) {
+        gameStatus = 'summary';
+        
+        // Policz przejęte pola
+        let redCount = newBoard.filter(color => color === 'red').length;
+        let blueCount = newBoard.filter(color => color === 'blue').length;
+
+        // Wygrywa ten, kto zdominował planszę (ma więcej kratek)
+        if (redCount > blueCount) {
+            winnerObj = 'red';
+        } else if (blueCount > redCount) {
+            winnerObj = 'blue';
         } else {
-            let field = turnColor === 'red' ? 'score.p1' : 'score.p2';
-            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: turnColor, [field]: firebase.firestore.FieldValue.increment(1) });
+            // Bezpiecznik (niezwykle mało prawdopodobny na planszy 3x3)
+            winnerObj = 'draw';
         }
-    } else if (!newBoard.includes(null)) {
+    }
+
+    // --- Aktualizacja Bazy Danych ---
+    if (gameStatus === 'summary') {
         if(isLocalClash) {
-            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: 'draw' });
+            let p1Score = localClashData.score.p1;
+            let p2Score = localClashData.score.p2;
+            if (winnerObj === 'red') p1Score += 1;
+            if (winnerObj === 'blue') p2Score += 1;
+            
+            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: winnerObj, score: {p1: p1Score, p2: p2Score} });
         } else {
-            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: 'draw' });
+            let field = winnerObj === 'red' ? 'score.p1' : (winnerObj === 'blue' ? 'score.p2' : null);
+            let updatePayload = { board: newBoard, guessedPlayers: newGuessed, status: 'summary', winner: winnerObj };
+            if (field) updatePayload[field] = firebase.firestore.FieldValue.increment(1);
+            
+            await db.collection("clash_rooms").doc(currentClashRoom).update(updatePayload);
         }
     } else {
         if(isLocalClash) {
@@ -3229,6 +3297,27 @@ function skipClashTurn(reason) {
         db.collection("clash_rooms").doc(currentClashRoom).update({ turn: nextTurn, deadline: Date.now() + 120000, lastAction: reason }); 
     }
 }
+
+// --- PODGLĄD PLANSZY PO MECZU ---
+function viewClashBoard() {
+    // 1. Chowamy overlay podsumowania
+    const overlay = document.getElementById('clashSummaryOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+    
+    // 2. Chcemy uniknąć możliwości klikania i zgadywania przez gracza w podglądzie
+    clashStatus = 'viewing'; 
+    clashTurn = 'none'; // Zerujemy turę, żeby nic się nie świeciło (poza wynikiem gry)
+    
+    // 3. Pokazujemy ładny napis informujący, że to tylko podgląd
+    document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
+    document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
+}
+
+// Globalny eksport (dla onclick w HTML)
+try { window.viewClashBoard = viewClashBoard; } catch (e) {}
 
 function handleClashEnd(data) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
