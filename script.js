@@ -2941,8 +2941,43 @@ function listenToClashRoom() {
     });
 }
 
+// NOWA FUNKCJA: Anulowanie wyszukiwania przez gracza
+async function cancelLeagueMatchmaking() {
+    const overlay = document.getElementById('clashMatchmakingOverlay');
+    if(overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+    
+    // JEŚLI GRA JUŻ TRWA (isSearchingLeague == false) TO NIE WYŁĄCZAJ POKOJU, TYLKO UKRYJ EKRAN
+    if (!isSearchingLeague) {
+        return; 
+    }
+
+    isSearchingLeague = false;
+    
+    // Jeśli zamykamy przed znalezieniem: Usuwamy nasze śmieci z bazy (pokój i kolejkę)
+    if (currentQueueId) {
+        await db.collection("clash_queue").doc(currentQueueId).delete().catch(()=>{});
+        currentQueueId = null;
+    }
+    if (currentClashRoom) {
+        await db.collection("clash_rooms").doc(currentClashRoom).delete().catch(()=>{});
+        currentClashRoom = null;
+    }
+    if(clashUnsubscribe) { clashUnsubscribe(); clashUnsubscribe = null; }
+    
+    showToast("Wyszukiwanie przerwane.", "normal");
+}
+
 function showVsScreen(data) {
     if (data.type === 'league') window.hasUpdatedLeague = false;
+    
+    // OSTATECZNE UBICIE OKIENKA WYSZUKIWANIA
+    const matchOverlay = document.getElementById('clashMatchmakingOverlay');
+    if(matchOverlay) { matchOverlay.style.display = 'none'; matchOverlay.style.opacity = '0'; }
+    isSearchingLeague = false; // Przerywamy status wyszukiwania (uruchamia blokadę usuwania w cancel)
+
     setElementDisplay('clashModeSelectContainer', 'none');
     document.getElementById('clashLobbyContainer').style.display = 'none';
     document.getElementById('clashContainer').style.display = 'none';
