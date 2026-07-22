@@ -500,13 +500,19 @@ async function handleDiscordCallback(savedCode = null) {
         showToast("Łączenie z kontem Discord... ⏳", "normal");
 
         try {
-            // 1. Wymuszamy pobranie najnowszego tokena bezpieczeństwa gracza
+            // WYMUSZAMY pobranie świeżego tokena z Firebase (naprawia to błędy sesji)
             const idToken = await auth.currentUser.getIdToken(true);
+            const currentUrl = window.location.origin + "/"; 
+
+            // LOG DIAGNOSTYCZNY - Otwórz F12 i sprawdź to!
+            console.log("Przygotowanie do wysłania paczki:");
+            console.log(" - KOD: ", code ? "JEST" : "BRAK");
+            console.log(" - LINK: ", currentUrl);
+            console.log(" - TOKEN: ", idToken ? "JEST (Odebrany z Google)" : "PUSTY!");
 
             const linkFunc = functions.httpsCallable('linkDiscordAccount');
-            const currentUrl = window.location.origin + "/"; 
             
-            // 2. Przesyłamy token ręcznie wewnątrz zapytania
+            // Przesyłamy token ręcznie wewnątrz zapytania do serwera
             const response = await linkFunc({ 
                 code: code,
                 redirectUri: currentUrl,
@@ -520,8 +526,9 @@ async function handleDiscordCallback(savedCode = null) {
                 saveStats();
             }
         } catch (error) {
+            // WYŚWIETLANIE BŁĘDU PROSTO Z SERWERA
             console.error("Szczegóły błędu łączenia:", error);
-            appAlert("Wystąpił problem przy łączeniu konta. Spróbuj ponownie później.", "Błąd");
+            appAlert(`Błąd z serwera: ${error.message}`, "Błąd Systemowy");
         }
     }
 }
