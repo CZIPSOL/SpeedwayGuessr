@@ -2361,7 +2361,13 @@ function showClashMatchView() {
     setElementDisplay('postGameActions', 'none');
     setElementDisplay('clashModeSelectContainer', 'none');
     setElementDisplay('clashLobbyContainer', 'none');
-    setElementDisplay('clashContainer', 'block');
+    
+    // Gwarantujemy, że plansza się pojawi i NIE BĘDZIE przezroczysta!
+    const clashContainer = document.getElementById('clashContainer');
+    if (clashContainer) {
+        clashContainer.style.display = 'block';
+        clashContainer.style.opacity = '1'; 
+    }
 }
 
 function showClashModeView() {
@@ -2994,31 +3000,17 @@ async function cancelLeagueMatchmaking() {
 function showVsScreen(data) {
     if (data.type === 'league') window.hasUpdatedLeague = false;
     
-    // ====================================================
-    // PANCERNE UBICIE WSZYSTKICH OKIENEK (MOBILE ORAZ PC)
-    // ====================================================
     isSearchingLeague = false; 
     
-    // Lista potencjalnych ID do schowania (na wypadek, gdybyś miał osobne ID dla PC)
-    const elementsToHide = [
-        'clashMatchmakingOverlay', 
-        'clashMatchmakingOverlayDesktop', // Gdyby istniał taki na PC
-        'clashModeSelectContainer', 
-        'clashLobbyContainer', 
-        'clashContainer', 
-        'clashSummaryOverlay',
-        'mainMenuContainer',              // Chowa menu mobilne
-        'desktopMainMenu'                 // Chowa GŁÓWNE MENU PC! (To prawdopodobnie tu był problem)
-    ];
-
-    elementsToHide.forEach(id => {
+    // Delikatne chowanie okien (bez psucia widoczności planszy)
+    ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop', 'clashSummaryOverlay'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-            el.style.opacity = '0';
-            el.style.display = 'none';
-        }
+        if (el) { el.style.opacity = '0'; setTimeout(() => el.style.display = 'none', 300); }
     });
-    // ====================================================
+
+    ['clashModeSelectContainer', 'clashLobbyContainer', 'clashContainer', 'mainMenuContainer', 'desktopMainMenu'].forEach(id => {
+        setElementDisplay(id, 'none');
+    });
 
     const vsOverlay = document.getElementById('clashVsOverlay');
     
