@@ -491,25 +491,26 @@ async function handleDiscordCallback(savedCode = null) {
 
     if (code) {
         if (!auth.currentUser) {
-            // Jeśli Firebase jeszcze nie odzyskał sesji po przeładowaniu strony, czekamy i próbujemy znów
+            // Czekamy aż Firebase odzyska sesję po przeładowaniu strony
             setTimeout(() => handleDiscordCallback(code), 500);
             return;
         }
 
-        // Gdy już jesteśmy na 100% pewni, że gracz jest zalogowany, czyścimy pasek adresu
         window.history.replaceState({}, document.title, window.location.pathname);
         showToast("Łączenie z kontem Discord... ⏳", "normal");
 
         try {
-            // WYMUSZAMY odświeżenie sesji Firebase przed kontaktem z serwerem (naprawia błąd 401)
-            await auth.currentUser.getIdToken(true);
+            // 1. Wymuszamy pobranie najnowszego tokena bezpieczeństwa gracza
+            const idToken = await auth.currentUser.getIdToken(true);
 
             const linkFunc = functions.httpsCallable('linkDiscordAccount');
             const currentUrl = window.location.origin + "/"; 
             
+            // 2. Przesyłamy token ręcznie wewnątrz zapytania
             const response = await linkFunc({ 
                 code: code,
-                redirectUri: currentUrl // Podajemy serwerowi z jakiego adresu wróciliśmy
+                redirectUri: currentUrl,
+                token: idToken 
             });
             
             if (response.data.success) {
