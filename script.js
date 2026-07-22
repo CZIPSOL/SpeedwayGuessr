@@ -3459,6 +3459,27 @@ async function loadDesktopRanking(type) {
     }
 }
 
+
+// --- OBSŁUGA STOPKI (FOOTERA) ---
+
+function showPrivacyPolicy() {
+    const text = `Polityka Prywatności - Speedway Guessr\n\n1. Logowanie przez Google służy wyłącznie do zapisu postępu w grze i tworzenia globalnych rankingów.\n2. Nie udostępniamy, nie sprzedajemy i nie wykorzystujemy Twojego adresu e-mail do celów marketingowych.\n3. Twój nick z Discorda (jeśli go połączysz) jest wykorzystywany tylko do automatycznego przyznawania ról na naszym serwerze.\n4. Gra używa LocalStorage w Twojej przeglądarce do zapisywania bieżącego stanu gry i statystyk.`;
+    
+    appAlert(text, "POLITYKA PRYWATNOŚCI");
+}
+
+function showTerms() {
+    const text = `Regulamin Gry\n\n1. Speedway Guessr to fanowski, darmowy projekt tworzony z pasji do żużla.\n2. Wszelkie nazwy klubów i nazwiska zawodników użyte są wyłącznie w celach informacyjnych.\n3. Oszukiwanie w trybie ligowym (Speedway Clash) poprzez wychodzenie z gry karane jest eskalującą blokadą czasową konta.\n4. Zastrzegamy sobie prawo do banowania graczy z wulgarnymi nickami.`;
+    
+    appAlert(text, "REGULAMIN");
+}
+
+// Globalny eksport (żeby kliknięcie w footer zadziałało)
+try {
+    window.showPrivacyPolicy = showPrivacyPolicy;
+    window.showTerms = showTerms;
+} catch (e) {}
+
 // ==============================================
 // ====== OBSŁUGA KLAWIATURY (ENTER) ============
 // ==============================================

@@ -92,7 +92,7 @@
 
             <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                 <h3 style="font-size: 14px; color: var(--text-dim); margin-bottom: 10px;">POWIĄZANE KONTA</h3>
-                
+
             <!-- DISCORD -->
                 <button id="btnLinkDiscord" onclick="startDiscordLinking()" class="menu-btn" style="background-color: #5865F2; padding: 10px; width: 100%; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM
@@ -271,10 +271,13 @@
                 <span onclick="openSuggestion()" data-i18n="missingRider">💡 Brak zawodnika?</span>
                 <span onclick="openBugReport()" style="color:var(--red-neon);" data-i18n="reportBug">🐛 Zgłoś błąd</span>
             </div>
-            <a href="LINK_DO_ZAPROSZENIA_DISCORD" target="_blank" class="menu-btn discord-btn" style="background-color: #5865F2; color: white;">
-                <span class="btn-icon">👾</span>
-                <span class="btn-text">DOŁĄCZ DO DISCORDA</span>
-            </a>
+                <!-- Elegancki przycisk Discord -->
+                <a href="TUTAJ_WKLEJ_LINK_DO_SERWERA" target="_blank" class="menu-discord-btn">
+                    <svg viewBox="0 0 127.14 96.36" class="discord-svg">
+                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53.01s5.02-12.69,11.43-12.69S54,46.12,53.88,53.01C53.88,60,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53.01s5.06-12.69,11.46-12.69S96.33,46.12,96.21,53.01C96.21,60,91.17,65.69,84.69,65.69Z"/>
+                    </svg>
+                    <span>DOŁĄCZ DO DISCORDA</span>
+                </a>
         </div>
         
 
@@ -817,13 +820,19 @@
         <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
     </div>
 
-    <footer class="game-footer">
-        <div class="footer-content">
-            <div class="copyright">
-                <p>&copy; 2026 Speedway Guessr by: CZIPSOL. Wszelkie prawa zastrzeżone.</p>
-            </div>
-        </div>
-    </footer>
+<!-- Stopka (Footer) -->
+<footer class="app-footer">
+    <div class="footer-links">
+        <a href="#" onclick="showPrivacyPolicy(); return false;">Polityka Prywatności</a>
+        <span class="separator">•</span>
+        <a href="#" onclick="showTerms(); return false;">Regulamin</a>
+        <span class="separator">•</span>
+        <a href="#" onclick="openBugReport(); return false;">Kontakt (Zgłoś błąd)</a>
+    </div>
+    <div class="footer-copy">
+        &copy; 2026 Speedway Guessr by CZIPsOL. Wszelkie prawa zastrzeżone.
+    </div>
+</footer>
 
     <!-- Biblioteki Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -833,5 +842,7 @@
 
     <script src="db.js"></script>
     <script src="script.js"></script>
+
+    
 </body>
 </html>
