@@ -1922,24 +1922,134 @@ function revealTargetInfoUI(finalName) {
 
 async function shareResult() {
     if (gameMode !== 'daily') return;
-    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 1080; canvas.height = 1920;
-    const grd = ctx.createRadialGradient(540, 0, 0, 540, 0, 1920); grd.addColorStop(0, "#1e1e22"); grd.addColorStop(1, "#0a0a0c"); ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffffff"; ctx.font = "900 80px Montserrat, sans-serif"; ctx.textAlign = "center"; ctx.fillText("🏁 SPEEDWAY GUESSR", 540, 200); ctx.fillStyle = "#f1c40f"; ctx.font = "700 50px Montserrat, sans-serif"; ctx.fillText(`DAILY ${dailyNumberGlobal}`, 540, 280); ctx.fillStyle = "#ffffff"; ctx.font = "900 120px Montserrat, sans-serif";
-    const scoreText = hasWon ? `${guessCount}/${GUESS_LIMIT}` : `X/${GUESS_LIMIT}`; ctx.fillText(scoreText, 540, 450);
-    const startY = 600; const boxSize = 100; const gap = 20; const gridWidth = (5 * boxSize) + (4 * gap); const startX = (1080 - gridWidth) / 2;
+    
+    const canvas = document.createElement('canvas'); 
+    const ctx = canvas.getContext('2d'); 
+    canvas.width = 1080; 
+    canvas.height = 1920;
+    
+    // Tło
+    const grd = ctx.createRadialGradient(540, 0, 0, 540, 0, 1920); 
+    grd.addColorStop(0, "#1e1e22"); 
+    grd.addColorStop(1, "#0a0a0c"); 
+    ctx.fillStyle = grd; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Teksty (zaktualizowane do nowej domeny)
+    ctx.fillStyle = "#ffffff"; 
+    ctx.font = "900 80px Montserrat, sans-serif"; 
+    ctx.textAlign = "center"; 
+    ctx.fillText("🏁 SPEEDWAY GUESSR", 540, 200); 
+    
+    ctx.fillStyle = "#f1c40f"; 
+    ctx.font = "700 50px Montserrat, sans-serif"; 
+    ctx.fillText(`DAILY ${dailyNumberGlobal}`, 540, 280); 
+    
+    ctx.fillStyle = "#ffffff"; 
+    ctx.font = "900 120px Montserrat, sans-serif";
+    const scoreText = hasWon ? `${guessCount}/${GUESS_LIMIT}` : `X/${GUESS_LIMIT}`; 
+    ctx.fillText(scoreText, 540, 480);
+    
+    // Rysowanie kwadracików wyników (wycentrowane)
+    const boxSize = 100; 
+    const gap = 20; 
+    const maxCols = Math.max(...guessHistory.map(row => Array.from(row).filter(char => ["🟩", "🟨", "🟥"].includes(char)).length), 5); // Zabezpieczenie minimalnej szerokości
+    
+    // Obliczamy szerokość najdłuższego rzędu, by wycentrować całość
+    const startY = 650; 
     const colorMap = { "🟩": "#00ff66", "🟨": "#ffcc00", "🟥": "#ff3333" };
+    
     guessHistory.forEach((rowString, rowIndex) => {
         const rowEmojis = Array.from(rowString).filter(char => char in colorMap);
-        rowEmojis.forEach((emoji, colIndex) => { ctx.fillStyle = colorMap[emoji]; const x = startX + colIndex * (boxSize + gap); const y = startY + rowIndex * (boxSize + gap); const radius = 20; ctx.beginPath(); ctx.moveTo(x + radius, y); ctx.lineTo(x + boxSize - radius, y); ctx.quadraticCurveTo(x + boxSize, y, x + boxSize, y + radius); ctx.lineTo(x + boxSize, y + boxSize - radius); ctx.quadraticCurveTo(x + boxSize, y + boxSize, x + boxSize - radius, y + boxSize); ctx.lineTo(x + radius, y + boxSize); ctx.quadraticCurveTo(x, y + boxSize, x, y + boxSize - radius); ctx.lineTo(x, y + radius); ctx.quadraticCurveTo(x, y, x + radius, y); ctx.closePath(); ctx.fill(); });
+        const rowWidth = (rowEmojis.length * boxSize) + ((rowEmojis.length - 1) * gap);
+        const startX = (1080 - rowWidth) / 2; // Wyśrodkowanie OSOBNO każdego rzędu
+        
+        rowEmojis.forEach((emoji, colIndex) => { 
+            ctx.fillStyle = colorMap[emoji]; 
+            const x = startX + colIndex * (boxSize + gap); 
+            const y = startY + rowIndex * (boxSize + gap); 
+            const radius = 20; 
+            
+            ctx.beginPath(); 
+            ctx.moveTo(x + radius, y); 
+            ctx.lineTo(x + boxSize - radius, y); 
+            ctx.quadraticCurveTo(x + boxSize, y, x + boxSize, y + radius); 
+            ctx.lineTo(x + boxSize, y + boxSize - radius); 
+            ctx.quadraticCurveTo(x + boxSize, y + boxSize, x + boxSize - radius, y + boxSize); 
+            ctx.lineTo(x + radius, y + boxSize); 
+            ctx.quadraticCurveTo(x, y + boxSize, x, y + boxSize - radius); 
+            ctx.lineTo(x, y + radius); 
+            ctx.quadraticCurveTo(x, y, x + radius, y); 
+            ctx.closePath(); 
+            ctx.fill(); 
+        });
     });
-    ctx.fillStyle = "#8e8e93"; ctx.font = "400 30px Montserrat, sans-serif"; ctx.fillText("speedway-guessr.github.io", 540, 1850);
+    
+    // Nowy link w stopce obrazka
+    ctx.fillStyle = "#8e8e93"; 
+    ctx.font = "600 35px Montserrat, sans-serif"; 
+    ctx.fillText("speedwayguessr.pl", 540, 1820);
+
+    // Klonujemy zawartość przycisku by go wizualnie zablokować
+    const shareBtn = document.getElementById('btnSharePost');
+    const originalBtnHTML = shareBtn.innerHTML;
+    shareBtn.innerHTML = "⏳ GENEROWANIE...";
+    shareBtn.disabled = true;
+
     try {
         canvas.toBlob(async (blob) => {
-            if (!blob) { alert("Błąd generowania obrazu."); return; } const file = new File([blob], `speedway-guessr-${dailyNumberGlobal}.png`, { type: "image/png" });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: `Speedway Guessr Daily ${dailyNumberGlobal}`, text: i18n[currentLang].shareText }); } 
-            else { alert("Niestety Twoja przeglądarka nie obsługuje bezpośredniego udostępniania obrazów. \n\nZrób zrzut ekranu, aby podzielić się wynikiem na Instagramie!"); }
+            if (!blob) { 
+                appAlert("Błąd generowania obrazu.", "Błąd"); 
+                resetShareBtn(shareBtn, originalBtnHTML);
+                return; 
+            } 
+            
+            // HYBRYDOWY SYSTEM UDOSTĘPNIANIA
+            // Jeśli urządzenie obsługuje natywne kopiowanie obrazów (zwykle PC) i nie jest urządzeniem typowo mobilnym
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
+                // Kopiowanie do schowka dla komputerów (PC)
+                try {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    await navigator.clipboard.write([item]);
+                    showToast("Obrazek skopiowany do schowka! Wklej go na Discordzie (Ctrl+V)", "success");
+                } catch (e) {
+                    console.error("Clipboard API failed, fallback to native share:", e);
+                    // Fallback jeśli ktoś ma wyłączone clipboard api na PC
+                    shareViaNativeAPI(blob); 
+                }
+            } else {
+                // Udostępnianie systemowe (Telefony)
+                shareViaNativeAPI(blob);
+            }
+            
+            resetShareBtn(shareBtn, originalBtnHTML);
+
         }, "image/png");
-    } catch (error) { console.error("Error sharing:", error); alert("Wystąpił nieoczekiwany błąd podczas udostępniania."); }
+    } catch (error) { 
+        console.error("Error sharing:", error); 
+        appAlert("Wystąpił nieoczekiwany błąd podczas udostępniania.", "Błąd"); 
+        resetShareBtn(shareBtn, originalBtnHTML);
+    }
+}
+
+// Funkcja pomocnicza przywracająca wygląd przycisku po zakończeniu
+function resetShareBtn(btn, html) {
+    setTimeout(() => {
+        btn.innerHTML = html;
+        btn.disabled = false;
+    }, 1500);
+}
+
+// Funkcja pomocnicza używająca starego API na telefonach
+async function shareViaNativeAPI(blob) {
+    const file = new File([blob], `speedway-guessr-${dailyNumberGlobal}.png`, { type: "image/png" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { 
+        await navigator.share({ files: [file], title: `Speedway Guessr Daily ${dailyNumberGlobal}`, text: `Mój wynik Speedway Guessr!` }); 
+    } else { 
+        appAlert("Twoja przeglądarka nie obsługuje tej funkcji udostępniania obrazów.", "Błąd Przeglądarki"); 
+    }
 }
 
 function openRanking(defaultTab = 'daily') { 
