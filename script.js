@@ -2871,6 +2871,7 @@ async function toggleClashRematch() {
 // --- SILNIK SIECIOWY GRY ---
 function listenToClashRoom() {
     if(!currentClashRoom) return;
+    
     clashUnsubscribe = db.collection("clash_rooms").doc(currentClashRoom).onSnapshot(doc => {
         if(!doc.exists) {
             appAlert("Przeciwnik zamknął pokój.", "Speedway Clash");
@@ -2900,12 +2901,7 @@ function listenToClashRoom() {
         }
 
         if (clashStatus === 'waiting') {
-            // JEŚLI JEST PRZECIWNIK W POKOJU:
             if (data.p2) {
-                
-                // ====================================================================
-                // 🚨 NATYCHMIASTOWE UBICIE OKIENKA WYSZUKIWANIA DLA HOSTA 🚨
-                // ====================================================================
                 isSearchingLeague = false;
                 ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop'].forEach(id => {
                     let el = document.getElementById(id);
@@ -2929,13 +2925,15 @@ function listenToClashRoom() {
                     p2ReadyStatus.innerText = data.p2Ready ? `🔵 ${data.p2.nick} (Gotowy)` : `🔵 ${data.p2.nick}`;
                 }
 
-                // Logika Hosta (uruchamiana, gdy kogoś znajdzie)
-                if (data.type === 'league' && myClashColor === 'red') {
+                // HOST LOGIC (zabezpieczenie przed dublowaniem wysyłki)
+                if (data.type === 'league' && myClashColor === 'red' && !window.vsScreenTriggered) {
+                    window.vsScreenTriggered = true; // Zabezpieczenie frontu
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                     if (data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(() => {});
                 }
 
-                if (data.type !== 'league' && myClashColor === 'red' && data.p1Ready && data.p2Ready) {
+                if (data.type !== 'league' && myClashColor === 'red' && data.p1Ready && data.p2Ready && !window.vsScreenTriggered) {
+                    window.vsScreenTriggered = true;
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
                 }
             }
@@ -2947,6 +2945,9 @@ function listenToClashRoom() {
             if(rematchCount) rematchCount.innerText = `(${readys}/2)`;
             
             if (myClashColor === 'red' && data.rematchP1 && data.rematchP2) {
+                window.lastRenderedClashStatus = null; // Resetujemy dla rewanżu
+                window.vsScreenTriggered = false;
+                
                 let allClubs = getCleanClubsList();
                 let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
                 if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
@@ -2959,11 +2960,24 @@ function listenToClashRoom() {
             }
         }
 
-        if(clashStatus === 'vsScreen') showVsScreen(data);
-        if(clashStatus === 'coinToss') playCoinToss(data);
-        if(clashStatus === 'playing') updateClashBoardUI(data);
-        if(clashStatus === 'summary' && document.getElementById('clashSummaryOverlay').style.display === 'none') {
-            handleClashEnd(data);
+        // ==========================================================
+        // 🚨 MAGICZNY FIX: ODPALAMY ANIMACJE TYLKO RAZ DLA DANEGO EKRANU 
+        // ==========================================================
+        if (clashStatus !== window.lastRenderedClashStatus) {
+            window.lastRenderedClashStatus = clashStatus; 
+            
+            if(clashStatus === 'vsScreen') showVsScreen(data);
+            if(clashStatus === 'coinToss') playCoinToss(data);
+            if(clashStatus === 'playing') updateClashBoardUI(data);
+            
+            if(clashStatus === 'summary') {
+                updateClashBoardUI(data); // <--- DODAJ TĄ LINIJKĘ! Wymusza narysowanie OSTATNIEGO ruchu na planszy!
+                
+                const summaryOverlay = document.getElementById('clashSummaryOverlay');
+                if (summaryOverlay && summaryOverlay.style.display === 'none') {
+                    handleClashEnd(data);
+                }
+            }
         }
     });
 }
@@ -3068,11 +3082,23 @@ function playCoinToss(data) {
 function updateClashBoardUI(data) {
     const clashContainer = document.getElementById('clashContainer');
     if (!clashContainer) return;
-    showClashMatchView(); closeClashSearch();
+    
+    // Upewniamy się, że jesteśmy w widoku Clasha
+    setElementDisplay('mainMenuContainer', 'none');
+    setElementDisplay('gameContainer', 'none');
+    setElementDisplay('clashModeSelectContainer', 'none');
+    setElementDisplay('clashLobbyContainer', 'none');
+    setElementDisplay('clashContainer', 'block');
+    
+    closeClashSearch();
 
+    // Rysowanie kratek na planszy z najnowszych danych z Firebase
     for(let r=0; r<3; r++) {
         for(let c=0; c<3; c++) {
-            let idx = r * 3 + c; let cell = document.getElementById(`cell-${r}-${c}`); let val = data.board[idx];
+            let idx = r * 3 + c; 
+            let cell = document.getElementById(`cell-${r}-${c}`); 
+            let val = data.board[idx];
+            
             if(val === 'red' || val === 'blue') { 
                 cell.className = `clash-cell clash-playable claimed-${val}`; 
                 let playerName = data.guessedPlayers[idx] || "Gracz";
@@ -3413,6 +3439,9 @@ async function leaveClashRoom() {
 }
 
 async function closeRoomCleanup(options = {}) {
+    window.lastRenderedClashStatus = null; // <--- DODAJ TO
+    window.vsScreenTriggered = false; 
+
     const roomId = currentClashRoom;
     const queueId = currentQueueId || currentClashData?.queueId;
     const roomData = currentClashData;
