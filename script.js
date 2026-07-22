@@ -2519,12 +2519,33 @@ async function updateLeagueStats(gameData) {
     appAlert(`Mecz ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`, "Mecz ligowy");
  
     try {
-        const updateDiscord = functions.httpsCallable('updateDiscordRank');
-        updateDiscord({ elo: league.elo, matchesPlayed: league.matchesPlayed })
-            .then(res => console.log("Status Discord:", res.data))
-            .catch(e => console.error("Discord Sync Error", e));
-    } catch(e) {}
-    // ----------------------------
+        if (!auth.currentUser) return; // Jeśli jakimś cudem wylogowało gracza w trakcie meczu
+        
+        // WYMUSZAMY POBRANIE ŚWIEŻEGO TOKENA
+        auth.currentUser.getIdToken(true).then(idToken => {
+            console.log("Wysyłam sygnał do bota Discorda z tokenem...", { elo: league.elo, matchesPlayed: league.matchesPlayed });
+            
+            const updateDiscord = functions.httpsCallable('updateDiscordRank');
+            
+            updateDiscord({ 
+                elo: league.elo, 
+                matchesPlayed: league.matchesPlayed,
+                firebaseToken: idToken // PRZESYŁAMY NASZ CERTYFIKAT TOŻSAMOŚCI!
+            }).then(res => {
+                console.log("Odpowiedź od bota Discorda:", res.data);
+                if(res.data && res.data.message) {
+                    showToast(`Discord: ${res.data.message}`, "success");
+                } else if (res.data && res.data.error) {
+                    console.error("Discord Auth Error:", res.data.error);
+                }
+            }).catch(e => {
+                console.error("Błąd sieciowy aktualizacji Discorda:", e);
+            });
+        });
+        
+    } catch(e) {
+        console.error("Nie udało się zainicjować funkcji Discorda", e);
+    }
 }
 
 // LOCAL MULTIPLAYER:
