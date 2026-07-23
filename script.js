@@ -178,13 +178,15 @@ async function fetchServerConfigAndAdminStatus() {
 window.onload = function() { 
     setRandomBackground();
     
-    // --- 🔥 RĘCZNE ODBLOKOWANIE TRYBU ADMINA 🔥 ---
+    // --- 🔥 RĘCZNE ODBLOKOWANIE TRYBU ADMINA (PC + MOBILE) 🔥 ---
     window.isPlayerAdmin = true; 
-    const taBtn = document.getElementById('btnTimeAttackAdmin');
-    if (taBtn) {
-        taBtn.style.display = 'inline-flex';
-    }
-    // ------------------------------------------------
+    
+    // Zamiast getElementById, szukamy WSZYSTKICH ukrytych przycisków
+    const taButtons = document.querySelectorAll('#btnTimeAttackAdmin');
+    taButtons.forEach(btn => {
+        btn.style.setProperty('display', 'inline-flex', 'important');
+    });
+    // -----------------------------------------------------------
     
     loadStats(); 
     initDailyMenu(); 
