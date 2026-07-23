@@ -1,3 +1,50 @@
+window.isAdmin = false; // Domyślnie nikt nie jest adminem
+
+// ==============================================
+// ====== SYSTEM BLOKADY DLA ZWYKŁYCH GRACZY =====
+// ==============================================
+function initAntiCheatEngine() {
+    if (window.isAdmin) {
+        console.log("👑 TRYB ADMINA AKTYWNY: Wszystkie blokady przeglądarki wyłączone!");
+        showToast("🔓 Tryb Admina: Odblokowano DevTools i PPM", "success");
+        return;
+    }
+
+    console.log("🛡️ Anti-Cheat Aktywny: Włączanie blokady F12 / PPM");
+
+    // 1. Blokada Prawego Przycisku Myszy (PPM)
+    document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        showToast("⛔ Prawy przycisk myszy jest zablokowany!", "error");
+        return false;
+    });
+
+    // 2. Blokada Skrótów Klawiszowych (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+Shift+C)
+    document.addEventListener('keydown', function (e) {
+        const isF12 = e.key === 'F12' || e.keyCode === 123;
+        const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
+        const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
+        const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
+        const isViewSource = e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85);
+
+        if (isF12 || isInspect || isConsole || isElement || isViewSource) {
+            e.preventDefault();
+            e.stopPropagation();
+            showToast("⛔ Dostęp do narzędzi deweloperskich zablokowany!", "error");
+            return false;
+        }
+    });
+}
+
+function startTestGameMode() {
+    if (!window.isAdmin) {
+        appAlert("Ten tryb jest obecnie w fazie zamkniętych testów i dostępny tylko dla Administratorów!", "Brak Dostępu");
+        return;
+    }
+    
+    // Logika uruchomienia gry dla Admina...
+}
+
 // ==============================================
 // ====== SEJF ZAWODNIKA (ZABEZPIECZENIE) =======
 // ==============================================
@@ -318,7 +365,7 @@ function closeUpdates() {
 // ====== AUTORYZACJA I PROFIL GRACZA ===========
 // ==============================================
 
-auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged(async (user) => {
     if (user) {
         playerId = user.uid;
         if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
@@ -327,11 +374,43 @@ auth.onAuthStateChanged((user) => {
         }
         localStorage.setItem('speedwayUserId', playerId);
         updateAuthUI(user);
+        
+        // --- SPRAWDZANIE ADMINA NA SERWERZE ---
+        await verifyAdminPermissions(user);
+
         syncStatsFromFirebase();
     } else {
+        window.isAdmin = false;
+        initAntiCheatEngine(); // Blokady dla gości
         updateAuthUI(null);
     }
 });
+
+async function verifyAdminPermissions(user) {
+    try {
+        const idToken = await user.getIdToken();
+        const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
+        const res = await checkAdminFunc({ firebaseToken: idToken });
+
+        if (res.data && res.data.isAdmin === true) {
+            window.isAdmin = true;
+            
+            // Ukrycie ekranu przerwy technicznej, jeśli była włączona
+            const maintOverlay = document.getElementById('maintenanceOverlay');
+            if (maintOverlay) maintOverlay.style.display = 'none';
+
+            // Pokazanie ukrytych elementów UI dla Admina (jeśli istnieją)
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        } else {
+            window.isAdmin = false;
+        }
+    } catch (e) {
+        console.error("Błąd weryfikacji admina:", e);
+        window.isAdmin = false;
+    } finally {
+        initAntiCheatEngine(); // Uruchamiamy blokady w zależności od wyniku
+    }
+}
 
 function signInWithGoogle() {
     auth.signInWithPopup(provider).then((result) => {
@@ -1125,14 +1204,20 @@ window.onload = async function() {
         }
 
         // 2. CAŁKOWITA PRZERWA TECHNICZNA
-        if (configResponse.data && configResponse.data.maintenanceMode === true && !isAdmin) {
-            document.getElementById('maintenanceOverlay').style.display = 'block';
-            document.getElementById('maintenanceOverlay').style.opacity = '1';
-            
-            if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
-            if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-            return; 
-        }
+        // Fragment w window.onload:
+          if (configResponse.data && configResponse.data.maintenanceMode === true) {
+            // Jeśli gracz NIE JEST adminem, zablokuj ekran
+            if (!window.isAdmin) {
+                document.getElementById('maintenanceOverlay').style.display = 'block';
+                document.getElementById('maintenanceOverlay').style.opacity = '1';
+                
+                if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+                if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+                return; 
+            } else {
+                showToast("🔐 Tryb Admina: Przerwa techniczna pominięta!", "success");
+            }
+            }
 
         // 3. BANNER INFORMACYJNY (Elegancki, pulsujący, nieblokujący klikania)
         if (configResponse.data && configResponse.data.infoMode === true) {
