@@ -1,108 +1,19 @@
 // ==============================================
-// ====== SEKCJA ADMINA I BLOKAD (ANTI-CHEAT) ===
-// ==============================================
-
-// 1. Domyślny stan zmiennej globalnej
-window.isAdmin = false;
-
-// Awaryjna obsługa wejścia z linku z kluczem (np. speedwayguessr.pl/?admin=czipsol)
-const initialUrlParams = new URLSearchParams(window.location.search);
-if (initialUrlParams.get('admin') === 'czipsol') {
-    window.isAdmin = true;
-    console.log("🔐 Tryb Admina aktywowany z parametru URL (?admin=czipsol)");
-}
-
-// 2. Blokada Prawego Przycisku Myszy (PPM)
-document.addEventListener('contextmenu', function (e) {
-    if (window.isAdmin === true) return true; // ADMIN -> Zezwalaj
-    e.preventDefault();
-    showToast("⛔ Prawy przycisk myszy zablokowany!", "error");
-    return false;
-}, true);
-
-// 3. Blokada Skrótów Klawiszowych (F12 / DevTools)
-document.addEventListener('keydown', function (e) {
-    if (window.isAdmin === true) return true; // ADMIN -> Zezwalaj
-
-    const isF12 = e.key === 'F12' || e.keyCode === 123;
-    const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
-    const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
-    const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
-    const isViewSource = e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85);
-
-    if (isF12 || isInspect || isConsole || isElement || isViewSource) {
-        e.preventDefault();
-        e.stopPropagation();
-        showToast("⛔ Dostęp do konsoli zablokowany!", "error");
-        return false;
-    }
-}, true);
-
-// 4. Logika Logowania Firebase
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        playerId = user.uid;
-        if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
-            playerNickname = user.displayName || "Gracz";
-            localStorage.setItem('speedwayNickname', playerNickname);
-        }
-        localStorage.setItem('speedwayUserId', playerId);
-        updateAuthUI(user);
-        
-        // WYWOŁANIE SPRAWDZENIA ADMINA
-        await verifyAdminPermissions(user);
-
-        syncStatsFromFirebase();
-    } else {
-        updateAuthUI(null);
-    }
-});
-
-async function verifyAdminPermissions(user) {
-    try {
-        console.log("🔍 Sprawdzanie statusu Admina dla UID:", user.uid);
-        
-        const idToken = await user.getIdToken(true);
-        const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
-        const res = await checkAdminFunc({ firebaseToken: idToken });
-
-        console.log("📡 Odpowiedź serwera w sprawie Admina:", res.data);
-
-        if (res.data && res.data.isAdmin === true) {
-            window.isAdmin = true;
-            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR! Odblokowano F12 i PPM.");
-            showToast("👑 Zalogowano jako Administrator", "success");
-            
-            // Ukryj przerwę techniczną jeśli była widoczna
-            const maintOverlay = document.getElementById('maintenanceOverlay');
-            if (maintOverlay) maintOverlay.style.display = 'none';
-        } else {
-            console.warn("⚠️ Twój UID nie znajduje się na liście ADMIN_UIDS na serwerze.");
-        }
-    } catch (e) {
-        console.error("❌ Błąd połączenia z funkcją checkAdminStatus:", e);
-    }
-}
-
-// ==============================================
 // ====== SEJF ZAWODNIKA (ZABEZPIECZENIE) =======
 // ==============================================
-let _gVault = null; // Zmienna przechowująca zaszyfrowany klucz
+let _gVault = null;
 
-// Szyfruje ID gracza (wzór matematyczny + Base64)
 function _lockTarget(playerId) {
     const salted = (playerId * 13) + 77;
     _gVault = btoa(salted.toString());
 }
 
-// Odszyfrowuje i zwraca obiekt gracza tylko wtedy, gdy gra tego potrzebuje
 function _unlockTarget() {
     if (!_gVault) return null;
     const unsalted = (parseInt(atob(_gVault)) - 77) / 13;
     return playersDB.find(p => p.id === unsalted);
 }
 
-// Generator gracza Daily
 function _generateDailyTarget(dayNumber) {
     let seed = (Number(dayNumber) || 1) * 73891247;
     let x = seed;
@@ -131,31 +42,46 @@ function _getSafeHint(name, currentGuessCount) {
 }
 
 // ==============================================
-// ====== ZMIENNE GLOBALNE I KONFIGURACJA =======
+// ====== 1. TRYB ADMINA I ANTI-CHEAT ===========
 // ==============================================
+window.isAdmin = false;
 
-let gameMode = 'endless'; let guessCount = 0;
-let guessHistory = []; let guessedPlayersNames = []; 
-let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
-let hasWon = false; let hasLost = false; let isRestoring = false;
-let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
-const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
+// Awaryjne włączenie przez URL (np. ?admin=czipsol)
+const initialUrlParams = new URLSearchParams(window.location.search);
+if (initialUrlParams.get('admin') === 'czipsol') {
+    window.isAdmin = true;
+    console.log("🔐 Tryb Admina aktywowany z parametru URL (?admin=czipsol)");
+}
 
-let hintActive = false; 
-let hintsUsedCount = 0; // Wpłynie na pozycję w rankingu
-// Rozbudowane statystyki o historię Clash
-let userStats = { 
-    played: 0, won: 0, currentStreak: 0, maxStreak: 0, 
-    dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [], 
-    clashLeague: { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 },
-    clashHistory: [] // Punkt 3: Historia meczów
-};
+// Blokada Prawego Przycisku Myszy (PPM)
+document.addEventListener('contextmenu', function (e) {
+    if (window.isAdmin === true) return true;
+    e.preventDefault();
+    showToast("⛔ Prawy przycisk myszy zablokowany!", "error");
+    return false;
+}, true);
 
-let playerNickname = localStorage.getItem('speedwayNickname') || null;
-window.hasUpdatedLeague = false; 
+// Blokada Skrótów (F12 / DevTools)
+document.addEventListener('keydown', function (e) {
+    if (window.isAdmin === true) return true;
 
-// --- FIREBASE CONFIG ---
+    const isF12 = e.key === 'F12' || e.keyCode === 123;
+    const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
+    const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
+    const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
+    const isViewSource = e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85);
+
+    if (isF12 || isInspect || isConsole || isElement || isViewSource) {
+        e.preventDefault();
+        e.stopPropagation();
+        showToast("⛔ Dostęp do konsoli zablokowany!", "error");
+        return false;
+    }
+}, true);
+
+// ==============================================
+// ====== 2. INICJALIZACJA FIREBASE (PIERWSZE) ==
+// ==============================================
 const firebaseConfig = {
     apiKey: "AIzaSyBslQyJYGbjNszn3TS_6BQ2tXw7kd9iznw",
     authDomain: "speedwayguessr.firebaseapp.com",
@@ -170,11 +96,85 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 
-// Dopiero po włączeniu, możemy pobrać bazę i funkcje:
+// Diero TERAZ tworzymy zmienne Firebase (db, auth, functions)
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 const functions = firebase.functions(); 
+
+// ==============================================
+// ====== 3. ZMIENNE GLOBALNE I SLUCHACZ AUTH ====
+// ==============================================
+let gameMode = 'endless'; let guessCount = 0;
+let guessHistory = []; let guessedPlayersNames = []; 
+let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
+let hasWon = false; let hasLost = false; let isRestoring = false;
+let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
+const GUESS_LIMIT = 10; 
+const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
+
+let hintActive = false; 
+let hintsUsedCount = 0; 
+let userStats = { 
+    played: 0, won: 0, currentStreak: 0, maxStreak: 0, 
+    dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [], 
+    clashLeague: { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 },
+    clashHistory: [] 
+};
+
+let playerNickname = localStorage.getItem('speedwayNickname') || null;
+window.hasUpdatedLeague = false; 
+
+let playerId = localStorage.getItem('speedwayUserId');
+if (!playerId) {
+    playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('speedwayUserId', playerId);
+}
+
+// Słuchacz logowania - TERAZ ZADZIAŁA, BO 'auth' JEST JUŻ ZDEFINIOWANE
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        playerId = user.uid;
+        if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
+            playerNickname = user.displayName || "Gracz";
+            localStorage.setItem('speedwayNickname', playerNickname);
+        }
+        localStorage.setItem('speedwayUserId', playerId);
+        updateAuthUI(user);
+        
+        // Sprawdzanie uprawnień Admina na serwerze
+        await verifyAdminPermissions(user);
+
+        syncStatsFromFirebase();
+    } else {
+        updateAuthUI(null);
+    }
+});
+
+async function verifyAdminPermissions(user) {
+    try {
+        console.log("🔍 Sprawdzanie statusu Admina dla UID:", user.uid);
+        
+        const idToken = await user.getIdToken(true);
+        const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
+        const res = await checkAdminFunc({ firebaseToken: idToken });
+
+        console.log("📡 Odpowiedź serwera w sprawie Admina:", res.data);
+
+        if (res.data && res.data.isAdmin === true) {
+            window.isAdmin = true;
+            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR! Odblokowano F12 i PPM.");
+            showToast("👑 Zalogowano jako Administrator", "success");
+            
+            const maintOverlay = document.getElementById('maintenanceOverlay');
+            if (maintOverlay) maintOverlay.style.display = 'none';
+        } else {
+            console.warn("⚠️ Twój UID nie znajduje się na liście ADMIN_UIDS na serwerze.");
+        }
+    } catch (e) {
+        console.error("❌ Błąd połączenia z funkcją checkAdminStatus:", e);
+    }
+}
 
 let playerId = localStorage.getItem('speedwayUserId');
 if (!playerId) {
