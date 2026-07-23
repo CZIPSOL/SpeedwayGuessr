@@ -176,14 +176,6 @@ async function verifyAdminPermissions(user) {
     }
 }
 
-let playerId = localStorage.getItem('speedwayUserId');
-if (!playerId) {
-    playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('speedwayUserId', playerId);
-}
-
-
-
 // ==============================================
 // ====== LOSOWE TŁA (STADIONY) =================
 // ==============================================
