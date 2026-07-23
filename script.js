@@ -1638,9 +1638,61 @@ function restorePlayedGame() {
 
 function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ'; const noAccents = 'acelnoszzACELNOSZZ'; return str.split('').map(char => { const index = accents.indexOf(char); return index !== -1 ? noAccents[index] : char; }).join(''); }
 
-function getCleanClubName(clubName) { 
-    if (!clubName) return "";
-    return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").trim().toLowerCase(); 
+// ==========================================
+// SYSTEM GENEROWANIA PLANSZY CLASH
+// ==========================================
+
+const EXCLUDED_CLUBS = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery', 'ska-speedway lwów', 'ukrajina równe', 'speedway miszkolc', 'gwardia warszawa', 'kaskad równe'];
+const HARD_CLUBS = ['landshut devils', 'lokomotiv daugavpils', 'start gniezno', 'kolejarz opole', 'wybrzeże gdańsk', 'speedway kraków', 'śląsk świętochłowice', 'kolejarz rawicz', 'unia tarnów'];
+
+function getCleanClubsList() {
+    let clubs = new Set();
+    playersDB.forEach(p => { 
+        p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); 
+        if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); 
+    });
+    EXCLUDED_CLUBS.forEach(c => clubs.delete(c)); 
+    return Array.from(clubs);
+}
+
+function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+        attempts++; 
+        
+        let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); 
+        let validCols = [];
+        
+        let hardClubsCount = tempRows.filter(c => HARD_CLUBS.includes(c)).length;
+        if (hardClubsCount > 2) continue;
+
+        for (let c of allClubs) {
+            if (tempRows.includes(c)) continue; 
+            if (HARD_CLUBS.includes(c) && hardClubsCount >= 2) continue;
+
+            let intersectsAll = tempRows.every(r => {
+                let matchCount = 0;
+                for (let p of playersDB) {
+                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); 
+                    if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
+                    if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
+                }
+                return matchCount >= minMatches;
+            });
+            
+            if (intersectsAll) {
+                validCols.push(c);
+                if (HARD_CLUBS.includes(c)) hardClubsCount++;
+            }
+
+            if (validCols.length >= 3) { 
+                clashRows = tempRows; 
+                clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); 
+                return true; 
+            }
+        }
+    }
+    return false;
 }
 
 function getClubAbbr(clubName) { 
@@ -3602,32 +3654,6 @@ function closeClashHistory() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-function getCleanClubsList() {
-    let clubs = new Set();
-    playersDB.forEach(p => { p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); });
-    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c)); return Array.from(clubs);
-}
-
-function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
-    let attempts = 0;
-    while (attempts < maxAttempts) {
-        attempts++; let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); let validCols = [];
-        for (let c of allClubs) {
-            if (tempRows.includes(c)) continue; 
-            let intersectsAll = tempRows.every(r => {
-                let matchCount = 0;
-                for (let p of playersDB) {
-                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
-                    if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
-                }
-                return matchCount >= minMatches;
-            });
-            if (intersectsAll) validCols.push(c);
-        }
-        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); return true; }
-    }
-    return false;
-}
 
 function showClashInfo() {
     const overlay = document.getElementById('clashInfoOverlay');
