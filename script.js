@@ -171,31 +171,17 @@ async function fetchServerConfigAndAdminStatus() {
 // ====== AUTORYZACJA I START GRY ===============
 // ==============================================
 
-// Nasłuchujemy logowania ORAZ wywołujemy sprawdzanie configu
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        playerId = user.uid;
-        if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
-            playerNickname = user.displayName || "Gracz";
-            localStorage.setItem('speedwayNickname', playerNickname);
-        }
-        localStorage.setItem('speedwayUserId', playerId);
-        updateAuthUI(user);
-        syncStatsFromFirebase();
-        
-        // Gdy Firebase zaloguje gracza -> pytamy serwer czy jest adminem
-        fetchServerConfigAndAdminStatus();
-    } else {
-        updateAuthUI(null);
-        
-        // Gość też musi widzieć ewentualne przerwy/bannery
-        fetchServerConfigAndAdminStatus();
-    }
-});
+// Obiekt do ładowania obrazka w tle (aby kaski nie migały podczas utraty życia)
+const helmetImgObj = new Image(); 
+function preloadHelmetImage() { 
+    helmetImgObj.src = 'kask-zycie.png'; 
+}
 
-const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
-
+// ==============================================
+// ====== GŁÓWNA FUNKCJA STARTOWA (ONLOAD) ======
+// ==============================================
 window.onload = function() { 
+    // Losowanie stadionu w tle
     setRandomBackground();
     
     // Uruchamiamy lokalne (nie-sieciowe) renderowanie natychmiast by zniwelować "skoki" ekranu
@@ -514,10 +500,6 @@ function ensureLeagueStats(stats) {
     if (typeof stats.clashLeague.losses !== 'number') stats.clashLeague.losses = 0;
     if (typeof stats.clashLeague.draws !== 'number') stats.clashLeague.draws = 0;
     if (typeof stats.clashLeague.elo !== 'number') stats.clashLeague.elo = 1000;
-    return stats;
-}
-// Zmiana w ensureLeagueStats - dodajemy zmienne dla banów
-function ensureLeagueStats(stats) {
     if (!stats.clashLeague) stats.clashLeague = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 };
     if (typeof stats.clashLeague.abandons !== 'number') stats.clashLeague.abandons = 0; // Licznik przewinień
     if (typeof stats.clashLeague.banUntil !== 'number') stats.clashLeague.banUntil = 0; // Czas trwania bana
