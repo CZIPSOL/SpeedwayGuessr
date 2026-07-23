@@ -1051,16 +1051,20 @@ function playSound(type) {
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
+window.isPlayerAdmin = false; // Domyślnie nikt nie jest adminem
+
 window.onload = async function() { 
     setRandomBackground();
     
-    // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
     try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const isAdmin = urlParams.get('admin') === 'czipsol'; 
-
         const getConfigFunc = functions.httpsCallable('getConfig');
         const configResponse = await getConfigFunc();
+        
+        // Zapisujemy uprawnienia nadesłane prosto z bezpiecznego serwera
+        if (configResponse.data && configResponse.data.isAdmin) {
+            window.isPlayerAdmin = true;
+            console.log("🛠️ Tryb Deweloperski (Admin) - Odblokowany.");
+        }
         
         // 1. BANNER O PRACACH NA ŻYWO (Elegancki, pulsujący na czerwono, nieblokujący klikania)
         if (configResponse.data && configResponse.data.warningMode === true) {
@@ -3958,15 +3962,13 @@ document.addEventListener('keydown', function(e) {
 // ====== BLOKADA UI (ANTI-CHEAT) ===============
 // ==============================================
 
-// Blokada prawego przycisku myszy (nie działa, jeśli masz w linku ?admin=czipsol)
 document.addEventListener('contextmenu', function(e) {
-    if (window.location.search.includes('admin=czipsol')) return; 
+    if (window.isPlayerAdmin) return; // Ufamy tylko zmiennej zweryfikowanej z serwera
     e.preventDefault();
 });
 
-// Blokada skrótów klawiszowych (nie działa dla admina)
 document.addEventListener('keydown', function(e) {
-    if (window.location.search.includes('admin=czipsol')) return; 
+    if (window.isPlayerAdmin) return;
 
     // F12
     if (e.keyCode === 123) {
@@ -3989,6 +3991,181 @@ document.addEventListener('keydown', function(e) {
         return false;
     }
 });
+
+// ==============================================
+// ====== SPEEDWAY TIME ATTACK (TESTOWY) ========
+// ==============================================
+
+let taTimerInterval = null;
+let taTimeLeft = 60.0;
+let taScore = 0;
+let taIsPlaying = false;
+
+function openTimeAttack() {
+    if (!window.isPlayerAdmin) return;
+    document.getElementById('mainMenuContainer').style.display = 'none';
+    document.getElementById('desktopMainMenu').style.display = 'none';
+    document.getElementById('timeAttackContainer').style.display = 'flex';
+}
+
+function closeTimeAttack() {
+    if (taTimerInterval) clearInterval(taTimerInterval);
+    taIsPlaying = false;
+    window.location.reload();
+}
+
+function startTaGame() {
+    document.getElementById('taOverlay').style.display = 'none';
+    document.getElementById('taCard').style.display = 'flex';
+    document.getElementById('taInputSection').style.display = 'flex';
+    document.getElementById('taGuessInput').value = '';
+    
+    taTimeLeft = 60.0;
+    taScore = 0;
+    taIsPlaying = true;
+    document.getElementById('taScoreDisplay').innerText = taScore;
+    
+    setupTaAutocomplete();
+    nextTaTarget();
+    startTaTimer();
+    document.getElementById('taGuessInput').focus();
+}
+
+function startTaTimer() {
+    if (taTimerInterval) clearInterval(taTimerInterval);
+    const display = document.getElementById('taTimerDisplay');
+    
+    taTimerInterval = setInterval(() => {
+        taTimeLeft -= 0.1;
+        if (taTimeLeft <= 0) {
+            clearInterval(taTimerInterval);
+            taTimeLeft = 0;
+            display.innerText = "0.0";
+            endTaGame();
+            return;
+        }
+
+        display.innerText = taTimeLeft.toFixed(1);
+
+        if (taTimeLeft <= 10.0) {
+            display.style.color = "var(--red-neon)";
+            if (taTimeLeft.toFixed(1).endsWith(".0")) playSound('flip');
+        } else {
+            display.style.color = "var(--accent)";
+        }
+    }, 100);
+}
+
+function nextTaTarget() {
+    // Szyfrujemy nowego gracza do Sejfu (Wykorzystujemy Twoją mechanikę z głównej gry!)
+    const p = playersDB[Math.floor(Math.random() * playersDB.length)];
+    _lockTarget(p.id); 
+
+    const target = _unlockTarget(); // Pobieramy z powrotem by wrzucić do UI
+    
+    document.getElementById('taCountry').innerText = target.country;
+    document.getElementById('taYear').innerText = target.year;
+    document.getElementById('taGp').innerText = target.gp === true || target.gp === "Tak" || target.gp === "tak" ? "Tak" : "Nie";
+    document.getElementById('taDmp').innerText = target.dmp;
+    document.getElementById('taStatus').innerText = target.status === "Aktywny" ? "Aktywny" : "Nieaktywny";
+    
+    const clubsContainer = document.getElementById('taClubs');
+    clubsContainer.innerHTML = '';
+    
+    let allClubsToRender = [...target.pastClubs];
+    if (target.currentClub && getCleanClubName(target.currentClub) !== "brak klubu") {
+        allClubsToRender.push(target.currentClub);
+    }
+
+    allClubsToRender.forEach(club => {
+        const abbr = getClubAbbr(club);
+        const cleanName = getCleanClubName(club);
+        const badgeHTML = getClubBadgeHTML(club);
+        let specialClass = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanName) ? 'club-special' : 'club-match';
+        clubsContainer.innerHTML += `<div class="club-logo-wrapper" title="${club}"><div class="club-abbr-box ${specialClass}">${abbr}</div>${badgeHTML}</div>`;
+    });
+}
+
+function submitTaGuess() {
+    if (!taIsPlaying) return;
+    const inputEl = document.getElementById('taGuessInput');
+    const guessName = inputEl.value.trim().toLowerCase();
+    if (!guessName) return;
+
+    const target = _unlockTarget(); // Pytamy sejf, kim jesteśmy
+
+    if (guessName === target.name.toLowerCase()) {
+        playSound('win');
+        taScore++;
+        document.getElementById('taScoreDisplay').innerText = taScore;
+        
+        taTimeLeft += 10.0;
+        const display = document.getElementById('taTimerDisplay');
+        display.style.transform = "scale(1.3)";
+        display.style.color = "var(--green-neon)";
+        setTimeout(() => { display.style.transform = "scale(1)"; if(taTimeLeft > 10) display.style.color = "var(--accent)"; }, 300);
+
+        inputEl.value = '';
+        nextTaTarget();
+    } else {
+        playSound('error');
+        const inputWrapper = inputEl.parentElement;
+        inputWrapper.classList.add('shake-error');
+        setTimeout(() => inputWrapper.classList.remove('shake-error'), 400);
+        inputEl.value = '';
+    }
+    inputEl.focus();
+}
+
+function endTaGame() {
+    taIsPlaying = false;
+    playSound('lose');
+    
+    const overlay = document.getElementById('taOverlay');
+    document.getElementById('taOverlayTitle').innerText = "CZAS MINĄŁ!";
+    document.getElementById('taOverlayTitle').style.color = "var(--red-neon)";
+    
+    const target = _unlockTarget();
+    document.getElementById('taOverlayDesc').innerHTML = `Zgadłeś/aś <b>${taScore}</b> zawodników!<br><br>Ostatnim zawodnikiem był: <b style="color:var(--accent);">${target.name}</b>`;
+    
+    const btn = overlay.querySelector('button');
+    btn.innerText = "ZAGRAJ PONOWNIE";
+    overlay.style.display = 'flex';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.activeElement.id === 'taGuessInput') submitTaGuess();
+});
+
+function setupTaAutocomplete() {
+    const oldInput = document.getElementById('taGuessInput'); 
+    if(!oldInput) return;
+    const newInput = oldInput.cloneNode(true); 
+    oldInput.replaceWith(newInput); 
+    
+    newInput.addEventListener('input', function() {
+        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
+        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
+        let valClean = removePolishAccents(val.toLowerCase());
+        
+        playersDB.forEach(player => {
+            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
+                let item = document.createElement("DIV"); item.innerHTML = player.name;
+                item.addEventListener("click", () => { 
+                    newInput.value = player.name; closeAllLists(); submitTaGuess(); 
+                }); 
+                listContainer.appendChild(item);
+            }
+        });
+    });
+}
+
+try {
+    window.openTimeAttack = openTimeAttack;
+    window.closeTimeAttack = closeTimeAttack;
+    window.startTaGame = startTaGame;
+    window.submitTaGuess = submitTaGuess;
+} catch (e) {}
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
