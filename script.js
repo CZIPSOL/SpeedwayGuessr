@@ -176,10 +176,16 @@ async function fetchServerConfigAndAdminStatus() {
 // ====== GŁÓWNA FUNKCJA STARTOWA (ONLOAD) ======
 // ==============================================
 window.onload = function() { 
-    // Losowanie stadionu w tle
     setRandomBackground();
     
-    // Uruchamiamy lokalne (nie-sieciowe) renderowanie natychmiast by zniwelować "skoki" ekranu
+    // --- 🔥 RĘCZNE ODBLOKOWANIE TRYBU ADMINA 🔥 ---
+    window.isPlayerAdmin = true; 
+    const taBtn = document.getElementById('btnTimeAttackAdmin');
+    if (taBtn) {
+        taBtn.style.display = 'inline-flex';
+    }
+    // ------------------------------------------------
+    
     loadStats(); 
     initDailyMenu(); 
     renderLastGames(); 
