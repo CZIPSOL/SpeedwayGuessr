@@ -80,8 +80,11 @@ const firebaseConfig = {
     measurementId: "G-QSWL3N5CHG"
 };
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
+// Dopiero po włączeniu, możemy pobrać bazę i funkcje:
 const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
@@ -93,101 +96,7 @@ if (!playerId) {
     localStorage.setItem('speedwayUserId', playerId);
 }
 
-window.isPlayerAdmin = false; // Domyślnie nikt nie jest adminem
 
-// ==============================================
-// ====== POBIERANIE KONFIGURACJI Z SERWERA =====
-// ==============================================
-
-async function fetchServerConfigAndAdminStatus() {
-    try {
-        const getConfigFunc = functions.httpsCallable('getConfig');
-        // Jeśli gracz jest zalogowany (co Firebase już wie w tym momencie), 
-        // automatycznie doczepi w tle token do tego requestu
-        const configResponse = await getConfigFunc();
-        
-        // --- 1. SPRAWDZANIE ADMINA ---
-        if (configResponse.data && configResponse.data.isAdmin === true) {
-            window.isPlayerAdmin = true;
-            console.log("🛠️ Tryb Deweloperski (Admin) - Odblokowany.");
-            
-            // Odkrywamy przycisk Time Attack w Menu
-            const taBtn = document.getElementById('btnTimeAttackAdmin');
-            if (taBtn) taBtn.style.display = 'inline-flex';
-        }
-
-        // --- 2. BANNER O PRACACH (Czerwony, pulsujący) ---
-        if (configResponse.data && configResponse.data.warningMode === true) {
-            if (!document.getElementById('warningPulseAnim')) {
-                const style = document.createElement('style');
-                style.id = 'warningPulseAnim';
-                style.innerHTML = `@keyframes warningSlideDown { 0% { transform: translate(-50%, -50px); opacity: 0; } 100% { transform: translate(-50%, 15px); opacity: 1; } } @keyframes warningGlow { 0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); } 50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); } 100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); } } .modern-warning-banner { position: fixed; top: 0; left: 50%; transform: translate(-50%, 15px); background: rgba(20, 20, 25, 0.9); backdrop-filter: blur(8px); border: 1px solid #dc2626; color: #eaeaea; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; text-align: left; z-index: 999999; pointer-events: none; animation: warningSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, warningGlow 2s infinite ease-in-out; display: flex; align-items: center; gap: 12px; max-width: 90%; width: fit-content; line-height: 1.4; } .modern-warning-banner b { color: #ff4d4d; letter-spacing: 0.5px; } .modern-warning-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.8)); }`;
-                document.head.appendChild(style);
-            }
-            if(!document.querySelector('.modern-warning-banner')) {
-                const banner = document.createElement('div');
-                banner.className = 'modern-warning-banner';
-                banner.innerHTML = `<div class="modern-warning-icon">⚠️</div> <div><b>PRACE SERWISOWE:</b> Trwają prace nad serwerem. Niektóre funkcje mogą tymczasowo nie działać. Przepraszamy za utrudnienia! 🛠️</div>`;
-                document.body.appendChild(banner);
-            }
-        }
-
-        // --- 3. CAŁKOWITA PRZERWA TECHNICZNA ---
-        // WAŻNE: Admin widzi grę normalnie mimo przerwy!
-        if (configResponse.data && configResponse.data.maintenanceMode === true) {
-            if (!window.isPlayerAdmin) {
-                document.getElementById('maintenanceOverlay').style.display = 'block';
-                document.getElementById('maintenanceOverlay').style.opacity = '1';
-                if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
-                if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-                return; // Ucina ładowanie gry dla gości
-            } else {
-                setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
-            }
-        }
-
-        // --- 4. BANNER INFORMACYJNY (Złoty/Niebieski) ---
-        if (configResponse.data && configResponse.data.infoMode === true) {
-            if (!document.getElementById('infoPulseAnim')) {
-                const style = document.createElement('style');
-                style.id = 'infoPulseAnim';
-                style.innerHTML = `@keyframes infoSlideDown { 0% { transform: translate(-50%, -50px); opacity: 0; } 100% { transform: translate(-50%, 15px); opacity: 1; } } @keyframes infoGlow { 0% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); } 50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); } 100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); } } .modern-info-banner { position: fixed; top: 0; left: 50%; transform: translate(-50%, 15px); background: rgba(20, 20, 25, 0.9); backdrop-filter: blur(8px); border: 1px solid #f1c40f; color: #eaeaea; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; text-align: left; z-index: 999999; pointer-events: none; animation: infoSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, infoGlow 2s infinite ease-in-out; display: flex; align-items: center; gap: 12px; max-width: 90%; width: fit-content; line-height: 1.4; } .modern-info-banner b { color: #f1c40f; letter-spacing: 0.5px; } .modern-info-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.8)); }`;
-                document.head.appendChild(style);
-            }
-            if(!document.querySelector('.modern-info-banner')) {
-                const banner = document.createElement('div');
-                banner.className = 'modern-info-banner';
-                banner.innerHTML = `<div class="modern-info-icon">💡</div> <div><b>INFORMACJA:</b> Aktualnie prowadzone są prace mające na celu umożliwienie połączenia z kontem Discord.</div>`;
-                document.body.appendChild(banner);
-            }
-        }
-        
-    } catch(e) {
-        console.warn("Nie udało się pobrać konfiguracji serwera.", e);
-    }
-}
-
-// ==============================================
-// ====== AUTORYZACJA I START GRY ===============
-// ==============================================
-
-// ==============================================
-// ====== GŁÓWNA FUNKCJA STARTOWA (ONLOAD) ======
-// ==============================================
-window.onload = function() { 
-    // Losowanie stadionu w tle
-    setRandomBackground();
-    
-    // Uruchamiamy lokalne (nie-sieciowe) renderowanie natychmiast by zniwelować "skoki" ekranu
-    loadStats(); 
-    initDailyMenu(); 
-    renderLastGames(); 
-    preloadHelmetImage(); 
-    setLang(currentLang); 
-    updateSoundBtn(); 
-    updateLeagueUI(); 
-    checkUnseenUpdates();
-};
 
 // ==============================================
 // ====== LOSOWE TŁA (STADIONY) =================
@@ -419,14 +328,8 @@ auth.onAuthStateChanged((user) => {
         localStorage.setItem('speedwayUserId', playerId);
         updateAuthUI(user);
         syncStatsFromFirebase();
-        
-        // 🔥 WŁAŚNIE ZALOGOWALIŚMY GRACZA – SPRAWDZAMY CZY JEST ADMINEM!
-        fetchServerConfigAndAdminStatus();
-
     } else {
         updateAuthUI(null);
-        // Jeśli nie jest zalogowany (tryb incognito/guest), pobieramy config anonimowo (Dla bannerów)
-        fetchServerConfigAndAdminStatus();
     }
 });
 
@@ -494,6 +397,10 @@ function ensureLeagueStats(stats) {
     if (typeof stats.clashLeague.losses !== 'number') stats.clashLeague.losses = 0;
     if (typeof stats.clashLeague.draws !== 'number') stats.clashLeague.draws = 0;
     if (typeof stats.clashLeague.elo !== 'number') stats.clashLeague.elo = 1000;
+    return stats;
+}
+// Zmiana w ensureLeagueStats - dodajemy zmienne dla banów
+function ensureLeagueStats(stats) {
     if (!stats.clashLeague) stats.clashLeague = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 };
     if (typeof stats.clashLeague.abandons !== 'number') stats.clashLeague.abandons = 0; // Licznik przewinień
     if (typeof stats.clashLeague.banUntil !== 'number') stats.clashLeague.banUntil = 0; // Czas trwania bana
@@ -999,7 +906,7 @@ const i18n = {
         teams: "Teams:", colName: "Rider", colCountry: "Country", colYear: "Born", colGP: "SGP?", colDMP: "Team Medals", colStatus: "Status", colClubs: "Clubs History",
         stats: "STATISTICS", statPlayed: "Played", statWon: "Won", statStreak: "Current Streak", statMax: "Max Streak", btnClose: "CLOSE", archive: "DAILY ARCHIVE",
         winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", theme: "Theme:", themeLight: "Light", themeDark: "Dark", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
-        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
+        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTHzablokuj", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
         clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Choose game mode", clashElo: "Play for ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Friendly Match", clashFriendlyDesc: "(Play with a friend)", clashLobbyTitle: "🤝 Friendly Match", clashHost: "CREATE ROOM (HOST)", clashJoinCode: "ROOM CODE...", clashJoinBtn: "JOIN", clashYourCode: "Your room code:", clashWaiting: "Waiting for opponent...", clashReady: "I'M READY", clashTime: "Time to answer:", clashSurrender: "SURRENDER / LEAVE", clashClaim: "CLAIM CELL", clashConfirm: "CONFIRM", clashCancel: "CANCEL", clashSeries: "SERIES SCORE", clashRematch: "PLAY REMATCH", clashQuit: "QUIT AND LEAVE", clashRulesTitle: "Rules: Speedway Clash ⚔️", clashRules1: "The game is played on a 3x3 grid like Tic-Tac-Toe.", clashRules2: "To claim a cell, click it and guess a rider who represented both intersecting clubs.", clashRules3: "Remember, only the Polish league history counts.", clashRules4: "You have 2 minutes to answer! Wrong guess or timeout means you lose your turn.", clashRules5: "Connect 3 cells in a line to win!", clashUnderstood: "UNDERSTOOD", clashGuessPlaceholder: "Rider's name and surname...", clashWaitBtn: "WAITING...", clashWaitP2: "WAITING FOR OPPONENT...",
         // NOWE TŁUMACZENIA DESKTOP
@@ -1144,80 +1051,160 @@ function playSound(type) {
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
-window.isPlayerAdmin = false; // Domyślnie nikt nie jest adminem
-
-// Osobna funkcja do bezpiecznego odpytania o config, używana dopiero po zalogowaniu
-async function checkServerStatusAndAdmin() {
+window.onload = async function() { 
+    setRandomBackground();
+    
+    // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
     try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('admin') === 'czipsol'; 
+
         const getConfigFunc = functions.httpsCallable('getConfig');
-        // Jeśli jesteśmy zalogowani, Firebase doczepi tu token autoryzacyjny
         const configResponse = await getConfigFunc();
         
-        // --- 1. SPRAWDZANIE ADMINA ---
-        if (configResponse.data && configResponse.data.isAdmin) {
-            window.isPlayerAdmin = true;
-            console.log("🛠️ Tryb Deweloperski (Admin) - Odblokowany.");
-            
-            // Pokazujemy przycisk w menu
-            const taBtn = document.getElementById('btnTimeAttackAdmin');
-            if (taBtn) taBtn.style.display = 'inline-flex';
-        }
-
-        // --- 2. BANNERY (Prace serwisowe) ---
+        // 1. BANNER O PRACACH NA ŻYWO (Elegancki, pulsujący na czerwono, nieblokujący klikania)
         if (configResponse.data && configResponse.data.warningMode === true) {
+            
+            // Dodajemy nowoczesne style CSS dla wersji ostrzegawczej
             if (!document.getElementById('warningPulseAnim')) {
                 const style = document.createElement('style');
                 style.id = 'warningPulseAnim';
-                style.innerHTML = `@keyframes warningSlideDown { 0% { transform: translate(-50%, -50px); opacity: 0; } 100% { transform: translate(-50%, 15px); opacity: 1; } } @keyframes warningGlow { 0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); } 50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); } 100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); } } .modern-warning-banner { position: fixed; top: 0; left: 50%; transform: translate(-50%, 15px); background: rgba(20, 20, 25, 0.9); backdrop-filter: blur(8px); border: 1px solid #dc2626; color: #eaeaea; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; text-align: left; z-index: 999999; pointer-events: none; animation: warningSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, warningGlow 2s infinite ease-in-out; display: flex; align-items: center; gap: 12px; max-width: 90%; width: fit-content; line-height: 1.4; } .modern-warning-banner b { color: #ff4d4d; letter-spacing: 0.5px; } .modern-warning-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.8)); }`;
+                style.innerHTML = `
+                    @keyframes warningSlideDown {
+                        0% { transform: translate(-50%, -50px); opacity: 0; }
+                        100% { transform: translate(-50%, 15px); opacity: 1; }
+                    }
+                    @keyframes warningGlow {
+                        0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); }
+                        50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); }
+                        100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); }
+                    }
+                    .modern-warning-banner {
+                        position: fixed;
+                        top: 0;
+                        left: 50%;
+                        transform: translate(-50%, 15px);
+                        background: rgba(20, 20, 25, 0.9);
+                        backdrop-filter: blur(8px);
+                        border: 1px solid #dc2626;
+                        color: #eaeaea;
+                        padding: 10px 20px;
+                        border-radius: 30px;
+                        font-size: 13px;
+                        font-weight: 500;
+                        text-align: left;
+                        z-index: 999999;
+                        pointer-events: none;
+                        animation: warningSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, warningGlow 2s infinite ease-in-out;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        max-width: 90%;
+                        width: fit-content;
+                        line-height: 1.4;
+                    }
+                    .modern-warning-banner b {
+                        color: #ff4d4d;
+                        letter-spacing: 0.5px;
+                    }
+                    .modern-warning-icon {
+                        font-size: 20px;
+                        filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.8));
+                    }
+                `;
                 document.head.appendChild(style);
             }
-            if(!document.querySelector('.modern-warning-banner')) {
-                const banner = document.createElement('div');
-                banner.className = 'modern-warning-banner';
-                banner.innerHTML = `<div class="modern-warning-icon">⚠️</div> <div><b>PRACE SERWISOWE:</b> Trwają prace nad serwerem. Niektóre funkcje mogą tymczasowo nie działać. Przepraszamy za utrudnienia! 🛠️</div>`;
-                document.body.appendChild(banner);
-            }
+
+            const banner = document.createElement('div');
+            banner.className = 'modern-warning-banner';
+            banner.innerHTML = `
+                <div class="modern-warning-icon">⚠️</div> 
+                <div><b>PRACE SERWISOWE:</b> Trwają prace nad serwerem. Niektóre funkcje mogą tymczasowo nie działać. Przepraszamy za utrudnienia! 🛠️</div>
+            `;
+            document.body.appendChild(banner);
         }
 
-        // --- 3. PRZERWA TECHNICZNA (blokująca grę) ---
-        if (configResponse.data && configResponse.data.maintenanceMode === true) {
-            if (!window.isPlayerAdmin) {
-                document.getElementById('maintenanceOverlay').style.display = 'block';
-                document.getElementById('maintenanceOverlay').style.opacity = '1';
-                if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
-                if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-            } else {
-                setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
-            }
+        // 2. CAŁKOWITA PRZERWA TECHNICZNA
+        if (configResponse.data && configResponse.data.maintenanceMode === true && !isAdmin) {
+            document.getElementById('maintenanceOverlay').style.display = 'block';
+            document.getElementById('maintenanceOverlay').style.opacity = '1';
+            
+            if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+            if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+            return; 
         }
 
-        // --- 4. BANNER INFO (Niebieski/Żółty) ---
+        // 3. BANNER INFORMACYJNY (Elegancki, pulsujący, nieblokujący klikania)
         if (configResponse.data && configResponse.data.infoMode === true) {
+            
+            // Dodajemy nowoczesne style CSS
             if (!document.getElementById('infoPulseAnim')) {
                 const style = document.createElement('style');
                 style.id = 'infoPulseAnim';
-                style.innerHTML = `@keyframes infoSlideDown { 0% { transform: translate(-50%, -50px); opacity: 0; } 100% { transform: translate(-50%, 15px); opacity: 1; } } @keyframes infoGlow { 0% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); } 50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); } 100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); } } .modern-info-banner { position: fixed; top: 0; left: 50%; transform: translate(-50%, 15px); background: rgba(20, 20, 25, 0.9); backdrop-filter: blur(8px); border: 1px solid #f1c40f; color: #eaeaea; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; text-align: left; z-index: 999999; pointer-events: none; animation: infoSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, infoGlow 2s infinite ease-in-out; display: flex; align-items: center; gap: 12px; max-width: 90%; width: fit-content; line-height: 1.4; } .modern-info-banner b { color: #f1c40f; letter-spacing: 0.5px; } .modern-info-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.8)); }`;
+                style.innerHTML = `
+                    @keyframes infoSlideDown {
+                        0% { transform: translate(-50%, -50px); opacity: 0; }
+                        100% { transform: translate(-50%, 15px); opacity: 1; }
+                    }
+                    @keyframes infoGlow {
+                        0% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+                        50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); }
+                        100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
+                    }
+                    .modern-info-banner {
+                        position: fixed;
+                        top: 0;
+                        left: 50%;
+                        transform: translate(-50%, 15px);
+                        background: rgba(20, 20, 25, 0.9);
+                        backdrop-filter: blur(8px);
+                        border: 1px solid #f1c40f;
+                        color: #eaeaea;
+                        padding: 10px 20px;
+                        border-radius: 30px;
+                        font-size: 13px;
+                        font-weight: 500;
+                        text-align: left;
+                        z-index: 999999;
+                        pointer-events: none;
+                        animation: infoSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, infoGlow 2s infinite ease-in-out;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        max-width: 90%;
+                        width: fit-content;
+                        line-height: 1.4;
+                    }
+                    .modern-info-banner b {
+                        color: #f1c40f;
+                        letter-spacing: 0.5px;
+                    }
+                    .modern-info-icon {
+                        font-size: 20px;
+                        filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.8));
+                    }
+                `;
                 document.head.appendChild(style);
             }
-            if(!document.querySelector('.modern-info-banner')) {
-                const banner = document.createElement('div');
-                banner.className = 'modern-info-banner';
-                banner.innerHTML = `<div class="modern-info-icon">💡</div> <div><b>INFORMACJA:</b> Aktualnie prowadzone są prace mające na celu umożliwienie połączenia z kontem Discord.</div>`;
-                document.body.appendChild(banner);
-            }
+
+            const banner = document.createElement('div');
+            banner.className = 'modern-info-banner';
+            banner.innerHTML = `
+                <div class="modern-info-icon">💡</div> 
+                <div><b>INFORMACJA:</b> Aktualnie prowadzone są prace mające na celu umożliwienie połączenia z kontem Discord, aby na serwerze widać było twoją rangę!</div>
+            `;
+            document.body.appendChild(banner);
+        }
+        
+        if (configResponse.data && configResponse.data.maintenanceMode === true && isAdmin) {
+            setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
         }
         
     } catch(e) {
-        console.warn("Nie udało się pobrać konfiguracji serwera.", e);
+        console.warn("Nie udało się połączyć z serwerem, by sprawdzić status.", e);
     }
-}
+    // ========================================
 
-window.isPlayerAdmin = false; // Domyślnie nikt nie jest adminem
-
-window.onload = function() { 
-    setRandomBackground();
-    
-    // Uruchamiamy lokalne renderowanie natychmiast
     loadStats(); 
     initDailyMenu(); 
     renderLastGames(); 
@@ -1227,7 +1214,6 @@ window.onload = function() {
     updateLeagueUI(); 
     checkUnseenUpdates();
 };
-
 function loadStats() {
     let saved = localStorage.getItem('speedwayStatsV2'); 
     if(saved) {
@@ -1652,66 +1638,9 @@ function restorePlayedGame() {
 
 function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ'; const noAccents = 'acelnoszzACELNOSZZ'; return str.split('').map(char => { const index = accents.indexOf(char); return index !== -1 ? noAccents[index] : char; }).join(''); }
 
-// ==========================================
-// SYSTEM GENEROWANIA PLANSZY CLASH
-// ==========================================
-
 function getCleanClubName(clubName) { 
     if (!clubName) return "";
     return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").trim().toLowerCase(); 
-}
-
-const EXCLUDED_CLUBS = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery', 'ska-speedway lwów', 'ukrajina równe', 'speedway miszkolc', 'gwardia warszawa', 'kaskad równe'];
-const HARD_CLUBS = ['landshut devils', 'lokomotiv daugavpils', 'start gniezno', 'kolejarz opole', 'wybrzeże gdańsk', 'speedway kraków', 'śląsk świętochłowice', 'kolejarz rawicz', 'unia tarnów'];
-
-function getCleanClubsList() {
-    let clubs = new Set();
-    playersDB.forEach(p => { 
-        p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); 
-        if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); 
-    });
-    EXCLUDED_CLUBS.forEach(c => clubs.delete(c)); 
-    return Array.from(clubs);
-}
-
-function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
-    let attempts = 0;
-    while (attempts < maxAttempts) {
-        attempts++; 
-        
-        let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); 
-        let validCols = [];
-        
-        let hardClubsCount = tempRows.filter(c => HARD_CLUBS.includes(c)).length;
-        if (hardClubsCount > 2) continue;
-
-        for (let c of allClubs) {
-            if (tempRows.includes(c)) continue; 
-            if (HARD_CLUBS.includes(c) && hardClubsCount >= 2) continue;
-
-            let intersectsAll = tempRows.every(r => {
-                let matchCount = 0;
-                for (let p of playersDB) {
-                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); 
-                    if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
-                    if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
-                }
-                return matchCount >= minMatches;
-            });
-            
-            if (intersectsAll) {
-                validCols.push(c);
-                if (HARD_CLUBS.includes(c)) hardClubsCount++;
-            }
-
-            if (validCols.length >= 3) { 
-                clashRows = tempRows; 
-                clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); 
-                return true; 
-            }
-        }
-    }
-    return false;
 }
 
 function getClubAbbr(clubName) { 
@@ -1775,68 +1704,45 @@ async function makeGuess() {
     const guessedPlayerLocal = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
     if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
     
-    const btn = document.querySelector('.search-box button');
-    const originalBtnText = btn.innerText;
-    btn.disabled = true;
-    btn.innerText = "SPRAWDZAM...";
+    const target = _unlockTarget(); // Wyciągamy gracza na moment sprawdzenia
+    const isWinningGuess = (target.id === guessedPlayerLocal.id);
 
-    // WYCIĄGAMY PRAWDZIWE IMIĘ Z SEJFU TYLKO NA UŁAMEK SEKUNDY
-    const trueName = _unlockTarget() ? _unlockTarget().name : null;
+    guessedPlayersNames.push(guessedPlayerLocal.name); 
+    playSound('guess');
+    
+    if (gameMode === 'daily') { 
+        if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
+        userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
+        saveStats(); 
+    }
+    
+    guessCount++; 
+    updateCounterDisplay(); 
+    
+    renderGuess(guessedPlayerLocal, target, false, isWinningGuess); 
+    revealClubsOnPath(guessedPlayerLocal); 
+    document.getElementById('guessInput').value = "";
+    
+    if (guessCount === 5 && !hintActive && !isWinningGuess) {
+        document.getElementById('btnHint').style.display = 'inline-block';
+        showToast("Możesz użyć podpowiedzi!", "normal");
+    }
+    if (guessCount >= 7 && !isWinningGuess) {
+        document.getElementById('btnGiveUp').style.display = 'inline-block';
+    }
 
-    try {
-        const checkGuessFunc = functions.httpsCallable('checkGuess');
-        const response = await checkGuessFunc({
-            guessedPlayerName: guessedPlayerLocal.name, 
-            targetName: trueName, 
-            guessCount: guessCount
-        });
+    if (hintActive && !isWinningGuess) {
+        document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
+    }
 
-        const result = response.data;
-        const isWinningGuess = result.isWin || (trueName && trueName.toLowerCase() === guessedPlayerLocal.name.toLowerCase());
-
-        guessedPlayersNames.push(guessedPlayerLocal.name); 
-        playSound('guess');
-        
-        if (gameMode === 'daily') { 
-            if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
-            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
-            saveStats(); 
-        }
-        
-        guessCount++; 
-        updateCounterDisplay(); 
-        
-        renderGuess(guessedPlayerLocal, serverTargetStats, false, isWinningGuess); 
-        revealClubsOnPath(guessedPlayerLocal); 
-        document.getElementById('guessInput').value = "";
-        
-        if (guessCount === 5 && !hintActive && !isWinningGuess) {
-            document.getElementById('btnHint').style.display = 'inline-block';
-            showToast("Możesz użyć podpowiedzi!", "normal");
-        }
-        if (guessCount >= 7 && !isWinningGuess) {
-            document.getElementById('btnGiveUp').style.display = 'inline-block';
-        }
-
-        if (hintActive && !isWinningGuess && result.hintText) {
-            document.getElementById('mysteryName').innerText = result.hintText;
-        }
-
-        if (isWinningGuess) { 
-            document.getElementById('mysteryName').innerText = trueName;
-            updateStatsOnWin(); 
-            setTimeout(() => handleWin(trueName), 1400); 
-        } else if (guessCount >= GUESS_LIMIT) { 
-            document.getElementById('mysteryName').innerText = trueName;
-            updateStatsOnLoss(); 
-            setTimeout(() => handleLoss(trueName), 1400); 
-        }
-
-    } catch(e) {
-        showToast("Błąd serwera. Spróbuj ponownie.", "error");
-    } finally {
-        btn.disabled = false;
-        btn.innerText = originalBtnText;
+    if (isWinningGuess) { 
+        document.getElementById('mysteryName').innerText = target.name;
+        updateStatsOnWin(); 
+        setTimeout(() => handleWin(target.name), 1400); 
+    } else if (guessCount >= GUESS_LIMIT) { 
+        document.getElementById('mysteryName').innerText = target.name;
+        updateStatsOnLoss(); 
+        setTimeout(() => handleLoss(target.name), 1400); 
     }
 }
 
@@ -1861,14 +1767,13 @@ function revealTargetInfoUI(finalName) {
     photoImg.style.display = 'block';
     document.getElementById('photoWrapper').classList.add('revealed'); 
     
-    // Używamy finalName, a jak go nie ma, to wyciągamy imię z sejfu!
     document.getElementById('mysteryName').innerText = finalName || (target ? target.name : "???");
     
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.index || !target) return;
-        let trueClub = target.pastClubs[box.dataset.index]; 
+        let trueClub = target.pastClubs[box.dataset.index]; // Zamiast serverTargetClubs
         let cleanC = getCleanClubName(trueClub).toLowerCase(); 
         if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
         box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
@@ -3673,6 +3578,32 @@ function closeClashHistory() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+function getCleanClubsList() {
+    let clubs = new Set();
+    playersDB.forEach(p => { p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); });
+    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c)); return Array.from(clubs);
+}
+
+function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+        attempts++; let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); let validCols = [];
+        for (let c of allClubs) {
+            if (tempRows.includes(c)) continue; 
+            let intersectsAll = tempRows.every(r => {
+                let matchCount = 0;
+                for (let p of playersDB) {
+                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
+                    if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
+                }
+                return matchCount >= minMatches;
+            });
+            if (intersectsAll) validCols.push(c);
+        }
+        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); return true; }
+    }
+    return false;
+}
 
 function showClashInfo() {
     const overlay = document.getElementById('clashInfoOverlay');
@@ -3968,214 +3899,6 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
-// ==============================================
-// ====== BLOKADA UI (ANTI-CHEAT) ===============
-// ==============================================
-
-document.addEventListener('contextmenu', function(e) {
-    if (window.isPlayerAdmin) return; // Ufamy tylko zmiennej zweryfikowanej z serwera
-    e.preventDefault();
-});
-
-document.addEventListener('keydown', function(e) {
-    if (window.isPlayerAdmin) return;
-
-    // F12
-    if (e.keyCode === 123) {
-        e.preventDefault();
-        return false;
-    }
-    // Ctrl+Shift+I (Narzędzia deweloperskie)
-    if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
-        e.preventDefault();
-        return false;
-    }
-    // Ctrl+Shift+J (Konsola)
-    if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
-        e.preventDefault();
-        return false;
-    }
-    // Ctrl+U (Pokaż źródło strony)
-    if (e.ctrlKey && e.keyCode === 85) {
-        e.preventDefault();
-        return false;
-    }
-});
-
-// ==============================================
-// ====== SPEEDWAY TIME ATTACK (TESTOWY) ========
-// ==============================================
-
-let taTimerInterval = null;
-let taTimeLeft = 60.0;
-let taScore = 0;
-let taIsPlaying = false;
-
-function openTimeAttack() {
-    if (!window.isPlayerAdmin) return;
-    document.getElementById('mainMenuContainer').style.display = 'none';
-    document.getElementById('desktopMainMenu').style.display = 'none';
-    document.getElementById('timeAttackContainer').style.display = 'flex';
-}
-
-function closeTimeAttack() {
-    if (taTimerInterval) clearInterval(taTimerInterval);
-    taIsPlaying = false;
-    window.location.reload();
-}
-
-function startTaGame() {
-    document.getElementById('taOverlay').style.display = 'none';
-    document.getElementById('taCard').style.display = 'flex';
-    document.getElementById('taInputSection').style.display = 'flex';
-    document.getElementById('taGuessInput').value = '';
-    
-    taTimeLeft = 60.0;
-    taScore = 0;
-    taIsPlaying = true;
-    document.getElementById('taScoreDisplay').innerText = taScore;
-    
-    setupTaAutocomplete();
-    nextTaTarget();
-    startTaTimer();
-    document.getElementById('taGuessInput').focus();
-}
-
-function startTaTimer() {
-    if (taTimerInterval) clearInterval(taTimerInterval);
-    const display = document.getElementById('taTimerDisplay');
-    
-    taTimerInterval = setInterval(() => {
-        taTimeLeft -= 0.1;
-        if (taTimeLeft <= 0) {
-            clearInterval(taTimerInterval);
-            taTimeLeft = 0;
-            display.innerText = "0.0";
-            endTaGame();
-            return;
-        }
-
-        display.innerText = taTimeLeft.toFixed(1);
-
-        if (taTimeLeft <= 10.0) {
-            display.style.color = "var(--red-neon)";
-            if (taTimeLeft.toFixed(1).endsWith(".0")) playSound('flip');
-        } else {
-            display.style.color = "var(--accent)";
-        }
-    }, 100);
-}
-
-function nextTaTarget() {
-    // Szyfrujemy nowego gracza do Sejfu (Wykorzystujemy Twoją mechanikę z głównej gry!)
-    const p = playersDB[Math.floor(Math.random() * playersDB.length)];
-    _lockTarget(p.id); 
-
-    const target = _unlockTarget(); // Pobieramy z powrotem by wrzucić do UI
-    
-    document.getElementById('taCountry').innerText = target.country;
-    document.getElementById('taYear').innerText = target.year;
-    document.getElementById('taGp').innerText = target.gp === true || target.gp === "Tak" || target.gp === "tak" ? "Tak" : "Nie";
-    document.getElementById('taDmp').innerText = target.dmp;
-    document.getElementById('taStatus').innerText = target.status === "Aktywny" ? "Aktywny" : "Nieaktywny";
-    
-    const clubsContainer = document.getElementById('taClubs');
-    clubsContainer.innerHTML = '';
-    
-    let allClubsToRender = [...target.pastClubs];
-    if (target.currentClub && getCleanClubName(target.currentClub) !== "brak klubu") {
-        allClubsToRender.push(target.currentClub);
-    }
-
-    allClubsToRender.forEach(club => {
-        const abbr = getClubAbbr(club);
-        const cleanName = getCleanClubName(club);
-        const badgeHTML = getClubBadgeHTML(club);
-        let specialClass = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanName) ? 'club-special' : 'club-match';
-        clubsContainer.innerHTML += `<div class="club-logo-wrapper" title="${club}"><div class="club-abbr-box ${specialClass}">${abbr}</div>${badgeHTML}</div>`;
-    });
-}
-
-function submitTaGuess() {
-    if (!taIsPlaying) return;
-    const inputEl = document.getElementById('taGuessInput');
-    const guessName = inputEl.value.trim().toLowerCase();
-    if (!guessName) return;
-
-    const target = _unlockTarget(); // Pytamy sejf, kim jesteśmy
-
-    if (guessName === target.name.toLowerCase()) {
-        playSound('win');
-        taScore++;
-        document.getElementById('taScoreDisplay').innerText = taScore;
-        
-        taTimeLeft += 10.0;
-        const display = document.getElementById('taTimerDisplay');
-        display.style.transform = "scale(1.3)";
-        display.style.color = "var(--green-neon)";
-        setTimeout(() => { display.style.transform = "scale(1)"; if(taTimeLeft > 10) display.style.color = "var(--accent)"; }, 300);
-
-        inputEl.value = '';
-        nextTaTarget();
-    } else {
-        playSound('error');
-        const inputWrapper = inputEl.parentElement;
-        inputWrapper.classList.add('shake-error');
-        setTimeout(() => inputWrapper.classList.remove('shake-error'), 400);
-        inputEl.value = '';
-    }
-    inputEl.focus();
-}
-
-function endTaGame() {
-    taIsPlaying = false;
-    playSound('lose');
-    
-    const overlay = document.getElementById('taOverlay');
-    document.getElementById('taOverlayTitle').innerText = "CZAS MINĄŁ!";
-    document.getElementById('taOverlayTitle').style.color = "var(--red-neon)";
-    
-    const target = _unlockTarget();
-    document.getElementById('taOverlayDesc').innerHTML = `Zgadłeś/aś <b>${taScore}</b> zawodników!<br><br>Ostatnim zawodnikiem był: <b style="color:var(--accent);">${target.name}</b>`;
-    
-    const btn = overlay.querySelector('button');
-    btn.innerText = "ZAGRAJ PONOWNIE";
-    overlay.style.display = 'flex';
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && document.activeElement.id === 'taGuessInput') submitTaGuess();
-});
-
-function setupTaAutocomplete() {
-    const oldInput = document.getElementById('taGuessInput'); 
-    if(!oldInput) return;
-    const newInput = oldInput.cloneNode(true); 
-    oldInput.replaceWith(newInput); 
-    
-    newInput.addEventListener('input', function() {
-        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
-        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
-        let valClean = removePolishAccents(val.toLowerCase());
-        
-        playersDB.forEach(player => {
-            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
-                let item = document.createElement("DIV"); item.innerHTML = player.name;
-                item.addEventListener("click", () => { 
-                    newInput.value = player.name; closeAllLists(); submitTaGuess(); 
-                }); 
-                listContainer.appendChild(item);
-            }
-        });
-    });
-}
-
-try {
-    window.openTimeAttack = openTimeAttack;
-    window.closeTimeAttack = closeTimeAttack;
-    window.startTaGame = startTaGame;
-    window.submitTaGuess = submitTaGuess;
-} catch (e) {}
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
