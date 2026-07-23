@@ -412,7 +412,6 @@ auth.onAuthStateChanged(async (user) => {
         syncStatsFromFirebase();
     } else {
         window.isAdmin = false;
-        initAntiCheatEngine(); // Blokady dla gości
         updateAuthUI(null);
     }
 });
@@ -1171,18 +1170,18 @@ window.onload = async function() {
     
     // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
     try {
-        // NOWY POPRAWNY KOD:
-if (configResponse.data && configResponse.data.maintenanceMode === true && !window.isAdmin) {
-    document.getElementById('maintenanceOverlay').style.display = 'block';
-    document.getElementById('maintenanceOverlay').style.opacity = '1';
-    
-    if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
-    if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-    return; 
-}
-
+try {
         const getConfigFunc = functions.httpsCallable('getConfig');
         const configResponse = await getConfigFunc();
+
+        if (configResponse.data && configResponse.data.maintenanceMode === true && !window.isAdmin) {
+            document.getElementById('maintenanceOverlay').style.display = 'block';
+            document.getElementById('maintenanceOverlay').style.opacity = '1';
+            
+            if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+            if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+            return; 
+        }
         
         // 1. BANNER O PRACACH NA ŻYWO (Elegancki, pulsujący na czerwono, nieblokujący klikania)
         if (configResponse.data && configResponse.data.warningMode === true) {
