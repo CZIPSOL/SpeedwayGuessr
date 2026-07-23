@@ -171,9 +171,6 @@ async function fetchServerConfigAndAdminStatus() {
 // ====== AUTORYZACJA I START GRY ===============
 // ==============================================
 
-
-const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
-
 // ==============================================
 // ====== GŁÓWNA FUNKCJA STARTOWA (ONLOAD) ======
 // ==============================================
