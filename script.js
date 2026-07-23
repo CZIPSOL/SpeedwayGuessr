@@ -1,40 +1,40 @@
 window.isAdmin = false; // Domyślnie nikt nie jest adminem
 
 // ==============================================
-// ====== SYSTEM BLOKADY DLA ZWYKŁYCH GRACZY =====
+// ====== DYNAMICZNY SYSTEM ANTI-CHEAT ==========
 // ==============================================
-function initAntiCheatEngine() {
-    if (window.isAdmin) {
-        console.log("👑 TRYB ADMINA AKTYWNY: Wszystkie blokady przeglądarki wyłączone!");
-        showToast("🔓 Tryb Admina: Odblokowano DevTools i PPM", "success");
-        return;
+
+// Słuchacze zdarzeń montujemy RAZ. Sprawdzają 'window.isAdmin' w chwili kliknięcia!
+
+// 1. Blokada Prawego Przycisku Myszy (PPM)
+document.addEventListener('contextmenu', function (e) {
+    if (window.isAdmin === true) {
+        return; // Admin kliknął PPM -> Zezwalamy!
+    }
+    e.preventDefault();
+    showToast("⛔ Prawy przycisk myszy jest zablokowany!", "error");
+    return false;
+});
+
+// 2. Blokada Skrótów Klawiszowych (F12 / DevTools)
+document.addEventListener('keydown', function (e) {
+    if (window.isAdmin === true) {
+        return; // Admin wcisnął klawisz -> Zezwalamy na F12!
     }
 
-    console.log("🛡️ Anti-Cheat Aktywny: Włączanie blokady F12 / PPM");
+    const isF12 = e.key === 'F12' || e.keyCode === 123;
+    const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
+    const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
+    const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
+    const isViewSource = e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85);
 
-    // 1. Blokada Prawego Przycisku Myszy (PPM)
-    document.addEventListener('contextmenu', function (e) {
+    if (isF12 || isInspect || isConsole || isElement || isViewSource) {
         e.preventDefault();
-        showToast("⛔ Prawy przycisk myszy jest zablokowany!", "error");
+        e.stopPropagation();
+        showToast("⛔ Dostęp do konsoli zablokowany!", "error");
         return false;
-    });
-
-    // 2. Blokada Skrótów Klawiszowych (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U, Ctrl+Shift+C)
-    document.addEventListener('keydown', function (e) {
-        const isF12 = e.key === 'F12' || e.keyCode === 123;
-        const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
-        const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
-        const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
-        const isViewSource = e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85);
-
-        if (isF12 || isInspect || isConsole || isElement || isViewSource) {
-            e.preventDefault();
-            e.stopPropagation();
-            showToast("⛔ Dostęp do narzędzi deweloperskich zablokowany!", "error");
-            return false;
-        }
-    });
-}
+    }
+});
 
 function startTestGameMode() {
     if (!window.isAdmin) {
@@ -388,27 +388,32 @@ auth.onAuthStateChanged(async (user) => {
 
 async function verifyAdminPermissions(user) {
     try {
-        const idToken = await user.getIdToken();
+        console.log("🔍 Sprawdzanie uprawnień dla UID:", user.uid);
+        const idToken = await user.getIdToken(true); // Wymuszamy świeży token
         const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
+        
         const res = await checkAdminFunc({ firebaseToken: idToken });
+
+        console.log("DANE Z SERWERA:", res.data);
 
         if (res.data && res.data.isAdmin === true) {
             window.isAdmin = true;
+            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR!");
+            showToast("👑 Zalogowano jako Administrator", "success");
             
-            // Ukrycie ekranu przerwy technicznej, jeśli była włączona
+            // Ukrycie przerwy technicznej dla Admina
             const maintOverlay = document.getElementById('maintenanceOverlay');
             if (maintOverlay) maintOverlay.style.display = 'none';
 
-            // Pokazanie ukrytych elementów UI dla Admina (jeśli istnieją)
+            // Pokaż ukryte elementy dla admina
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
         } else {
             window.isAdmin = false;
+            console.warn("⛔ Serwer zgłosił: Brak uprawnień administratora dla tego UID.");
         }
     } catch (e) {
-        console.error("Błąd weryfikacji admina:", e);
+        console.error("❌ Błąd podczas weryfikacji admina na serwerze:", e);
         window.isAdmin = false;
-    } finally {
-        initAntiCheatEngine(); // Uruchamiamy blokady w zależności od wyniku
     }
 }
 
