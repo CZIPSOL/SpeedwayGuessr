@@ -171,11 +171,8 @@ async function fetchServerConfigAndAdminStatus() {
 // ====== AUTORYZACJA I START GRY ===============
 // ==============================================
 
-// Obiekt do ładowania obrazka w tle (aby kaski nie migały podczas utraty życia)
-const helmetImgObj = new Image(); 
-function preloadHelmetImage() { 
-    helmetImgObj.src = 'kask-zycie.png'; 
-}
+
+const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
 
 // ==============================================
 // ====== GŁÓWNA FUNKCJA STARTOWA (ONLOAD) ======
