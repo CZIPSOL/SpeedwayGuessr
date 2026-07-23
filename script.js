@@ -1051,159 +1051,45 @@ function playSound(type) {
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
+const helmetImgObj = new Image(); 
+function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
+
+window.isPlayerAdmin = false;
+
 window.onload = async function() { 
     setRandomBackground();
     
-    // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
+    // === BEZPIECZNE ODZYSKANIE DANYCH OD SERWERA ===
     try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const isAdmin = urlParams.get('admin') === 'czipsol'; 
-
         const getConfigFunc = functions.httpsCallable('getConfig');
-        const configResponse = await getConfigFunc();
-        
-        // 1. BANNER O PRACACH NA ŻYWO (Elegancki, pulsujący na czerwono, nieblokujący klikania)
-        if (configResponse.data && configResponse.data.warningMode === true) {
-            
-            // Dodajemy nowoczesne style CSS dla wersji ostrzegawczej
-            if (!document.getElementById('warningPulseAnim')) {
-                const style = document.createElement('style');
-                style.id = 'warningPulseAnim';
-                style.innerHTML = `
-                    @keyframes warningSlideDown {
-                        0% { transform: translate(-50%, -50px); opacity: 0; }
-                        100% { transform: translate(-50%, 15px); opacity: 1; }
-                    }
-                    @keyframes warningGlow {
-                        0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); }
-                        50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); }
-                        100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); }
-                    }
-                    .modern-warning-banner {
-                        position: fixed;
-                        top: 0;
-                        left: 50%;
-                        transform: translate(-50%, 15px);
-                        background: rgba(20, 20, 25, 0.9);
-                        backdrop-filter: blur(8px);
-                        border: 1px solid #dc2626;
-                        color: #eaeaea;
-                        padding: 10px 20px;
-                        border-radius: 30px;
-                        font-size: 13px;
-                        font-weight: 500;
-                        text-align: left;
-                        z-index: 999999;
-                        pointer-events: none;
-                        animation: warningSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, warningGlow 2s infinite ease-in-out;
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        max-width: 90%;
-                        width: fit-content;
-                        line-height: 1.4;
-                    }
-                    .modern-warning-banner b {
-                        color: #ff4d4d;
-                        letter-spacing: 0.5px;
-                    }
-                    .modern-warning-icon {
-                        font-size: 20px;
-                        filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.8));
-                    }
-                `;
-                document.head.appendChild(style);
-            }
+        // Wysyłamy nasze ID by serwer sprawdził czy to my
+        const configResponse = await getConfigFunc({ playerId: playerId });
+        const config = configResponse.data;
 
-            const banner = document.createElement('div');
-            banner.className = 'modern-warning-banner';
-            banner.innerHTML = `
-                <div class="modern-warning-icon">⚠️</div> 
-                <div><b>PRACE SERWISOWE:</b> Trwają prace nad serwerem. Niektóre funkcje mogą tymczasowo nie działać. Przepraszamy za utrudnienia! 🛠️</div>
-            `;
-            document.body.appendChild(banner);
+        // Jeśli jesteś Adminem
+        if (config.isAdmin === true) {
+            window.isPlayerAdmin = true;
+            console.log("🛠️ Tryb Admina: Włączony. Blokady UI zdjęte.");
+            
+            // Odkrywamy przyciski Time Attack (PC + Mobile)
+            document.querySelectorAll('#btnTimeAttackAdmin').forEach(btn => {
+                btn.style.setProperty('display', 'inline-flex', 'important');
+            });
         }
 
-        // 2. CAŁKOWITA PRZERWA TECHNICZNA
-        if (configResponse.data && configResponse.data.maintenanceMode === true && !isAdmin) {
+        // Jeśli jest przerwa techniczna, a TY NIE JESTEŚ ADMINEM
+        if (config.maintenanceMode === true && !window.isPlayerAdmin) {
             document.getElementById('maintenanceOverlay').style.display = 'block';
             document.getElementById('maintenanceOverlay').style.opacity = '1';
-            
             if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
             if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-            return; 
-        }
-
-        // 3. BANNER INFORMACYJNY (Elegancki, pulsujący, nieblokujący klikania)
-        if (configResponse.data && configResponse.data.infoMode === true) {
-            
-            // Dodajemy nowoczesne style CSS
-            if (!document.getElementById('infoPulseAnim')) {
-                const style = document.createElement('style');
-                style.id = 'infoPulseAnim';
-                style.innerHTML = `
-                    @keyframes infoSlideDown {
-                        0% { transform: translate(-50%, -50px); opacity: 0; }
-                        100% { transform: translate(-50%, 15px); opacity: 1; }
-                    }
-                    @keyframes infoGlow {
-                        0% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
-                        50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); }
-                        100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
-                    }
-                    .modern-info-banner {
-                        position: fixed;
-                        top: 0;
-                        left: 50%;
-                        transform: translate(-50%, 15px);
-                        background: rgba(20, 20, 25, 0.9);
-                        backdrop-filter: blur(8px);
-                        border: 1px solid #f1c40f;
-                        color: #eaeaea;
-                        padding: 10px 20px;
-                        border-radius: 30px;
-                        font-size: 13px;
-                        font-weight: 500;
-                        text-align: left;
-                        z-index: 999999;
-                        pointer-events: none;
-                        animation: infoSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, infoGlow 2s infinite ease-in-out;
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                        max-width: 90%;
-                        width: fit-content;
-                        line-height: 1.4;
-                    }
-                    .modern-info-banner b {
-                        color: #f1c40f;
-                        letter-spacing: 0.5px;
-                    }
-                    .modern-info-icon {
-                        font-size: 20px;
-                        filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.8));
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            const banner = document.createElement('div');
-            banner.className = 'modern-info-banner';
-            banner.innerHTML = `
-                <div class="modern-info-icon">💡</div> 
-                <div><b>INFORMACJA:</b> Aktualnie prowadzone są prace mające na celu umożliwienie połączenia z kontem Discord, aby na serwerze widać było twoją rangę!</div>
-            `;
-            document.body.appendChild(banner);
-        }
-        
-        if (configResponse.data && configResponse.data.maintenanceMode === true && isAdmin) {
-            setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
+            return; // Ucinamy ładowanie gry dla innych
         }
         
     } catch(e) {
-        console.warn("Nie udało się połączyć z serwerem, by sprawdzić status.", e);
+        console.warn("Błąd połączenia z konfiguracją serwera.", e);
     }
-    // ========================================
+    // ===============================================
 
     loadStats(); 
     initDailyMenu(); 
@@ -1214,6 +1100,24 @@ window.onload = async function() {
     updateLeagueUI(); 
     checkUnseenUpdates();
 };
+
+// ==============================================
+// ====== BLOKADA UI (ANTI-CHEAT) ===============
+// ==============================================
+document.addEventListener('contextmenu', function(e) {
+    if (window.isPlayerAdmin) return; // Admin może klikać prawym
+    e.preventDefault();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (window.isPlayerAdmin) return; // Admin może używać F12
+
+    if (e.keyCode === 123) { e.preventDefault(); return false; } // F12
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 73) { e.preventDefault(); return false; } // Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 74) { e.preventDefault(); return false; } // Ctrl+Shift+J
+    if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; } // Ctrl+U
+});
+
 function loadStats() {
     let saved = localStorage.getItem('speedwayStatsV2'); 
     if(saved) {
@@ -3899,6 +3803,212 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// ==============================================
+// ====== SPEEDWAY TIME ATTACK (PEŁNA WERSJA) ===
+// ==============================================
+
+let taTimerInterval = null;
+let taTimeLeft = 60.0;
+let taScore = 0;
+let taIsPlaying = false;
+let taGuessedNames = []; // Lista odgadniętych nazwisk
+
+function openTimeAttack() {
+    if (!window.isPlayerAdmin) return;
+    document.getElementById('mainMenuContainer').style.display = 'none';
+    document.getElementById('desktopMainMenu').style.display = 'none';
+    document.getElementById('timeAttackContainer').style.display = 'flex';
+}
+
+function closeTimeAttack() {
+    if (taTimerInterval) clearInterval(taTimerInterval);
+    taIsPlaying = false;
+    window.location.reload();
+}
+
+function startTaGame() {
+    document.getElementById('taOverlay').style.display = 'none';
+    document.getElementById('taCard').style.display = 'flex';
+    document.getElementById('taInputSection').style.display = 'flex';
+    
+    // Pokazanie nowej sekcji listy
+    document.getElementById('taGuessedListContainer').style.display = 'block';
+    document.getElementById('taGuessedList').innerHTML = '';
+    document.getElementById('taGuessInput').value = '';
+    
+    taTimeLeft = 60.0;
+    taScore = 0;
+    taGuessedNames = [];
+    taIsPlaying = true;
+    document.getElementById('taScoreDisplay').innerText = taScore;
+    
+    setupTaAutocomplete();
+    nextTaTarget();
+    startTaTimer();
+    
+    // Focus na input - gotowy do pisania
+    setTimeout(() => { document.getElementById('taGuessInput').focus(); }, 100);
+}
+
+function startTaTimer() {
+    if (taTimerInterval) clearInterval(taTimerInterval);
+    const display = document.getElementById('taTimerDisplay');
+    
+    taTimerInterval = setInterval(() => {
+        taTimeLeft -= 0.1;
+        if (taTimeLeft <= 0) {
+            clearInterval(taTimerInterval);
+            taTimeLeft = 0;
+            display.innerText = "0.0";
+            endTaGame();
+            return;
+        }
+
+        display.innerText = taTimeLeft.toFixed(1);
+
+        if (taTimeLeft <= 10.0) {
+            display.style.color = "var(--red-neon)";
+            if (taTimeLeft.toFixed(1).endsWith(".0")) playSound('flip');
+        } else {
+            display.style.color = "var(--accent)";
+        }
+    }, 100);
+}
+
+function nextTaTarget() {
+    // Losujemy zawodnika dopóki nie wylosujemy kogoś, kogo jeszcze nie odgadliśmy
+    let p;
+    let isDuplicate = true;
+    while (isDuplicate) {
+        p = playersDB[Math.floor(Math.random() * playersDB.length)];
+        if (!taGuessedNames.includes(p.name)) {
+            isDuplicate = false;
+        }
+    }
+
+    _lockTarget(p.id); 
+    const target = _unlockTarget(); 
+    
+    document.getElementById('taCountry').innerText = target.country;
+    document.getElementById('taYear').innerText = target.year;
+    document.getElementById('taGp').innerText = target.gp === true || target.gp === "Tak" || target.gp === "tak" ? "Tak" : "Nie";
+    document.getElementById('taDmp').innerText = target.dmp;
+    document.getElementById('taStatus').innerText = target.status === "Aktywny" ? "Aktywny" : "Nieaktywny";
+    
+    const clubsContainer = document.getElementById('taClubs');
+    clubsContainer.innerHTML = '';
+    
+    let allClubsToRender = [...target.pastClubs];
+    if (target.currentClub && getCleanClubName(target.currentClub) !== "brak klubu") {
+        allClubsToRender.push(target.currentClub);
+    }
+
+    allClubsToRender.forEach((club, index) => {
+        const abbr = getClubAbbr(club);
+        const cleanName = getCleanClubName(club);
+        const badgeHTML = getClubBadgeHTML(club);
+        let specialClass = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanName) ? 'club-special' : 'club-match';
+        
+        clubsContainer.innerHTML += `<div class="club-logo-wrapper" title="${club}"><div class="club-abbr-box ${specialClass}">${abbr}</div>${badgeHTML}</div>`;
+        
+        if (index < allClubsToRender.length - 1) {
+            clubsContainer.innerHTML += `<div style="display:flex; align-items:center; color: var(--text-dim); font-size:12px; margin: 0 4px;">→</div>`;
+        }
+    });
+}
+
+function submitTaGuess() {
+    if (!taIsPlaying) return;
+    const inputEl = document.getElementById('taGuessInput');
+    const guessName = inputEl.value.trim().toLowerCase();
+    if (!guessName) return;
+
+    const target = _unlockTarget();
+
+    if (guessName === target.name.toLowerCase()) {
+        playSound('win');
+        taScore++;
+        document.getElementById('taScoreDisplay').innerText = taScore;
+        
+        // Dodawanie nazwiska do listy pod inputem
+        taGuessedNames.push(target.name);
+        const listEl = document.getElementById('taGuessedList');
+        const newItem = document.createElement('li');
+        newItem.innerText = target.name;
+        // Animacja pojawiania się na liście
+        newItem.style.animation = "flipIn 0.3s ease forwards"; 
+        listEl.appendChild(newItem);
+        
+        // Przewinięcie listy na sam dół (żeby zawsze było widać najnowszego)
+        listEl.parentElement.scrollTop = listEl.parentElement.scrollHeight;
+
+        // Efekt powiększenia zegara
+        const display = document.getElementById('taTimerDisplay');
+        display.style.transform = "scale(1.3)";
+        display.style.color = "var(--green-neon)";
+        setTimeout(() => { display.style.transform = "scale(1)"; if(taTimeLeft > 10) display.style.color = "var(--accent)"; }, 300);
+
+        inputEl.value = '';
+        nextTaTarget(); // Wczytuje kolejnego zawodnika
+    } else {
+        playSound('error');
+        const inputWrapper = inputEl.parentElement;
+        inputWrapper.classList.add('shake-error');
+        setTimeout(() => inputWrapper.classList.remove('shake-error'), 400);
+        inputEl.value = '';
+    }
+    // Przywracamy focus po zgadnięciu/błędzie
+    inputEl.focus();
+}
+
+function endTaGame() {
+    taIsPlaying = false;
+    playSound('lose');
+    
+    const overlay = document.getElementById('taOverlay');
+    document.getElementById('taOverlayTitle').innerText = "CZAS MINĄŁ!";
+    document.getElementById('taOverlayTitle').style.color = "var(--red-neon)";
+    
+    // Budujemy ładne podsumowanie z listą
+    let summaryHtml = `Zgadłeś/aś <b style="color:var(--accent); font-size:24px;">${taScore}</b> zawodników!<br><br>`;
+    if (taScore > 0) {
+        summaryHtml += `<div style="max-height: 150px; overflow-y: auto; text-align: left; padding: 15px; background: rgba(0,0,0,0.5); border-radius: 8px; border-left: 3px solid var(--accent); font-size: 14px;">
+            <ol style="margin: 0; padding-left: 20px;">
+                ${taGuessedNames.map(name => `<li>${name}</li>`).join('')}
+            </ol>
+        </div>`;
+    }
+    
+    document.getElementById('taOverlayDesc').innerHTML = summaryHtml;
+    
+    const btn = overlay.querySelector('button');
+    btn.innerText = "ZAGRAJ PONOWNIE";
+    overlay.style.display = 'flex';
+}
+
+function setupTaAutocomplete() {
+    const oldInput = document.getElementById('taGuessInput'); 
+    if(!oldInput) return;
+    const newInput = oldInput.cloneNode(true); 
+    oldInput.replaceWith(newInput); 
+    
+    newInput.addEventListener('input', function() {
+        let val = this.value; closeAllLists(); if (!val || val.length < 2) return;
+        let listContainer = document.createElement("DIV"); listContainer.setAttribute("class", "autocomplete-items"); this.parentNode.appendChild(listContainer);
+        let valClean = removePolishAccents(val.toLowerCase());
+        
+        playersDB.forEach(player => {
+            if (removePolishAccents(player.name.toLowerCase()).includes(valClean)) {
+                let item = document.createElement("DIV"); item.innerHTML = player.name;
+                item.addEventListener("click", () => { 
+                    newInput.value = player.name; closeAllLists(); submitTaGuess(); 
+                }); 
+                listContainer.appendChild(item);
+            }
+        });
+    });
+}
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
