@@ -1,26 +1,28 @@
-window.isAdmin = false; // Domyślnie nikt nie jest adminem
-
 // ==============================================
-// ====== DYNAMICZNY SYSTEM ANTI-CHEAT ==========
+// ====== SEKCJA ADMINA I BLOKAD (ANTI-CHEAT) ===
 // ==============================================
 
-// Słuchacze zdarzeń montujemy RAZ. Sprawdzają 'window.isAdmin' w chwili kliknięcia!
+// 1. Domyślny stan zmiennej globalnej
+window.isAdmin = false;
 
-// 1. Blokada Prawego Przycisku Myszy (PPM)
+// Awaryjna obsługa wejścia z linku z kluczem (np. speedwayguessr.pl/?admin=czipsol)
+const initialUrlParams = new URLSearchParams(window.location.search);
+if (initialUrlParams.get('admin') === 'czipsol') {
+    window.isAdmin = true;
+    console.log("🔐 Tryb Admina aktywowany z parametru URL (?admin=czipsol)");
+}
+
+// 2. Blokada Prawego Przycisku Myszy (PPM)
 document.addEventListener('contextmenu', function (e) {
-    if (window.isAdmin === true) {
-        return; // Admin kliknął PPM -> Zezwalamy!
-    }
+    if (window.isAdmin === true) return true; // ADMIN -> Zezwalaj
     e.preventDefault();
-    showToast("⛔ Prawy przycisk myszy jest zablokowany!", "error");
+    showToast("⛔ Prawy przycisk myszy zablokowany!", "error");
     return false;
-});
+}, true);
 
-// 2. Blokada Skrótów Klawiszowych (F12 / DevTools)
+// 3. Blokada Skrótów Klawiszowych (F12 / DevTools)
 document.addEventListener('keydown', function (e) {
-    if (window.isAdmin === true) {
-        return; // Admin wcisnął klawisz -> Zezwalamy na F12!
-    }
+    if (window.isAdmin === true) return true; // ADMIN -> Zezwalaj
 
     const isF12 = e.key === 'F12' || e.keyCode === 123;
     const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
@@ -34,15 +36,52 @@ document.addEventListener('keydown', function (e) {
         showToast("⛔ Dostęp do konsoli zablokowany!", "error");
         return false;
     }
+}, true);
+
+// 4. Logika Logowania Firebase
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        playerId = user.uid;
+        if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
+            playerNickname = user.displayName || "Gracz";
+            localStorage.setItem('speedwayNickname', playerNickname);
+        }
+        localStorage.setItem('speedwayUserId', playerId);
+        updateAuthUI(user);
+        
+        // WYWOŁANIE SPRAWDZENIA ADMINA
+        await verifyAdminPermissions(user);
+
+        syncStatsFromFirebase();
+    } else {
+        updateAuthUI(null);
+    }
 });
 
-function startTestGameMode() {
-    if (!window.isAdmin) {
-        appAlert("Ten tryb jest obecnie w fazie zamkniętych testów i dostępny tylko dla Administratorów!", "Brak Dostępu");
-        return;
+async function verifyAdminPermissions(user) {
+    try {
+        console.log("🔍 Sprawdzanie statusu Admina dla UID:", user.uid);
+        
+        const idToken = await user.getIdToken(true);
+        const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
+        const res = await checkAdminFunc({ firebaseToken: idToken });
+
+        console.log("📡 Odpowiedź serwera w sprawie Admina:", res.data);
+
+        if (res.data && res.data.isAdmin === true) {
+            window.isAdmin = true;
+            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR! Odblokowano F12 i PPM.");
+            showToast("👑 Zalogowano jako Administrator", "success");
+            
+            // Ukryj przerwę techniczną jeśli była widoczna
+            const maintOverlay = document.getElementById('maintenanceOverlay');
+            if (maintOverlay) maintOverlay.style.display = 'none';
+        } else {
+            console.warn("⚠️ Twój UID nie znajduje się na liście ADMIN_UIDS na serwerze.");
+        }
+    } catch (e) {
+        console.error("❌ Błąd połączenia z funkcją checkAdminStatus:", e);
     }
-    
-    // Logika uruchomienia gry dla Admina...
 }
 
 // ==============================================
@@ -1140,8 +1179,15 @@ window.onload = async function() {
     
     // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
     try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const isAdmin = urlParams.get('admin') === 'czipsol'; 
+        // NOWY POPRAWNY KOD:
+if (configResponse.data && configResponse.data.maintenanceMode === true && !window.isAdmin) {
+    document.getElementById('maintenanceOverlay').style.display = 'block';
+    document.getElementById('maintenanceOverlay').style.opacity = '1';
+    
+    if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+    if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+    return; 
+}
 
         const getConfigFunc = functions.httpsCallable('getConfig');
         const configResponse = await getConfigFunc();
