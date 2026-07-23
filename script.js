@@ -210,7 +210,6 @@ window.onload = function() {
 };
 
 // Dopiero po włączeniu, możemy pobrać bazę i funkcje:
-const db = firebase.firestore();
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 const functions = firebase.functions(); 
