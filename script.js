@@ -906,7 +906,7 @@ const i18n = {
         teams: "Teams:", colName: "Rider", colCountry: "Country", colYear: "Born", colGP: "SGP?", colDMP: "Team Medals", colStatus: "Status", colClubs: "Clubs History",
         stats: "STATISTICS", statPlayed: "Played", statWon: "Won", statStreak: "Current Streak", statMax: "Max Streak", btnClose: "CLOSE", archive: "DAILY ARCHIVE",
         winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", theme: "Theme:", themeLight: "Light", themeDark: "Dark", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
-        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTHzablokuj", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
+        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
         clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Choose game mode", clashElo: "Play for ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Friendly Match", clashFriendlyDesc: "(Play with a friend)", clashLobbyTitle: "🤝 Friendly Match", clashHost: "CREATE ROOM (HOST)", clashJoinCode: "ROOM CODE...", clashJoinBtn: "JOIN", clashYourCode: "Your room code:", clashWaiting: "Waiting for opponent...", clashReady: "I'M READY", clashTime: "Time to answer:", clashSurrender: "SURRENDER / LEAVE", clashClaim: "CLAIM CELL", clashConfirm: "CONFIRM", clashCancel: "CANCEL", clashSeries: "SERIES SCORE", clashRematch: "PLAY REMATCH", clashQuit: "QUIT AND LEAVE", clashRulesTitle: "Rules: Speedway Clash ⚔️", clashRules1: "The game is played on a 3x3 grid like Tic-Tac-Toe.", clashRules2: "To claim a cell, click it and guess a rider who represented both intersecting clubs.", clashRules3: "Remember, only the Polish league history counts.", clashRules4: "You have 2 minutes to answer! Wrong guess or timeout means you lose your turn.", clashRules5: "Connect 3 cells in a line to win!", clashUnderstood: "UNDERSTOOD", clashGuessPlaceholder: "Rider's name and surname...", clashWaitBtn: "WAITING...", clashWaitP2: "WAITING FOR OPPONENT...",
         // NOWE TŁUMACZENIA DESKTOP
@@ -1704,45 +1704,68 @@ async function makeGuess() {
     const guessedPlayerLocal = playersDB.find(p => p.name.toLowerCase() === input.toLowerCase());
     if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
     
-    const target = _unlockTarget(); // Wyciągamy gracza na moment sprawdzenia
-    const isWinningGuess = (target.id === guessedPlayerLocal.id);
+    const btn = document.querySelector('.search-box button');
+    const originalBtnText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "SPRAWDZAM...";
 
-    guessedPlayersNames.push(guessedPlayerLocal.name); 
-    playSound('guess');
-    
-    if (gameMode === 'daily') { 
-        if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
-        userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
-        saveStats(); 
-    }
-    
-    guessCount++; 
-    updateCounterDisplay(); 
-    
-    renderGuess(guessedPlayerLocal, target, false, isWinningGuess); 
-    revealClubsOnPath(guessedPlayerLocal); 
-    document.getElementById('guessInput').value = "";
-    
-    if (guessCount === 5 && !hintActive && !isWinningGuess) {
-        document.getElementById('btnHint').style.display = 'inline-block';
-        showToast("Możesz użyć podpowiedzi!", "normal");
-    }
-    if (guessCount >= 7 && !isWinningGuess) {
-        document.getElementById('btnGiveUp').style.display = 'inline-block';
-    }
+    // WYCIĄGAMY PRAWDZIWE IMIĘ Z SEJFU TYLKO NA UŁAMEK SEKUNDY
+    const trueName = _unlockTarget() ? _unlockTarget().name : null;
 
-    if (hintActive && !isWinningGuess) {
-        document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
-    }
+    try {
+        const checkGuessFunc = functions.httpsCallable('checkGuess');
+        const response = await checkGuessFunc({
+            guessedPlayerName: guessedPlayerLocal.name, 
+            targetName: trueName, 
+            guessCount: guessCount
+        });
 
-    if (isWinningGuess) { 
-        document.getElementById('mysteryName').innerText = target.name;
-        updateStatsOnWin(); 
-        setTimeout(() => handleWin(target.name), 1400); 
-    } else if (guessCount >= GUESS_LIMIT) { 
-        document.getElementById('mysteryName').innerText = target.name;
-        updateStatsOnLoss(); 
-        setTimeout(() => handleLoss(target.name), 1400); 
+        const result = response.data;
+        const isWinningGuess = result.isWin || (trueName && trueName.toLowerCase() === guessedPlayerLocal.name.toLowerCase());
+
+        guessedPlayersNames.push(guessedPlayerLocal.name); 
+        playSound('guess');
+        
+        if (gameMode === 'daily') { 
+            if (!userStats.dailyGuesses[selectedDailyDay]) userStats.dailyGuesses[selectedDailyDay] = []; 
+            userStats.dailyGuesses[selectedDailyDay].push(guessedPlayerLocal.name); 
+            saveStats(); 
+        }
+        
+        guessCount++; 
+        updateCounterDisplay(); 
+        
+        renderGuess(guessedPlayerLocal, serverTargetStats, false, isWinningGuess); 
+        revealClubsOnPath(guessedPlayerLocal); 
+        document.getElementById('guessInput').value = "";
+        
+        if (guessCount === 5 && !hintActive && !isWinningGuess) {
+            document.getElementById('btnHint').style.display = 'inline-block';
+            showToast("Możesz użyć podpowiedzi!", "normal");
+        }
+        if (guessCount >= 7 && !isWinningGuess) {
+            document.getElementById('btnGiveUp').style.display = 'inline-block';
+        }
+
+        if (hintActive && !isWinningGuess && result.hintText) {
+            document.getElementById('mysteryName').innerText = result.hintText;
+        }
+
+        if (isWinningGuess) { 
+            document.getElementById('mysteryName').innerText = trueName;
+            updateStatsOnWin(); 
+            setTimeout(() => handleWin(trueName), 1400); 
+        } else if (guessCount >= GUESS_LIMIT) { 
+            document.getElementById('mysteryName').innerText = trueName;
+            updateStatsOnLoss(); 
+            setTimeout(() => handleLoss(trueName), 1400); 
+        }
+
+    } catch(e) {
+        showToast("Błąd serwera. Spróbuj ponownie.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalBtnText;
     }
 }
 
@@ -1767,13 +1790,14 @@ function revealTargetInfoUI(finalName) {
     photoImg.style.display = 'block';
     document.getElementById('photoWrapper').classList.add('revealed'); 
     
+    // Używamy finalName, a jak go nie ma, to wyciągamy imię z sejfu!
     document.getElementById('mysteryName').innerText = finalName || (target ? target.name : "???");
     
     if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
     
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.index || !target) return;
-        let trueClub = target.pastClubs[box.dataset.index]; // Zamiast serverTargetClubs
+        let trueClub = target.pastClubs[box.dataset.index]; 
         let cleanC = getCleanClubName(trueClub).toLowerCase(); 
         if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
         box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
@@ -3897,6 +3921,41 @@ document.addEventListener('keydown', function(e) {
         if (document.activeElement.id === 'nickInput') {
             saveNick();
         }
+    }
+});
+// ==============================================
+// ====== BLOKADA UI (ANTI-CHEAT) ===============
+// ==============================================
+
+// Blokada prawego przycisku myszy (nie działa, jeśli masz w linku ?admin=czipsol)
+document.addEventListener('contextmenu', function(e) {
+    if (window.location.search.includes('admin=czipsol')) return; 
+    e.preventDefault();
+});
+
+// Blokada skrótów klawiszowych (nie działa dla admina)
+document.addEventListener('keydown', function(e) {
+    if (window.location.search.includes('admin=czipsol')) return; 
+
+    // F12
+    if (e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+    }
+    // Ctrl+Shift+I (Narzędzia deweloperskie)
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+        e.preventDefault();
+        return false;
+    }
+    // Ctrl+Shift+J (Konsola)
+    if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+        e.preventDefault();
+        return false;
+    }
+    // Ctrl+U (Pokaż źródło strony)
+    if (e.ctrlKey && e.keyCode === 85) {
+        e.preventDefault();
+        return false;
     }
 });
 
