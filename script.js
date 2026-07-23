@@ -1642,6 +1642,11 @@ function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁ�
 // SYSTEM GENEROWANIA PLANSZY CLASH
 // ==========================================
 
+function getCleanClubName(clubName) { 
+    if (!clubName) return "";
+    return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").trim().toLowerCase(); 
+}
+
 const EXCLUDED_CLUBS = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery', 'ska-speedway lwów', 'ukrajina równe', 'speedway miszkolc', 'gwardia warszawa', 'kaskad równe'];
 const HARD_CLUBS = ['landshut devils', 'lokomotiv daugavpils', 'start gniezno', 'kolejarz opole', 'wybrzeże gdańsk', 'speedway kraków', 'śląsk świętochłowice', 'kolejarz rawicz', 'unia tarnów'];
 
