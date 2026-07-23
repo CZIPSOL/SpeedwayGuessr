@@ -136,6 +136,16 @@ const CURRENT_GAME_VERSION = "Alpha v1.1.0";
 const changelog = {
     pl: [
         {
+            version: "Beta v1.2.0", date: "23.07.2026",
+            changes: [
+                "👾 <b>Integracja Discord:</b> Otwieramy oficjalny serwer Discord! Dołącz do nas z poziomu menu gry, aby rozmawiać i szukać graczy do Clasha.",
+                "🏆 <b>Rangi na Discordzie:</b> Całkowita nowość! Połącz swoje konto w profilu gracza, a Twoja ranga z ligi Clash (Srebro, Diament itp.) będzie automatycznie aktualizować się na naszym serwerze Discord!",
+                "⚔️ <b>Zasady Clash (Brak Remisów):</b> Zmieniamy logikę gry. Jeśli plansza 3x3 się zapełni i nikt nie ułoży linii, nie ma już klasycznego remisu. Wygrywa gracz, który przejął więcej kratek (np. 5 do 4)!",
+                "👁️ <b>Podgląd Planszy:</b> Po emocjonującym meczu Clash możesz teraz kliknąć przycisk 'Podgląd Planszy', aby na spokojnie przeanalizować układ i strzały po obu stronach.",
+                "📱 <b>Udostępnianie Daily:</b> Znacznie ulepszono wygląd generowanego obrazka z wynikiem Daily. Na komputerach PC obrazek automatycznie kopiuje się do schowka (gotowy do wklejenia Ctrl+V)!"
+            ]
+        },
+        {
             version: "Beta v1.0.0", date: "18.07.2026",
             changes: [
                 "🚀 <b>Przechodzimy do fazy BETA!</b> Gra jest w pełni stabilna i gotowa na szersze testy przez graczy.",
@@ -184,6 +194,16 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.2.0", date: "24.07.2026",
+            changes: [
+                "👾 <b>Discord Integration:</b> Our official Discord server is now open! Join us from the game menu to chat and find Clash opponents.",
+                "🏆 <b>Discord Roles:</b> Link your account in the player profile, and your Clash League rank (Silver, Diamond, etc.) will automatically sync with our Discord server!",
+                "⚔️ <b>Clash Rules (No Draws):</b> We changed the game logic. If the 3x3 board fills up with no line of 3, there's no more draw. The player with the most claimed cells wins (e.g. 5 to 4)!",
+                "👁️ <b>Board Preview:</b> After a thrilling Clash match, you can now click the 'Board Preview' button to analyze the final layout and guesses.",
+                "📱 <b>Daily Share:</b> Massively improved the generated Daily result image. On PCs, the image is automatically copied to your clipboard (ready for Ctrl+V)!"
+            ]
+        },
         {
             version: "Beta v1.0.0", date: "18.07.2026",
             changes: [
