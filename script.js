@@ -80,9 +80,134 @@ const firebaseConfig = {
     measurementId: "G-QSWL3N5CHG"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
+const functions = firebase.functions(); 
+
+let playerId = localStorage.getItem('speedwayUserId');
+if (!playerId) {
+    playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('speedwayUserId', playerId);
 }
+
+window.isPlayerAdmin = false; // Domyślnie nikt nie jest adminem
+
+// ==============================================
+// ====== POBIERANIE KONFIGURACJI Z SERWERA =====
+// ==============================================
+
+async function fetchServerConfigAndAdminStatus() {
+    try {
+        const getConfigFunc = functions.httpsCallable('getConfig');
+        // Jeśli gracz jest zalogowany (co Firebase już wie w tym momencie), 
+        // automatycznie doczepi w tle token do tego requestu
+        const configResponse = await getConfigFunc();
+        
+        // --- 1. SPRAWDZANIE ADMINA ---
+        if (configResponse.data && configResponse.data.isAdmin === true) {
+            window.isPlayerAdmin = true;
+            console.log("🛠️ Tryb Deweloperski (Admin) - Odblokowany.");
+            
+            // Odkrywamy przycisk Time Attack w Menu
+            const taBtn = document.getElementById('btnTimeAttackAdmin');
+            if (taBtn) taBtn.style.display = 'inline-flex';
+        }
+
+        // --- 2. BANNER O PRACACH (Czerwony, pulsujący) ---
+        if (configResponse.data && configResponse.data.warningMode === true) {
+            if (!document.getElementById('warningPulseAnim')) {
+                const style = document.createElement('style');
+                style.id = 'warningPulseAnim';
+                style.innerHTML = `@keyframes warningSlideDown { 0% { transform: translate(-50%, -50px); opacity: 0; } 100% { transform: translate(-50%, 15px); opacity: 1; } } @keyframes warningGlow { 0% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); } 50% { box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); } 100% { box-shadow: 0 0 10px rgba(220, 38, 38, 0.3); } } .modern-warning-banner { position: fixed; top: 0; left: 50%; transform: translate(-50%, 15px); background: rgba(20, 20, 25, 0.9); backdrop-filter: blur(8px); border: 1px solid #dc2626; color: #eaeaea; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; text-align: left; z-index: 999999; pointer-events: none; animation: warningSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, warningGlow 2s infinite ease-in-out; display: flex; align-items: center; gap: 12px; max-width: 90%; width: fit-content; line-height: 1.4; } .modern-warning-banner b { color: #ff4d4d; letter-spacing: 0.5px; } .modern-warning-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.8)); }`;
+                document.head.appendChild(style);
+            }
+            if(!document.querySelector('.modern-warning-banner')) {
+                const banner = document.createElement('div');
+                banner.className = 'modern-warning-banner';
+                banner.innerHTML = `<div class="modern-warning-icon">⚠️</div> <div><b>PRACE SERWISOWE:</b> Trwają prace nad serwerem. Niektóre funkcje mogą tymczasowo nie działać. Przepraszamy za utrudnienia! 🛠️</div>`;
+                document.body.appendChild(banner);
+            }
+        }
+
+        // --- 3. CAŁKOWITA PRZERWA TECHNICZNA ---
+        // WAŻNE: Admin widzi grę normalnie mimo przerwy!
+        if (configResponse.data && configResponse.data.maintenanceMode === true) {
+            if (!window.isPlayerAdmin) {
+                document.getElementById('maintenanceOverlay').style.display = 'block';
+                document.getElementById('maintenanceOverlay').style.opacity = '1';
+                if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+                if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+                return; // Ucina ładowanie gry dla gości
+            } else {
+                setTimeout(() => { showToast("🔐 Tryb Admina: Przerwa techniczna ominięta", "success"); }, 1000);
+            }
+        }
+
+        // --- 4. BANNER INFORMACYJNY (Złoty/Niebieski) ---
+        if (configResponse.data && configResponse.data.infoMode === true) {
+            if (!document.getElementById('infoPulseAnim')) {
+                const style = document.createElement('style');
+                style.id = 'infoPulseAnim';
+                style.innerHTML = `@keyframes infoSlideDown { 0% { transform: translate(-50%, -50px); opacity: 0; } 100% { transform: translate(-50%, 15px); opacity: 1; } } @keyframes infoGlow { 0% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); } 50% { box-shadow: 0 0 25px rgba(241, 196, 15, 0.8); } 100% { box-shadow: 0 0 10px rgba(241, 196, 15, 0.3); } } .modern-info-banner { position: fixed; top: 0; left: 50%; transform: translate(-50%, 15px); background: rgba(20, 20, 25, 0.9); backdrop-filter: blur(8px); border: 1px solid #f1c40f; color: #eaeaea; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 500; text-align: left; z-index: 999999; pointer-events: none; animation: infoSlideDown 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, infoGlow 2s infinite ease-in-out; display: flex; align-items: center; gap: 12px; max-width: 90%; width: fit-content; line-height: 1.4; } .modern-info-banner b { color: #f1c40f; letter-spacing: 0.5px; } .modern-info-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.8)); }`;
+                document.head.appendChild(style);
+            }
+            if(!document.querySelector('.modern-info-banner')) {
+                const banner = document.createElement('div');
+                banner.className = 'modern-info-banner';
+                banner.innerHTML = `<div class="modern-info-icon">💡</div> <div><b>INFORMACJA:</b> Aktualnie prowadzone są prace mające na celu umożliwienie połączenia z kontem Discord.</div>`;
+                document.body.appendChild(banner);
+            }
+        }
+        
+    } catch(e) {
+        console.warn("Nie udało się pobrać konfiguracji serwera.", e);
+    }
+}
+
+// ==============================================
+// ====== AUTORYZACJA I START GRY ===============
+// ==============================================
+
+// Nasłuchujemy logowania ORAZ wywołujemy sprawdzanie configu
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        playerId = user.uid;
+        if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
+            playerNickname = user.displayName || "Gracz";
+            localStorage.setItem('speedwayNickname', playerNickname);
+        }
+        localStorage.setItem('speedwayUserId', playerId);
+        updateAuthUI(user);
+        syncStatsFromFirebase();
+        
+        // Gdy Firebase zaloguje gracza -> pytamy serwer czy jest adminem
+        fetchServerConfigAndAdminStatus();
+    } else {
+        updateAuthUI(null);
+        
+        // Gość też musi widzieć ewentualne przerwy/bannery
+        fetchServerConfigAndAdminStatus();
+    }
+});
+
+const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
+
+window.onload = function() { 
+    setRandomBackground();
+    
+    // Uruchamiamy lokalne (nie-sieciowe) renderowanie natychmiast by zniwelować "skoki" ekranu
+    loadStats(); 
+    initDailyMenu(); 
+    renderLastGames(); 
+    preloadHelmetImage(); 
+    setLang(currentLang); 
+    updateSoundBtn(); 
+    updateLeagueUI(); 
+    checkUnseenUpdates();
+};
 
 // Dopiero po włączeniu, możemy pobrać bazę i funkcje:
 const db = firebase.firestore();
