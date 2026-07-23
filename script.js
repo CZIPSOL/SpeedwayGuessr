@@ -104,7 +104,8 @@ async function fetchServerConfigAndAdminStatus() {
         const getConfigFunc = functions.httpsCallable('getConfig');
         // Jeśli gracz jest zalogowany (co Firebase już wie w tym momencie), 
         // automatycznie doczepi w tle token do tego requestu
-        const configResponse = await getConfigFunc();
+        // Wysyłamy nasze playerId, żeby serwer sprawdził je w swojej tablicy ADMIN_UIDS
+        const configResponse = await getConfigFunc({ playerId: playerId });
         
         // --- 1. SPRAWDZANIE ADMINA ---
         if (configResponse.data && configResponse.data.isAdmin === true) {
