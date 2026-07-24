@@ -585,7 +585,8 @@ async function syncStatsToFirebase() {
 }
 
 async function syncLeagueScoreToFirebase() {
-    if (!playerId) return; // Otwieramy bramki! Teraz wpuszcza i graczy Google, i Gości.
+    if (!auth.currentUser) return; // <--- TEJ LINIJKI BRAKOWAŁO (zapisuje tylko zalogowanych)
+    if (!playerId) return; 
     const league = ensureLeagueStats(userStats).clashLeague;
     try {
         await db.collection('leaderboard_clash_beta').doc(playerId).set({
