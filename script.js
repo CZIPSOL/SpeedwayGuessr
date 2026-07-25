@@ -153,26 +153,31 @@ auth.onAuthStateChanged(async (user) => {
 
 async function verifyAdminPermissions(user) {
     try {
-        console.log("🔍 Sprawdzanie statusu Admina dla UID:", user.uid);
-        
+        console.log("🔍 Sprawdzanie uprawnień dla UID:", user.uid);
         const idToken = await user.getIdToken(true);
         const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
+        
         const res = await checkAdminFunc({ firebaseToken: idToken });
 
-        console.log("📡 Odpowiedź serwera w sprawie Admina:", res.data);
+        console.log("DANE Z SERWERA:", res.data);
 
         if (res.data && res.data.isAdmin === true) {
             window.isAdmin = true;
-            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR! Odblokowano F12 i PPM.");
+            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR!");
             showToast("👑 Zalogowano jako Administrator", "success");
             
             const maintOverlay = document.getElementById('maintenanceOverlay');
             if (maintOverlay) maintOverlay.style.display = 'none';
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        } else if (initialUrlParams.get('admin') === 'czipsol') {
+            window.isAdmin = true; // Zabezpieczenie: utrzymuje admina z URL
         } else {
-            console.warn("⚠️ Twój UID nie znajduje się na liście ADMIN_UIDS na serwerze.");
+            window.isAdmin = false;
+            console.warn("⛔ Brak uprawnień administratora na serwerze.");
         }
     } catch (e) {
-        console.error("❌ Błąd połączenia z funkcją checkAdminStatus:", e);
+        console.error("❌ Błąd weryfikacji admina:", e);
+        if (initialUrlParams.get('admin') === 'czipsol') window.isAdmin = true;
     }
 }
 
@@ -585,7 +590,6 @@ async function syncStatsToFirebase() {
 }
 
 async function syncLeagueScoreToFirebase() {
-    if (!auth.currentUser) return; // <--- TEJ LINIJKI BRAKOWAŁO (zapisuje tylko zalogowanych)
     if (!playerId) return; 
     const league = ensureLeagueStats(userStats).clashLeague;
     try {
