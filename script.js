@@ -45,12 +45,32 @@ function _getSafeHint(name, currentGuessCount) {
 // ====== 1. TRYB ADMINA I ANTI-CHEAT ===========
 // ==============================================
 window.isAdmin = false;
+window.isMaintenanceBlocked = false;
 
-// Awaryjne włączenie przez URL (np. ?admin=czipsol)
-const initialUrlParams = new URLSearchParams(window.location.search);
-if (initialUrlParams.get('admin') === 'czipsol') {
-    window.isAdmin = true;
-    console.log("🔐 Tryb Admina aktywowany z parametru URL (?admin=czipsol)");
+function applyAdminState(isServerAdmin) {
+    window.isAdmin = Boolean(isServerAdmin);
+
+    if (window.isAdmin) {
+        const maintOverlay = document.getElementById('maintenanceOverlay');
+        if (maintOverlay) {
+            maintOverlay.style.display = 'none';
+            maintOverlay.style.opacity = '0';
+        }
+
+        if (window.isMaintenanceBlocked) {
+            const mainMenu = document.getElementById('mainMenuContainer');
+            const desktopMenu = document.getElementById('desktopMainMenu');
+            if (mainMenu) mainMenu.style.display = '';
+            if (desktopMenu) desktopMenu.style.display = '';
+            window.isMaintenanceBlocked = false;
+        }
+    }
+
+    document.querySelectorAll('.admin-only').forEach(el => {
+        el.style.display = window.isAdmin ? 'block' : 'none';
+    });
+
+    return window.isAdmin;
 }
 
 // Blokada Prawego Przycisku Myszy (PPM)
@@ -129,56 +149,6 @@ let playerId = localStorage.getItem('speedwayUserId');
 if (!playerId) {
     playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('speedwayUserId', playerId);
-}
-
-// Słuchacz logowania - TERAZ ZADZIAŁA, BO 'auth' JEST JUŻ ZDEFINIOWANE
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        playerId = user.uid;
-        if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
-            playerNickname = user.displayName || "Gracz";
-            localStorage.setItem('speedwayNickname', playerNickname);
-        }
-        localStorage.setItem('speedwayUserId', playerId);
-        updateAuthUI(user);
-        
-        // Sprawdzanie uprawnień Admina na serwerze
-        await verifyAdminPermissions(user);
-
-        syncStatsFromFirebase();
-    } else {
-        updateAuthUI(null);
-    }
-});
-
-async function verifyAdminPermissions(user) {
-    try {
-        console.log("🔍 Sprawdzanie uprawnień dla UID:", user.uid);
-        const idToken = await user.getIdToken(true);
-        const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
-        
-        const res = await checkAdminFunc({ firebaseToken: idToken });
-
-        console.log("DANE Z SERWERA:", res.data);
-
-        if (res.data && res.data.isAdmin === true) {
-            window.isAdmin = true;
-            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR!");
-            showToast("👑 Zalogowano jako Administrator", "success");
-            
-            const maintOverlay = document.getElementById('maintenanceOverlay');
-            if (maintOverlay) maintOverlay.style.display = 'none';
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-        } else if (initialUrlParams.get('admin') === 'czipsol') {
-            window.isAdmin = true; // Zabezpieczenie: utrzymuje admina z URL
-        } else {
-            window.isAdmin = false;
-            console.warn("⛔ Brak uprawnień administratora na serwerze.");
-        }
-    } catch (e) {
-        console.error("❌ Błąd weryfikacji admina:", e);
-        if (initialUrlParams.get('admin') === 'czipsol') window.isAdmin = true;
-    }
 }
 
 // ==============================================
@@ -416,7 +386,7 @@ auth.onAuthStateChanged(async (user) => {
 
         syncStatsFromFirebase();
     } else {
-        window.isAdmin = false;
+        applyAdminState(false);
         updateAuthUI(null);
     }
 });
@@ -432,23 +402,16 @@ async function verifyAdminPermissions(user) {
         console.log("DANE Z SERWERA:", res.data);
 
         if (res.data && res.data.isAdmin === true) {
-            window.isAdmin = true;
+            applyAdminState(true);
             console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR!");
             showToast("👑 Zalogowano jako Administrator", "success");
-            
-            // Ukrycie przerwy technicznej dla Admina
-            const maintOverlay = document.getElementById('maintenanceOverlay');
-            if (maintOverlay) maintOverlay.style.display = 'none';
-
-            // Pokaż ukryte elementy dla admina
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
         } else {
-            window.isAdmin = false;
-            console.warn("⛔ Serwer zgłosił: Brak uprawnień administratora dla tego UID.");
+            applyAdminState(false);
+            console.warn("⛔ Serwer zgłosił: Brak uprawnień administratora dla UID:", res.data && res.data.verifiedUid);
         }
     } catch (e) {
         console.error("❌ Błąd podczas weryfikacji admina na serwerze:", e);
-        window.isAdmin = false;
+        applyAdminState(false);
     }
 }
 
@@ -1241,6 +1204,7 @@ window.onload = async function() {
         // 2. CAŁKOWITA PRZERWA TECHNICZNA
         if (configResponse.data && configResponse.data.maintenanceMode === true) {
             if (!window.isAdmin) {
+                window.isMaintenanceBlocked = true;
                 document.getElementById('maintenanceOverlay').style.display = 'block';
                 document.getElementById('maintenanceOverlay').style.opacity = '1';
                 
