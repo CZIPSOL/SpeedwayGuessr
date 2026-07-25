@@ -252,6 +252,11 @@
                     <div class="nav-main text-clash" onclick="startClashGame()"><i>SPEEDWAY CLASH ►</i></div>
                 </div>
 
+                <!-- TIME ATTACK (ADMIN TEST) -->
+                <div class="nav-item admin-only" style="display: none;">
+                    <div class="nav-main text-timeattack" onclick="startTimeAttack()"><i>TIME ATTACK</i></div>
+                </div>
+
                 <div class="nav-divider"></div>
 
                 <!-- MENU SYSTEMOWE -->
@@ -355,6 +360,11 @@
                 <span class="btn-icon text-shadow">⚔️</span>
                 <span class="btn-text text-shadow">SPEEDWAY CLASH</span>
             </button>
+
+            <button class="menu-btn btn-timeattack admin-only mt-15" onclick="startTimeAttack()" style="display: none;">
+                <span class="btn-icon text-shadow">⏱️</span>
+                <span class="btn-text text-shadow">TIME ATTACK</span>
+            </button>
         </div>
 
         <div class="flex-row gap-10 mt-25 justify-center w-100 max-w-400 mx-auto">
@@ -365,6 +375,56 @@
             <span class="btn-icon">👾</span>
             <span class="btn-text">DOŁĄCZ DO DISCORDA</span>
         </a>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- ====== TIME ATTACK (ADMIN TEST) =============== -->
+    <!-- ============================================== -->
+    <div id="timeAttackContainer" class="timeattack-screen" style="display: none;">
+        <div class="timeattack-shell">
+            <header class="timeattack-header">
+                <button onclick="exitTimeAttack()" class="icon-btn" title="Powrot">↩</button>
+                <div>
+                    <p class="timeattack-kicker">ADMIN TEST</p>
+                    <h1>TIME ATTACK</h1>
+                </div>
+                <div class="timeattack-clock" id="timeAttackTimer">60</div>
+            </header>
+
+            <section class="timeattack-main">
+                <div class="timeattack-board">
+                    <div class="timeattack-score-row">
+                        <div>
+                            <span class="timeattack-label">Wynik</span>
+                            <strong id="timeAttackScore">0</strong>
+                        </div>
+                        <div>
+                            <span class="timeattack-label">Pozostalo</span>
+                            <strong id="timeAttackRemaining">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="timeattack-hints" id="timeAttackHints"></div>
+
+                    <div class="timeattack-input-row">
+                        <div class="input-wrapper">
+                            <input type="text" id="timeAttackInput" placeholder="Wpisz imie/nazwisko zawodnika..." autocomplete="off">
+                        </div>
+                        <button id="timeAttackSubmitBtn" onclick="submitTimeAttackGuess()">ZGADNIJ</button>
+                    </div>
+                </div>
+
+                <aside class="timeattack-results">
+                    <div class="timeattack-results-head">
+                        <h2>Odgadnieci</h2>
+                        <button onclick="restartTimeAttack()" class="btn-reset timeattack-small-btn">RESET</button>
+                    </div>
+                    <ol id="timeAttackList" class="timeattack-list"></ol>
+                    <p id="timeAttackEmpty" class="timeattack-empty">Lista uzupelni sie po pierwszym trafieniu.</p>
+                </aside>
+            </section>
+        </div>
     </div>
 
 

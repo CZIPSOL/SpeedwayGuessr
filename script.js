@@ -67,7 +67,12 @@ function applyAdminState(isServerAdmin) {
     }
 
     document.querySelectorAll('.admin-only').forEach(el => {
-        el.style.display = window.isAdmin ? 'block' : 'none';
+        if (!window.isAdmin) {
+            el.style.display = 'none';
+            return;
+        }
+
+        el.style.display = (el.classList.contains('nav-item') || el.classList.contains('menu-btn')) ? 'flex' : 'block';
     });
 
     return window.isAdmin;
@@ -135,6 +140,13 @@ const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; 
+const TIME_ATTACK_DURATION = 60;
+let timeAttackTarget = null;
+let timeAttackPool = [];
+let timeAttackSolved = [];
+let timeAttackSecondsLeft = TIME_ATTACK_DURATION;
+let timeAttackTimerId = null;
+let timeAttackActive = false;
 let userStats = { 
     played: 0, won: 0, currentStreak: 0, maxStreak: 0, 
     dailyResults: {}, dailyHistory: [], dailyGuesses: {}, recentEndless: [], 
@@ -827,8 +839,8 @@ function isNickClean(nick) {
 }
 
 function escapeHTML(str) {
-    if (!str) return "";
-    return str.replace(/[&<>'"]/g, 
+    if (str === null || str === undefined) return "";
+    return String(str).replace(/[&<>'"]/g, 
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
     );
 }
@@ -1734,9 +1746,306 @@ function getClubBadgeHTML(rawClubName) {
     return "";
 }
 
-document.addEventListener("click", function (e) { if (e.target.id !== "guessInput" && e.target.id !== "clashGuessInput") closeAllLists(); });
+document.addEventListener("click", function (e) { if (e.target.id !== "guessInput" && e.target.id !== "clashGuessInput" && e.target.id !== "timeAttackInput") closeAllLists(); });
 
 function closeAllLists() { let items = document.getElementsByClassName("autocomplete-items"); while (items.length > 0) items[0].parentNode.removeChild(items[0]); }
+
+function getPlayerLastName(player) {
+    const parts = (player.name || "").trim().split(/\s+/);
+    return parts[parts.length - 1] || player.name;
+}
+
+function normalizeTimeAttackText(value) {
+    return removePolishAccents(String(value || "").toLowerCase().trim());
+}
+
+function getTimeAttackClubLabel(clubName) {
+    const suffix = clubName && clubName.includes("(W)") ? " (W)" : (clubName && clubName.includes("(G)") ? " (G)" : "");
+    return `${getClubAbbr(clubName)}${suffix}`;
+}
+
+function getTimeAttackPathText(player) {
+    return (player.pastClubs || []).map(getTimeAttackClubLabel).join(" -> ");
+}
+
+function hideScreensForTimeAttack() {
+    [
+        'desktopMainMenu',
+        'mainMenuContainer',
+        'gameContainer',
+        'postGameActions',
+        'clashModeSelectContainer',
+        'clashLobbyContainer',
+        'clashLocalLobbyContainer',
+        'clashContainer',
+        'clashVsOverlay'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
+function renderTimeAttackTimer() {
+    const timerEl = document.getElementById('timeAttackTimer');
+    if (!timerEl) return;
+    timerEl.innerText = timeAttackSecondsLeft;
+    timerEl.classList.toggle('danger', timeAttackSecondsLeft <= 10);
+}
+
+function renderTimeAttackScore() {
+    const scoreEl = document.getElementById('timeAttackScore');
+    const remainingEl = document.getElementById('timeAttackRemaining');
+    if (scoreEl) scoreEl.innerText = timeAttackSolved.length;
+    if (remainingEl) remainingEl.innerText = timeAttackPool.length + (timeAttackTarget ? 1 : 0);
+}
+
+function renderTimeAttackHints(player) {
+    const hintsEl = document.getElementById('timeAttackHints');
+    if (!hintsEl) return;
+
+    if (!player) {
+        hintsEl.innerHTML = `
+            <div class="timeattack-hint wide">
+                <span>Koniec</span>
+                <strong>Czas minal. Wynik: ${timeAttackSolved.length}</strong>
+            </div>
+        `;
+        return;
+    }
+
+    const pastClubs = player.pastClubs || [];
+    const clubs = pastClubs.map((club, index) => `
+        <span class="timeattack-club" title="${escapeHTML(club)}">${escapeHTML(getTimeAttackClubLabel(club))}</span>
+        ${index < pastClubs.length - 1 ? '<span class="timeattack-arrow">-&gt;</span>' : ''}
+    `).join('');
+
+    hintsEl.innerHTML = `
+        <div class="timeattack-hint">
+            <span>Kraj</span>
+            <strong>${escapeHTML(player.country || "-")}</strong>
+        </div>
+        <div class="timeattack-hint">
+            <span>Rok urodzenia</span>
+            <strong>${escapeHTML(player.year || "-")}</strong>
+        </div>
+        <div class="timeattack-hint">
+            <span>Jezdzil w GP</span>
+            <strong>${escapeHTML(player.gp || "-")}</strong>
+        </div>
+        <div class="timeattack-hint">
+            <span>Medale DMP</span>
+            <strong>${escapeHTML(player.dmp ?? 0)}</strong>
+        </div>
+        <div class="timeattack-hint wide">
+            <span>Historia klubow</span>
+            <div class="timeattack-path">${clubs || '<strong>Brak danych</strong>'}</div>
+        </div>
+    `;
+}
+
+function renderTimeAttackList() {
+    const listEl = document.getElementById('timeAttackList');
+    const emptyEl = document.getElementById('timeAttackEmpty');
+    if (!listEl || !emptyEl) return;
+
+    emptyEl.style.display = timeAttackSolved.length ? 'none' : 'block';
+    listEl.innerHTML = timeAttackSolved.map(player => `
+        <li>
+            <strong>${escapeHTML(player.name)}</strong>
+            <small>${escapeHTML(player.country || "-")} | ${escapeHTML(player.year || "-")} | GP: ${escapeHTML(player.gp || "-")} | DMP: ${escapeHTML(player.dmp ?? 0)} | ${escapeHTML(getTimeAttackPathText(player))}</small>
+        </li>
+    `).join('');
+}
+
+function drawNextTimeAttackTarget() {
+    if (!timeAttackActive || timeAttackPool.length === 0) {
+        finishTimeAttack();
+        return;
+    }
+
+    const index = Math.floor(Math.random() * timeAttackPool.length);
+    timeAttackTarget = timeAttackPool.splice(index, 1)[0];
+    renderTimeAttackHints(timeAttackTarget);
+    renderTimeAttackScore();
+
+    const input = document.getElementById('timeAttackInput');
+    if (input) {
+        input.value = '';
+        input.disabled = false;
+        input.focus();
+    }
+
+    const submitBtn = document.getElementById('timeAttackSubmitBtn');
+    if (submitBtn) submitBtn.disabled = false;
+}
+
+function findTimeAttackGuess(input) {
+    const normalized = normalizeTimeAttackText(input);
+    if (!normalized) return null;
+
+    const exact = playersDB.find(player => normalizeTimeAttackText(player.name) === normalized);
+    if (exact) return exact;
+
+    const lastNameMatches = playersDB.filter(player => normalizeTimeAttackText(getPlayerLastName(player)) === normalized);
+    if (lastNameMatches.length === 1) return lastNameMatches[0];
+
+    return null;
+}
+
+function setupTimeAttackAutocomplete() {
+    const oldInput = document.getElementById('timeAttackInput');
+    if (!oldInput) return;
+
+    const newInput = oldInput.cloneNode(true);
+    oldInput.replaceWith(newInput);
+
+    newInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') submitTimeAttackGuess();
+    });
+
+    newInput.addEventListener('input', function() {
+        const val = this.value;
+        closeAllLists();
+        if (!val || val.length < 2) return;
+
+        const listContainer = document.createElement("DIV");
+        listContainer.setAttribute("class", "autocomplete-items");
+        this.parentNode.appendChild(listContainer);
+
+        const valClean = normalizeTimeAttackText(val);
+        playersDB
+            .filter(player => !timeAttackSolved.some(solved => solved.id === player.id))
+            .filter(player => normalizeTimeAttackText(player.name).includes(valClean) || normalizeTimeAttackText(getPlayerLastName(player)).includes(valClean))
+            .slice(0, 12)
+            .forEach(player => {
+                const item = document.createElement("DIV");
+                item.innerText = player.name;
+                item.addEventListener("click", () => {
+                    newInput.value = player.name;
+                    closeAllLists();
+                    submitTimeAttackGuess();
+                });
+                listContainer.appendChild(item);
+            });
+    });
+}
+
+function triggerTimeAttackErrorShake() {
+    const input = document.getElementById('timeAttackInput');
+    const wrapper = input ? input.closest('.input-wrapper') : null;
+    if (!wrapper) return;
+    wrapper.classList.add('shake-error');
+    playSound('error');
+    setTimeout(() => wrapper.classList.remove('shake-error'), 400);
+}
+
+function startTimeAttack() {
+    if (!window.isAdmin) {
+        showToast("Time Attack jest teraz dostepny tylko dla admina.", "error");
+        return;
+    }
+
+    clearInterval(timeAttackTimerId);
+    gameMode = 'timeAttack';
+    timeAttackPool = [...playersDB];
+    timeAttackSolved = [];
+    timeAttackSecondsLeft = TIME_ATTACK_DURATION;
+    timeAttackActive = true;
+    timeAttackTarget = null;
+
+    hideScreensForTimeAttack();
+
+    const container = document.getElementById('timeAttackContainer');
+    if (container) {
+        container.style.display = 'block';
+        container.classList.remove('timeattack-finished');
+    }
+
+    const input = document.getElementById('timeAttackInput');
+    const submitBtn = document.getElementById('timeAttackSubmitBtn');
+    if (input) {
+        input.value = '';
+        input.disabled = false;
+    }
+    if (submitBtn) submitBtn.disabled = false;
+
+    setupTimeAttackAutocomplete();
+    renderTimeAttackTimer();
+    renderTimeAttackScore();
+    renderTimeAttackList();
+    drawNextTimeAttackTarget();
+
+    timeAttackTimerId = setInterval(() => {
+        timeAttackSecondsLeft -= 1;
+        renderTimeAttackTimer();
+        if (timeAttackSecondsLeft <= 0) finishTimeAttack();
+    }, 1000);
+}
+
+function submitTimeAttackGuess() {
+    if (!timeAttackActive || !timeAttackTarget) return;
+
+    const input = document.getElementById('timeAttackInput');
+    const guess = input ? input.value.trim() : '';
+    const guessedPlayer = findTimeAttackGuess(guess);
+
+    if (!guessedPlayer) {
+        triggerTimeAttackErrorShake();
+        return;
+    }
+
+    if (timeAttackSolved.some(player => player.id === guessedPlayer.id)) {
+        triggerTimeAttackErrorShake();
+        showToast("Ten zawodnik jest juz na liscie trafionych.", "normal");
+        return;
+    }
+
+    if (guessedPlayer.id !== timeAttackTarget.id) {
+        triggerTimeAttackErrorShake();
+        return;
+    }
+
+    timeAttackSolved.push(timeAttackTarget);
+    playSound('guess');
+    renderTimeAttackList();
+    drawNextTimeAttackTarget();
+}
+
+function finishTimeAttack() {
+    if (!timeAttackActive && !timeAttackTimerId) return;
+
+    clearInterval(timeAttackTimerId);
+    timeAttackTimerId = null;
+    timeAttackActive = false;
+    timeAttackTarget = null;
+    timeAttackSecondsLeft = Math.max(0, timeAttackSecondsLeft);
+
+    const container = document.getElementById('timeAttackContainer');
+    const input = document.getElementById('timeAttackInput');
+    const submitBtn = document.getElementById('timeAttackSubmitBtn');
+    if (container) container.classList.add('timeattack-finished');
+    if (input) input.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+
+    closeAllLists();
+    renderTimeAttackTimer();
+    renderTimeAttackHints(null);
+    renderTimeAttackScore();
+    showToast(`Time Attack zakonczony. Wynik: ${timeAttackSolved.length}`, "success");
+}
+
+function restartTimeAttack() {
+    startTimeAttack();
+}
+
+function exitTimeAttack() {
+    clearInterval(timeAttackTimerId);
+    timeAttackTimerId = null;
+    timeAttackActive = false;
+    timeAttackTarget = null;
+    closeAllLists();
+    window.location.reload();
+}
 
 function setupAutocomplete() {
     const oldInput = document.getElementById('guessInput'); const newInput = oldInput.cloneNode(true); oldInput.replaceWith(newInput); 
@@ -4034,6 +4343,10 @@ try {
     window.useHint = useHint;
     window.returnToMainMenu = returnToMainMenu;
     window.submitLeagueSurrender = submitLeagueSurrender;
+    window.startTimeAttack = startTimeAttack;
+    window.submitTimeAttackGuess = submitTimeAttackGuess;
+    window.restartTimeAttack = restartTimeAttack;
+    window.exitTimeAttack = exitTimeAttack;
     
 } catch (e) {
     console.error("Global export error:", e);
