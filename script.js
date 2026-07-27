@@ -42,14 +42,17 @@ function _getSafeHint(name, currentGuessCount) {
 }
 
 // ==============================================
-// ====== 1. TRYB ADMINA I ANTI-CHEAT ===========
+// ====== 1. TRYB ADMINA, TESTERA I ANTI-CHEAT ==
 // ==============================================
 window.isAdmin = false;
+window.isTester = false;
 window.isMaintenanceBlocked = false;
 
-function applyAdminState(isServerAdmin) {
+function applyAdminState(isServerAdmin, isServerTester) {
     window.isAdmin = Boolean(isServerAdmin);
+    window.isTester = Boolean(isServerTester);
 
+    // Omijanie przerwy technicznej TYLKO dla Admina!
     if (window.isAdmin) {
         const maintOverlay = document.getElementById('maintenanceOverlay');
         if (maintOverlay) {
@@ -66,27 +69,35 @@ function applyAdminState(isServerAdmin) {
         }
     }
 
+    // Wyświetlanie elementów w menu
     document.querySelectorAll('.admin-only').forEach(el => {
-        if (!window.isAdmin) {
+        if (window.isAdmin) {
+            el.style.display = (el.classList.contains('nav-item') || el.classList.contains('menu-btn')) ? 'flex' : 'block';
+        } else {
             el.style.display = 'none';
-            return;
         }
-
-        el.style.display = (el.classList.contains('nav-item') || el.classList.contains('menu-btn')) ? 'flex' : 'block';
     });
 
-    return window.isAdmin;
+    // Indywidualne odblokowanie Time Attack dla testera (jeśli nie jest adminem)
+    if (window.isTester && !window.isAdmin) {
+        const taDesktop = document.getElementById('btnTimeAttackDesktop');
+        const taMobile = document.getElementById('btnTimeAttackMobile');
+        if (taDesktop) taDesktop.style.display = 'flex';
+        if (taMobile) taMobile.style.display = 'flex';
+    }
+
+    return window.isAdmin || window.isTester;
 }
 
-// Blokada Prawego Przycisku Myszy (PPM)
+// Blokada Prawego Przycisku Myszy (PPM) - UWAGA: Testerzy MAJĄ blokadę!
 document.addEventListener('contextmenu', function (e) {
-    if (window.isAdmin === true) return true;
+    if (window.isAdmin === true) return true; 
     e.preventDefault();
     showToast("⛔ Prawy przycisk myszy zablokowany!", "error");
     return false;
 }, true);
 
-// Blokada Skrótów (F12 / DevTools)
+// Blokada Skrótów (F12 / DevTools) - UWAGA: Testerzy MAJĄ blokadę!
 document.addEventListener('keydown', function (e) {
     if (window.isAdmin === true) return true;
 
@@ -406,24 +417,30 @@ auth.onAuthStateChanged(async (user) => {
 async function verifyAdminPermissions(user) {
     try {
         console.log("🔍 Sprawdzanie uprawnień dla UID:", user.uid);
-        const idToken = await user.getIdToken(true); // Wymuszamy świeży token
+        const idToken = await user.getIdToken(true); 
         const checkAdminFunc = functions.httpsCallable('checkAdminStatus');
         
         const res = await checkAdminFunc({ firebaseToken: idToken });
 
         console.log("DANE Z SERWERA:", res.data);
 
-        if (res.data && res.data.isAdmin === true) {
-            applyAdminState(true);
-            console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR!");
-            showToast("👑 Zalogowano jako Administrator", "success");
+        if ((res.data && res.data.isAdmin === true) || (res.data && res.data.isTester === true)) {
+            applyAdminState(res.data.isAdmin, res.data.isTester);
+            
+            if (res.data.isAdmin) {
+                console.log("👑 ZALOGOWANO JAKO ADMINISTRATOR!");
+                showToast("👑 Zalogowano jako Administrator", "success");
+            } else {
+                console.log("🧪 ZALOGOWANO JAKO TESTER!");
+                showToast("🧪 Zalogowano jako Tester", "success");
+            }
         } else {
-            applyAdminState(false);
-            console.warn("⛔ Serwer zgłosił: Brak uprawnień administratora dla UID:", res.data && res.data.verifiedUid);
+            applyAdminState(false, false);
+            console.warn("⛔ Serwer zgłosił: Brak uprawnień administratora/testera dla UID:", res.data && res.data.verifiedUid);
         }
     } catch (e) {
-        console.error("❌ Błąd podczas weryfikacji admina na serwerze:", e);
-        applyAdminState(false);
+        console.error("❌ Błąd podczas weryfikacji ról na serwerze:", e);
+        applyAdminState(false, false);
     }
 }
 
@@ -1214,19 +1231,19 @@ window.onload = async function() {
         }
 
         // 2. CAŁKOWITA PRZERWA TECHNICZNA
-        if (configResponse.data && configResponse.data.maintenanceMode === true) {
-            if (!window.isAdmin) {
-                window.isMaintenanceBlocked = true;
-                document.getElementById('maintenanceOverlay').style.display = 'block';
-                document.getElementById('maintenanceOverlay').style.opacity = '1';
-                
-                if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
-                if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-                return; 
-            } else {
-                showToast("🔐 Tryb Admina: Przerwa techniczna pominięta!", "success");
-            }
-        }
+                if (configResponse.data && configResponse.data.maintenanceMode === true) {
+                    if (!window.isAdmin) { // <-- Tylko admin przechodzi. Tester i zwykły gracz dostają blokadę.
+                        window.isMaintenanceBlocked = true;
+                        document.getElementById('maintenanceOverlay').style.display = 'block';
+                        document.getElementById('maintenanceOverlay').style.opacity = '1';
+                        
+                        if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+                        if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+                        return; 
+                    } else {
+                        showToast("🔐 Tryb Admina: Przerwa techniczna pominięta!", "success");
+                    }
+                }
 
         // 3. BANNER INFORMACYJNY
         if (configResponse.data && configResponse.data.infoMode === true) {
@@ -1993,8 +2010,8 @@ function triggerTimeAttackErrorShake() {
 }
 
 function startTimeAttack() {
-    if (!window.isAdmin) {
-        showToast("Time Attack jest teraz dostępny tylko dla admina.", "error");
+    if (!window.isAdmin && !window.isTester) {
+        showToast("Time Attack jest dostępny tylko dla testerów.", "error");
         return;
     }
 
