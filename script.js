@@ -1755,8 +1755,29 @@ function getPlayerLastName(player) {
     return parts[parts.length - 1] || player.name;
 }
 
+// ==============================================
+// ====== TIME ATTACK LOGIKA ====================
+// ==============================================
+
 function normalizeTimeAttackText(value) {
     return removePolishAccents(String(value || "").toLowerCase().trim());
+}
+
+function hideScreensForTimeAttack() {
+    [
+        'desktopMainMenu',
+        'mainMenuContainer',
+        'gameContainer',
+        'postGameActions',
+        'clashModeSelectContainer',
+        'clashLobbyContainer',
+        'clashLocalLobbyContainer',
+        'clashContainer',
+        'clashVsOverlay'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
 }
 
 function renderTimeAttackTimer() {
@@ -1856,7 +1877,7 @@ function renderTimeAttackList() {
             clubsHTML += `<div class="path-arrow">→</div><div class="path-box found" style="border:none; background:transparent;">❌</div>`; 
         }
 
-        const listNumber = timeAttackSolved.length - idx; // Numerowanie 3,2,1 odpowiednio
+        const listNumber = timeAttackSolved.length - idx; // Numerowanie odpowiednio od największego
 
         return `
         <div class="main-card glass-panel-centered" style="padding: 15px 10px; margin-bottom: 0; position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
@@ -1887,36 +1908,6 @@ function renderTimeAttackList() {
         </div>
         `;
     }).join('');
-}
-
-function submitTimeAttackGuess() {
-    if (!timeAttackActive || !timeAttackTarget) return;
-
-    const input = document.getElementById('timeAttackInput');
-    const guess = input ? input.value.trim() : '';
-    const guessedPlayer = findTimeAttackGuess(guess);
-
-    if (!guessedPlayer) {
-        triggerTimeAttackErrorShake();
-        return;
-    }
-
-    if (timeAttackSolved.some(player => player.id === guessedPlayer.id)) {
-        triggerTimeAttackErrorShake();
-        showToast("Ten zawodnik jest już na liście trafionych.", "normal");
-        return;
-    }
-
-    if (guessedPlayer.id !== timeAttackTarget.id) {
-        triggerTimeAttackErrorShake();
-        return;
-    }
-
-    // Zamiana .push na .unshift() sprawia, że nowe poprawne trafienie od razu wrzuca się na samą górę listy wyników
-    timeAttackSolved.unshift(timeAttackTarget);
-    playSound('guess');
-    renderTimeAttackList();
-    drawNextTimeAttackTarget();
 }
 
 function drawNextTimeAttackTarget() {
@@ -2003,7 +1994,7 @@ function triggerTimeAttackErrorShake() {
 
 function startTimeAttack() {
     if (!window.isAdmin) {
-        showToast("Time Attack jest teraz dostepny tylko dla admina.", "error");
+        showToast("Time Attack jest teraz dostępny tylko dla admina.", "error");
         return;
     }
 
@@ -2020,7 +2011,6 @@ function startTimeAttack() {
     const container = document.getElementById('timeAttackContainer');
     if (container) {
         container.style.display = 'block';
-        container.classList.remove('timeattack-finished');
     }
 
     const input = document.getElementById('timeAttackInput');
@@ -2058,7 +2048,7 @@ function submitTimeAttackGuess() {
 
     if (timeAttackSolved.some(player => player.id === guessedPlayer.id)) {
         triggerTimeAttackErrorShake();
-        showToast("Ten zawodnik jest juz na liscie trafionych.", "normal");
+        showToast("Ten zawodnik jest już na liście trafionych.", "normal");
         return;
     }
 
@@ -2067,7 +2057,8 @@ function submitTimeAttackGuess() {
         return;
     }
 
-    timeAttackSolved.push(timeAttackTarget);
+    // Wrzuca poprawne trafienie na górę listy
+    timeAttackSolved.unshift(timeAttackTarget);
     playSound('guess');
     renderTimeAttackList();
     drawNextTimeAttackTarget();
@@ -2082,10 +2073,8 @@ function finishTimeAttack() {
     timeAttackTarget = null;
     timeAttackSecondsLeft = Math.max(0, timeAttackSecondsLeft);
 
-    const container = document.getElementById('timeAttackContainer');
     const input = document.getElementById('timeAttackInput');
     const submitBtn = document.getElementById('timeAttackSubmitBtn');
-    if (container) container.classList.add('timeattack-finished');
     if (input) input.disabled = true;
     if (submitBtn) submitBtn.disabled = true;
 
@@ -2093,7 +2082,7 @@ function finishTimeAttack() {
     renderTimeAttackTimer();
     renderTimeAttackHints(null);
     renderTimeAttackScore();
-    showToast(`Time Attack zakonczony. Wynik: ${timeAttackSolved.length}`, "success");
+    showToast(`Time Attack zakończony. Wynik: ${timeAttackSolved.length}`, "success");
 }
 
 function restartTimeAttack() {
@@ -2108,6 +2097,8 @@ function exitTimeAttack() {
     closeAllLists();
     window.location.reload();
 }
+
+//----------------------------------------------
 
 function setupAutocomplete() {
     const oldInput = document.getElementById('guessInput'); const newInput = oldInput.cloneNode(true); oldInput.replaceWith(newInput); 
