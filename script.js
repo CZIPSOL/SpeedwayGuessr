@@ -151,7 +151,7 @@ const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; 
-const TIME_ATTACK_DURATION = 60;
+const TIME_ATTACK_DURATION = 120; // 2 minuty (żuzlowe)
 let timeAttackTarget = null;
 let timeAttackPool = [];
 let timeAttackSolved = [];
@@ -1775,8 +1775,6 @@ function getPlayerLastName(player) {
 // ==============================================
 // ====== TIME ATTACK LOGIKA ====================
 // ==============================================
-
-const TIME_ATTACK_DURATION = 120; // 2 minuty (żuzlowe)
 
 function normalizeTimeAttackText(value) {
     return removePolishAccents(String(value || "").toLowerCase().trim());
