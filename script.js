@@ -1759,88 +1759,69 @@ function normalizeTimeAttackText(value) {
     return removePolishAccents(String(value || "").toLowerCase().trim());
 }
 
-function getTimeAttackClubLabel(clubName) {
-    const suffix = clubName && clubName.includes("(W)") ? " (W)" : (clubName && clubName.includes("(G)") ? " (G)" : "");
-    return `${getClubAbbr(clubName)}${suffix}`;
-}
-
-function getTimeAttackPathText(player) {
-    return (player.pastClubs || []).map(getTimeAttackClubLabel).join(" -> ");
-}
-
-function hideScreensForTimeAttack() {
-    [
-        'desktopMainMenu',
-        'mainMenuContainer',
-        'gameContainer',
-        'postGameActions',
-        'clashModeSelectContainer',
-        'clashLobbyContainer',
-        'clashLocalLobbyContainer',
-        'clashContainer',
-        'clashVsOverlay'
-    ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
-}
-
 function renderTimeAttackTimer() {
     const timerEl = document.getElementById('timeAttackTimer');
     if (!timerEl) return;
     timerEl.innerText = timeAttackSecondsLeft;
-    timerEl.classList.toggle('danger', timeAttackSecondsLeft <= 10);
+    timerEl.classList.toggle('ta-timer-danger', timeAttackSecondsLeft <= 10);
 }
 
 function renderTimeAttackScore() {
     const scoreEl = document.getElementById('timeAttackScore');
-    const remainingEl = document.getElementById('timeAttackRemaining');
     if (scoreEl) scoreEl.innerText = timeAttackSolved.length;
-    if (remainingEl) remainingEl.innerText = timeAttackPool.length + (timeAttackTarget ? 1 : 0);
 }
 
 function renderTimeAttackHints(player) {
-    const hintsEl = document.getElementById('timeAttackHints');
-    if (!hintsEl) return;
+    const attrContainer = document.getElementById('taTargetAttributes');
+    const clubsContainer = document.getElementById('taTargetClubs');
+    if (!attrContainer || !clubsContainer) return;
 
     if (!player) {
-        hintsEl.innerHTML = `
-            <div class="timeattack-hint wide">
-                <span>Koniec</span>
-                <strong>Czas minal. Wynik: ${timeAttackSolved.length}</strong>
-            </div>
-        `;
+        attrContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-weight: bold; color: var(--text-main);">Koniec gry</div>';
+        clubsContainer.innerHTML = '';
         return;
     }
 
-    const pastClubs = player.pastClubs || [];
-    const clubs = pastClubs.map((club, index) => `
-        <span class="timeattack-club" title="${escapeHTML(club)}">${escapeHTML(getTimeAttackClubLabel(club))}</span>
-        ${index < pastClubs.length - 1 ? '<span class="timeattack-arrow">-&gt;</span>' : ''}
-    `).join('');
+    // Flaga / Kraj
+    const pCountries = player.country.split("/").map(c => c.trim()); 
+    let c1 = countryToCode[pCountries[0]] || 'pl';
+    let countryContent = pCountries.length > 1 
+        ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
+        : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
 
-    hintsEl.innerHTML = `
-        <div class="timeattack-hint">
-            <span>Kraj</span>
-            <strong>${escapeHTML(player.country || "-")}</strong>
-        </div>
-        <div class="timeattack-hint">
-            <span>Rok urodzenia</span>
-            <strong>${escapeHTML(player.year || "-")}</strong>
-        </div>
-        <div class="timeattack-hint">
-            <span>Jezdzil w GP</span>
-            <strong>${escapeHTML(player.gp || "-")}</strong>
-        </div>
-        <div class="timeattack-hint">
-            <span>Medale DMP</span>
-            <strong>${escapeHTML(player.dmp ?? 0)}</strong>
-        </div>
-        <div class="timeattack-hint wide">
-            <span>Historia klubow</span>
-            <div class="timeattack-path">${clubs || '<strong>Brak danych</strong>'}</div>
-        </div>
+    // GP & Status
+    const isGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
+    const gpIcon = isGP ? "✅" : "❌";
+    const statusIcon = player.status === 'Aktywny' ? '✅' : '❌';
+
+    attrContainer.innerHTML = `
+        <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);">${countryContent}</div></div>
+        <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);"><span class="val-num">${player.year}</span></div></div>
+        <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); font-size: 24px;">${gpIcon}</div></div>
+        <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);"><span class="val-num">${player.dmp}</span></div></div>
+        <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box" style="background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); font-size: 24px;">${statusIcon}</div></div>
     `;
+
+    // Historia Klubów
+    clubsContainer.innerHTML = '';
+    const pastClubs = player.pastClubs || [];
+    pastClubs.forEach((club, index) => {
+        const box = document.createElement('div'); 
+        let cleanC = getCleanClubName(club).toLowerCase(); 
+        box.className = 'path-box found'; 
+        if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC)) { box.classList.add('club-special'); }
+        box.innerHTML = `<span>${getClubAbbr(club)}</span>${getClubBadgeHTML(club)}`; 
+        clubsContainer.appendChild(box);
+        if (index < pastClubs.length - 1) { 
+            const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; clubsContainer.appendChild(arrow); 
+        }
+    });
+    if (player.status.toLowerCase().includes("koniec") || player.status === "Ś.P.") { 
+        const arrow = document.createElement('div'); arrow.className = 'path-arrow'; arrow.innerText = '→'; clubsContainer.appendChild(arrow); 
+        const endIcon = document.createElement('div'); endIcon.className = 'path-box found'; endIcon.innerText = '❌'; 
+        endIcon.style.border = 'none'; endIcon.style.background = 'transparent';
+        clubsContainer.appendChild(endIcon); 
+    }
 }
 
 function renderTimeAttackList() {
@@ -1849,12 +1830,93 @@ function renderTimeAttackList() {
     if (!listEl || !emptyEl) return;
 
     emptyEl.style.display = timeAttackSolved.length ? 'none' : 'block';
-    listEl.innerHTML = timeAttackSolved.map(player => `
-        <li>
-            <strong>${escapeHTML(player.name)}</strong>
-            <small>${escapeHTML(player.country || "-")} | ${escapeHTML(player.year || "-")} | GP: ${escapeHTML(player.gp || "-")} | DMP: ${escapeHTML(player.dmp ?? 0)} | ${escapeHTML(getTimeAttackPathText(player))}</small>
-        </li>
-    `).join('');
+    
+    listEl.innerHTML = timeAttackSolved.map((player, idx) => {
+        const pCountries = player.country.split("/").map(c => c.trim()); 
+        let c1 = countryToCode[pCountries[0]] || 'pl';
+        let countryContent = pCountries.length > 1 
+            ? `<div class="tile-flag-dual" title="${player.country}"><img src="https://flagcdn.com/h80/${c1}.png" class="flag-left"><img src="https://flagcdn.com/h80/${countryToCode[pCountries[1]] || 'pl'}.png" class="flag-right"></div>` 
+            : `<img src="https://flagcdn.com/w80/${c1}.png" class="tile-flag" title="${player.country}">`;
+
+        const isGP = player.gp === true || player.gp === "Tak" || player.gp === "tak";
+        const gpIcon = isGP ? "✅" : "❌";
+        const statusIcon = player.status === 'Aktywny' ? '✅' : '❌';
+
+        let clubsHTML = '';
+        const pastClubs = player.pastClubs || [];
+        pastClubs.forEach((club, index) => {
+            let cleanC = getCleanClubName(club).toLowerCase(); 
+            let specialClass = ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].includes(cleanC) ? ' club-special' : '';
+            clubsHTML += `<div class="path-box found${specialClass}"><span>${getClubAbbr(club)}</span>${getClubBadgeHTML(club)}</div>`;
+            if (index < pastClubs.length - 1) { 
+                clubsHTML += `<div class="path-arrow">→</div>`; 
+            }
+        });
+        if (player.status.toLowerCase().includes("koniec") || player.status === "Ś.P.") { 
+            clubsHTML += `<div class="path-arrow">→</div><div class="path-box found" style="border:none; background:transparent;">❌</div>`; 
+        }
+
+        const listNumber = timeAttackSolved.length - idx; // Numerowanie 3,2,1 odpowiednio
+
+        return `
+        <div class="main-card glass-panel-centered" style="padding: 15px 10px; margin-bottom: 0; position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+            <div style="position: absolute; left: 15px; top: 15px; font-size: 20px; font-weight: 900; color: var(--text-dim);">${listNumber}.</div>
+            <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16px;">${player.name}</h3>
+            
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+                <div>Kraj</div>
+                <div>Wiek</div>
+                <div>GP</div>
+                <div>DMP</div>
+                <div>Status</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 15px; justify-items: center;">
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green">${countryContent}</div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green"><span class="val-num">${player.year}</span></div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green" style="font-size: 24px;">${gpIcon}</div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green"><span class="val-num">${player.dmp}</span></div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green" style="font-size: 24px;">${statusIcon}</div></div>
+            </div>
+            
+            <div class="team-path-centered">
+                <div class="path-boxes" style="justify-content: center; margin: 0 auto; flex-wrap: wrap; padding-bottom: 0;">
+                    ${clubsHTML}
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function submitTimeAttackGuess() {
+    if (!timeAttackActive || !timeAttackTarget) return;
+
+    const input = document.getElementById('timeAttackInput');
+    const guess = input ? input.value.trim() : '';
+    const guessedPlayer = findTimeAttackGuess(guess);
+
+    if (!guessedPlayer) {
+        triggerTimeAttackErrorShake();
+        return;
+    }
+
+    if (timeAttackSolved.some(player => player.id === guessedPlayer.id)) {
+        triggerTimeAttackErrorShake();
+        showToast("Ten zawodnik jest już na liście trafionych.", "normal");
+        return;
+    }
+
+    if (guessedPlayer.id !== timeAttackTarget.id) {
+        triggerTimeAttackErrorShake();
+        return;
+    }
+
+    // Zamiana .push na .unshift() sprawia, że nowe poprawne trafienie od razu wrzuca się na samą górę listy wyników
+    timeAttackSolved.unshift(timeAttackTarget);
+    playSound('guess');
+    renderTimeAttackList();
+    drawNextTimeAttackTarget();
 }
 
 function drawNextTimeAttackTarget() {

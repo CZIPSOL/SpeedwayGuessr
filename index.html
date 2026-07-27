@@ -382,48 +382,52 @@
     <!-- ====== TIME ATTACK (ADMIN TEST) =============== -->
     <!-- ============================================== -->
     <div id="timeAttackContainer" class="timeattack-screen" style="display: none;">
-        <div class="timeattack-shell">
-            <header class="timeattack-header">
-                <button onclick="exitTimeAttack()" class="icon-btn" title="Powrot">↩</button>
-                <div>
-                    <p class="timeattack-kicker">ADMIN TEST</p>
-                    <h1>TIME ATTACK</h1>
+        <header class="game-header" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center;">
+            <button onclick="exitTimeAttack()" class="icon-btn" title="Powrót">↩</button>
+            <div style="text-align: center;">
+                <h1 class="game-title-small" style="font-size: 24px; margin: 0;">TIME ATTACK</h1>
+                <div style="color: var(--text-dim); font-size: 12px; font-weight: 700; margin-top: 5px;">WYNIK: <span id="timeAttackScore" style="color: var(--accent); font-size: 16px;">0</span></div>
+            </div>
+            <div id="timeAttackTimer" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border: 2px solid var(--accent); border-radius: 12px; font-weight: 900; font-size: 24px; color: var(--accent);">60</div>
+        </header>
+
+        <div style="max-width: 800px; margin: 0 auto;">
+            <!-- Karta docelowego zawodnika (do zgadnięcia) -->
+            <div class="main-card glass-panel-centered mb-20" style="padding: 20px 10px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+                    <div>Kraj</div>
+                    <div>Wiek</div>
+                    <div>GP</div>
+                    <div>DMP</div>
+                    <div>Status</div>
                 </div>
-                <div class="timeattack-clock" id="timeAttackTimer">60</div>
-            </header>
-
-            <section class="timeattack-main">
-                <div class="timeattack-board">
-                    <div class="timeattack-score-row">
-                        <div>
-                            <span class="timeattack-label">Wynik</span>
-                            <strong id="timeAttackScore">0</strong>
-                        </div>
-                        <div>
-                            <span class="timeattack-label">Pozostalo</span>
-                            <strong id="timeAttackRemaining">0</strong>
-                        </div>
-                    </div>
-
-                    <div class="timeattack-hints" id="timeAttackHints"></div>
-
-                    <div class="timeattack-input-row">
-                        <div class="input-wrapper">
-                            <input type="text" id="timeAttackInput" placeholder="Wpisz imie/nazwisko zawodnika..." autocomplete="off">
-                        </div>
-                        <button id="timeAttackSubmitBtn" onclick="submitTimeAttackGuess()">ZGADNIJ</button>
-                    </div>
+                <div id="taTargetAttributes" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 20px; justify-items: center;">
+                    <!-- Atrybuty renderowane przez JS -->
                 </div>
+                <div class="team-path-centered">
+                    <span class="path-label text-center" style="width: 100%; display: block; margin-bottom: 10px; font-size: 11px;">Drużyny:</span>
+                    <div id="taTargetClubs" class="path-boxes" style="justify-content: center; margin: 0 auto; flex-wrap: wrap; padding-bottom: 0;"></div>
+                </div>
+            </div>
 
-                <aside class="timeattack-results">
-                    <div class="timeattack-results-head">
-                        <h2>Odgadnieci</h2>
-                        <button onclick="restartTimeAttack()" class="btn-reset timeattack-small-btn">RESET</button>
+            <!-- Input do wpisywania -->
+            <div class="input-section" style="width: 100%; max-width: 100%; margin: 0 auto 20px auto;">
+                <div class="search-box">
+                    <div class="input-wrapper">
+                        <input type="text" id="timeAttackInput" placeholder="Wpisz imię/nazwisko zawodnika..." autocomplete="off">
                     </div>
-                    <ol id="timeAttackList" class="timeattack-list"></ol>
-                    <p id="timeAttackEmpty" class="timeattack-empty">Lista uzupelni sie po pierwszym trafieniu.</p>
-                </aside>
-            </section>
+                    <button id="timeAttackSubmitBtn" onclick="submitTimeAttackGuess()">ZGADNIJ</button>
+                </div>
+            </div>
+
+            <!-- Lista odgadniętych zawodników -->
+            <div id="timeAttackList" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                <!-- Karty rozwiązań z JS -->
+            </div>
+            
+            <div id="timeAttackEmpty" style="text-align: center; color: var(--text-dim); margin-top: 20px; font-weight: 600; font-size: 13px;">
+                Rozwiązani zawodnicy pojawią się tutaj.
+            </div>
         </div>
     </div>
 
