@@ -1776,21 +1776,17 @@ function getPlayerLastName(player) {
 // ====== TIME ATTACK LOGIKA ====================
 // ==============================================
 
+const TIME_ATTACK_DURATION = 120; // 2 minuty (żuzlowe)
+
 function normalizeTimeAttackText(value) {
     return removePolishAccents(String(value || "").toLowerCase().trim());
 }
 
 function hideScreensForTimeAttack() {
     [
-        'desktopMainMenu',
-        'mainMenuContainer',
-        'gameContainer',
-        'postGameActions',
-        'clashModeSelectContainer',
-        'clashLobbyContainer',
-        'clashLocalLobbyContainer',
-        'clashContainer',
-        'clashVsOverlay'
+        'desktopMainMenu', 'mainMenuContainer', 'gameContainer', 'postGameActions',
+        'clashModeSelectContainer', 'clashLobbyContainer', 'clashLocalLobbyContainer',
+        'clashContainer', 'clashVsOverlay'
     ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -1806,19 +1802,55 @@ function renderTimeAttackTimer() {
 
 function renderTimeAttackScore() {
     const scoreEl = document.getElementById('timeAttackScore');
-    if (scoreEl) scoreEl.innerText = timeAttackSolved.length;
+    // Wynikiem są tylko rozwiązani (odrzucamy tego, którego nie zdążyliśmy)
+    if (scoreEl) scoreEl.innerText = timeAttackSolved.filter(p => !p.isMissed).length;
+}
+
+function showTimeBonusAnimation() {
+    const timerEl = document.getElementById('timeAttackTimer');
+    if (!timerEl) return;
+    
+    const bonus = document.createElement('div');
+    bonus.className = 'time-bonus-anim';
+    bonus.innerText = '+15s';
+    
+    // Obliczamy pozycję na podstawie licznika
+    const rect = timerEl.getBoundingClientRect();
+    bonus.style.left = (rect.left + rect.width / 2 - 25) + 'px';
+    bonus.style.top = (rect.top - 10) + 'px';
+    
+    document.body.appendChild(bonus);
+    
+    setTimeout(() => {
+        bonus.remove();
+    }, 1000);
 }
 
 function renderTimeAttackHints(player) {
     const attrContainer = document.getElementById('taTargetAttributes');
     const clubsContainer = document.getElementById('taTargetClubs');
+    const headers = document.getElementById('taTargetHeaders');
+    const pathBox = document.getElementById('taTargetPathBox');
+    const title = document.getElementById('taTargetName');
+
     if (!attrContainer || !clubsContainer) return;
 
     if (!player) {
-        attrContainer.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; font-weight: bold; color: var(--text-main);">Koniec gry</div>';
+        // Koniec gry (czyszczenie wizytówki)
+        headers.style.display = 'none';
+        pathBox.style.display = 'none';
+        attrContainer.innerHTML = '';
         clubsContainer.innerHTML = '';
+        title.innerText = "KONIEC CZASU!";
+        title.style.color = "var(--red-neon)";
         return;
     }
+
+    // Nowa tura
+    headers.style.display = 'grid';
+    pathBox.style.display = 'block';
+    title.innerText = "KOGO SZUKAMY?";
+    title.style.color = "var(--accent)";
 
     // Flaga / Kraj
     const pCountries = player.country.split("/").map(c => c.trim()); 
@@ -1869,7 +1901,22 @@ function renderTimeAttackList() {
 
     emptyEl.style.display = timeAttackSolved.length ? 'none' : 'block';
     
-    listEl.innerHTML = timeAttackSolved.map((player, idx) => {
+    // Obliczamy ile kart było prawdzwymi trafieniami (bez tej nieodgadniętej na końcu)
+    const validGuessesCount = timeAttackSolved.filter(p => !p.isMissed).length;
+    let rankCounter = validGuessesCount;
+
+    listEl.innerHTML = timeAttackSolved.map((player) => {
+        const isMissed = player.isMissed === true;
+        
+        // Stylizacja dla karty "Nieodgadnięty" (czerwona)
+        const borderStyle = isMissed ? "border: 2px solid var(--red-neon); box-shadow: 0 0 25px rgba(255, 51, 51, 0.4);" : "";
+        const nameColor = isMissed ? "var(--red-neon)" : "var(--text-main)";
+        const titlePrefix = isMissed ? "NIE ZDĄŻYŁEŚ: " : "";
+        const attrColorClass = isMissed ? "red" : "green";
+        const iconPrefix = isMissed ? "❌" : `${rankCounter}.`;
+        
+        if (!isMissed) rankCounter--;
+
         const pCountries = player.country.split("/").map(c => c.trim()); 
         let c1 = countryToCode[pCountries[0]] || 'pl';
         let countryContent = pCountries.length > 1 
@@ -1894,12 +1941,10 @@ function renderTimeAttackList() {
             clubsHTML += `<div class="path-arrow">→</div><div class="path-box found" style="border:none; background:transparent;">❌</div>`; 
         }
 
-        const listNumber = timeAttackSolved.length - idx; // Numerowanie odpowiednio od największego
-
         return `
-        <div class="main-card glass-panel-centered" style="padding: 15px 10px; margin-bottom: 0; position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-            <div style="position: absolute; left: 15px; top: 15px; font-size: 20px; font-weight: 900; color: var(--text-dim);">${listNumber}.</div>
-            <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16px;">${player.name}</h3>
+        <div class="main-card glass-panel-centered" style="padding: 15px 10px; margin-bottom: 0; position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; ${borderStyle}">
+            <div style="position: absolute; left: 15px; top: 15px; font-size: 20px; font-weight: 900; color: ${isMissed ? 'var(--red-neon)' : 'var(--text-dim)'};">${iconPrefix}</div>
+            <h3 style="text-align: center; margin: 0 0 10px 0; font-size: 16px; color: ${nameColor};">${titlePrefix}${player.name}</h3>
             
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
                 <div>Kraj</div>
@@ -1910,11 +1955,11 @@ function renderTimeAttackList() {
             </div>
             
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 15px; justify-items: center;">
-                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green">${countryContent}</div></div>
-                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green"><span class="val-num">${player.year}</span></div></div>
-                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green" style="font-size: 24px;">${gpIcon}</div></div>
-                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green"><span class="val-num">${player.dmp}</span></div></div>
-                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box green" style="font-size: 24px;">${statusIcon}</div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box ${attrColorClass}">${countryContent}</div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box ${attrColorClass}"><span class="val-num">${player.year}</span></div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box ${attrColorClass}" style="font-size: 24px;">${gpIcon}</div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box ${attrColorClass}"><span class="val-num">${player.dmp}</span></div></div>
+                <div style="width: 100%; display: flex; justify-content: center;"><div class="attr-box ${attrColorClass}" style="font-size: 24px;">${statusIcon}</div></div>
             </div>
             
             <div class="team-path-centered">
@@ -1984,6 +2029,7 @@ function setupTimeAttackAutocomplete() {
 
         const valClean = normalizeTimeAttackText(val);
         playersDB
+            // Zabezpieczenie przed podpowiadaniem graczy, których już zgadliśmy
             .filter(player => !timeAttackSolved.some(solved => solved.id === player.id))
             .filter(player => normalizeTimeAttackText(player.name).includes(valClean) || normalizeTimeAttackText(getPlayerLastName(player)).includes(valClean))
             .slice(0, 12)
@@ -2017,7 +2063,10 @@ function startTimeAttack() {
 
     clearInterval(timeAttackTimerId);
     gameMode = 'timeAttack';
-    timeAttackPool = [...playersDB];
+    
+    // Głęboka kopia bazy danych, żeby flaga isMissed nie psuła kolejnych gier
+    timeAttackPool = playersDB.map(p => ({...p})); 
+    
     timeAttackSolved = [];
     timeAttackSecondsLeft = TIME_ATTACK_DURATION;
     timeAttackActive = true;
@@ -2074,7 +2123,12 @@ function submitTimeAttackGuess() {
         return;
     }
 
-    // Wrzuca poprawne trafienie na górę listy
+    // DODANIE CZASU I ANIMACJI
+    timeAttackSecondsLeft += 15;
+    renderTimeAttackTimer();
+    showTimeBonusAnimation();
+
+    // Wrzucenie na szczyt listy wyników
     timeAttackSolved.unshift(timeAttackTarget);
     playSound('guess');
     renderTimeAttackList();
@@ -2087,8 +2141,13 @@ function finishTimeAttack() {
     clearInterval(timeAttackTimerId);
     timeAttackTimerId = null;
     timeAttackActive = false;
-    timeAttackTarget = null;
     timeAttackSecondsLeft = Math.max(0, timeAttackSecondsLeft);
+
+    // Klonujemy obiekt, oznaczamy go jako "nieodgadnięty" i wrzucamy na szczyt
+    if (timeAttackTarget) {
+        timeAttackTarget.isMissed = true;
+        timeAttackSolved.unshift(timeAttackTarget);
+    }
 
     const input = document.getElementById('timeAttackInput');
     const submitBtn = document.getElementById('timeAttackSubmitBtn');
@@ -2096,10 +2155,15 @@ function finishTimeAttack() {
     if (submitBtn) submitBtn.disabled = true;
 
     closeAllLists();
+    playSound('lose');
     renderTimeAttackTimer();
-    renderTimeAttackHints(null);
+    renderTimeAttackHints(null); // ukrywamy formularz zadania
     renderTimeAttackScore();
-    showToast(`Time Attack zakończony. Wynik: ${timeAttackSolved.length}`, "success");
+    renderTimeAttackList(); // Renderowanie nowej listy (w tym czerwonej góry)
+    
+    // Zliczamy tylko poprawne do podsumowania
+    const validCount = timeAttackSolved.filter(p => !p.isMissed).length;
+    showToast(`Time Attack zakończony. Twój wynik: ${validCount}`, "success");
 }
 
 function restartTimeAttack() {
