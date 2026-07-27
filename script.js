@@ -3044,11 +3044,7 @@ async function startLeagueMatchmaking() {
                 clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; 
             }
 
-            let constraints = null;
-            if (Math.random() > 0.5) {
-                const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
-                constraints = { col: Math.floor(Math.random() * 3), country: countries[Math.floor(Math.random() * countries.length)] };
-            }
+            let constraints = generateValidClashConstraint(clashRows, clashCols);
 
             await db.collection("clash_rooms").doc(roomCode).set({
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -3220,11 +3216,7 @@ function startLocalClashMatch() {
     let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
     if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
     
-    let constraints = null;
-    if (Math.random() > 0.5) {
-        const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
-        constraints = { col: Math.floor(Math.random() * 3), country: countries[Math.floor(Math.random() * countries.length)] };
-    }
+let constraints = generateValidClashConstraint(clashRows, clashCols);
 
     localClashData = {
         type: 'local', status: 'vsScreen',
@@ -3271,6 +3263,8 @@ async function createClashRoom() {
     let allClubs = getCleanClubsList();
     let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
     if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+
+    let constraints = generateValidClashConstraint(clashRows, clashCols); // <-- DODANO TUTAJ
 
     try {
         await db.collection("clash_rooms").doc(code).set({
@@ -3430,14 +3424,15 @@ function listenToClashRoom() {
                 window.lastRenderedClashStatus = null; // Resetujemy dla rewanżu
                 window.vsScreenTriggered = false;
                 
-                let allClubs = getCleanClubsList();
                 let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
                 if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
                 
+                let constraints = generateValidClashConstraint(clashRows, clashCols); // <-- DODANO TUTAJ
+
                 db.collection("clash_rooms").doc(currentClashRoom).update({
                     status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
                     board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
-                    rows: clashRows, cols: clashCols, rematchP1: false, rematchP2: false
+                    rows: clashRows, cols: clashCols, constraints: constraints, rematchP1: false, rematchP2: false // <-- DODANO constraints: constraints,
                 });
             }
         }
@@ -3886,11 +3881,7 @@ function handleClashEnd(data) {
              let allClubs = getCleanClubsList();
              let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
              if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
-             let constraints = null;
-             if (Math.random() > 0.5) {
-                 const countries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
-                 constraints = { col: Math.floor(Math.random() * 3), country: countries[Math.floor(Math.random() * countries.length)] };
-             }
+             let constraints = generateValidClashConstraint(clashRows, clashCols);
              updateLocalClashData({
                  status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
                  board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
@@ -4057,6 +4048,55 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
         if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); return true; }
     }
     return false;
+}
+
+function generateValidClashConstraint(rows, cols) {
+    // 50% szans na to, że w ogóle spróbujemy dodać wymóg narodowości (jak wcześniej)
+    if (Math.random() > 0.5) return null; 
+
+    const candidateCountries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
+    
+    // Tasujemy kolumny i kraje, żeby losowość była naturalna
+    let colsIndices = [0, 1, 2].sort(() => 0.5 - Math.random());
+    let shuffledCountries = [...candidateCountries].sort(() => 0.5 - Math.random());
+
+    for (let c of colsIndices) {
+        let colClub = cols[c]; // np. 'apator toruń'
+        
+        for (let country of shuffledCountries) {
+            let isValidForAllRows = true;
+            
+            // Sprawdzamy wszystkie 3 rzędy (0, 1, 2) dla tej kolumny
+            for (let r = 0; r < 3; r++) {
+                let rowClub = rows[r];
+                
+                // Szukamy w bazie zawodnika, który spełnia 3 warunki: Kraj + Klub 1 + Klub 2
+                let matchFound = playersDB.some(p => {
+                    let pCountries = p.country.split("/").map(s => s.trim());
+                    if (!pCountries.includes(country)) return false;
+                    
+                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase());
+                    if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
+                    
+                    return pClubs.includes(rowClub) && pClubs.includes(colClub);
+                });
+                
+                // Jeśli choć jedno pole w tej kolumnie byłoby nie do odgadnięcia - odrzucamy ten kraj
+                if (!matchFound) {
+                    isValidForAllRows = false;
+                    break;
+                }
+            }
+            
+            // Jeśli znaleźliśmy kraj, który pasuje do wszystkich 3 rzędów w tej kolumnie, zwracamy go
+            if (isValidForAllRows) {
+                return { col: c, country: country };
+            }
+        }
+    }
+    
+    // Jeśli na tej planszy nie da się nałożyć żadnego wymogu, zwracamy null (brak wymogu)
+    return null; 
 }
 
 function showClashInfo() {
