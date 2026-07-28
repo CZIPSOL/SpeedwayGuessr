@@ -1835,20 +1835,24 @@ function renderTimeAttackHints(player) {
 
     if (!player) {
         // Koniec gry (czyszczenie wizytówki)
-        headers.style.display = 'none';
-        pathBox.style.display = 'none';
+        if (headers) headers.style.display = 'none';
+        if (pathBox) pathBox.style.display = 'none';
         attrContainer.innerHTML = '';
         clubsContainer.innerHTML = '';
-        title.innerText = "KONIEC CZASU!";
-        title.style.color = "var(--red-neon)";
+        if (title) {
+            title.innerText = "KONIEC CZASU!";
+            title.style.color = "var(--red-neon)";
+        }
         return;
     }
 
     // Nowa tura
-    headers.style.display = 'grid';
-    pathBox.style.display = 'block';
-    title.innerText = "KOGO SZUKAMY?";
-    title.style.color = "var(--accent)";
+    if (headers) headers.style.display = 'grid';
+    if (pathBox) pathBox.style.display = 'block';
+    if (title) {
+        title.innerText = "KOGO SZUKAMY?";
+        title.style.color = "var(--accent)";
+    }
 
     // Flaga / Kraj
     const pCountries = player.country.split("/").map(c => c.trim()); 
@@ -2054,6 +2058,7 @@ function triggerTimeAttackErrorShake() {
 }
 
 function startTimeAttack() {
+    // Podwójne zabezpieczenie: działa dla adminów i testerów
     if (!window.isAdmin && !window.isTester) {
         showToast("Time Attack jest dostępny tylko dla testerów.", "error");
         return;
