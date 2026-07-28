@@ -77,15 +77,6 @@ function applyAdminState(isServerAdmin, isServerTester) {
             el.style.display = 'none';
         }
     });
-
-    // Indywidualne odblokowanie Time Attack dla testera (jeśli nie jest adminem)
-    if (window.isTester && !window.isAdmin) {
-        const taDesktop = document.getElementById('btnTimeAttackDesktop');
-        const taMobile = document.getElementById('btnTimeAttackMobile');
-        if (taDesktop) taDesktop.style.display = 'flex';
-        if (taMobile) taMobile.style.display = 'flex';
-    }
-
     return window.isAdmin || window.isTester;
 }
 
@@ -212,6 +203,14 @@ const CURRENT_GAME_VERSION = "Alpha v1.1.0";
 const changelog = {
     pl: [
         {
+            version: "Beta v1.3.0", date: "28.07.2026",
+            changes: [
+                "⏱️ <b>Nowy tryb gry - Time Attack!</b> Masz 120 sekund na odgadnięcie jak największej liczby żużlowców. Za każdą poprawną odpowiedź zyskujesz +15 sekund bonusu. Tryb posiada własny, globalny ranking najlepszych ekspertów!",
+                "🛡️ <b>Zabezpieczenia i Anti-Cheat:</b> Wprowadzono blokadę konsoli deweloperskiej (F12) oraz prawego przycisku myszy dla zwykłych graczy, aby zagwarantować uczciwą rywalizację w rankingach.",
+                "🐛 <b>Poprawki błędów:</b> Usprawniono "inteligentne" generowanie flag narodowości w trybie Clash oraz załatano pomniejsze błędy interfejsu (UI) na mniejszych ekranach."
+            ]
+        },
+        {
             version: "Beta v1.2.0", date: "23.07.2026",
             changes: [
                 "👾 <b>Integracja Discord:</b> Otwieramy oficjalny serwer Discord! Dołącz do nas z poziomu menu gry, aby rozmawiać i szukać graczy do Clasha.",
@@ -270,6 +269,14 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.3.0", date: "28.07.2026",
+            changes: [
+                "⏱️ <b>New game mode - Time Attack!</b> You have 120 seconds to guess as many riders as possible. Each correct guess grants a +15 seconds bonus. This mode features its own global leaderboard!",
+                "🛡️ <b>Security & Anti-Cheat:</b> Added developer console (F12) and right-click locks for regular players to ensure fair play across all leaderboards.",
+                "🐛 <b>Bug fixes:</b> Improved the 'smart' generation of nationality flags in Clash mode and patched minor UI glitches on smaller screens."
+            ]
+        },
         {
             version: "Beta v1.2.0", date: "24.07.2026",
             changes: [
@@ -2167,10 +2174,6 @@ async function syncTimeAttackScoreToFirebase(score) {
 
 function startTimeAttack() {
     // Podwójne zabezpieczenie: działa dla adminów i testerów
-    if (!window.isAdmin && !window.isTester) {
-        showToast("Time Attack jest dostępny tylko dla testerów.", "error");
-        return;
-    }
 
     clearInterval(timeAttackTimerId);
     gameMode = 'timeAttack';
