@@ -207,7 +207,7 @@ const changelog = {
             changes: [
                 "⏱️ <b>Nowy tryb gry - Time Attack!</b> Masz 120 sekund na odgadnięcie jak największej liczby żużlowców. Za każdą poprawną odpowiedź zyskujesz +15 sekund bonusu. Tryb posiada własny, globalny ranking najlepszych ekspertów!",
                 "🛡️ <b>Zabezpieczenia i Anti-Cheat:</b> Wprowadzono blokadę konsoli deweloperskiej (F12) oraz prawego przycisku myszy dla zwykłych graczy, aby zagwarantować uczciwą rywalizację w rankingach.",
-                "🐛 <b>Poprawki błędów:</b> Usprawniono "inteligentne" generowanie flag narodowości w trybie Clash oraz załatano pomniejsze błędy interfejsu (UI) na mniejszych ekranach."
+                "🐛 <b>Poprawki błędów:</b> Usprawniono 'inteligentne' generowanie flag narodowości w trybie Clash oraz załatano pomniejsze błędy interfejsu (UI) na mniejszych ekranach."
             ]
         },
         {
