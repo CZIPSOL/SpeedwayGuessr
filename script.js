@@ -1328,8 +1328,10 @@ function loadStats() {
         if (!userStats.recentEndless) userStats.recentEndless = [];
         if (!userStats.clashHistory) userStats.clashHistory = [];
         ensureLeagueStats(userStats);
+        ensureTimeAttackStats(userStats); // <--- DODANA LINIJKA
     }
     ensureLeagueStats(userStats);
+    ensureTimeAttackStats(userStats); // <--- DODANA LINIJKA
     updateDiscordButtonUI();
     
     setTimeout(() => {
@@ -1784,7 +1786,7 @@ function hideScreensForTimeAttack() {
     [
         'desktopMainMenu', 'mainMenuContainer', 'gameContainer', 'postGameActions',
         'clashModeSelectContainer', 'clashLobbyContainer', 'clashLocalLobbyContainer',
-        'clashContainer', 'clashVsOverlay'
+        'clashContainer', 'clashVsOverlay', 'timeAttackMenuContainer' // <-- DODANE
     ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -2057,6 +2059,112 @@ function triggerTimeAttackErrorShake() {
     setTimeout(() => wrapper.classList.remove('shake-error'), 400);
 }
 
+// ====== OBSŁUGA MENU TIME ATTACK ======
+
+function ensureTimeAttackStats(stats) {
+    if (!stats.timeAttack) {
+        stats.timeAttack = { played: 0, highestScore: 0, totalScore: 0 };
+    }
+    // Zabezpieczenia, jeśli dane by uciekły
+    if (typeof stats.timeAttack.played !== 'number') stats.timeAttack.played = 0;
+    if (typeof stats.timeAttack.highestScore !== 'number') stats.timeAttack.highestScore = 0;
+    if (typeof stats.timeAttack.totalScore !== 'number') stats.timeAttack.totalScore = 0;
+    return stats;
+}
+
+function updateTimeAttackMenuUI() {
+    ensureTimeAttackStats(userStats);
+    const ta = userStats.timeAttack;
+    
+    document.getElementById('taStatPlayed').innerText = ta.played;
+    document.getElementById('taStatBest').innerText = ta.highestScore;
+    
+    const avg = ta.played > 0 ? (ta.totalScore / ta.played).toFixed(1) : "0.0";
+    document.getElementById('taStatAvg').innerText = avg;
+}
+
+function openTimeAttackMenu() {
+    promptForNick(() => {
+        document.getElementById('mainMenuContainer').style.display = 'none';
+        document.getElementById('desktopMainMenu').style.display = 'none';
+        document.getElementById('clashModeSelectContainer').style.display = 'none';
+        document.getElementById('timeAttackMenuContainer').style.display = 'grid'; // Używamy grid, bo to okno desktopowe
+
+        const nickDisplay = document.getElementById('taMenuNick');
+        if(nickDisplay) nickDisplay.innerText = playerNickname || "GRACZ";
+
+        updateTimeAttackMenuUI();
+        loadTimeAttackRanking();
+    });
+}
+
+function exitTimeAttackMenu() {
+    window.location.reload();
+}
+
+function showTimeAttackInfo() {
+    const overlay = document.getElementById('timeAttackInfoOverlay');
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+}
+function closeTimeAttackInfo() {
+    const overlay = document.getElementById('timeAttackInfoOverlay');
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+async function loadTimeAttackRanking() {
+    const tbody = document.getElementById('desktopRankingBodyTA'); 
+    if (!tbody) return;
+    
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
+    
+    try {
+        let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(50).get();
+        let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+        
+        tbody.innerHTML = '';
+        if (scores.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Brak wyników. Zagraj jako pierwszy!</td></tr>`; 
+            return; 
+        }
+
+        let pos = 1;
+        scores.forEach((row) => {
+            let safeNick = escapeHTML(row.nick || "Gracz");
+            let isMe = safeNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            
+            let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
+            
+            tbody.innerHTML += `
+                <tr ${isMe}>
+                    <td class="${rankClass}" style="font-weight:900;">${pos}</td>
+                    <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
+                    <td style="color:#feca57; font-weight:900;">${row.score}</td>
+                </tr>`;
+            pos++;
+        });
+    } catch (e) { 
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
+    }
+}
+
+async function syncTimeAttackScoreToFirebase(score) {
+    if (!playerId) return; 
+    try {
+        const docRef = db.collection('leaderboard_timeattack').doc(playerId);
+        const doc = await docRef.get();
+        
+        // Zapisujemy tylko jeśli nowy wynik jest wyższy niż stary (lub to pierwszy wynik)
+        if (!doc.exists || doc.data().score < score) {
+            await docRef.set({
+                nick: playerNickname || 'Gracz',
+                score: score,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }
+    } catch (e) { console.error('Time Attack sync error:', e); }
+}
+
 function startTimeAttack() {
     // Podwójne zabezpieczenie: działa dla adminów i testerów
     if (!window.isAdmin && !window.isTester) {
@@ -2146,7 +2254,6 @@ function finishTimeAttack() {
     timeAttackActive = false;
     timeAttackSecondsLeft = Math.max(0, timeAttackSecondsLeft);
 
-    // Klonujemy obiekt, oznaczamy go jako "nieodgadnięty" i wrzucamy na szczyt
     if (timeAttackTarget) {
         timeAttackTarget.isMissed = true;
         timeAttackSolved.unshift(timeAttackTarget);
@@ -2160,13 +2267,28 @@ function finishTimeAttack() {
     closeAllLists();
     playSound('lose');
     renderTimeAttackTimer();
-    renderTimeAttackHints(null); // ukrywamy formularz zadania
+    renderTimeAttackHints(null); 
     renderTimeAttackScore();
-    renderTimeAttackList(); // Renderowanie nowej listy (w tym czerwonej góry)
+    renderTimeAttackList(); 
     
-    // Zliczamy tylko poprawne do podsumowania
+    // Zapis statystyk i bazy!
     const validCount = timeAttackSolved.filter(p => !p.isMissed).length;
-    showToast(`Time Attack zakończony. Twój wynik: ${validCount}`, "success");
+    
+    ensureTimeAttackStats(userStats);
+    userStats.timeAttack.played++;
+    userStats.timeAttack.totalScore += validCount;
+    if (validCount > userStats.timeAttack.highestScore) {
+        userStats.timeAttack.highestScore = validCount;
+    }
+    saveStats();
+    syncTimeAttackScoreToFirebase(validCount);
+    
+    showToast(`Koniec czasu! Zdobyto: ${validCount} pkt. Wrócisz do menu za 5s...`, "success");
+    
+    // Automatyczny powrót do Menu po 5 sekundach
+    setTimeout(() => {
+        exitTimeAttack();
+    }, 5000);
 }
 
 function restartTimeAttack() {
@@ -2179,8 +2301,11 @@ function exitTimeAttack() {
     timeAttackActive = false;
     timeAttackTarget = null;
     closeAllLists();
-    window.location.reload();
+    
+    document.getElementById('timeAttackContainer').style.display = 'none';
+    openTimeAttackMenu(); // Wracamy płynnie do menu, nie przeładowując strony
 }
+
 
 //----------------------------------------------
 
