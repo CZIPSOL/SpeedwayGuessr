@@ -385,16 +385,18 @@
         <header class="game-header" style="max-width: 800px; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center;">
             <button onclick="exitTimeAttack()" class="icon-btn" title="Powrót">↩</button>
             <div style="text-align: center;">
-                <h1 class="game-title-small" style="font-size: 24px; margin: 0;">TIME ATTACK</h1>
+                <h1 class="game-title-small" style="font-size: 24px; margin: 0;">TIME ATTACK (TESTY) ►</h1>
                 <div style="color: var(--text-dim); font-size: 12px; font-weight: 700; margin-top: 5px;">WYNIK: <span id="timeAttackScore" style="color: var(--accent); font-size: 16px;">0</span></div>
             </div>
-            <div id="timeAttackTimer" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border: 2px solid var(--accent); border-radius: 12px; font-weight: 900; font-size: 24px; color: var(--accent);">60</div>
+            <div id="timeAttackTimer" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border: 2px solid var(--accent); border-radius: 12px; font-weight: 900; font-size: 24px; color: var(--accent);">120</div>
         </header>
 
         <div style="max-width: 800px; margin: 0 auto;">
             <!-- Karta docelowego zawodnika (do zgadnięcia) -->
             <div class="main-card glass-panel-centered mb-20" style="padding: 20px 10px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
+                <h2 id="taTargetName" style="text-align: center; margin: 0 0 15px 0; font-size: 20px; color: var(--accent); font-weight: 900;">KOGO SZUKAMY?</h2>
+                
+                <div id="taTargetHeaders" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
                     <div>Kraj</div>
                     <div>Wiek</div>
                     <div>GP</div>
@@ -404,7 +406,7 @@
                 <div id="taTargetAttributes" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 20px; justify-items: center;">
                     <!-- Atrybuty renderowane przez JS -->
                 </div>
-                <div class="team-path-centered">
+                <div id="taTargetPathBox" class="team-path-centered">
                     <span class="path-label text-center" style="width: 100%; display: block; margin-bottom: 10px; font-size: 11px;">Drużyny:</span>
                     <div id="taTargetClubs" class="path-boxes" style="justify-content: center; margin: 0 auto; flex-wrap: wrap; padding-bottom: 0;"></div>
                 </div>
