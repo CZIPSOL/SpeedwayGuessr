@@ -226,62 +226,79 @@
         
         <!-- LEWA STRONA: Nawigacja -->
         <div class="desktop-left">
-            <h1 class="desktop-logo">
+            <h1 class="desktop-logo" style="margin-bottom: 30px;">
                 <i>SPEEDWAY</i><br>
                 <i>GUESSR</i><br>
                 <span class="logo-sub">by: CZIPSOL</span>
             </h1>
 
-            <nav class="desktop-nav">
-                <!-- DAILY GUESSR -->
-                <div class="nav-item group" onmouseenter="loadDesktopRanking('daily')">
-                    <div class="nav-main"><i>DAILY GUESSR ►</i></div>
-                    <div class="nav-sub">
+            <nav class="desktop-nav-modern">
+                <!-- DAILY GUESSR (Z Submenu) -->
+                <div class="nav-item-modern group" onmouseenter="loadDesktopRanking('daily')">
+                    <div class="nav-icon-box">📅</div>
+                    <div class="nav-text-main">DAILY GUESSR</div>
+                    <div class="nav-arrow">▶</div>
+                    <!-- Rozwijane menu po najechaniu -->
+                    <div class="nav-sub-modern">
                         <span onclick="startDailyGame()"><i data-i18n="dToday">DZISIEJSZA GRA</i></span>
                         <span onclick="openCalendar()"><i data-i18n="dArchive">ARCHIWUM DAILY</i></span>
                     </div>
                 </div>
 
                 <!-- ENDLESS GUESSR -->
-                <div class="nav-item" onmouseenter="loadDesktopRanking('alltime')">
-                    <div class="nav-main" onclick="startEndlessGame()"><i>ENDLESS GUESSR</i></div>
+                <div class="nav-item-modern" onclick="startEndlessGame()" onmouseenter="loadDesktopRanking('alltime')">
+                    <div class="nav-icon-box" style="font-size: 26px; line-height: 1;">∞</div>
+                    <div class="nav-text-main">ENDLESS GUESSR</div>
+                    <div class="nav-arrow">▶</div>
                 </div>
 
                 <!-- SPEEDWAY CLASH -->
-                <div class="nav-item group" onmouseenter="loadDesktopRanking('league')">
-                    <div class="nav-main text-clash" onclick="startClashGame()"><i>SPEEDWAY CLASH ►</i></div>
+                <div class="nav-item-modern hover-blue" onclick="startClashGame()" onmouseenter="loadDesktopRanking('league')">
+                    <div class="nav-icon-box">⚔️</div>
+                    <div class="nav-text-main">SPEEDWAY CLASH</div>
+                    <div class="nav-arrow">▶</div>
                 </div>
 
-                <!-- TIME ATTACK -->
-                <div class="nav-item" id="btnTimeAttackDesktop">
-                    <div class="nav-main text-timeattack" onclick="openTimeAttackMenu()"><i>TIME ATTACK (Nowość) ►</i></div>
+                <!-- TIME ATTACK (TESTER/ADMIN) -->
+                <div class="nav-item-modern hover-green admin-only" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" style="display: none;">
+                    <div class="nav-icon-box">⏱️</div>
+                    <div class="nav-text-main">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; vertical-align: middle; margin-left: 5px;">(NOWOŚĆ)</span></div>
+                    <div class="nav-arrow">▶</div>
                 </div>
 
-                <div class="nav-divider"></div>
+                <!-- ODDZIELENIE -->
+                <div class="nav-divider-modern"></div>
 
                 <!-- MENU SYSTEMOWE -->
-                <div class="nav-item">
-                    <div class="nav-main" onclick="openSettings()"><i data-i18n="dSettings">USTAWIENIA</i></div>
+                <div class="nav-item-secondary" onclick="openSettings()">
+                    <div class="nav-icon-simple">⚙️</div>
+                    <div class="nav-text-secondary" data-i18n="dSettings">USTAWIENIA</div>
                 </div>
-                <div class="nav-item">
-                    <div class="nav-main" onclick="openProfile()"><i data-i18n="dProfile">PROFIL</i></div>
+                
+                <div class="nav-item-secondary" onclick="openProfile()">
+                    <div class="nav-icon-simple">👤</div>
+                    <div class="nav-text-secondary" data-i18n="dProfile">PROFIL</div>
                 </div>
-                <div class="nav-item">
-                    <div class="nav-main" onclick="openUpdates()"><i>CHANGELOG <span id="updateBadgeDesktop" class="update-badge-desktop"></span></i></div>
+                
+                <div class="nav-item-secondary" onclick="openUpdates()">
+                    <div class="nav-icon-simple">📊</div>
+                    <div class="nav-text-secondary">CHANGELOG <span id="updateBadgeDesktop" class="update-badge-desktop" style="display:none; position:relative; top:-2px;"></span></div>
                 </div>
             </nav>
 
-            <div class="desktop-footer-links">
-                <span onclick="openSuggestion()" data-i18n="missingRider">💡 Brak zawodnika?</span>
-                <span onclick="openBugReport()" style="color:var(--red-neon);" data-i18n="reportBug">🐛 Zgłoś błąd</span>
+            <!-- LINKI AKCJI NA DOLE -->
+            <div class="action-links-container">
+                <span class="action-link yellow" onclick="openSuggestion()">💡 Brak zawodnika?</span>
+                <span class="action-link red" onclick="openBugReport()">🚩 Zgłoś błąd</span>
             </div>
-                <!-- Elegancki przycisk Discord -->
-                <a href="https://discord.gg/Ep9cBXgs99" target="_blank" class="menu-discord-btn">
-                    <svg viewBox="0 0 127.14 96.36" class="discord-svg">
-                        <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53.01s5.02-12.69,11.43-12.69S54,46.12,53.88,53.01C53.88,60,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53.01s5.06-12.69,11.46-12.69S96.33,46.12,96.21,53.01C96.21,60,91.17,65.69,84.69,65.69Z"/>
-                    </svg>
-                    <span>DOŁĄCZ DO DISCORDA</span>
-                </a>
+            
+            <!-- Elegancki przycisk Discord -->
+            <a href="https://discord.gg/Ep9cBXgs99" target="_blank" class="menu-discord-btn" style="margin-top: 30px;">
+                <svg viewBox="0 0 127.14 96.36" class="discord-svg">
+                    <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53.01s5.02-12.69,11.43-12.69S54,46.12,53.88,53.01C53.88,60,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53.01s5.06-12.69,11.46-12.69S96.33,46.12,96.21,53.01C96.21,60,91.17,65.69,84.69,65.69Z"/>
+                </svg>
+                <span>DOŁĄCZ DO DISCORDA</span>
+            </a>
         </div>
         
 
