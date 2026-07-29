@@ -577,7 +577,7 @@ body {
 
 /* WSPÓLNA BAZA DLA GŁÓWNYCH I DOLNYCH PRZYCISKÓW */
 .nav-item-modern {
-    display: flex;
+    display: flex !important; /* <--- DODANE !important */
     align-items: center;
     gap: 15px;
     cursor: pointer;

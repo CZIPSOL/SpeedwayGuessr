@@ -72,7 +72,8 @@ function applyAdminState(isServerAdmin, isServerTester) {
     // Wyświetlanie elementów w menu
     document.querySelectorAll('.admin-only').forEach(el => {
         if (window.isAdmin) {
-            el.style.display = (el.classList.contains('nav-item') || el.classList.contains('menu-btn')) ? 'flex' : 'block';
+            // Dodano rozpoznawanie nav-item-modern
+            el.style.display = (el.classList.contains('nav-item') || el.classList.contains('nav-item-modern') || el.classList.contains('menu-btn')) ? 'flex' : 'block';
         } else {
             el.style.display = 'none';
         }
