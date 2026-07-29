@@ -575,14 +575,14 @@ body {
     gap: 12px;
 }
 
-/* GŁÓWNE TRYBY GRY */
+/* WSPÓLNA BAZA DLA GŁÓWNYCH I DOLNYCH PRZYCISKÓW */
 .nav-item-modern {
     display: flex;
     align-items: center;
     gap: 15px;
     cursor: pointer;
     position: relative;
-    width: max-content; /* Zapobiega rozciąganiu na 100% ekranu */
+    width: max-content; 
     color: rgba(255, 255, 255, 0.4);
     transition: all 0.2s ease;
 }
@@ -600,15 +600,25 @@ body {
     flex-shrink: 0;
 }
 
+/* TEKST GŁÓWNYCH TRYBÓW */
 .nav-text-main {
     font-size: 26px;
     font-weight: 900;
     font-style: italic;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    white-space: nowrap; /* KLUCZOWE: zapobiega łamaniu wiersza */
     display: flex;
-    align-items: center; /* Trzyma napis (NOWOŚĆ) w jednej linii */
+    align-items: center; 
+    white-space: nowrap !important;
+}
+
+/* TEKST DODATKOWY (Ustawienia, Profil, Changelog) */
+.nav-text-secondary {
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap !important;
 }
 
 .nav-arrow {
@@ -619,17 +629,22 @@ body {
     flex-shrink: 0;
 }
 
-/* Hover dla głównych trybów */
+/* Efekty najechania myszką */
 .nav-item-modern:hover { color: var(--accent); }
 .nav-item-modern:hover .nav-icon-box { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 15px rgba(241, 196, 15, 0.2); transform: scale(1.05); }
 .nav-item-modern:hover .nav-arrow { opacity: 1; transform: translateX(5px); }
 
-/* Własne kolory podświetleń (opcjonalne, dla urozmaicenia) */
+/* Własne kolory podświetleń */
 .nav-item-modern.hover-blue:hover { color: #3399ff; }
 .nav-item-modern.hover-blue:hover .nav-icon-box { border-color: #3399ff; color: #3399ff; box-shadow: 0 0 15px rgba(51, 153, 255, 0.2); }
 
 .nav-item-modern.hover-green:hover { color: #1dd1a1; }
 .nav-item-modern.hover-green:hover .nav-icon-box { border-color: #1dd1a1; color: #1dd1a1; box-shadow: 0 0 15px rgba(29, 209, 161, 0.2); }
+
+/* Mniejsze i subtelniejsze podświetlenie dla "dolnego" menu */
+.nav-item-modern.secondary-style:hover { color: #fff; }
+.nav-item-modern.secondary-style:hover .nav-icon-box { border-color: #fff; color: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+
 
 /* SUBMENU FLYOUT (dla Daily) */
 .nav-sub-modern {
@@ -661,36 +676,6 @@ body {
     max-width: 400px;
 }
 
-/* MENU SYSTEMOWE (Ustawienia, Profil) */
-.nav-item-secondary {
-    display: flex;
-    align-items: center;
-    gap: 15px; /* Taki sam gap jak w głównym menu */
-    color: rgba(255, 255, 255, 0.4);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    padding: 6px 0;
-}
-
-.nav-icon-simple {
-    width: 42px; /* Taka sama szerokość jak kwadraty wyżej! */
-    text-align: center;
-    font-size: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.nav-text-secondary {
-    font-size: 16px;
-    font-weight: 900;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.nav-item-secondary:hover { color: #fff; transform: translateX(5px); }
-
 /* ZGŁOŚ BŁĄD / BRAK ZAWODNIKA (na samym dole) */
 .action-links-container {
     display: flex;
@@ -698,7 +683,7 @@ body {
     margin-top: 25px;
     font-weight: 700;
     font-size: 13px;
-    padding-left: 5px; /* Delikatne wcięcie żeby wyrównać ikony z listą */
+    padding-left: 5px;
 }
 .action-link { display: flex; align-items: center; gap: 6px; color: var(--text-dim); cursor: pointer; transition: 0.2s; }
 .action-link.yellow:hover { color: var(--accent); }

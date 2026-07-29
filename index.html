@@ -224,7 +224,7 @@
     <!-- ============================================== -->
     <div id="desktopMainMenu" class="desktop-menu-wrapper">
         
-        <!-- LEWA STRONA: Nawigacja -->
+ <!-- LEWA STRONA: Nawigacja -->
         <div class="desktop-left">
             <h1 class="desktop-logo" style="margin-bottom: 30px;">
                 <i>SPEEDWAY</i><br>
@@ -262,7 +262,7 @@
                 <!-- TIME ATTACK (TESTER/ADMIN) -->
                 <div class="nav-item-modern hover-green admin-only" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" style="display: none;">
                     <div class="nav-icon-box">⏱️</div>
-                    <div class="nav-text-main">TIME ATTACK</div>
+                    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;">(NOWOŚĆ)</span></div>
                     <div class="nav-arrow">▶</div>
                 </div>
 
@@ -270,19 +270,19 @@
                 <div class="nav-divider-modern"></div>
 
                 <!-- MENU SYSTEMOWE -->
-                <div class="nav-item-secondary" onclick="openSettings()">
-                    <div class="nav-icon-simple">⚙️</div>
+                <div class="nav-item-modern secondary-style" onclick="openSettings()">
+                    <div class="nav-icon-box" style="font-size: 16px;">⚙️</div>
                     <div class="nav-text-secondary" data-i18n="dSettings">USTAWIENIA</div>
                 </div>
                 
-                <div class="nav-item-secondary" onclick="openProfile()">
-                    <div class="nav-icon-simple">👤</div>
+                <div class="nav-item-modern secondary-style" onclick="openProfile()">
+                    <div class="nav-icon-box" style="font-size: 16px;">👤</div>
                     <div class="nav-text-secondary" data-i18n="dProfile">PROFIL</div>
                 </div>
                 
-                <div class="nav-item-secondary" onclick="openUpdates()">
-                    <div class="nav-icon-simple">📊</div>
-                    <div class="nav-text-secondary">CHANGELOG <span id="updateBadgeDesktop" class="update-badge-desktop" style="display:none; position:relative; top:-2px;"></span></div>
+                <div class="nav-item-modern secondary-style" onclick="openUpdates()">
+                    <div class="nav-icon-box" style="font-size: 16px;">📊</div>
+                    <div class="nav-text-secondary" style="display: flex; align-items: center;">CHANGELOG <span id="updateBadgeDesktop" class="update-badge-desktop" style="display:none; position:relative; margin-left: 5px;"></span></div>
                 </div>
             </nav>
 
