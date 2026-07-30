@@ -1045,8 +1045,8 @@ function ensureClubStat(stats) {
 
 function getMiniClubBadge(clubName) {
     if (!clubName) return '';
-    let abbr = getClubAbbr(clubName);
-    return `<span class="mini-club-badge" title="${clubName}">${abbr}</span>`;
+    // Zwraca pełną nazwę klubu małą czcionką i w nawiasie
+    return ` <span style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: none;">(${clubName})</span>`;
 }
 
 
@@ -3207,9 +3207,37 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function updateClashTurnUI() {
-    let p1El = document.getElementById('clashPlayer1'); let p2El = document.getElementById('clashPlayer2');
+    let p1El = document.getElementById('clashPlayer1'); 
+    let p2El = document.getElementById('clashPlayer2');
+    
+    // Podświetlanie czyja jest tura
     if(p1El) p1El.className = clashTurn === 'red' ? 'clash-player active' : 'clash-player';
     if(p2El) p2El.className = clashTurn === 'blue' ? 'clash-player active' : 'clash-player';
+
+    // Aktualizacja tekstów (jeśli mamy załadowane dane meczowe)
+    const data = isLocalClash ? localClashData : currentClashData;
+    if (data && data.p1 && data.p2) {
+        
+        // Przygotowanie herbów (jeśli ktoś ma klub)
+        let badge1 = getMiniClubBadge(data.p1.club);
+        let badge2 = getMiniClubBadge(data.p2.club);
+        
+        let nick1 = data.p1.nick;
+        let nick2 = data.p2.nick;
+
+        // Jeśli to mecz ligowy, dodajemy z boku ELO w małym szarym polu (oraz ukrytą ikonkę rangi, aby nie robić bałaganu na froncie)
+        if (data.type === 'league') {
+            const p1Elo = `<span style="font-size: 10px; color: var(--accent); background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; margin-left: 5px;">${data.p1.elo}</span>`;
+            const p2Elo = `<span style="font-size: 10px; color: var(--accent); background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; margin-left: 5px;">${data.p2.elo}</span>`;
+            
+            document.getElementById('cp1Nick').innerHTML = nick1 + badge1 + p1Elo; 
+            document.getElementById('cp2Nick').innerHTML = nick2 + badge2 + p2Elo;
+        } else {
+            // Zwykły mecz towarzyski/lokalny - tylko nick + herb
+            document.getElementById('cp1Nick').innerHTML = nick1 + badge1; 
+            document.getElementById('cp2Nick').innerHTML = nick2 + badge2;
+        }
+    }
 }
 
 function setElementDisplay(id, value) {
@@ -3958,7 +3986,6 @@ function updateClashBoardUI(data) {
     const clashContainer = document.getElementById('clashContainer');
     if (!clashContainer) return;
 
-    // Zabezpieczenie: Jeśli oglądamy planszę PO MECZU, nie mieszaj w oknach
     if (clashStatus !== 'viewing') {
         setElementDisplay('mainMenuContainer', 'none');
         setElementDisplay('gameContainer', 'none');
@@ -3969,7 +3996,6 @@ function updateClashBoardUI(data) {
     
     closeClashSearch();
 
-    // Rysowanie kratek na planszy z najnowszych danych z Firebase
     for(let r=0; r<3; r++) {
         for(let c=0; c<3; c++) {
             let idx = r * 3 + c; 
@@ -3989,19 +4015,15 @@ function updateClashBoardUI(data) {
 
     updateClashTurnUI();
     
-    // ===================================
-    // BLOKOWANIE TIMERA W PODGLĄDZIE / NA KOŃCU
-    // ===================================
     if (clashStatus === 'viewing' || clashStatus === 'summary') {
         document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
         document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
         if(clashTimerInterval) clearInterval(clashTimerInterval);
-        return; // WAŻNE: Tu musi być return, by uciąć funkcję
+        return; 
     }
 
     if(clashTurn === myClashColor || isLocalClash) { 
         document.getElementById('clashTimerDisplay').style.color = '#00ff66'; 
-        // Dźwięk pikania tylko dla Hosta w localu lub gdy zmienia się nasza tura online
         if (isLocalClash || (window.lastTurnColor !== clashTurn)) {
             playSound('flip');
             window.lastTurnColor = clashTurn;
@@ -4010,7 +4032,6 @@ function updateClashBoardUI(data) {
         document.getElementById('clashTimerDisplay').style.color = '#fff'; 
     }
 
-    // Tost z błędem wroga
     if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
         setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
         if (isLocalClash) {
@@ -4022,11 +4043,16 @@ function updateClashBoardUI(data) {
         showToast("TWÓJ RUCH!", "normal");
     }
 
+    startClashTimer(data.deadline);
+}
+// Globalny timer wyciągnięty z wnętrza funkcji!
+let lastHeartbeatSecond = -1;
+
 function startClashTimer(deadlineTime) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
     const display = document.getElementById('clashTimerDisplay');
+    if(!display) return;
 
-    // Tworzymy funkcję tick, aby wywołać ją natychmiast (bez czekania 1 sekundy)
     function tick() {
         let now = Date.now(); 
         let diff = deadlineTime - now;
@@ -4038,15 +4064,9 @@ function startClashTimer(deadlineTime) {
             
             if(clashStatus === 'playing') {
                 if(isLocalClash || clashTurn === myClashColor) {
-                    // To nasza tura (lub gramy lokalnie na 1 PC). Oddajemy turę.
                     skipClashTurn("Koniec czasu!");
                 } else {
-                    // FIX: To tura przeciwnika, a czas na naszym ekranie minął.
-                    // Dajemy jego przeglądarce 1.5 sekundy na wysłanie zmiany.
-                    // Jeśli po tym czasie tura się nie zmieni (bo np. zamknął kartę/stracił neta),
-                    // my wymuszamy zmianę tury z naszego klienta.
                     setTimeout(() => {
-                        // Sprawdzamy, czy w międzyczasie tura faktycznie się nie zmieniła i gra nadal trwa
                         if (clashStatus === 'playing' && clashTurn !== myClashColor) {
                             skipClashTurn("Przeciwnik AFK (Koniec czasu)");
                         }
@@ -4061,7 +4081,6 @@ function startClashTimer(deadlineTime) {
         let s = (totalSeconds % 60).toString().padStart(2, '0');
         display.innerText = `${m}:${s}`;
         
-        // BICIE SERCA PONIZEJ 10 SEKUND
         if(totalSeconds <= 10 && (clashTurn === myClashColor || isLocalClash)) { 
             display.style.color = "var(--red-neon)"; 
             if (lastHeartbeatSecond !== totalSeconds) {
@@ -4073,9 +4092,8 @@ function startClashTimer(deadlineTime) {
         }
     }
 
-    tick(); // Wywołanie natychmiastowe przy starcie
-    clashTimerInterval = setInterval(tick, 1000); // Następnie co sekundę
-}
+    tick(); 
+    clashTimerInterval = setInterval(tick, 1000);
 }
 
 
@@ -4699,16 +4717,58 @@ async function submitBugReport() {
 
 // --- OBSŁUGA STOPKI (FOOTERA) ---
 
-function showPrivacyPolicy() {
-    const text = `Polityka Prywatności - Speedway Guessr\n\n1. Logowanie przez Google służy wyłącznie do zapisu postępu w grze i tworzenia globalnych rankingów.\n2. Nie udostępniamy, nie sprzedajemy i nie wykorzystujemy Twojego adresu e-mail do celów marketingowych.\n3. Twój nick z Discorda (jeśli go połączysz) jest wykorzystywany tylko do automatycznego przyznawania ról na naszym serwerze.\n4. Gra używa LocalStorage w Twojej przeglądarce do zapisywania bieżącego stanu gry i statystyk.`;
+function showLegalModal(title, htmlContent) {
+    const overlay = document.getElementById('appModalOverlay');
+    const titleEl = document.getElementById('appModalTitle');
+    const messageEl = document.getElementById('appModalMessage');
+    const confirmBtn = document.getElementById('appModalConfirm');
+    const cancelBtn = document.getElementById('appModalCancel');
+
+    titleEl.innerText = title;
+    messageEl.innerHTML = htmlContent; // Wstrzykujemy ładny HTML
     
-    appAlert(text, "POLITYKA PRYWATNOŚCI");
+    confirmBtn.innerText = "ZROZUMIANO";
+    cancelBtn.style.display = 'none';
+
+    confirmBtn.onclick = () => {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    };
+
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function showPrivacyPolicy() {
+    const html = `
+        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main);">
+            <h3 style="color: var(--accent); margin-bottom: 5px;">1. Gromadzenie danych</h3>
+            <p style="margin-top: 0;">Logowanie przez Google służy <b>wyłącznie</b> do zapisu postępu w grze i tworzenia globalnych rankingów (zapisywany jest Twój adres e-mail i identyfikator).</p>
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">2. Wykorzystanie danych</h3>
+            <p style="margin-top: 0;">Nie udostępniamy, nie sprzedajemy i nie wykorzystujemy Twojego adresu e-mail do celów marketingowych.</p>
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">3. Ciasteczka (Cookies) i LocalStorage</h3>
+            <p style="margin-top: 0;">Gra używa lokalnej pamięci Twojej przeglądarki do zapisywania bieżącego stanu gry, statystyk oraz wybranego motywu.</p>
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">4. Discord</h3>
+            <p style="margin-top: 0;">Twój nick z Discorda (jeśli zdecydujesz się połączyć konto) jest wykorzystywany tylko i wyłącznie do automatycznego przyznawania ról ligowych na naszym serwerze.</p>
+        </div>
+    `;
+    showLegalModal("POLITYKA PRYWATNOŚCI", html);
 }
 
 function showTerms() {
-    const text = `Regulamin Gry\n\n1. Speedway Guessr to fanowski, darmowy projekt tworzony z pasji do żużla.\n2. Wszelkie nazwy klubów i nazwiska zawodników użyte są wyłącznie w celach informacyjnych.\n3. Oszukiwanie w trybie ligowym (Speedway Clash) poprzez wychodzenie z gry karane jest eskalującą blokadą czasową konta.\n4. Zastrzegamy sobie prawo do banowania graczy z wulgarnymi nickami.`;
-    
-    appAlert(text, "REGULAMIN");
+    const html = `
+        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main);">
+            <h3 style="color: var(--accent); margin-bottom: 5px;">1. Postanowienia ogólne</h3>
+            <p style="margin-top: 0;"><b>Speedway Guessr</b> to darmowy, nieoficjalny projekt fanowski tworzony z pasji do sportu żużlowego. Gra nie jest powiązana z PGE Ekstraligą ani klubami żużlowymi.</p>
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">2. Prawa własności</h3>
+            <p style="margin-top: 0;">Wszelkie nazwy klubów, zawodników oraz logotypy użyte są w aplikacji wyłącznie w celach informacyjnych i statystycznych (prawo cytatu).</p>
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">3. Zasady Fair Play</h3>
+            <p style="margin-top: 0;">Oszukiwanie w trybie ligowym (Speedway Clash), w tym celowe wychodzenie z gry, jest karane automatyczną blokadą czasową (od 5 minut do 7 dni).</p>
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">4. Konta użytkowników</h3>
+            <p style="margin-top: 0;">Zastrzegamy sobie prawo do banowania graczy posługujących się wulgarnymi, obraźliwymi pseudonimami w rankingach.</p>
+        </div>
+    `;
+    showLegalModal("REGULAMIN GRY", html);
 }
 
 // Globalny eksport (żeby kliknięcie w footer zadziałało)
