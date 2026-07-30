@@ -3827,7 +3827,59 @@ function updateClashBoardUI(data) {
         showToast("TWÓJ RUCH!", "normal");
     }
 
-    startClashTimer(data.deadline);
+function startClashTimer(deadlineTime) {
+    if(clashTimerInterval) clearInterval(clashTimerInterval);
+    const display = document.getElementById('clashTimerDisplay');
+
+    // Tworzymy funkcję tick, aby wywołać ją natychmiast (bez czekania 1 sekundy)
+    function tick() {
+        let now = Date.now(); 
+        let diff = deadlineTime - now;
+        
+        if (diff <= 0) {
+            clearInterval(clashTimerInterval); 
+            display.innerText = "00:00"; 
+            display.style.color = "var(--red-neon)";
+            
+            if(clashStatus === 'playing') {
+                if(isLocalClash || clashTurn === myClashColor) {
+                    // To nasza tura (lub gramy lokalnie na 1 PC). Oddajemy turę.
+                    skipClashTurn("Koniec czasu!");
+                } else {
+                    // FIX: To tura przeciwnika, a czas na naszym ekranie minął.
+                    // Dajemy jego przeglądarce 1.5 sekundy na wysłanie zmiany.
+                    // Jeśli po tym czasie tura się nie zmieni (bo np. zamknął kartę/stracił neta),
+                    // my wymuszamy zmianę tury z naszego klienta.
+                    setTimeout(() => {
+                        // Sprawdzamy, czy w międzyczasie tura faktycznie się nie zmieniła i gra nadal trwa
+                        if (clashStatus === 'playing' && clashTurn !== myClashColor) {
+                            skipClashTurn("Przeciwnik AFK (Koniec czasu)");
+                        }
+                    }, 1500);
+                }
+            }
+            return;
+        }
+        
+        let totalSeconds = Math.floor(diff / 1000); 
+        let m = Math.floor(totalSeconds / 60).toString().padStart(2, '0'); 
+        let s = (totalSeconds % 60).toString().padStart(2, '0');
+        display.innerText = `${m}:${s}`;
+        
+        // BICIE SERCA PONIZEJ 10 SEKUND
+        if(totalSeconds <= 10 && (clashTurn === myClashColor || isLocalClash)) { 
+            display.style.color = "var(--red-neon)"; 
+            if (lastHeartbeatSecond !== totalSeconds) {
+                playSound('heartbeat'); 
+                lastHeartbeatSecond = totalSeconds;
+            }
+        } else { 
+            display.style.color = "#fff"; 
+        }
+    }
+
+    tick(); // Wywołanie natychmiastowe przy starcie
+    clashTimerInterval = setInterval(tick, 1000); // Następnie co sekundę
 }
 
 
