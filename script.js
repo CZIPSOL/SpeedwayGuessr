@@ -199,10 +199,17 @@ function setRandomBackground() {
 // ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
 // ==============================================
 
-const CURRENT_GAME_VERSION = "Alpha v1.1.0";
+const CURRENT_GAME_VERSION = "Beta v1.3.1";
 
 const changelog = {
     pl: [
+        {
+            version: "Beta v1.3.1", date: "30.07.2026",
+            changes: [
+                "🛡️ <b>Wybierz swój klub:</b> Od teraz w Profilu możesz wybrać drużynę, której kibicujesz! Będzie ona widoczna obok Twojego nicku we wszystkich rankingach oraz podczas meczów na żywo w trybie Clash.",
+                "🏆 <b>Rozbudowa osiągnięć:</b> Pokaźna aktualizacja systemu osiągnięć! Dodano nowe wyzwania (m.in. za tryb Time Attack i Speedway Clash), a cała gablota zyskała nowy, profesjonalny wygląd (niczym na Steamie) z paskiem postępu i datami odblokowania."
+            ]
+        },
         {
             version: "Beta v1.3.0", date: "28.07.2026",
             changes: [
@@ -270,6 +277,13 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.3.1", date: "30.07.2026",
+            changes: [
+                "🛡️ <b>Choose your club:</b> You can now select your favorite team in your Profile! It will be displayed next to your nickname in all leaderboards and during live Clash matches.",
+                "🏆 <b>Achievements expansion:</b> A massive update to the achievements system! Added new challenges (including Time Attack and Speedway Clash), and the entire showcase received a new, professional look (like on Steam) with a progress bar and unlock dates."
+            ]
+        },
         {
             version: "Beta v1.3.0", date: "28.07.2026",
             changes: [
@@ -4124,6 +4138,10 @@ function updateClashBoardUI(data) {
     startClashTimer(data.deadline);
 }
 
+let lastHeartbeatSecond = -1; // Zmienna zapobiegająca nakładaniu się dźwięku
+
+let lastHeartbeatSecond = -1; // Zmienna zapobiegająca nakładaniu się dźwięku bicia serca
+
 function startClashTimer(deadlineTime) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
     const display = document.getElementById('clashTimerDisplay');
@@ -4140,56 +4158,18 @@ function startClashTimer(deadlineTime) {
             
             if(clashStatus === 'playing') {
                 if(isLocalClash || clashTurn === myClashColor) {
+                    // 1. Normalna sytuacja: Gracz, którego jest tura, sam oddaje kolejkę
                     skipClashTurn("Koniec czasu!");
                 } else {
+                    // 2. ZABEZPIECZENIE (AFK): Jeśli to tura przeciwnika, a on wyszedł z gry 
+                    // (lub ma laga), czekamy 1.5 sekundy. Jeśli status w bazie się nie zmienił, 
+                    // MY (gracz oczekujący) wymuszamy zmianę tury!
                     setTimeout(() => {
                         if (clashStatus === 'playing' && clashTurn !== myClashColor) {
                             skipClashTurn("Przeciwnik AFK (Koniec czasu)");
                         }
                     }, 1500);
                 }
-            }
-            return;
-        }
-        
-        let totalSeconds = Math.floor(diff / 1000); 
-        let m = Math.floor(totalSeconds / 60).toString().padStart(2, '0'); 
-        let s = (totalSeconds % 60).toString().padStart(2, '0');
-        display.innerText = `${m}:${s}`;
-        
-        if(totalSeconds <= 10 && (clashTurn === myClashColor || isLocalClash)) { 
-            display.style.color = "var(--red-neon)"; 
-            if (lastHeartbeatSecond !== totalSeconds) {
-                playSound('heartbeat'); 
-                lastHeartbeatSecond = totalSeconds;
-            }
-        } else { 
-            display.style.color = "#fff"; 
-        }
-    }
-
-    tick(); 
-    clashTimerInterval = setInterval(tick, 1000);
-}
-
-
-let lastHeartbeatSecond = -1; // Zmienna zapobiegająca nakładaniu się dźwięku
-
-function startClashTimer(deadlineTime) {
-    if(clashTimerInterval) clearInterval(clashTimerInterval);
-    const display = document.getElementById('clashTimerDisplay');
-
-    // Tworzymy funkcję tick, aby wywołać ją natychmiast (bez czekania 1 sekundy)
-    function tick() {
-        let now = Date.now(); 
-        let diff = deadlineTime - now;
-        
-        if (diff <= 0) {
-            clearInterval(clashTimerInterval); 
-            display.innerText = "00:00"; 
-            display.style.color = "var(--red-neon)";
-            if(clashStatus === 'playing') {
-                if(isLocalClash || clashTurn === myClashColor) skipClashTurn("Koniec czasu!");
             }
             return;
         }
@@ -4211,9 +4191,10 @@ function startClashTimer(deadlineTime) {
         }
     }
 
-    tick(); // Wywołanie natychmiastowe przy starcie
-    clashTimerInterval = setInterval(tick, 1000); // Następnie co sekundę
+    tick(); // Wywołanie natychmiastowe, żeby nie było sekundy opóźnienia
+    clashTimerInterval = setInterval(tick, 1000);
 }
+
 function handleClashCell(r, c) {
     if (!isLocalClash && clashTurn !== myClashColor) { showToast("Czekaj na swoją kolej!", "error"); return; }
     let idx = r * 3 + c; if(clashBoardState[idx] !== null) { showToast("To pole jest już zajęte!", "error"); return; }
