@@ -770,30 +770,30 @@ function saveFavoriteClub(clubName) {
 // ==============================================
 
 const ACHIEVEMENTS_DB = [
-    { id: 'first_try', icon: '🦅', title: 'Sokole Oko', desc: 'Zgadnij zawodnika w 1. próbie.', globalPct: '12.4%' },
-    { id: 'close_call', icon: '😅', title: 'O włos', desc: 'Zgadnij zawodnika w ostatniej, 10. próbie.', globalPct: '34.1%' },
-    { id: 'no_hint_1', icon: '🧠', title: 'Bystrzak', desc: 'Wygraj grę bez użycia podpowiedzi.', globalPct: '68.2%' },
-    { id: 'no_hint_5', icon: '📚', title: 'Chodząca Encyklopedia', desc: 'Wygraj 5 gier z rzędu bez podpowiedzi.', globalPct: '15.7%' },
-    { id: 'play_10', icon: '🕹️', title: 'Rozgrzewka', desc: 'Rozegraj łącznie 10 gier.', globalPct: '82.5%' },
-    { id: 'play_50', icon: '🎮', title: 'Maniak', desc: 'Rozegraj łącznie 50 gier.', globalPct: '41.2%' },
-    { id: 'streak_3', icon: '🔥', title: 'Gorąca Seria I', desc: 'Osiągnij Win Streak równy 3.', globalPct: '55.3%' },
-    { id: 'streak_7', icon: '☄️', title: 'Gorąca Seria II', desc: 'Osiągnij Win Streak równy 7.', globalPct: '22.8%' },
-    { id: 'streak_15', icon: '🌋', title: 'Gorąca Seria III', desc: 'Osiągnij Win Streak równy 15.', globalPct: '4.1%' },
-    { id: 'clash_1', icon: '⚔️', title: 'Pierwsza Krew', desc: 'Wygraj swój pierwszy mecz w Speedway Clash.', globalPct: '61.0%' },
-    { id: 'clash_10', icon: '🛡️', title: 'Gladiator', desc: 'Wygraj 10 meczów w Clashu.', globalPct: '28.5%' },
-    { id: 'clash_50', icon: '👑', title: 'Dominator', desc: 'Wygraj 50 meczów w Clashu.', globalPct: '8.2%' },
-    { id: 'clash_flawless', icon: '🛑', title: 'Bezbłędny Clash!', desc: 'Wygraj mecz ligowy, nie oddając przeciwnikowi ani jednego pola.', globalPct: '3.5%' },
-    { id: 'rank_silver', icon: '🥈', title: 'Srebrny Lis', desc: 'Awansuj do rangi Srebro w lidze Clash.', globalPct: '45.1%' },
-    { id: 'rank_gold', icon: '🥇', title: 'Złoty Chłopak', desc: 'Awansuj do rangi Złoto w lidze Clash.', globalPct: '20.4%' },
-    { id: 'rank_diamond', icon: '💎', title: 'Żużlowa Elita', desc: 'Awansuj do rangi Diament w lidze Clash.', globalPct: '5.2%' },
-    { id: 'clash_legend', icon: '🐐', title: 'Żywa Legenda', desc: 'Osiągnij najwyższą rangę: Legenda.', globalPct: '0.8%' },
-    { id: 'ta_10', icon: '⏱️', title: 'Time Attack Ekspert I', desc: 'Odgadnij 10 zawodników w jednej grze Time Attack.', globalPct: '14.2%' },
-    { id: 'ta_20', icon: '⏱️', title: 'Time Attack Ekspert II', desc: 'Odgadnij 20 zawodników w jednej grze Time Attack.', globalPct: '8.5%' },
-    { id: 'ta_30', icon: '⏱️', title: 'Time Attack Ekspert III', desc: 'Odgadnij 30 zawodników w jednej grze Time Attack.', globalPct: '3.1%' },
-    { id: 'ta_50', icon: '⏱️', title: 'Time Attack Ekspert IV', desc: 'Odgadnij 50 zawodników w jednej grze Time Attack.', globalPct: '0.9%' },
-    { id: 'ta_100', icon: '⏱️', title: 'Time Attack God', desc: 'Odgadnij 100 zawodników w jednej grze Time Attack.', globalPct: '0.1%' },
-    { id: 'easter_club', icon: '🏟️', title: 'Klubowe Barwy', desc: 'Wybierz swój ulubiony klub w profilu gracza.', globalPct: '75.2%' },
-    { id: 'easter_lang', icon: '🌍', title: 'Poliglota', desc: 'Zmień język gry w Ustawieniach.', globalPct: '18.9%' }
+    { id: 'first_try', icon: '🦅', title: 'Sokole Oko', desc: 'Zgadnij zawodnika w 1. próbie.' },
+    { id: 'close_call', icon: '😅', title: 'O włos', desc: 'Zgadnij zawodnika w ostatniej, 10. próbie.' },
+    { id: 'no_hint_1', icon: '🧠', title: 'Bystrzak', desc: 'Wygraj grę bez użycia podpowiedzi.' },
+    { id: 'no_hint_5', icon: '📚', title: 'Chodząca Encyklopedia', desc: 'Wygraj 5 gier z rzędu bez podpowiedzi.' },
+    { id: 'play_10', icon: '🕹️', title: 'Rozgrzewka', desc: 'Rozegraj łącznie 10 gier.' },
+    { id: 'play_50', icon: '🎮', title: 'Maniak', desc: 'Rozegraj łącznie 50 gier.' },
+    { id: 'streak_3', icon: '🔥', title: 'Gorąca Seria I', desc: 'Osiągnij Win Streak równy 3.' },
+    { id: 'streak_7', icon: '☄️', title: 'Gorąca Seria II', desc: 'Osiągnij Win Streak równy 7.' },
+    { id: 'streak_15', icon: '🌋', title: 'Gorąca Seria III', desc: 'Osiągnij Win Streak równy 15.' },
+    { id: 'clash_1', icon: '⚔️', title: 'Pierwsza Krew', desc: 'Wygraj swój pierwszy mecz w Speedway Clash.' },
+    { id: 'clash_10', icon: '🛡️', title: 'Gladiator', desc: 'Wygraj 10 meczów w Clashu.' },
+    { id: 'clash_50', icon: '👑', title: 'Dominator', desc: 'Wygraj 50 meczów w Clashu.' },
+    { id: 'clash_flawless', icon: '🛑', title: 'Bezbłędny Clash!', desc: 'Wygraj mecz ligowy, nie oddając przeciwnikowi ani jednego pola.' },
+    { id: 'rank_silver', icon: '🥈', title: 'Srebrny Lis', desc: 'Awansuj do rangi Srebro w lidze Clash.' },
+    { id: 'rank_gold', icon: '🥇', title: 'Złoty Chłopak', desc: 'Awansuj do rangi Złoto w lidze Clash.' },
+    { id: 'rank_diamond', icon: '💎', title: 'Żużlowa Elita', desc: 'Awansuj do rangi Diament w lidze Clash.' },
+    { id: 'clash_legend', icon: '🐐', title: 'Żywa Legenda', desc: 'Osiągnij najwyższą rangę: Legenda.' },
+    { id: 'ta_10', icon: '⏱️', title: 'Time Attack Ekspert I', desc: 'Odgadnij 10 zawodników w jednej grze Time Attack.' },
+    { id: 'ta_20', icon: '⏱️', title: 'Time Attack Ekspert II', desc: 'Odgadnij 20 zawodników w jednej grze Time Attack.' },
+    { id: 'ta_30', icon: '⏱️', title: 'Time Attack Ekspert III', desc: 'Odgadnij 30 zawodników w jednej grze Time Attack.' },
+    { id: 'ta_50', icon: '⏱️', title: 'Time Attack Ekspert IV', desc: 'Odgadnij 50 zawodników w jednej grze Time Attack.' },
+    { id: 'ta_100', icon: '⏱️', title: 'Time Attack God', desc: 'Odgadnij 100 zawodników w jednej grze Time Attack.' },
+    { id: 'easter_club', icon: '🏟️', title: 'Klubowe Barwy', desc: 'Wybierz swój ulubiony klub w profilu gracza.' },
+    { id: 'easter_lang', icon: '🌍', title: 'Poliglota', desc: 'Zmień język gry w Ustawieniach.' }
 ];
 
 function ensureAchievementsStats() {
@@ -875,7 +875,7 @@ function openAchievementsModal() {
     sortedAch.forEach(ach => {
         const isUnlocked = userStats.achievements.includes(ach.id);
         const lockClass = isUnlocked ? '' : 'locked';
-        const dateStr = isUnlocked ? `Odblokowano: ${userStats.achievementsDates[ach.id] || 'Niedawno'}` : 'Zablokowane';
+        const dateStr = isUnlocked ? `${userStats.achievementsDates[ach.id] || 'NIEDAWNO'}` : 'ZABLOKOWANE';
         const iconRender = isUnlocked ? ach.icon : '🔒';
         
         listContainer.innerHTML += `
@@ -887,7 +887,6 @@ function openAchievementsModal() {
                 </div>
                 <div class="ach-row-meta">
                     <span class="ach-row-date">${dateStr}</span>
-                    <span class="ach-row-pct">${ach.globalPct} graczy</span>
                 </div>
             </div>
         `;
