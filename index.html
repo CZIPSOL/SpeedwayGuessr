@@ -118,6 +118,14 @@
                 </div>
             </div>
 
+            <!-- WYBÓR KLUBU -->
+            <div class="setting-block mb-25 w-100">
+                <label class="text-dim text-xs uppercase font-bold mb-5">TWÓJ ULUBIONY KLUB:</label>
+                <button onclick="openClubSelectModal()" class="menu-btn btn-flat w-100" style="padding: 12px; font-size: 13px;">
+                    <span id="currentClubDisplay">WYBIERZ KLUB 🛡️</span>
+                </button>
+            </div>
+
             <!-- STATYSTYKI -->
             <h3 class="text-sm text-dim mb-10" data-i18n="stats">STATYSTYKI</h3>
             <div class="stats-grid">
@@ -220,6 +228,35 @@
         </div>
     </div>
 
+    <!-- WYBÓR KLUBU MODAL -->
+    <div id="clubSelectOverlay" class="win-overlay" style="display: none; z-index: 10030;">
+        <div class="stats-modal modal-md">
+            <h2 class="text-accent mb-15">WYBIERZ SWÓJ KLUB</h2>
+            <p class="text-xs text-dim mb-20 line-h-1-4">Wybierz drużynę, której kibicujesz. Jej skrót będzie widoczny przy Twoim nicku w rankingach i podczas meczów w trybie Clash!</p>
+            
+            <div class="club-leagues-grid">
+                <!-- Kolumna 1 -->
+                <div>
+                    <h4 class="text-white text-xs mb-10 uppercase">PGE Ekstraliga</h4>
+                    <div id="league1Clubs" class="flex-col gap-5"></div>
+                </div>
+                <!-- Kolumna 2 -->
+                <div>
+                    <h4 class="text-white text-xs mb-10 uppercase">Metalkas 2.E</h4>
+                    <div id="league2Clubs" class="flex-col gap-5"></div>
+                </div>
+                <!-- Kolumna 3 -->
+                <div>
+                    <h4 class="text-white text-xs mb-10 uppercase">KLŻ</h4>
+                    <div id="league3Clubs" class="flex-col gap-5"></div>
+                </div>
+            </div>
+
+            <button onclick="saveFavoriteClub(null)" class="btn-reset btn-danger w-100 mt-20 text-sm p-12">USUŃ KLUB (POZOSTAŃ NEUTRALNY)</button>
+            <button onclick="closeClubSelectModal()" class="btn-close w-100 mt-10 p-12 text-sm">ZAMKNIJ</button>
+        </div>
+    </div>
+
 
     <!-- ============================================== -->
     <!-- ====== NOWE MENU PC (DESKTOP ONLY) ====== -->
@@ -261,12 +298,11 @@
                     <div class="nav-arrow">▶</div>
                 </div>
 
-                <!-- TIME ATTACK (TESTER/ADMIN) -->
-                <div class="nav-item-modern hover-green admin-only" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" style="display: none;">
-                    <div class="nav-icon-box">⏱️</div>
-                    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;">(NOWOŚĆ)</span></div>
-                    <div class="nav-arrow">▶</div>
-                </div>
+                <div class="nav-item-modern hover-green" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" onmouseenter="loadDesktopRanking('timeattack')">
+    <div class="nav-icon-box">⏱️</div>
+    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;">(NOWOŚĆ)</span></div>
+    <div class="nav-arrow">▶</div>
+</div>
 
                 <!-- ODDZIELENIE -->
                 <div class="nav-divider-modern"></div>

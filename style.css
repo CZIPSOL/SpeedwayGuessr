@@ -566,6 +566,54 @@ body {
 .d-tab:hover, .d-tab.active { color: var(--accent); }
 
 /* ============================================== */
+/* ====== WYBÓR KLUBU I ZNACZKI (BADGES) ======== */
+/* ============================================== */
+.club-leagues-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    text-align: center;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+.club-leagues-grid::-webkit-scrollbar { width: 4px; }
+.club-leagues-grid::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+.club-select-btn {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-dim);
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    width: 100%;
+}
+.club-select-btn:hover { border-color: var(--accent); color: #fff; }
+.club-select-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(241, 196, 15, 0.15); box-shadow: 0 0 10px rgba(241, 196, 15, 0.2); }
+
+.mini-club-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #333, #111);
+    border: 1px solid #555;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 900;
+    border-radius: 4px;
+    padding: 2px 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 0.5px;
+}
+
+/* ============================================== */
 /* ====== NOWOCZESNE MENU PC (Z OBRAZKA) ======== */
 /* ============================================== */
 

@@ -589,23 +589,6 @@ async function syncStatsToFirebase() {
     } catch (e) { console.error("Cloud Sync Save Error:", e); }
 }
 
-async function syncLeagueScoreToFirebase() {
-    if (!playerId) return; 
-    const league = ensureLeagueStats(userStats).clashLeague;
-    try {
-        await db.collection('leaderboard_clash_beta').doc(playerId).set({
-            nick: playerNickname || 'Gracz',
-            elo: Math.round(league.elo),
-            matchesPlayed: league.matchesPlayed,
-            wins: league.wins,
-            losses: league.losses,
-            draws: league.draws,
-            rank: getLeagueRankName(league.elo, league.matchesPlayed),
-            provisional: league.matchesPlayed < 5,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-    } catch (e) { console.error('League leaderboard sync error:', e); }
-}
 
 // --- SYSTEM ŁĄCZENIA Z DISCORDEM ---
 
@@ -717,6 +700,8 @@ function openProfile() {
     document.getElementById('profileStatStreak').innerText = userStats.currentStreak; 
     document.getElementById('profileStatMax').innerText = userStats.maxStreak;
     document.getElementById('changeNickInput').value = playerNickname || "";
+    ensureClubStat(userStats);
+    document.getElementById('currentClubDisplay').innerHTML = userStats.favoriteClub ? `KLUB: <b>${userStats.favoriteClub}</b>` : "WYBIERZ KLUB 🛡️";
     
     renderAchievements();
     
@@ -729,6 +714,49 @@ function closeProfile() {
     const overlay = document.getElementById('profileOverlay');
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
+
+function openClubSelectModal() {
+    document.getElementById('profileOverlay').style.opacity = '0';
+    setTimeout(() => document.getElementById('profileOverlay').style.display = 'none', 300);
+
+    const overlay = document.getElementById('clubSelectOverlay');
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+
+    // Generowanie list
+    const generateList = (containerId, leagueArray) => {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        leagueArray.forEach(club => {
+            const btn = document.createElement('button');
+            const isActive = userStats.favoriteClub === club ? 'active' : '';
+            btn.className = `club-select-btn ${isActive}`;
+            btn.innerText = club;
+            btn.onclick = () => saveFavoriteClub(club);
+            container.appendChild(btn);
+        });
+    }
+
+    generateList('league1Clubs', LEAGUES_DB.ext);
+    generateList('league2Clubs', LEAGUES_DB.m2e);
+    generateList('league3Clubs', LEAGUES_DB.klz);
+}
+
+function closeClubSelectModal() {
+    const overlay = document.getElementById('clubSelectOverlay');
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+    openProfile(); // Powrót do profilu
+}
+
+function saveFavoriteClub(clubName) {
+    ensureClubStat(userStats);
+    userStats.favoriteClub = clubName;
+    saveStats();
+    
+    showToast(clubName ? `Zapisano! Reprezentujesz: ${clubName}` : "Usunięto przynależność klubową", "success");
+    closeClubSelectModal();
+}
+
+
 
 // ==============================================
 // ====== SYSTEM OSIĄGNIĘĆ (GABLOTA) ============
@@ -1003,6 +1031,24 @@ const clubAbbreviations = {
 };
 
 const countryToCode = { "Polska": "pl", "Wielka Brytania": "gb", "Dania": "dk", "Australia": "au", "Szwecja": "se", "Słowacja": "sk", "Rosja": "ru", "Łotwa": "lv", "Niemcy": "de", "Francja": "fr", "Słowenia": "si", "USA": "us", "Norwegia": "no", "Ukraina": "ua", "Finlandia": "fi", "Czechy": "cz", "Włochy": "it", "Hiszpania": "es" };
+
+const LEAGUES_DB = {
+    ext: ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+    m2e: ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+    klz: ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Śląsk Świętochłowice", "Unia Tarnów", "Kolejarz Rawicz"]
+};
+
+// Zabezpieczenie statystyk profilu
+function ensureClubStat(stats) {
+    if (typeof stats.favoriteClub === 'undefined') stats.favoriteClub = null;
+}
+
+function getMiniClubBadge(clubName) {
+    if (!clubName) return '';
+    let abbr = getClubAbbr(clubName);
+    return `<span class="mini-club-badge" title="${clubName}">${abbr}</span>`;
+}
+
 
 const i18n = {
     pl: {
@@ -1476,23 +1522,42 @@ async function sendScoreToDatabase(isWin, attempts) {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
         const safeNick = escapeHTML(playerNickname);
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        // Dodajemy 'hints: hintsUsedCount'
-        batch.set(dailyRef, { nick: safeNick, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });
-        const increment = firebase.firestore.FieldValue.increment;
-        const winIncrement = isWin ? 1 : 0; // Dodaje 1 jeśli wygrana, 0 jeśli przegrana
         
-        // Zapis do tabel sumarycznych (zawsze dodaje próby, ale wygrane tylko jeśli isWin == true)
+        batch.set(dailyRef, { nick: safeNick, club: userStats.favoriteClub || null, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });
+        
+        const increment = firebase.firestore.FieldValue.increment;
+        const winIncrement = isWin ? 1 : 0; 
+        
         const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-        batch.set(weeklyRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(weeklyRef, { nick: safeNick, club: userStats.favoriteClub || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-        batch.set(monthlyRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(monthlyRef, { nick: safeNick, club: userStats.favoriteClub || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-        batch.set(alltimeRef, { nick: safeNick, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(alltimeRef, { nick: safeNick, club: userStats.favoriteClub || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         await batch.commit();
     } catch (e) { console.error("DB Error:", e); }
+}
+
+async function syncLeagueScoreToFirebase() {
+    if (!playerId) return; 
+    const league = ensureLeagueStats(userStats).clashLeague;
+    try {
+        await db.collection('leaderboard_clash_beta').doc(playerId).set({
+            nick: playerNickname || 'Gracz',
+            club: userStats.favoriteClub || null,
+            elo: Math.round(league.elo),
+            matchesPlayed: league.matchesPlayed,
+            wins: league.wins,
+            losses: league.losses,
+            draws: league.draws,
+            rank: getLeagueRankName(league.elo, league.matchesPlayed),
+            provisional: league.matchesPlayed < 5,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    } catch (e) { console.error('League leaderboard sync error:', e); }
 }
 
 function updateStatsOnWin() {
@@ -2731,26 +2796,158 @@ function openRanking(defaultTab = 'daily') {
     }); 
 }
 
+// ==============================================
+// ====== DESKTOP MENU RANKING LOADER ===========
+// ==============================================
+
+async function loadDesktopRanking(type) {
+    const tbody = document.getElementById('desktopRankingBody'); 
+    const thead = document.getElementById('desktopRankingHead');
+    const title = document.getElementById('desktopRankingTitle');
+    const tabs = document.getElementById('desktopRankTabs');
+    
+    if (!tbody || !thead || !title) return;
+
+    // Obsługa zakładek i stylizacji tytułów
+    if (type === 'league') {
+        title.innerHTML = '<i>LEADERBOARD (CLASH)</i>';
+        title.style.color = '#3399ff';
+        if (tabs) tabs.style.display = 'none';
+    } else if (type === 'timeattack') {
+        title.innerHTML = '<i>LEADERBOARD (TIME ATTACK)</i>';
+        title.style.color = '#1dd1a1';
+        if (tabs) tabs.style.display = 'none';
+    } else {
+        title.innerHTML = `<i>LEADERBOARD (${type.toUpperCase()})</i>`;
+        title.style.color = 'var(--accent)';
+        if (tabs) {
+            tabs.style.display = 'flex';
+            document.querySelectorAll('.d-tab').forEach(tab => tab.classList.remove('active'));
+            if(type==='daily') tabs.children[0].classList.add('active');
+            if(type==='weekly') tabs.children[1].classList.add('active');
+            if(type==='monthly') tabs.children[2].classList.add('active');
+            if(type==='alltime') tabs.children[3].classList.add('active');
+        }
+    }
+
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie danych...</td></tr>';
+
+    try {
+        if (type === 'league') {
+            thead.innerHTML = `<tr><th>Poz.</th><th>Nick</th><th>Ranga</th><th>ELO</th></tr>`;
+            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
+            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            
+            tbody.innerHTML = '';
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+
+            let pos = 1;
+            scores.forEach((row) => {
+                if (row.provisional || row.matchesPlayed < 5) return; 
+                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+                
+                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                safeNick += getMiniClubBadge(row.club); 
+                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td style="color:var(--accent); font-weight:900;">${pos}</td>
+                        <td style="text-align:left;">${safeNick}</td>
+                        <td style="font-size:10px;">${rangaText}</td>
+                        <td style="color:#3399ff;">${row.elo}</td>
+                    </tr>`;
+                pos++;
+            });
+        } else if (type === 'timeattack') {
+            thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th style="color: #1dd1a1;">Rekord</th></tr>`;
+            let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(20).get();
+            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            
+            tbody.innerHTML = '';
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+
+            let pos = 1;
+            scores.forEach((row) => {
+                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                safeNick += getMiniClubBadge(row.club); 
+                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
+                
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td class="${rankClass}" style="color:var(--accent); font-weight:900;">${pos}</td>
+                        <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
+                        <td style="color:#1dd1a1; font-weight:900;">${row.score}</td>
+                    </tr>`;
+                pos++;
+            });
+        } else {
+            let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
+            thead.innerHTML = `<tr><th>Poz.</th><th style="text-align:left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
+            
+            let snapshot;
+            if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
+            else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(20).get();
+            else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
+            else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
+            
+            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            scores.sort((a, b) => { 
+                let winsA = a.won !== undefined ? a.won : (a.wins || 0); 
+                let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
+                if (winsB !== winsA) return winsB - winsA; 
+                if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
+                let hintsA = a.hints || 0; let hintsB = b.hints || 0;
+                if (hintsA !== hintsB) return hintsA - hintsB;
+                return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
+            });
+            
+            tbody.innerHTML = '';
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+
+            scores.forEach((row, index) => {
+                let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
+                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
+                
+                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                safeNick += getMiniClubBadge(row.club); 
+                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="color: var(--accent);"' : '';
+                
+                tbody.innerHTML += `
+                    <tr ${isMe}>
+                        <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
+                        <td style="text-align:left;">${safeNick}</td>
+                        <td>${wonText}</td>
+                        <td style="color:var(--text-dim);">${row.guesses}</td>
+                    </tr>`;
+            });
+        }
+    } catch (e) { 
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
+    }
+}
+
+// ==============================================
+// ====== WERSJA MOBILNA RANKINGU (MODAL) =======
+// ==============================================
+
 async function loadRanking(type) {
-    // 1. Zmiana aktywnych zakładek
     document.querySelectorAll('.rank-tab').forEach(btn => btn.classList.remove('active')); 
     const activeTab = document.getElementById(`tab-${type}`); 
     if (activeTab) activeTab.classList.add('active');
     
     const tbody = document.getElementById('rankingTableBody'); 
-    const thead = document.getElementById('rankingTableHead'); // W HTML dodaliśmy id="rankingTableHead" do <thead>
+    const thead = document.getElementById('rankingTableHead');
     let dateDisplay = document.getElementById('rankingDateDisplay');
     
     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
 
-    // 2. NOWOŚĆ: TRYB LIGOWY CLASH
     if (type === 'league') {
         if (dateDisplay) dateDisplay.style.display = 'none';
-        // Nowe nagłówki tabeli dla ligi
         if (thead) thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>Ranga</th><th>Mecze</th><th style="color:var(--accent);">ELO</th></tr>`;
         
         try {
-            // Pobieranie top 100 graczy ligowych
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
@@ -2760,10 +2957,9 @@ async function loadRanking(type) {
                 return; 
             }
 
-            let currentRankPosition = 1; // Własny licznik, by pozycje nie skakały jak pominiemy graczy na kalibracji
+            let currentRankPosition = 1;
 
             scores.forEach((row) => {
-                // Nie pokazujemy w ogólnym rankingu graczy w trackie Kalibracji (< 5 meczy)
                 if (row.provisional || row.matchesPlayed < 5) return; 
                 
                 let rankClass = ""; 
@@ -2772,11 +2968,12 @@ async function loadRanking(type) {
                 else if (currentRankPosition === 3) rankClass = "rank-3";
                 
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
-                let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                safeRenderNick += getMiniClubBadge(row.club); 
+                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
-                let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18); // Zmniejszona ikonka dla tabeli
+                let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18);
                 
                 if (tbody) { 
                     tbody.innerHTML += `<tr ${isMe}>
@@ -2794,7 +2991,6 @@ async function loadRanking(type) {
                 currentRankPosition++;
             });
 
-            // Jeśli po przefiltrowaniu nikogo nie ma (wszyscy są w trakcie kalibracji)
             if (tbody && tbody.innerHTML === '') {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Brak wyników. Wszyscy gracze są w trakcie kalibracji! ⚖️</td></tr>`;
             }
@@ -2806,7 +3002,6 @@ async function loadRanking(type) {
         return;
     }
 
-    // 3. STARY TRYB (DAILY / ENDLESS / TYGODNIOWE ITP.)
     let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
     if (thead) thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
     
@@ -2832,12 +3027,8 @@ async function loadRanking(type) {
             let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
             if (winsB !== winsA) return winsB - winsA; 
             if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
-            
-            // NOWOŚĆ: Osoby które użyły podpowiedzi są niżej
-            let hintsA = a.hints || 0;
-            let hintsB = b.hints || 0;
+            let hintsA = a.hints || 0; let hintsB = b.hints || 0;
             if (hintsA !== hintsB) return hintsA - hintsB;
-            
             return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
         });
         
@@ -2857,7 +3048,8 @@ async function loadRanking(type) {
             let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? 'NIE' : '0'}</span>`;
             
             let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
-            let isMe = safeRenderNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            safeRenderNick += getMiniClubBadge(row.club); 
+            let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             if (tbody) { 
                 tbody.innerHTML += `<tr ${isMe}>
@@ -3498,7 +3690,7 @@ async function joinClashRoom() {
         if(!doc.exists) { errorEl.innerText = "Nie znaleziono pokoju!"; errorEl.style.display = 'block'; return; }
         if(doc.data().p2 !== null) { errorEl.innerText = "Pokój jest pełny!"; errorEl.style.display = 'block'; return; }
 
-        await roomRef.update({ p2: { id: playerId, nick: playerNickname, color: 'blue' } });
+        await roomRef.update({ p2: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'blue', club: userStats.favoriteClub || null } });
         myClashColor = 'blue'; currentClashRoom = input;
         
         document.getElementById('clashLobbySelect').style.display = 'none';
@@ -3708,11 +3900,14 @@ function showVsScreen(data) {
 
     const vsOverlay = document.getElementById('clashVsOverlay');
     
-    let p1NickHTML = data.p1.nick; let p2NickHTML = data.p2.nick;
+    let p1NickHTML = data.p1.nick + getMiniClubBadge(data.p1.club); 
+    let p2NickHTML = data.p2.nick + getMiniClubBadge(data.p2.club);
+    
     if (data.type === 'league') {
         const p1RankImg = getLeagueImageTag(data.p1.elo, data.p1.matchesPlayed || 5, 24);
         const p2RankImg = getLeagueImageTag(data.p2.elo, data.p2.matchesPlayed || 5, 24);
-        p1NickHTML = `${p1RankImg} ${data.p1.nick}`; p2NickHTML = `${p2RankImg} ${data.p2.nick}`;
+        p1NickHTML = `${p1RankImg} ${p1NickHTML}`; 
+        p2NickHTML = `${p2RankImg} ${p2NickHTML}`;
     }
 
     document.getElementById('vsP1Name').innerHTML = p1NickHTML; 
@@ -3880,6 +4075,7 @@ function startClashTimer(deadlineTime) {
 
     tick(); // Wywołanie natychmiastowe przy starcie
     clashTimerInterval = setInterval(tick, 1000); // Następnie co sekundę
+}
 }
 
 
@@ -4501,107 +4697,6 @@ async function submitBugReport() {
     }
 }
 
-// ==============================================
-// ====== DESKTOP MENU RANKING LOADER ===========
-// ==============================================
-
-async function loadDesktopRanking(type) {
-    const tbody = document.getElementById('desktopRankingBody'); 
-    const thead = document.getElementById('desktopRankingHead');
-    const title = document.getElementById('desktopRankingTitle');
-    const tabs = document.getElementById('desktopRankTabs');
-    
-    if (!tbody || !thead || !title) return;
-
-    // Obsługa zakładek i stylizacji tytułów
-    if (type === 'league') {
-        title.innerHTML = '<i>LEADERBOARD (CLASH)</i>';
-        title.style.color = '#3399ff';
-        tabs.style.display = 'none'; // W lidze nie ma podziału na dni
-    } else {
-        title.innerHTML = `<i>LEADERBOARD (${type.toUpperCase()})</i>`;
-        title.style.color = 'var(--accent)';
-        tabs.style.display = 'flex';
-        
-        document.querySelectorAll('.d-tab').forEach(tab => tab.classList.remove('active'));
-        if(type==='daily') tabs.children[0].classList.add('active');
-        if(type==='weekly') tabs.children[1].classList.add('active');
-        if(type==='monthly') tabs.children[2].classList.add('active');
-        if(type==='alltime') tabs.children[3].classList.add('active');
-    }
-
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie danych...</td></tr>';
-
-    try {
-        if (type === 'league') {
-            thead.innerHTML = `<tr><th>Poz.</th><th>Nick</th><th>Ranga</th><th>ELO</th></tr>`;
-            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
-            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
-            
-            tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
-
-            let pos = 1;
-            scores.forEach((row) => {
-                if (row.provisional || row.matchesPlayed < 5) return; 
-                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-                let safeNick = escapeHTML(row.nick || "Gracz");
-                let isMe = safeNick === playerNickname ? 'style="color: var(--accent);"' : '';
-                
-                tbody.innerHTML += `
-                    <tr ${isMe}>
-                        <td style="color:var(--accent); font-weight:900;">${pos}</td>
-                        <td>${safeNick}</td>
-                        <td style="font-size:10px;">${rangaText}</td>
-                        <td style="color:#3399ff;">${row.elo}</td>
-                    </tr>`;
-                pos++;
-            });
-        } else {
-            let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
-            thead.innerHTML = `<tr><th>Poz.</th><th>Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
-            
-            let snapshot;
-            if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
-            else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(20).get();
-            else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
-            else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
-            
-            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
-            scores.sort((a, b) => { 
-                let winsA = a.won !== undefined ? a.won : (a.wins || 0); 
-                let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
-                if (winsB !== winsA) return winsB - winsA; 
-                if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
-                let hintsA = a.hints || 0; let hintsB = b.hints || 0;
-                if (hintsA !== hintsB) return hintsA - hintsB;
-                return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
-            });
-            
-            tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
-
-            scores.forEach((row, index) => {
-                let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
-                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
-                let safeNick = escapeHTML(row.nick || "Gracz");
-                let isMe = safeNick === playerNickname ? 'style="color: var(--accent);"' : '';
-                
-                tbody.innerHTML += `
-                    <tr ${isMe}>
-                        <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
-                        <td>${safeNick}</td>
-                        <td>${wonText}</td>
-                        <td style="color:var(--text-dim);">${row.guesses}</td>
-                    </tr>`;
-            });
-        }
-    } catch (e) { 
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
-    }
-}
-
-
 // --- OBSŁUGA STOPKI (FOOTERA) ---
 
 function showPrivacyPolicy() {
@@ -4705,6 +4800,13 @@ try {
     window.submitTimeAttackGuess = submitTimeAttackGuess;
     window.restartTimeAttack = restartTimeAttack;
     window.exitTimeAttack = exitTimeAttack;
+    window.openClubSelectModal = openClubSelectModal;
+    window.closeClubSelectModal = closeClubSelectModal;
+    window.saveFavoriteClub = saveFavoriteClub;
+    window.openTimeAttackMenu = openTimeAttackMenu;
+    window.exitTimeAttackMenu = exitTimeAttackMenu;
+    window.showTimeAttackInfo = showTimeAttackInfo;
+    window.closeTimeAttackInfo = closeTimeAttackInfo;
     
 } catch (e) {
     console.error("Global export error:", e);
