@@ -4167,8 +4167,6 @@ function updateClashBoardUI(data) {
 
 let lastHeartbeatSecond = -1; // Zmienna zapobiegająca nakładaniu się dźwięku
 
-let lastHeartbeatSecond = -1; // Zmienna zapobiegająca nakładaniu się dźwięku bicia serca
-
 function startClashTimer(deadlineTime) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
     const display = document.getElementById('clashTimerDisplay');
