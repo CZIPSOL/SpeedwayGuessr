@@ -4731,7 +4731,7 @@ function showLegalModal(title, htmlContent) {
     const cancelBtn = document.getElementById('appModalCancel');
 
     titleEl.innerText = title;
-    messageEl.innerHTML = htmlContent; // Wstrzykujemy ładny HTML
+    messageEl.innerHTML = htmlContent; 
     
     confirmBtn.innerText = "ZROZUMIANO";
     cancelBtn.style.display = 'none';
@@ -4747,15 +4747,23 @@ function showLegalModal(title, htmlContent) {
 
 function showPrivacyPolicy() {
     const html = `
-        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main);">
-            <h3 style="color: var(--accent); margin-bottom: 5px;">1. Gromadzenie danych</h3>
-            <p style="margin-top: 0;">Logowanie przez Google służy <b>wyłącznie</b> do zapisu postępu w grze i tworzenia globalnych rankingów (zapisywany jest Twój adres e-mail i identyfikator).</p>
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">2. Wykorzystanie danych</h3>
-            <p style="margin-top: 0;">Nie udostępniamy, nie sprzedajemy i nie wykorzystujemy Twojego adresu e-mail do celów marketingowych.</p>
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">3. Ciasteczka (Cookies) i LocalStorage</h3>
-            <p style="margin-top: 0;">Gra używa lokalnej pamięci Twojej przeglądarki do zapisywania bieżącego stanu gry, statystyk oraz wybranego motywu.</p>
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">4. Discord</h3>
-            <p style="margin-top: 0;">Twój nick z Discorda (jeśli zdecydujesz się połączyć konto) jest wykorzystywany tylko i wyłącznie do automatycznego przyznawania ról ligowych na naszym serwerze.</p>
+        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main); max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+            <p style="margin-top: 0; margin-bottom: 15px;">Niniejsza Polityka Prywatności określa zasady gromadzenia i przetwarzania danych w grze <b>Speedway Guessr</b>.</p>
+            
+            <h3 style="color: var(--accent); margin-bottom: 5px; font-size: 14px;">1. Gromadzenie Danych (Logowanie Google)</h3>
+            <p style="margin-top: 0; color: #ccc;">Aby umożliwić zapisywanie postępów w grze oraz udział w globalnych rankingach, aplikacja oferuje możliwość logowania za pomocą usługi Google (OAuth 2.0). Pobieramy wyłącznie podstawowe dane udostępniane przez dostawcę (unikalny identyfikator użytkownika, publiczna nazwa profilu oraz adres e-mail). Zapisywany adres e-mail służy wyłącznie weryfikacji konta i nie jest wyświetlany publicznie.</p>
+            
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">2. Cel Przetwarzania Danych</h3>
+            <p style="margin-top: 0; color: #ccc;">Zgromadzone dane są wykorzystywane <b>wyłącznie</b> w celach prawidłowego funkcjonowania gry, tj.: przypisywania punktów ELO, generowania publicznych rankingów graczy oraz zapisywania ustawień profilu (np. wybranego klubu). Nie udostępniamy, nie sprzedajemy i nie profilujemy Twoich danych. Twój adres e-mail nigdy nie zostanie użyty do celów marketingowych.</p>
+            
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">3. Ciasteczka (Cookies) i LocalStorage</h3>
+            <p style="margin-top: 0; color: #ccc;">Aplikacja wykorzystuje technologie pamięci przeglądarki (tzw. <i>LocalStorage</i>) w celu zapisania Twoich preferencji (wybrany motyw jasny/ciemny, stan dźwięku, język) oraz tymczasowego stanu gry (abyś mógł powrócić do rozpoczętej zagadki). Te pliki są przechowywane wyłącznie na Twoim urządzeniu.</p>
+            
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">4. Powiązanie z platformą Discord</h3>
+            <p style="margin-top: 0; color: #ccc;">Jeśli dobrowolnie zdecydujesz się na powiązanie swojego konta z komunikatorem Discord, pobierzemy Twój identyfikator Discord ID. Dane te służą tylko jednemu celowi – automatycznemu przypisywaniu specjalnych Ról (odzwierciedlających Twoją rangę ELO w grze) na oficjalnym serwerze społeczności.</p>
+
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">5. Kontakt i Prawa Użytkownika</h3>
+            <p style="margin-top: 0; color: #ccc;">W każdej chwili masz prawo zażądać wglądu w swoje dane lub ich całkowitego usunięcia z naszych baz (co spowoduje wyczyszczenie Twoich wyników z rankingów). W takich sprawach prosimy o kontakt pod adresem: <br><a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--accent); font-weight: bold; text-decoration: none;">kontakt@speedwayguessr.pl</a></p>
         </div>
     `;
     showLegalModal("POLITYKA PRYWATNOŚCI", html);
@@ -4763,15 +4771,25 @@ function showPrivacyPolicy() {
 
 function showTerms() {
     const html = `
-        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main);">
-            <h3 style="color: var(--accent); margin-bottom: 5px;">1. Postanowienia ogólne</h3>
-            <p style="margin-top: 0;"><b>Speedway Guessr</b> to darmowy, nieoficjalny projekt fanowski tworzony z pasji do sportu żużlowego. Gra nie jest powiązana z PGE Ekstraligą ani klubami żużlowymi.</p>
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">2. Prawa własności</h3>
-            <p style="margin-top: 0;">Wszelkie nazwy klubów, zawodników oraz logotypy użyte są w aplikacji wyłącznie w celach informacyjnych i statystycznych (prawo cytatu).</p>
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">3. Zasady Fair Play</h3>
-            <p style="margin-top: 0;">Oszukiwanie w trybie ligowym (Speedway Clash), w tym celowe wychodzenie z gry, jest karane automatyczną blokadą czasową (od 5 minut do 7 dni).</p>
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px;">4. Konta użytkowników</h3>
-            <p style="margin-top: 0;">Zastrzegamy sobie prawo do banowania graczy posługujących się wulgarnymi, obraźliwymi pseudonimami w rankingach.</p>
+        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main); max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+            <p style="margin-top: 0; margin-bottom: 15px;">Korzystanie z gry przeglądarkowej <b>Speedway Guessr</b> oznacza akceptację poniższego Regulaminu.</p>
+            
+            <h3 style="color: var(--accent); margin-bottom: 5px; font-size: 14px;">1. Postanowienia Ogólne i Charakter Projektu</h3>
+            <p style="margin-top: 0; color: #ccc;">Gra <b>Speedway Guessr</b> jest darmowym, nieoficjalnym projektem fanowskim, stworzonym z pasji do sportu żużlowego i nie przynosi korzyści majątkowych z tytułu subskrypcji. Projekt nie jest w żaden sposób powiązany, sponsorowany ani popierany przez Ekstraligę Żużlową sp. z o.o., Speedway Ekstraligę, PZMot ani konkretne kluby sportowe.</p>
+            
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">2. Prawa Własności Intelektualnej</h3>
+            <p style="margin-top: 0; color: #ccc;">Wszelkie nazwy klubów, zawodników, skróty nazw, suche dane statystyczne oraz logotypy w postaci niewielkich herbów są używane w aplikacji na zasadach dozwolonego użytku oraz prawa cytatu (w celach edukacyjno-informacyjnych oraz rozrywkowych). Wszystkie prawa do wizerunku, znaków towarowych oraz logotypów należą do ich prawowitych właścicieli.</p>
+            
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">3. Zasady Fair Play</h3>
+            <p style="margin-top: 0; color: #ccc;">W trybach rankingowych (w szczególności w trybie <b>Speedway Clash</b>) obowiązują bezwzględne zasady sportowej rywalizacji. <br><br>Zabrania się używania skryptów zewnętrznych i oszukiwania. Nakładane są zautomatyzowane blokady czasowe (od 5 minut do 7 dni) za:<br>
+            • Celowe wychodzenie (rage quit) z wylosowanych spotkań rankingowych.<br>
+            • Opuszczanie aktywnej karty przeglądarki podczas trwania meczu sieciowego.</p>
+            
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">4. Treści Tworzone Przez Użytkowników</h3>
+            <p style="margin-top: 0; color: #ccc;">Gracze są w pełni odpowiedzialni za nazwy kont (pseudonimy/nicki) podawane przy rejestracji w rankingach. Administracja zastrzega sobie bezwzględne prawo do trwałego usuwania kont i blokowania adresów IP graczy, którzy używają w pseudonimach słów wulgarnych, obraźliwych, naruszających dobra osobiste osób trzecich lub godzących w dobre imię klubów sportowych.</p>
+
+            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">5. Dostępność Usługi</h3>
+            <p style="margin-top: 0; color: #ccc;">Będąc projektem hobbystycznym, autorzy nie gwarantują 100% dostępności usługi. Gra, jej algorytmy (w tym system punktacji ELO) oraz statystyki mogą być resetowane, modyfikowane lub zawieszane w dowolnym momencie w celach technicznych. W razie pytań zapraszamy do kontaktu: <a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--accent); text-decoration: none; font-weight: bold;">kontakt@speedwayguessr.pl</a></p>
         </div>
     `;
     showLegalModal("REGULAMIN GRY", html);
