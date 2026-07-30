@@ -722,6 +722,100 @@ body {
 .action-link.yellow:hover { color: var(--accent); }
 .action-link.red:hover { color: var(--red-neon); }
 
+/* ============================================== */
+/* ====== NOWY SYSTEM OSIĄGNIĘĆ (STEAM STYLE) === */
+/* ============================================== */
+
+/* Pasek postępu na górze */
+.ach-progress-box {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.ach-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+.ach-progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.ach-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3498db, #00ff66);
+    width: 0%;
+    transition: width 1s cubic-bezier(0.1, 0.8, 0.2, 1);
+}
+
+/* Pionowa lista osiągnięć */
+.achievements-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 50vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.achievements-list-container::-webkit-scrollbar { width: 6px; }
+.achievements-list-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+.ach-row {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 12px;
+    transition: background 0.2s;
+}
+.ach-row:hover { background: rgba(255,255,255,0.06); }
+.ach-row.locked { opacity: 0.5; filter: grayscale(100%); }
+
+.ach-row-icon {
+    font-size: 32px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    flex-shrink: 0;
+    margin-right: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.ach-row:not(.locked) .ach-row-icon {
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+}
+
+.ach-row-info { flex: 1; text-align: left; }
+.ach-row-title { font-size: 14px; font-weight: 900; color: #fff; margin-bottom: 4px; display: block;}
+.ach-row.locked .ach-row-title { color: var(--text-dim); }
+.ach-row-desc { font-size: 11px; color: var(--text-dim); font-weight: 600; line-height: 1.3;}
+
+.ach-row-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    margin-left: 10px;
+}
+.ach-row-date { font-size: 9px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
+.ach-row-pct { font-size: 11px; font-weight: 900; color: rgba(255,255,255,0.3); }
 
 /* ============================================== */
 /* ====== GAME HEADER & INPUT =================== */

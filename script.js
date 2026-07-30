@@ -766,43 +766,78 @@ function saveFavoriteClub(clubName) {
 
 
 // ==============================================
-// ====== SYSTEM OSIĄGNIĘĆ (GABLOTA) ============
+// ====== SYSTEM OSIĄGNIĘĆ (PIONOWA GABLOTA) ====
 // ==============================================
 
 const ACHIEVEMENTS_DB = [
-    { id: 'first_try', icon: '🦅', title: 'Sokole Oko', desc: 'Zgadnij zawodnika w 1. próbie' },
-    { id: 'streak_7', icon: '🔥', title: 'Weteran', desc: 'Osiągnij Win Streak równy 7' },
-    { id: 'no_hint_5', icon: '🧠', title: 'Bystrzak', desc: 'Wygraj 5 razy bez podpowiedzi' },
-    { id: 'clash_10', icon: '⚔️', title: 'Gladiator', desc: 'Wygraj 10 meczów w Clashu' },
-    { id: 'play_50', icon: '🕹️', title: 'Maniak', desc: 'Rozegraj łącznie 50 gier' },
-    { id: 'clash_legend', icon: '👑', title: 'Legenda', desc: 'Osiągnij rangę Legenda' }
+    { id: 'first_try', icon: '🦅', title: 'Sokole Oko', desc: 'Zgadnij zawodnika w 1. próbie.', globalPct: '12.4%' },
+    { id: 'close_call', icon: '😅', title: 'O włos', desc: 'Zgadnij zawodnika w ostatniej, 10. próbie.', globalPct: '34.1%' },
+    { id: 'no_hint_1', icon: '🧠', title: 'Bystrzak', desc: 'Wygraj grę bez użycia podpowiedzi.', globalPct: '68.2%' },
+    { id: 'no_hint_5', icon: '📚', title: 'Chodząca Encyklopedia', desc: 'Wygraj 5 gier z rzędu bez podpowiedzi.', globalPct: '15.7%' },
+    { id: 'play_10', icon: '🕹️', title: 'Rozgrzewka', desc: 'Rozegraj łącznie 10 gier.', globalPct: '82.5%' },
+    { id: 'play_50', icon: '🎮', title: 'Maniak', desc: 'Rozegraj łącznie 50 gier.', globalPct: '41.2%' },
+    { id: 'streak_3', icon: '🔥', title: 'Gorąca Seria I', desc: 'Osiągnij Win Streak równy 3.', globalPct: '55.3%' },
+    { id: 'streak_7', icon: '☄️', title: 'Gorąca Seria II', desc: 'Osiągnij Win Streak równy 7.', globalPct: '22.8%' },
+    { id: 'streak_15', icon: '🌋', title: 'Gorąca Seria III', desc: 'Osiągnij Win Streak równy 15.', globalPct: '4.1%' },
+    { id: 'clash_1', icon: '⚔️', title: 'Pierwsza Krew', desc: 'Wygraj swój pierwszy mecz w Speedway Clash.', globalPct: '61.0%' },
+    { id: 'clash_10', icon: '🛡️', title: 'Gladiator', desc: 'Wygraj 10 meczów w Clashu.', globalPct: '28.5%' },
+    { id: 'clash_50', icon: '👑', title: 'Dominator', desc: 'Wygraj 50 meczów w Clashu.', globalPct: '8.2%' },
+    { id: 'clash_flawless', icon: '🛑', title: 'Bezbłędny Clash!', desc: 'Wygraj mecz ligowy, nie oddając przeciwnikowi ani jednego pola.', globalPct: '3.5%' },
+    { id: 'rank_silver', icon: '🥈', title: 'Srebrny Lis', desc: 'Awansuj do rangi Srebro w lidze Clash.', globalPct: '45.1%' },
+    { id: 'rank_gold', icon: '🥇', title: 'Złoty Chłopak', desc: 'Awansuj do rangi Złoto w lidze Clash.', globalPct: '20.4%' },
+    { id: 'rank_diamond', icon: '💎', title: 'Żużlowa Elita', desc: 'Awansuj do rangi Diament w lidze Clash.', globalPct: '5.2%' },
+    { id: 'clash_legend', icon: '🐐', title: 'Żywa Legenda', desc: 'Osiągnij najwyższą rangę: Legenda.', globalPct: '0.8%' },
+    { id: 'ta_10', icon: '⏱️', title: 'Time Attack Ekspert I', desc: 'Odgadnij 10 zawodników w jednej grze Time Attack.', globalPct: '14.2%' },
+    { id: 'ta_20', icon: '⏱️', title: 'Time Attack Ekspert II', desc: 'Odgadnij 20 zawodników w jednej grze Time Attack.', globalPct: '8.5%' },
+    { id: 'ta_30', icon: '⏱️', title: 'Time Attack Ekspert III', desc: 'Odgadnij 30 zawodników w jednej grze Time Attack.', globalPct: '3.1%' },
+    { id: 'ta_50', icon: '⏱️', title: 'Time Attack Ekspert IV', desc: 'Odgadnij 50 zawodników w jednej grze Time Attack.', globalPct: '0.9%' },
+    { id: 'ta_100', icon: '⏱️', title: 'Time Attack God', desc: 'Odgadnij 100 zawodników w jednej grze Time Attack.', globalPct: '0.1%' },
+    { id: 'easter_club', icon: '🏟️', title: 'Klubowe Barwy', desc: 'Wybierz swój ulubiony klub w profilu gracza.', globalPct: '75.2%' },
+    { id: 'easter_lang', icon: '🌍', title: 'Poliglota', desc: 'Zmień język gry w Ustawieniach.', globalPct: '18.9%' }
 ];
 
 function ensureAchievementsStats() {
     if(!userStats.achievements) userStats.achievements = [];
-    if(!userStats.trackers) userStats.trackers = { winsNoHint: 0 };
+    if(!userStats.achievementsDates) userStats.achievementsDates = {}; // Nowość: pamiętamy kiedy odblokowano
+    if(!userStats.trackers) userStats.trackers = { winsNoHint: 0, flawlessClash: false };
 }
 
-// Funkcja sprawdzająca czy właśnie coś odblokowaliśmy
 function checkAchievements() {
     ensureAchievementsStats();
     let unlockedAny = false;
+    const nowStr = new Date().toLocaleDateString();
 
-    // Definicje warunków
     const conditions = {
         'first_try': () => hasWon && guessCount === 1,
-        'streak_7': () => userStats.currentStreak >= 7,
+        'close_call': () => hasWon && guessCount === 10,
+        'no_hint_1': () => userStats.trackers.winsNoHint >= 1,
         'no_hint_5': () => userStats.trackers.winsNoHint >= 5,
-        'clash_10': () => userStats.clashLeague.wins >= 10,
+        'play_10': () => userStats.played >= 10,
         'play_50': () => userStats.played >= 50,
-        'clash_legend': () => userStats.clashLeague.elo >= 4001
+        'streak_3': () => userStats.currentStreak >= 3,
+        'streak_7': () => userStats.currentStreak >= 7,
+        'streak_15': () => userStats.currentStreak >= 15,
+        'clash_1': () => userStats.clashLeague && userStats.clashLeague.wins >= 1,
+        'clash_10': () => userStats.clashLeague && userStats.clashLeague.wins >= 10,
+        'clash_50': () => userStats.clashLeague && userStats.clashLeague.wins >= 50,
+        'clash_flawless': () => userStats.trackers.flawlessClash === true,
+        'rank_silver': () => userStats.clashLeague && userStats.clashLeague.elo >= 476,
+        'rank_gold': () => userStats.clashLeague && userStats.clashLeague.elo >= 951,
+        'rank_diamond': () => userStats.clashLeague && userStats.clashLeague.elo >= 2751,
+        'clash_legend': () => userStats.clashLeague && userStats.clashLeague.elo >= 4001,
+        'ta_10': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 10,
+        'ta_20': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 20,
+        'ta_30': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 30,
+        'ta_50': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 50,
+        'ta_100': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 100,
+        'easter_club': () => userStats.favoriteClub !== null && userStats.favoriteClub !== undefined
     };
 
     Object.keys(conditions).forEach(id => {
-        if (!userStats.achievements.includes(id) && conditions[id]()) {
+        if (!userStats.achievements.includes(id) && conditions[id] && conditions[id]()) {
             userStats.achievements.push(id);
+            userStats.achievementsDates[id] = nowStr;
             const ach = ACHIEVEMENTS_DB.find(a => a.id === id);
-            // Piękne powiadomienie Toast!
             setTimeout(() => showToast(`🏆 Osiągnięcie: ${ach.title}!`, 'success'), 1000);
             unlockedAny = true;
         }
@@ -811,25 +846,61 @@ function checkAchievements() {
     if(unlockedAny) saveStats();
 }
 
-// Rysowanie gabloty w Profilu
-function renderAchievements() {
+function openAchievementsModal() {
+    document.getElementById('profileOverlay').style.opacity = '0';
+    setTimeout(() => document.getElementById('profileOverlay').style.display = 'none', 300);
+
     ensureAchievementsStats();
-    const container = document.getElementById('achievementsGrid');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    ACHIEVEMENTS_DB.forEach(ach => {
+    const overlay = document.getElementById('achievementsOverlay');
+    const listContainer = document.getElementById('achievementsListContainer');
+    listContainer.innerHTML = '';
+
+    const total = ACHIEVEMENTS_DB.length;
+    const unlockedCount = userStats.achievements.length;
+    const pct = Math.round((unlockedCount / total) * 100);
+
+    // Animacja paska postępu
+    document.getElementById('achProgressText').innerText = `ZDOBYTO ${unlockedCount} Z ${total} OSIĄGNIĘĆ`;
+    document.getElementById('achProgressPct').innerText = `(${pct}%)`;
+    document.getElementById('achProgressBarFill').style.width = '0%';
+    setTimeout(() => { document.getElementById('achProgressBarFill').style.width = `${pct}%`; }, 100);
+
+    // Sortowanie: odblokowane u góry, zablokowane na dole
+    const sortedAch = [...ACHIEVEMENTS_DB].sort((a, b) => {
+        let aUnl = userStats.achievements.includes(a.id) ? 1 : 0;
+        let bUnl = userStats.achievements.includes(b.id) ? 1 : 0;
+        return bUnl - aUnl;
+    });
+
+    sortedAch.forEach(ach => {
         const isUnlocked = userStats.achievements.includes(ach.id);
         const lockClass = isUnlocked ? '' : 'locked';
+        const dateStr = isUnlocked ? `Odblokowano: ${userStats.achievementsDates[ach.id] || 'Niedawno'}` : 'Zablokowane';
+        const iconRender = isUnlocked ? ach.icon : '🔒';
         
-        container.innerHTML += `
-            <div class="ach-badge ${lockClass}" title="${ach.desc}">
-                <div class="ach-icon">${isUnlocked ? ach.icon : '🔒'}</div>
-                <div class="ach-title">${ach.title}</div>
-                <div class="ach-desc">${ach.desc}</div>
+        listContainer.innerHTML += `
+            <div class="ach-row ${lockClass}">
+                <div class="ach-row-icon">${iconRender}</div>
+                <div class="ach-row-info">
+                    <span class="ach-row-title">${ach.title}</span>
+                    <span class="ach-row-desc">${ach.desc}</span>
+                </div>
+                <div class="ach-row-meta">
+                    <span class="ach-row-date">${dateStr}</span>
+                    <span class="ach-row-pct">${ach.globalPct} graczy</span>
+                </div>
             </div>
         `;
     });
+
+    overlay.style.display = 'block'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeAchievementsModal() {
+    const overlay = document.getElementById('achievementsOverlay');
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+    openProfile();
 }
 
 // ==============================================

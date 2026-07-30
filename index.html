@@ -135,13 +135,35 @@
                 <div class="stat-box"><span id="profileStatMax" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza</span></div>
             </div>
             
-            <!-- OSIĄGNIĘCIA -->
-            <h3 class="text-sm text-dim mb-10 mt-20" style="text-transform: uppercase;">Gablota Osiągnięć</h3>
-            <div id="achievementsGrid" class="achievements-grid">
-                <!-- Ładowane z JS -->
-            </div>
+            <!-- OSIĄGNIĘCIA (PRZYCISK) -->
+            <button onclick="openAchievementsModal()" class="menu-btn mt-25" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                <span style="font-size: 20px; margin-right: 10px;">🏆</span> MOJE OSIĄGNIĘCIA
+            </button>
 
             <button onclick="closeProfile()" class="btn-close w-100 mt-20" data-i18n="btnClose">ZAMKNIJ</button>
+        </div>
+    </div>
+
+    <!-- MODAL OSIĄGNIĘĆ (STEAM STYLE) -->
+    <div id="achievementsOverlay" class="win-overlay" style="display: none; z-index: 10040;">
+        <div class="stats-modal modal-lg">
+            <h2 class="text-accent mb-15">OSIĄGNIĘCIA GRACZA</h2>
+            
+            <div class="ach-progress-box">
+                <div class="ach-progress-header">
+                    <span id="achProgressText">ZDOBYTO 0 Z 0 OSIĄGNIĘĆ</span>
+                    <span id="achProgressPct">(0%)</span>
+                </div>
+                <div class="ach-progress-bar-bg">
+                    <div id="achProgressBarFill" class="ach-progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <div id="achievementsListContainer" class="achievements-list-container">
+                <!-- Generowane z JS -->
+            </div>
+
+            <button onclick="closeAchievementsModal()" class="btn-close w-100 mt-20 p-12 text-sm">WRÓĆ DO PROFILU</button>
         </div>
     </div>
 
