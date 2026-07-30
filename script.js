@@ -4045,8 +4045,6 @@ function updateClashBoardUI(data) {
 
     startClashTimer(data.deadline);
 }
-// Globalny timer wyciągnięty z wnętrza funkcji!
-let lastHeartbeatSecond = -1;
 
 function startClashTimer(deadlineTime) {
     if(clashTimerInterval) clearInterval(clashTimerInterval);
