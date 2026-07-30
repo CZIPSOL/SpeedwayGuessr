@@ -752,6 +752,13 @@ function saveFavoriteClub(clubName) {
     userStats.favoriteClub = clubName;
     saveStats();
     
+    // Aktualizujemy wyświetlacz w profilu i na karcie w Clashu na żywo
+    const currentClubDisplay = document.getElementById('currentClubDisplay');
+    if (currentClubDisplay) currentClubDisplay.innerHTML = clubName ? `KLUB: <b>${clubName}</b>` : "WYBIERZ KLUB 🛡️";
+    
+    const clashMenuNick = document.getElementById('clashMenuNick');
+    if (clashMenuNick) clashMenuNick.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(clubName);
+    
     showToast(clubName ? `Zapisano! Reprezentujesz: ${clubName}` : "Usunięto przynależność klubową", "success");
     closeClubSelectModal();
 }
@@ -1044,8 +1051,7 @@ function ensureClubStat(stats) {
 }
 
 function getMiniClubBadge(clubName) {
-    if (!clubName) return '';
-    // Zwraca pełną nazwę klubu małą czcionką i w nawiasie
+    if (!clubName || clubName === "null" || clubName === "undefined") return '';
     return ` <span style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: none;">(${clubName})</span>`;
 }
 
@@ -2163,8 +2169,10 @@ function openTimeAttackMenu() {
         document.getElementById('clashModeSelectContainer').style.display = 'none';
         document.getElementById('timeAttackMenuContainer').style.display = 'grid'; // Używamy grid, bo to okno desktopowe
 
-        const nickDisplay = document.getElementById('taMenuNick');
-        if(nickDisplay) nickDisplay.innerText = playerNickname || "GRACZ";
+        const nickDisplay = document.getElementById('clashMenuNick');
+        if(nickDisplay) {
+            nickDisplay.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
+        }
 
         updateTimeAttackMenuUI();
         loadTimeAttackRanking();
