@@ -700,14 +700,14 @@ function openProfile() {
     document.getElementById('profileStatStreak').innerText = userStats.currentStreak; 
     document.getElementById('profileStatMax').innerText = userStats.maxStreak;
     document.getElementById('changeNickInput').value = playerNickname || "";
+    
     ensureClubStat(userStats);
     document.getElementById('currentClubDisplay').innerHTML = userStats.favoriteClub ? `KLUB: <b>${userStats.favoriteClub}</b>` : "WYBIERZ KLUB 🛡️";
     
-    renderAchievements();
+    // TUTAJ USUNĘLIŚMY renderAchievements(); !
     
     const overlay = document.getElementById('profileOverlay');
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-    
 }
 
 function closeProfile() {
