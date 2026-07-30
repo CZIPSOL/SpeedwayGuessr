@@ -15,14 +15,41 @@ function _unlockTarget() {
 }
 
 function _generateDailyTarget(dayNumber) {
-    let seed = (Number(dayNumber) || 1) * 73891247;
-    let x = seed;
-    for (let i = 0; i < 12; i++) {
-        x = Math.imul(x ^ (x >>> 30), 0x6D2B79F5);
-        x = x ^ (x >>> 27);
-        x = Math.imul(x, 0xA2E8D4C3);
+    let targetDay = Number(dayNumber) || 1;
+    
+    // Rdzeń losowania - zawsze ten sam dla tego samego dnia
+    function getRaw(d) {
+        let x = d * 73891247;
+        for (let i = 0; i < 12; i++) {
+            x = Math.imul(x ^ (x >>> 30), 0x6D2B79F5);
+            x = x ^ (x >>> 27);
+            x = Math.imul(x, 0xA2E8D4C3);
+        }
+        return Math.abs(x) % playersDB.length;
     }
-    return playersDB[Math.abs(x) % playersDB.length];
+
+    let history = []; 
+    
+    // Obliczamy "w pamięci" historię od 1 dnia aż do dzisiaj
+    for (let i = 1; i <= targetDay; i++) {
+        let rawIdx = getRaw(i);
+        let finalIdx = rawIdx;
+        let offset = 0;
+        
+        // ZABEZPIECZENIE: Jeśli zawodnik był w ciągu ostatnich 5 dni, bierzemy następnego
+        while (history.includes(finalIdx)) {
+            offset++;
+            finalIdx = (rawIdx + offset) % playersDB.length;
+        }
+        
+        history.push(finalIdx);
+        // Trzymamy tylko 5 ostatnich dni, żeby nie obciążać pamięci
+        if (history.length > 5) history.shift(); 
+    }
+
+    // Wybieramy zawodnika przypisanego na konkretnie ten (dzisiejszy) dzień
+    let finalTargetIndex = history[history.length - 1];
+    return playersDB[finalTargetIndex];
 }
 
 function _getSafeHint(name, currentGuessCount) {
