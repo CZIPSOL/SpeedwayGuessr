@@ -834,7 +834,7 @@ const ACHIEVEMENTS_DB = [
     { id: 'ta_50', icon: '⏱️', title: 'Time Attack Ekspert IV', desc: 'Odgadnij 50 zawodników w jednej grze Time Attack.' },
     { id: 'ta_100', icon: '⏱️', title: 'Time Attack God', desc: 'Odgadnij 100 zawodników w jednej grze Time Attack.' },
     { id: 'easter_club', icon: '🏟️', title: 'Klubowe Barwy', desc: 'Wybierz swój ulubiony klub w profilu gracza.' },
-    { id: 'easter_lang', icon: '🌍', title: 'Poliglota', desc: 'Zmień język gry w Ustawieniach.' }
+    { id: 'easter_lang', icon: '🌍', title: 'Poliglota', desc: 'Zmień język gry w Ustawieniach.' },
     { id: 'easter_theme', icon: '🌗', title: 'Dwa Oblicza', desc: 'Zmień motyw gry (Jasny/Ciemny).' }
 ];
 
