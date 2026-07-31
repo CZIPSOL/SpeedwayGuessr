@@ -22,7 +22,10 @@
     <link rel="stylesheet" href="style.css?v=1.1">
     <meta property="og:image" content="https://speedwayguessr.pl/miniatura_speedwayguessr.png">
     <script>
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        let savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'system') {
+            savedTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
         document.documentElement.setAttribute('data-theme', savedTheme);
     </script>
 </head>
@@ -209,32 +212,39 @@
     <!-- USTAWIENIA MODAL -->
     <div id="settingsOverlay" class="win-overlay" style="display: none; z-index: 10000;">
         <div class="stats-modal modal-sm">
-            <h2 class="mb-25" data-i18n="settingsTitle">USTAWIENIA</h2>
+            <h2 class="text-accent mb-25 font-black uppercase" data-i18n="settingsTitle" style="letter-spacing: 1px;">USTAWIENIA</h2>
             
-            <div class="setting-block mb-20">
-                <label data-i18n="sound">Dźwięk:</label>
-                <button id="btnSoundToggle" onclick="toggleSound()" class="theme-btn light mt-5 px-20 py-10 text-sm">Włączony 🔊</button>
-            </div>
-
-            <div class="setting-block mb-20">
-                <label data-i18n="theme">Motyw:</label>
-                <div class="btn-group flex-center mt-5 gap-10">
-                    <button onclick="setTheme('light')" class="theme-btn light" data-i18n="themeLight">Jasny</button>
-                    <button onclick="setTheme('dark')" class="theme-btn dark" data-i18n="themeDark">Ciemny</button>
+            <div class="setting-block mb-20 w-100 align-left">
+                <label data-i18n="theme" style="margin-bottom: 5px; margin-left: 5px;">Motyw:</label>
+                <div class="options-grid">
+                    <div class="option-card" id="theme-btn-light" onclick="setTheme('light')">
+                        <span class="option-icon">☀️</span><span data-i18n="themeLight">Jasny</span>
+                    </div>
+                    <div class="option-card" id="theme-btn-dark" onclick="setTheme('dark')">
+                        <span class="option-icon">🌙</span><span data-i18n="themeDark">Ciemny</span>
+                    </div>
+                    <div class="option-card" id="theme-btn-system" onclick="setTheme('system')">
+                        <span class="option-icon">💻</span><span data-i18n="themeSystem">System</span>
+                    </div>
                 </div>
             </div>
 
-            <div class="setting-block mb-25">
-                <label data-i18n="lang">Język:</label>
-                <div class="flag-group flex-center mt-5 gap-10">
-                    <img src="https://flagcdn.com/w40/pl.png" onclick="setLang('pl')" class="lang-flag" id="flag-pl" alt="PL" title="Polski">
-                    <img src="https://flagcdn.com/w40/gb.png" onclick="setLang('en')" class="lang-flag" id="flag-en" alt="EN" title="English">
-                    <img src="https://flagcdn.com/w40/se.png" onclick="setLang('sv')" class="lang-flag" id="flag-sv" alt="SV" title="Svenska">
-                    <img src="https://flagcdn.com/w40/dk.png" onclick="setLang('da')" class="lang-flag" id="flag-da" alt="DA" title="Dansk">
+            <div class="setting-block mb-20 w-100 align-left">
+                <label data-i18n="lang" style="margin-bottom: 5px; margin-left: 5px;">Język:</label>
+                <div class="flags-grid">
+                    <div class="flag-card" id="flag-btn-pl" onclick="setLang('pl')"><img src="https://flagcdn.com/w40/pl.png" alt="PL" title="Polski"></div>
+                    <div class="flag-card" id="flag-btn-en" onclick="setLang('en')"><img src="https://flagcdn.com/w40/gb.png" alt="EN" title="English"></div>
+                    <div class="flag-card" id="flag-btn-sv" onclick="setLang('sv')"><img src="https://flagcdn.com/w40/se.png" alt="SV" title="Svenska"></div>
+                    <div class="flag-card" id="flag-btn-da" onclick="setLang('da')"><img src="https://flagcdn.com/w40/dk.png" alt="DA" title="Dansk"></div>
                 </div>
             </div>
 
-            <button onclick="closeSettings()" class="btn-close w-100" data-i18n="btnClose">ZAMKNIJ</button>
+            <div class="setting-block mb-25 w-100 align-left">
+                <label data-i18n="sound" style="margin-bottom: 5px; margin-left: 5px;">Dźwięk:</label>
+                <button id="btnSoundToggle" onclick="toggleSound()" class="menu-btn btn-flat w-100" style="padding: 14px; font-size: 14px;">Włączony 🔊</button>
+            </div>
+
+            <button onclick="closeSettings()" class="btn-close w-100 mt-10 p-12 text-sm" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
@@ -1091,7 +1101,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v0"></script>
+    <script src="script.js?v2"></script>
 
     
 </body>

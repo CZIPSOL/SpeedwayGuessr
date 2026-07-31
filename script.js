@@ -1182,11 +1182,11 @@ const i18n = {
         subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry Daily:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ",
         teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "W GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów",
         stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Obecna Seria", statMax: "Najlepsza Seria", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY",
-        winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
+        winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", 
+        theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", themeSystem: "System", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
         tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane", rankTotalWins: "Suma Wygranych", rankGuesses: "Próby",
         months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
         clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Wybierz tryb gry", clashElo: "Graj o ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Mecz Towarzyski", clashFriendlyDesc: "(Graj ze znajomym)", clashLobbyTitle: "🤝 Mecz Towarzyski", clashHost: "UTWÓRZ POKÓJ (HOST)", clashJoinCode: "KOD POKOJU...", clashJoinBtn: "DOŁĄCZ", clashYourCode: "Twój kod pokoju:", clashWaiting: "Oczekiwanie na przeciwnika...", clashReady: "JESTEM GOTÓW", clashTime: "Czas na odpowiedź:", clashSurrender: "PODDAJ SIĘ / WYJDŹ", clashClaim: "PRZEJMIJ POLE", clashConfirm: "POTWIERDŹ", clashCancel: "ANULUJ", clashSeries: "WYNIK SERII", clashRematch: "ZAGRAJ REWANŻ", clashQuit: "ZAKOŃCZ I WYJDŹ", clashRulesTitle: "Zasady gry: Speedway Clash ⚔️", clashRules1: "Gra toczy się na planszy 3x3 na zasadach 'Kółko i Krzyżyk'.", clashRules2: "Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował oba krzyżujące się kluby.", clashRules3: "Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).", clashRules4: "Masz 2 minuty na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę.", clashRules5: "Wygrywa gracz, który jako pierwszy połączy 3 swoje pola w linii!", clashUnderstood: "ZROZUMIANO", clashGuessPlaceholder: "Imię i nazwisko zawodnika...", clashWaitBtn: "OCZEKIWANIE...", clashWaitP2: "CZEKANIE NA DRUGIEGO GRACZA...",
-        // NOWE TŁUMACZENIA DESKTOP
         dToday: "DZISIEJSZA GRA ►", dArchive: "ARCHIWUM DAILY", dLeague: "MECZ LIGOWY ►", dFriendly: "MECZ TOWARZYSKI", dLocal: "GRA LOKALNA (1 PC)", dSettings: "USTAWIENIA", dProfile: "PROFIL", missingRider: "💡 Brak zawodnika?", reportBug: "🐛 Zgłoś błąd"
     },
     en: {
@@ -1195,11 +1195,11 @@ const i18n = {
         subtitle: "Speedway Edition", lastGames: "Recent Daily games:", btnDaily: "Play Daily", btnReview: "Review game", btnEndless: "Endless Guessr", searchPlaceholder: "Enter rider's name...", btnGuess: "GUESS",
         teams: "Teams:", colName: "Rider", colCountry: "Country", colYear: "Born", colGP: "SGP?", colDMP: "Team Medals", colStatus: "Status", colClubs: "Clubs History",
         stats: "STATISTICS", statPlayed: "Played", statWon: "Won", statStreak: "Current Streak", statMax: "Max Streak", btnClose: "CLOSE", archive: "DAILY ARCHIVE",
-        winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", theme: "Theme:", themeLight: "Light", themeDark: "Dark", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
-        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTHzablokuj", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
+        winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", 
+        theme: "Theme:", themeLight: "Light", themeDark: "Dark", themeSystem: "Auto", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
+        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
         clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Choose game mode", clashElo: "Play for ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Friendly Match", clashFriendlyDesc: "(Play with a friend)", clashLobbyTitle: "🤝 Friendly Match", clashHost: "CREATE ROOM (HOST)", clashJoinCode: "ROOM CODE...", clashJoinBtn: "JOIN", clashYourCode: "Your room code:", clashWaiting: "Waiting for opponent...", clashReady: "I'M READY", clashTime: "Time to answer:", clashSurrender: "SURRENDER / LEAVE", clashClaim: "CLAIM CELL", clashConfirm: "CONFIRM", clashCancel: "CANCEL", clashSeries: "SERIES SCORE", clashRematch: "PLAY REMATCH", clashQuit: "QUIT AND LEAVE", clashRulesTitle: "Rules: Speedway Clash ⚔️", clashRules1: "The game is played on a 3x3 grid like Tic-Tac-Toe.", clashRules2: "To claim a cell, click it and guess a rider who represented both intersecting clubs.", clashRules3: "Remember, only the Polish league history counts.", clashRules4: "You have 2 minutes to answer! Wrong guess or timeout means you lose your turn.", clashRules5: "Connect 3 cells in a line to win!", clashUnderstood: "UNDERSTOOD", clashGuessPlaceholder: "Rider's name and surname...", clashWaitBtn: "WAITING...", clashWaitP2: "WAITING FOR OPPONENT...",
-        // NOWE TŁUMACZENIA DESKTOP
         dToday: "TODAY'S GAME ►", dArchive: "DAILY ARCHIVE", dLeague: "LEAGUE MATCH ►", dFriendly: "FRIENDLY MATCH", dLocal: "LOCAL PLAY (1 PC)", dSettings: "SETTINGS", dProfile: "PROFILE", missingRider: "💡 Missing rider?", reportBug: "🐛 Report a bug"
     },
     sv: {
@@ -1208,11 +1208,11 @@ const i18n = {
         subtitle: "Speedway Edition", lastGames: "Senaste Daily:", btnDaily: "Spela Daily", btnReview: "Granska spel", btnEndless: "Endless Guessr", searchPlaceholder: "Ange förarens namn...", btnGuess: "GISSA",
         teams: "Klubbar:", colName: "Förare", colCountry: "Land", colYear: "Född", colGP: "SGP?", colDMP: "Lagmedaljer", colStatus: "Status", colClubs: "Klubbhistorik",
         stats: "STATISTIK", statPlayed: "Spelade", statWon: "Vunna", statStreak: "Aktuell Svit", statMax: "Bästa Svit", btnClose: "STÄNG", archive: "DAILY ARKIV",
-        winTitle: "BRAVO!", winSub: "Du gissade föraren!", loseTitle: "INGA FÖRSÖK", loseSub: "Tyvärr, du gissade inte föraren.", btnShare: "DELA 📋", btnPlayEndless: "SPELA ENDLESS", btnPlayAgain: "SPELA IGEN", btnMenu: "HUVUDMENY", theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
+        winTitle: "BRAVO!", winSub: "Du gissade föraren!", loseTitle: "INGA FÖRSÖK", loseSub: "Tyvärr, du gissade inte föraren.", btnShare: "DELA 📋", btnPlayEndless: "SPELA ENDLESS", btnPlayAgain: "SPELA IGEN", btnMenu: "HUVUDMENY", 
+        theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", themeSystem: "System", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
         tabDaily: "DAGLIG", tabWeekly: "VECKA", tabMonthly: "MÅNAD", tabAllTime: "ALLMÄN", rankWonToday: "Vinster", rankTotalWins: "Totala Vinster", rankGuesses: "Gissningar",
         months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"], weekdays: ["Må", "Ti", "On", "To", "Fr", "Lö", "Sö"],
         clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Välj spelläge", clashElo: "Spela för ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Vänskapsmatch", clashFriendlyDesc: "(Spela med en vän)", clashLobbyTitle: "🤝 Vänskapsmatch", clashHost: "SKAPA RUM (HOST)", clashJoinCode: "RUMKOD...", clashJoinBtn: "GÅ MED", clashYourCode: "Din rumkod:", clashWaiting: "Väntar på motståndare...", clashReady: "JAG ÄR REDO", clashTime: "Tid att svara:", clashSurrender: "GE UPP / LÄMNA", clashClaim: "TA ÖVER RUTA", clashConfirm: "BEKRÄFTA", clashCancel: "AVBRYT", clashSeries: "SERIERESULTAT", clashRematch: "SPELA RETURMATCH", clashQuit: "AVSLUTA OCH LÄMNA", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spelet spelas på ett 3x3 rutnät som Luffarschack.", clashRules2: "För att ta över en ruta, klicka på den och gissa en förare som representerat båda klubbarna.", clashRules3: "Kom ihåg att endast den polska ligahistoriken räknas.", clashRules4: "Du har 2 minuter på dig att svara! Vid fel gissning eller om tiden går ut förlorar du din tur.", clashRules5: "Anslut 3 rutor i rad för att vinna!", clashUnderstood: "FÖRSTÅTT", clashGuessPlaceholder: "Förarens för- och efternamn...", clashWaitBtn: "VÄNTAR...", clashWaitP2: "VÄNTAR PÅ MOTSTÅNDARE...",
-        // NOWE TŁUMACZENIA DESKTOP
         dToday: "DAGENS SPEL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAMATCH ►", dFriendly: "VÄNSKAPSMATCH", dLocal: "LOKAL SPEL (1 PC)", dSettings: "INSTÄLLNINGAR", dProfile: "PROFIL", missingRider: "💡 Saknad förare?", reportBug: "🐛 Rapportera ett fel"
     },
     da: {
@@ -1221,25 +1221,72 @@ const i18n = {
         subtitle: "Speedway Edition", lastGames: "Seneste Daily:", btnDaily: "Spil Daily", btnReview: "Gennemse spil", btnEndless: "Endless Guessr", searchPlaceholder: "Indtast kørers navn...", btnGuess: "GÆT",
         teams: "Hold:", colName: "Kører", colCountry: "Land", colYear: "Født", colGP: "SGP?", colDMP: "Holdmedaljer", colStatus: "Status", colClubs: "Klubhistorik",
         stats: "STATISTIK", statPlayed: "Spillet", statWon: "Vundet", statStreak: "Nuværende Stime", statMax: "Bedste Stime", btnClose: "LUK", archive: "DAILY ARKIV",
-        winTitle: "BRAVO!", winSub: "Du gættede køreren!", loseTitle: "INGEN FORSØG", loseSub: "Desværre gættede du ikke køreren.", btnShare: "DEL 📋", btnPlayEndless: "SPIL ENDLESS", btnPlayAgain: "SPIL IGEN", btnMenu: "HOVEDMENU", theme: "Tema:", themeLight: "Lyst", themeDark: "Mørkt", lang: "Sprog:", modeDaily: "Tilstand: Daily", modeEndless: "Tilstand: Endless",
+        winTitle: "BRAVO!", winSub: "Du gættede køreren!", loseTitle: "INGEN FORSØG", loseSub: "Desværre gættede du ikke køreren.", btnShare: "DEL 📋", btnPlayEndless: "SPIL ENDLESS", btnPlayAgain: "SPIL IGEN", btnMenu: "HOVEDMENU", 
+        theme: "Tema:", themeLight: "Lyst", themeDark: "Mørkt", themeSystem: "System", lang: "Sprog:", modeDaily: "Tilstand: Daily", modeEndless: "Tilstand: Endless",
         tabDaily: "DAGLIG", tabWeekly: "UGE", tabMonthly: "MÅNED", tabAllTime: "GENEREL", rankWonToday: "Sejre", rankTotalWins: "Samlede Sejre", rankGuesses: "Gæt",
         months: ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"], weekdays: ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Vælg spiltilstand", clashElo: "Spil om ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Venskabskamp", clashFriendlyDesc: "(Spil med en ven)", clashLobbyTitle: "🤝 Venskabskamp", clashHost: "OPRET RUM (HOST)", clashJoinCode: "RUMKODE...", clashJoinBtn: "TILSLUT", clashYourCode: "Din rumkode:", clashWaiting: "Venter på modstander...", clashReady: "JEG ER KLAR", clashTime: "Tid til at svare:", clashSurrender: "GIV OP / FORLAD", clashClaim: "OVERTAG FELT", clashConfirm: "BEKRÆFT", clashCancel: "ANNULLER", clashSeries: "SERIERESULTAT", clashRematch: "SPIL REVANCHE", clashQuit: "AFSLUT OG FORLAD", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spillet spilles på et 3x3 gitter som Kryds og Bolle.", clashRules2: "For at overtage et felt skal du klikke på det og gætte en kører, der har repræsenteret begge klubber.", clashRules3: "Husk, at kun den polska ligahistorie tæller.", clashRules4: "Du har 2 minutter til at svare! Forkert gæt eller timeout betyder, at du mister din tur.", clashRules5: "Forbind 3 felter på stribe for at vinde!", clashUnderstood: "FORSTÅET", clashGuessPlaceholder: "Kørerens for- og efternavn...", clashWaitBtn: "VENTER...", clashWaitP2: "VENTER PÅ MODSTANDER...",
-        // NOWE TŁUMACZENIA DESKTOP
+        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Vælg spiltilstand", clashElo: "Spil om ELO", clashWip: "(WORK IN PROGRESS...)", clashFriendly: "Venskabskamp", clashFriendlyDesc: "(Spil med en ven)", clashLobbyTitle: "🤝 Venskabskamp", clashHost: "OPRET RUM (HOST)", clashJoinCode: "RUMKODE...", clashJoinBtn: "TILSLUT", clashYourCode: "Din rumkode:", clashWaiting: "Venter på modstander...", clashReady: "JEG ER KLAR", clashTime: "Tid til at svare:", clashSurrender: "GIV OP / FORLAD", clashClaim: "OVERTAG FELT", clashConfirm: "BEKRÆFT", clashCancel: "ANNULLER", clashSeries: "SERIERESULTAT", clashRematch: "SPIL REVANCHE", clashQuit: "AFSLUT OG FORLAD", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spillet spilles på et 3x3 gitter som Kryds og Bolle.", clashRules2: "For at overtage et felt skal du klikke på det og gætte en kører, der har repræsenteret begge klubber.", clashRules3: "Husk, at kun den polska ligahistorie tæller.", clashRules4: "Du har 2 minuter til at svare! Forkert gæt eller timeout betyder, at du mister din tur.", clashRules5: "Forbind 3 felter på stribe for at vinde!", clashUnderstood: "FORSTÅET", clashGuessPlaceholder: "Kørerens for- og efternavn...", clashWaitBtn: "VENTER...", clashWaitP2: "VENTER PÅ MODSTANDER...",
         dToday: "DAGENS SPIL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAKAMP ►", dFriendly: "VENSKABSKAMP", dLocal: "LOKALT SPIL (1 PC)", dSettings: "INDSTILLINGER", dProfile: "PROFIL", missingRider: "💡 Manglende kører?", reportBug: "🐛 Rapporter en fejl"
     }
 };
 
 let currentLang = localStorage.getItem('speedwayLang') || 'pl';
 
+
+// Ensure function is available from inline onclick handlers in HTML
+try { window.setLang = setLang; } catch (e) {}
+
+// ==============================================
+// ====== USTAWIENIA NOWE TAKIE O ===============
+// ==============================================
+
+// Aplikowanie fizycznego CSS w zależności od wyboru
+function applyTheme(themeName) {
+    let actualTheme = themeName;
+    if (themeName === 'system') {
+        actualTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', actualTheme);
+}
+
+function setTheme(themeName) { 
+    let oldTheme = localStorage.getItem('theme');
+    localStorage.setItem('theme', themeName); 
+    applyTheme(themeName);
+    
+    // Zaznaczanie aktywnego kafelka w Ustawieniach
+    document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
+    const activeBtn = document.getElementById('theme-btn-' + themeName);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    // Odblokowanie osiągnięcia, jeśli temat faktycznie się zmienił (zabezpieczenie na start)
+    if (oldTheme && oldTheme !== themeName && typeof userStats !== 'undefined' && userStats.trackers) {
+        ensureAchievementsStats();
+        userStats.trackers.changedTheme = true;
+        checkAchievements();
+        saveStats();
+    }
+}
+
+// Nasłuchiwacz: Jeśli zmienia się tryb w telefonie, a gracz ma wybrane "System", zmień natychmiast
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e => {
+    if (localStorage.getItem('theme') === 'system') {
+        applyTheme('system');
+    }
+});
+
+// Musimy zaktualizować setLang, by podświetlało nowe karty z flagami
 function setLang(lang) {
     try { console.log('setLang called:', lang); } catch (e) {}
     
-    let oldLang = localStorage.getItem('speedwayLang'); // Pobieramy stary przed zmianą
+    let oldLang = localStorage.getItem('speedwayLang');
     currentLang = i18n[lang] ? lang : 'pl';
     localStorage.setItem('speedwayLang', currentLang);
-    document.querySelectorAll('.lang-flag').forEach(el => el.classList.remove('active'));
-    const flagEl = document.getElementById('flag-' + currentLang); if(flagEl) flagEl.classList.add('active');
+    
+    // Nowa klasa flag
+    document.querySelectorAll('.flag-card').forEach(el => el.classList.remove('active'));
+    const flagEl = document.getElementById('flag-btn-' + currentLang); 
+    if(flagEl) flagEl.classList.add('active');
 
     const strings = i18n[currentLang] || i18n.pl;
     const nodes = document.querySelectorAll('[data-i18n]');
@@ -1257,7 +1304,6 @@ function setLang(lang) {
         }
     });
 
-    // Tooltip keys mapping
     document.querySelectorAll('[data-i18n-tip]').forEach(el => {
         const tipKey = el.getAttribute('data-i18n-tip');
         if (tipKey && strings[tipKey]) el.setAttribute('data-tip', strings[tipKey]);
@@ -1265,7 +1311,6 @@ function setLang(lang) {
 
     updateDailyMenu(); updateSoundBtn(); updateAuthUI(auth.currentUser);
     if(document.getElementById('calendarOverlay').style.display === 'block') renderCalendar();
-    
     renderUpdates();
     
     const modeDisplay = document.getElementById('gameModeDisplay');
@@ -1281,8 +1326,28 @@ function setLang(lang) {
     }
 }
 
-// Ensure function is available from inline onclick handlers in HTML
-try { window.setLang = setLang; } catch (e) {}
+function toggleSound() { 
+    soundEnabled = !soundEnabled; 
+    localStorage.setItem('speedwaySound', soundEnabled); 
+    updateSoundBtn(); 
+}
+
+function updateSoundBtn() {
+    const btn = document.getElementById('btnSoundToggle');
+    if (btn) { 
+        btn.innerHTML = soundEnabled ? `${i18n[currentLang].soundOn || 'Włączony 🔊'}` : `${i18n[currentLang].soundOff || 'Wyłączony 🔇'}`; 
+        // Zmieniamy tylko podświetlenie krawędzi dla efektu wciśnięcia
+        btn.style.borderColor = soundEnabled ? 'var(--accent)' : 'var(--border-color)';
+        btn.style.color = soundEnabled ? 'var(--accent)' : 'var(--text-dim)';
+        btn.style.background = soundEnabled ? 'rgba(241, 196, 15, 0.05)' : 'transparent';
+    }
+}
+
+// Przy załadowaniu strony aktywujemy zapisany temat wizualnie
+window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    setTheme(savedTheme);
+});
 
 // ==============================================
 // ====== AUDIO, UI I START GRY =================
@@ -1291,10 +1356,7 @@ try { window.setLang = setLang; } catch (e) {}
 let audioCtx = null;
 let soundEnabled = localStorage.getItem('speedwaySound') !== 'false';
 function toggleSound() { soundEnabled = !soundEnabled; localStorage.setItem('speedwaySound', soundEnabled); updateSoundBtn(); }
-function updateSoundBtn() {
-    const btn = document.getElementById('btnSoundToggle');
-    if (btn) { btn.innerHTML = soundEnabled ? i18n[currentLang].soundOn : i18n[currentLang].soundOff; btn.className = soundEnabled ? "theme-btn light" : "theme-btn dark"; }
-}
+
 
 function playSound(type) {
     if (!soundEnabled) return;
@@ -1640,19 +1702,7 @@ function closeSettings() {
     const overlay = document.getElementById('settingsOverlay');
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
-function setTheme(themeName) { 
-    let oldTheme = localStorage.getItem('theme');
-    document.documentElement.setAttribute('data-theme', themeName); 
-    localStorage.setItem('theme', themeName); 
-    
-    // Odblokowanie osiągnięcia, jeśli temat faktycznie się zmienił
-    if (oldTheme && oldTheme !== themeName && typeof userStats !== 'undefined' && userStats.trackers) {
-        ensureAchievementsStats();
-        userStats.trackers.changedTheme = true;
-        checkAchievements();
-        saveStats();
-    }
-}
+
 
 
 // ==============================================
