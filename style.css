@@ -1277,7 +1277,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 .flags-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
     width: 100%;
 }

@@ -1175,6 +1175,10 @@ function getMiniClubBadge(clubName) {
 }
 
 
+// ==============================================
+// ====== SŁOWNIK I18N I TŁUMACZENIA ============
+// ==============================================
+
 const i18n = {
     pl: {
         // Base
@@ -1189,7 +1193,7 @@ const i18n = {
         months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
         clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Wybierz tryb gry", clashElo: "Graj o ELO", clashFriendly: "Mecz Towarzyski", clashFriendlyDesc: "(Graj ze znajomym)", clashLobbyTitle: "🤝 Mecz Towarzyski", clashHost: "UTWÓRZ POKÓJ (HOST)", clashJoinCode: "KOD POKOJU...", clashJoinBtn: "DOŁĄCZ", clashYourCode: "Twój kod pokoju:", clashWaiting: "Oczekiwanie na przeciwnika...", clashReady: "JESTEM GOTÓW", clashTime: "Czas na odpowiedź:", clashSurrender: "PODDAJ SIĘ / WYJDŹ", clashClaim: "PRZEJMIJ POLE", clashConfirm: "POTWIERDŹ", clashCancel: "ANULUJ", clashSeries: "WYNIK SERII", clashRematch: "ZAGRAJ REWANŻ", clashQuit: "ZAKOŃCZ I WYJDŹ", clashRulesTitle: "Zasady gry: Speedway Clash ⚔️", clashRules1: "Gra toczy się na planszy 3x3 na zasadach 'Kółko i Krzyżyk'.", clashRules2: "Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował oba krzyżujące się kluby.", clashRules3: "Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).", clashRules4: "Masz 2 minuty na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę.", clashRules5: "Wygrywa gracz, który jako pierwszy połączy 3 swoje pola w linii!", clashUnderstood: "ZROZUMIANO, WCHODZĘ DO GRY!", clashGuessPlaceholder: "Imię i nazwisko zawodnika...", clashWaitBtn: "OCZEKIWANIE...", clashWaitP2: "CZEKANIE NA DRUGIEGO GRACZA...",
         
-        // New UI additions
+        // New UI additions & Tables
         dailyProgress: "TWÓJ POSTĘP DAILY:", missingRider: "💡 Brak zawodnika?", reportBug: "🐛 Zgłoś błąd", joinDiscord: "DOŁĄCZ DO DISCORDA",
         timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "WYNIK:", whoAreWeLookingFor: "KOGO SZUKAMY?", taEmptyList: "Rozwiązani zawodnicy pojawią się tutaj.",
         expertMode: "TRYB EKSPERCKI", games: "Gier", record: "Rekord", average: "Średnia", startGame: "ROZPOCZNIJ GRĘ ►", howToPlay: "JAK GRAĆ?", backToMenu: "🔙 POWRÓT DO MENU GŁÓWNEGO",
@@ -1211,10 +1215,10 @@ const i18n = {
         clashRule1Title: "Cel Gry", clashRule2Title: "Przejmowanie Pól", clashRule3Title: "Zasady i Czas", clashRule4Title: "Dodatkowy Wymóg (Hardcore)", clashRule4Desc: "Czasami pod herbem klubu pojawi się flaga kraju. Zawodnik musi dodatkowo pochodzić z tego państwa!",
         leagueHistory: "Historia Ligowa",
         
-        // JS dynamic strings
+        // JS dynamic strings & Tables
         loadingData: "Ładowanie danych...", noResults: "Brak wyników. Zagraj pierwszy!", noResultsCalib: "Brak wyników. Wszyscy gracze są w trakcie kalibracji! ⚖️",
         noPlayedMatches: "Brak rozegranych meczów.", errorDB: "Błąd bazy danych.",
-        taP1Name: "Gracz 1", taP2Name: "Gracz 2",
+        taP1Name: "Gracz 1", taP2Name: "Gracz 2", defaultPlayer: "Gracz",
         toastHintUsed: "Użyto podpowiedzi!", toastPlayerGuessed: "Ten zawodnik jest już na liście trafionych.", toastTimeEnd: "Koniec czasu! Zdobyto: {count} pkt. Wrócisz do menu za 5s...",
         toastWaitTurn: "Czekaj na swoją kolej!", toastCellTaken: "To pole jest już zajęte!", toastPlayerNotExist: "Zawodnik nie istnieje lub został podany!",
         toastWrongCountry: "BŁĄD! Ta kolumna wymaga zawodnika z kraju:", toastMissedClubs: "Pudło! {name} nie jeździł w obu tych klubach.", toastTurn: "TWÓJ RUCH!",
@@ -1225,6 +1229,10 @@ const i18n = {
         alertNickLength: "Nick musi mieć minimum 3 znaki!", alertNickRules: "Ten nick narusza zasady. Wybierz inny.", alertNickTaken: "Ten nick jest już zajęty! Wymyśl inny.", alertNickSame: "To jest Twój obecny nick!",
         alertClashLeave: "Wyjście zamknie aktualny pokój dla obu graczy.\nCzy na pewno chcesz wyjść?", alertClashLeaveTitle: "Opuścić mecz?", alertClashLeaveBtn: "WYJDŹ",
         alertClashSurrender: "Poddasz mecz ligowy walkowerem.\nTy otrzymasz porażkę i ujemne ELO, a przeciwnik dostanie wygraną oraz nagrodę ELO.\nCzy na pewno chcesz poddać mecz?", alertClashSurrenderBtn: "PODDAJ MECZ",
+        
+        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (TYDZIEŃ)", desktopRankMonthly: "LEADERBOARD (MIESIĄC)", desktopRankAllTime: "LEADERBOARD (OGÓLNY)",
+        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        colPos: "Poz.", colNick: "Nick", colRank: "Ranga", colElo: "ELO", colRecord: "Rekord", colSolved: "Rozwiązane", colTotalWins: "Suma Wygranych", colTries: "Próby", yes: "TAK", no: "NIE",
         
         ach_title_first_try: "Sokole Oko", ach_desc_first_try: "Zgadnij zawodnika w 1. próbie.",
         ach_title_close_call: "O włos", ach_desc_close_call: "Zgadnij zawodnika w ostatniej, 10. próbie.",
@@ -1287,7 +1295,7 @@ const i18n = {
         
         loadingData: "Loading data...", noResults: "No results. Be the first to play!", noResultsCalib: "No results. All players are currently in calibration! ⚖️",
         noPlayedMatches: "No matches played.", errorDB: "Database error.",
-        taP1Name: "Player 1", taP2Name: "Player 2",
+        taP1Name: "Player 1", taP2Name: "Player 2", defaultPlayer: "Player",
         toastHintUsed: "Hint used!", toastPlayerGuessed: "This rider is already guessed.", toastTimeEnd: "Time's up! Score: {count} pts. Returning to menu in 5s...",
         toastWaitTurn: "Wait for your turn!", toastCellTaken: "This cell is already taken!", toastPlayerNotExist: "Rider does not exist or was already picked!",
         toastWrongCountry: "ERROR! This column requires a rider from:", toastMissedClubs: "Miss! {name} hasn't ridden for both these clubs.", toastTurn: "YOUR TURN!",
@@ -1298,6 +1306,10 @@ const i18n = {
         alertNickLength: "Nick must have at least 3 characters!", alertNickRules: "This nick violates the rules. Choose another.", alertNickTaken: "This nick is already taken! Choose another.", alertNickSame: "This is your current nick!",
         alertClashLeave: "Leaving will close the room for both players.\nAre you sure you want to leave?", alertClashLeaveTitle: "Leave match?", alertClashLeaveBtn: "LEAVE",
         alertClashSurrender: "You will forfeit the match.\nYou'll receive a loss and negative ELO, and your opponent will get a win.\nAre you sure you want to surrender?", alertClashSurrenderBtn: "SURRENDER",
+        
+        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (WEEK)", desktopRankMonthly: "LEADERBOARD (MONTH)", desktopRankAllTime: "LEADERBOARD (ALL-TIME)",
+        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        colPos: "Pos.", colNick: "Nick", colRank: "Rank", colElo: "ELO", colRecord: "Record", colSolved: "Solved", colTotalWins: "Total Wins", colTries: "Guesses", yes: "YES", no: "NO",
         
         ach_title_first_try: "Eagle Eye", ach_desc_first_try: "Guess the rider on the 1st try.",
         ach_title_close_call: "Close Call", ach_desc_close_call: "Guess the rider on the last, 10th try.",
@@ -1354,13 +1366,13 @@ const i18n = {
         removeSelection: "TA BORT VAL", chooseYourClub: "VÄLJ DIN KLUBB", chooseClubDesc: "Välj laget du stöder. Dess logotyp visas bredvid ditt nick i rankingar och Clash-matcher!",
         updatesTitle: "SPELUPPDATERINGAR 📢", updatesDesc: "Kolla in våra senaste ändringar!", understoodBtn: "FÖRSTÅTT",
         maintTitle: "UNDERHÅLL", maintDesc: "Serverunderhåll pågår.<br>Spelet är tillfälligt inaktiverat.<br>Kom tillbaka snart!",
-        dToday: "DAGENS SPEL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAMATCH ►", dFriendly: "VÄNSKAPSMATCH", dLocal: "LOKALT SPIL (1 PC)", dSettings: "INSTÄLLNINGAR", dProfile: "PROFIL",
+        dToday: "DAGENS SPEL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAMATCH ►", dFriendly: "VÄNSKAPSMATCH", dLocal: "LOKALT SPEL (1 PC)", dSettings: "INSTÄLLNINGAR", dProfile: "PROFIL",
         clashRule1Title: "Spelmål", clashRule2Title: "Överta rutor", clashRule3Title: "Regler och tid", clashRule4Title: "Extra Krav (Hardcore)", clashRule4Desc: "Ibland visas en landsflagga under klubbloggan. Föraren måste också komma från det landet!",
         leagueHistory: "Ligahistorik",
         
         loadingData: "Laddar data...", noResults: "Inga resultat. Var den första att spela!", noResultsCalib: "Inga resultat. Alla spelare kalibreras just nu! ⚖️",
         noPlayedMatches: "Inga spelade matcher.", errorDB: "Databasfel.",
-        taP1Name: "Spelare 1", taP2Name: "Spelare 2",
+        taP1Name: "Spelare 1", taP2Name: "Spelare 2", defaultPlayer: "Spelare",
         toastHintUsed: "Tips använt!", toastPlayerGuessed: "Denna förare är redan gissad.", toastTimeEnd: "Tiden är ute! Poäng: {count}. Tillbaka till menyn om 5s...",
         toastWaitTurn: "Vänta på din tur!", toastCellTaken: "Denna ruta är redan tagen!", toastPlayerNotExist: "Föraren finns inte eller är redan vald!",
         toastWrongCountry: "FEL! Denna kolumn kräver en förare från:", toastMissedClubs: "Miss! {name} har inte kört för båda dessa klubbar.", toastTurn: "DIN TUR!",
@@ -1371,6 +1383,10 @@ const i18n = {
         alertNickLength: "Nicket måste ha minst 3 tecken!", alertNickRules: "Detta nick bryter mot reglerna. Välj ett annat.", alertNickTaken: "Detta nick är redan upptaget!", alertNickSame: "Detta är ditt nuvarande nick!",
         alertClashLeave: "Att lämna stänger rummet för båda spelarna.\nÄr du säker på att du vill lämna?", alertClashLeaveTitle: "Lämna match?", alertClashLeaveBtn: "LÄMNA",
         alertClashSurrender: "Du kommer att förlora matchen på walkover.\nDu får en förlust och minus-ELO.\nÄr du säker?", alertClashSurrenderBtn: "GE UPP",
+        
+        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (VECKA)", desktopRankMonthly: "LEADERBOARD (MÅNAD)", desktopRankAllTime: "LEADERBOARD (ALLMÄN)",
+        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        colPos: "Pos.", colNick: "Nick", colRank: "Rank", colElo: "ELO", colRecord: "Rekord", colSolved: "Lösta", colTotalWins: "Totala Vinster", colTries: "Gissningar", yes: "JA", no: "NEJ",
         
         ach_title_first_try: "Örnöga", ach_desc_first_try: "Gissa föraren på 1:a försöket.",
         ach_title_close_call: "Nära ögat", ach_desc_close_call: "Gissa föraren på sista, 10:e försöket.",
@@ -1433,7 +1449,7 @@ const i18n = {
         
         loadingData: "Indlæser data...", noResults: "Ingen resultater. Vær den første til at spille!", noResultsCalib: "Ingen resultater. Alle spillere kalibreres lige nu! ⚖️",
         noPlayedMatches: "Ingen spillede kampe.", errorDB: "Databasefejl.",
-        taP1Name: "Spiller 1", taP2Name: "Spiller 2",
+        taP1Name: "Spiller 1", taP2Name: "Spiller 2", defaultPlayer: "Spiller",
         toastHintUsed: "Tip brugt!", toastPlayerGuessed: "Denne kører er allerede gættet.", toastTimeEnd: "Tiden er gået! Score: {count}. Tilbage til menu om 5s...",
         toastWaitTurn: "Vent på din tur!", toastCellTaken: "Dette felt er allerede taget!", toastPlayerNotExist: "Køreren findes ikke eller er allerede valgt!",
         toastWrongCountry: "FEJL! Denne kolonne kræver en kører fra:", toastMissedClubs: "Forbi! {name} har ikke kørt for begge disse klubber.", toastTurn: "DIN TUR!",
@@ -1444,6 +1460,10 @@ const i18n = {
         alertNickLength: "Nick skal have mindst 3 tegn!", alertNickRules: "Dette nick overtræder reglerne. Vælg et andet.", alertNickTaken: "Dette nick er allerede taget!", alertNickSame: "Dette er dit nuværende nick!",
         alertClashLeave: "At forlade vil lukke rummet for begge spillere.\nEr du sikker på, at du vil forlade det?", alertClashLeaveTitle: "Forlad kamp?", alertClashLeaveBtn: "FORLAD",
         alertClashSurrender: "Du vil tabe kampen på walkover.\nDu får et tab og minus-ELO.\nEr du sikker?", alertClashSurrenderBtn: "GIV OP",
+        
+        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (UGE)", desktopRankMonthly: "LEADERBOARD (MÅNED)", desktopRankAllTime: "LEADERBOARD (GENEREL)",
+        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        colPos: "Pos.", colNick: "Nick", colRank: "Rang", colElo: "ELO", colRecord: "Rekord", colSolved: "Løst", colTotalWins: "Samlede Sejre", colTries: "Gæt", yes: "JA", no: "NEJ",
         
         ach_title_first_try: "Ørneøje", ach_desc_first_try: "Gæt køreren i 1. forsøg.",
         ach_title_close_call: "Lige ved og næsten", ach_desc_close_call: "Gæt køreren i sidste, 10. forsøg.",
@@ -1469,7 +1489,161 @@ const i18n = {
         ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gæt 100 kørere i et enkelt Time Attack-spil.",
         ach_title_easter_club: "Klubfarver", ach_desc_easter_club: "Vælg din favoritklubb i din spillerprofil.",
         ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Skift sprog i indstillinger.",
-        ach_title_easter_theme: "To ansigter", ach_desc_easter_theme: "Skift spillets tema (Lyst/Mørkt)."
+        ach_title_easter_theme: "To ansigter", ach_desc_easter_theme: "Skift spillets tema (Ljust/Mørkt)."
+    },
+    de: {
+        account: "DEIN PROFIL", loginDesc: "Mit Google anmelden, um Fortschritte zu speichern!", btnLoginGoogle: "MIT GOOGLE ANMELDEN", orGuest: "ODER GAST-NICK EINGEBEN", guestPlaceholder: "Nick (max 12 Zeichen)", btnSavePlay: "SPEICHERN & SPIELEN", btnLogout: "ABMELDEN",
+        settingsTitle: "EINSTELLUNGEN", sound: "Ton:", soundOn: "An 🔊", soundOff: "Aus 🔇",
+        subtitle: "Speedway Edition", lastGames: "Letzte Daily-Spiele:", btnDaily: "Daily spielen", btnReview: "Spiel ansehen", btnEndless: "Endless Guessr", searchPlaceholder: "Fahrername eingeben...", btnGuess: "RATEN",
+        teams: "Teams:", colName: "Fahrer", colCountry: "Land", colYear: "Geb.", colGP: "SGP?", colDMP: "Medaillen", colStatus: "Status", colClubs: "Klubhistorie",
+        stats: "STATISTIKEN", statPlayed: "Gespielt", statWon: "Gewonnen", statStreak: "Aktuelle Serie", statMax: "Beste Serie", btnClose: "SCHLIESSEN", archive: "DAILY-ARCHIV",
+        winTitle: "BRAVO!", winSub: "Du hast den Fahrer erraten!", loseTitle: "KEINE VERSUCHE MEHR", loseSub: "Leider nicht erraten.", btnShare: "TEILEN 📋", btnPlayEndless: "ENDLESS SPIELEN", btnPlayAgain: "NOCHMAL SPIELEN", btnMenu: "HAUPTMENÜ", 
+        theme: "Design:", themeLight: "Hell", themeDark: "Dunkel", themeSystem: "System", lang: "Sprache:", modeDaily: "Modus: Daily", modeEndless: "Modus: Endless",
+        tabDaily: "TÄGLICH", tabWeekly: "WOCHE", tabMonthly: "MONAT", tabAllTime: "GESAMT", rankWonToday: "Siege", rankTotalWins: "Gesamtsiege", rankGuesses: "Versuche",
+        months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"], weekdays: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
+        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Spielmodus wählen", clashElo: "Um ELO spielen", clashFriendly: "Freundschaftsspiel", clashFriendlyDesc: "(Mit Freund spielen)", clashLobbyTitle: "🤝 Freundschaftsspiel", clashHost: "RAUM ERSTELLEN (HOST)", clashJoinCode: "RAUMCODE...", clashJoinBtn: "BEITRETEN", clashYourCode: "Dein Raumcode:", clashWaiting: "Warte auf Gegner...", clashReady: "ICH BIN BEREIT", clashTime: "Antwortzeit:", clashSurrender: "AUFGEBEN / VERLASSEN", clashClaim: "FELD ÜBERNEHMEN", clashConfirm: "BESTÄTIGEN", clashCancel: "ABBRECHEN", clashSeries: "SERIENSTAND", clashRematch: "REVANCHE SPIELEN", clashQuit: "BEENDEN UND VERLASSEN", clashRulesTitle: "Regeln: Speedway Clash ⚔️", clashRules1: "Gespielt wird auf einem 3x3 Raster wie Tic-Tac-Toe.", clashRules2: "Klicke auf ein Feld und rate einen Fahrer, der für beide Klubs gefahren ist.", clashRules3: "Es zählt nur die polnische Ligahistorie.", clashRules4: "Du hast 2 Minuten Zeit! Falsche Antwort = Zugverlust.", clashRules5: "Verbinde 3 Felder in einer Reihe, um zu gewinnen!", clashUnderstood: "VERSTANDEN, ICH SPIELE!", clashGuessPlaceholder: "Vor- und Nachname des Fahrers...", clashWaitBtn: "WARTEN...", clashWaitP2: "WARTE AUF GEGNER...",
+        
+        dailyProgress: "DEIN DAILY-FORTSCHRITT:", missingRider: "💡 Fehlender Fahrer?", reportBug: "🐛 Fehler melden", joinDiscord: "DISCORD BEITRETEN",
+        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "PUNKTE:", whoAreWeLookingFor: "WEN SUCHEN WIR?", taEmptyList: "Erratene Fahrer erscheinen hier.",
+        expertMode: "EXPERTENMODUS", games: "Spiele", record: "Rekord", average: "Schnitt", startGame: "SPIEL STARTEN ►", howToPlay: "WIE WIRD GESPIELT?", backToMenu: "🔙 ZURÜCK ZUM HAUPTMENÜ",
+        taRulesTitle: "Regeln: Time Attack ⏱️", taRulesDesc: "Nimm die Herausforderung an und schau, wie viele Fahrer du unter Zeitdruck erraten kannst!",
+        taRule1Title: "Die Uhr tickt", taRule1Desc: "Du startest mit exakt 120 Sekunden. Die Uhr läuft gnadenlos ab.",
+        taRule2Title: "Keine schrittweisen Tipps", taRule2Desc: "Du siehst sofort Land, Geburtsjahr, Medaillen und die Klubhistorie. Erkenne den Fahrer sofort.",
+        taRule3Title: "Zeitboni", taRule3Desc: "Jeder richtig erratene Fahrer gibt +15 Sekunden. Das Spiel endet, wenn die Zeit abläuft.",
+        understoodBack: "VERSTANDEN, ZURÜCK!",
+        localGameTitle: "🖥️ Lokales Spiel", localGameDesc: "Nicknames eingeben, um an einem Bildschirm zu spielen.", p1Red: "Spieler 1 (Rot)", p2Blue: "Spieler 2 (Blau)", startMatch: "MATCH STARTEN",
+        boardPreview: "BRETT-VORSCHAU 👁️", searching: "Suchen...", waitingForOpponentElo: "Warte auf Gegner mit ähnlicher ELO", cancel: "ABBRECHEN",
+        sugTitle: "FAHRER MELDEN", sugDesc: "Fehlt ein Fahrer? Gib uns seine Daten und wir fügen ihn hinzu! 🤝", sugName: "Vor- und Nachname *", sugCountry: "Land", sugNotes: "Klubs / Notizen", send: "SENDEN",
+        bugTitle: "FEHLER MELDEN 🐛", bugDesc: "Etwas ist schiefgelaufen? Beschreibe das Problem!", bugDescInput: "Problembeschreibung *", sendBug: "FEHLER SENDEN",
+        footerPrivacy: "Datenschutzerklärung", footerTerms: "Nutzungsbedingungen", footerContact: "Kontakt (Fehler melden)", footerRights: "Alle Rechte vorbehalten.",
+        linkedAccounts: "VERKNÜPFTE KONTEN", linkDiscord: "DISCORD VERKNÜPFEN", yourNick: "DEIN AKTUELLER NICK:", change: "ÄNDERN", yourClub: "DEIN LIEBLINGSKLUB:", chooseClub: "KLUB WÄHLEN 🛡️", myAchievements: "MEINE ERFOLGE", playerAchievements: "SPIELER-ERFOLGE", backToProfile: "ZURÜCK ZUM PROFIL",
+        removeSelection: "AUSWAHL ENTFERNEN", chooseYourClub: "WÄHLE DEINEN KLUB", chooseClubDesc: "Wähle das Team, das du unterstützt. Sein Logo wird neben deinem Nick angezeigt!",
+        updatesTitle: "SPIEL-UPDATES 📢", updatesDesc: "Sieh dir unsere neuesten Änderungen an!", understoodBtn: "VERSTANDEN",
+        maintTitle: "WARTUNGSARBEITEN", maintDesc: "Serverwartung im Gange.<br>Das Spiel ist vorübergehend deaktiviert.",
+        dToday: "HEUTIGES SPIEL ►", dArchive: "DAILY-ARCHIV", dLeague: "LIGASPIEL ►", dFriendly: "FREUNDSCHAFTSSPIEL", dLocal: "LOKALES SPIEL (1 PC)", dSettings: "EINSTELLUNGEN", dProfile: "PROFIL",
+        clashRule1Title: "Spielziel", clashRule2Title: "Felder übernehmen", clashRule3Title: "Regeln und Zeit", clashRule4Title: "Zusätzliche Bedingung (Hardcore)", clashRule4Desc: "Manchmal erscheint eine Flagge unter dem Klub. Der Fahrer muss auch aus diesem Land kommen!",
+        leagueHistory: "Liga-Historie",
+        
+        loadingData: "Lade Daten...", noResults: "Keine Ergebnisse. Sei der Erste!", noResultsCalib: "Keine Ergebnisse. Alle in der Kalibrierung! ⚖️",
+        noPlayedMatches: "Keine Spiele gespielt.", errorDB: "Datenbankfehler.",
+        taP1Name: "Spieler 1", taP2Name: "Spieler 2", defaultPlayer: "Spieler",
+        toastHintUsed: "Tipp benutzt!", toastPlayerGuessed: "Fahrer bereits erraten.", toastTimeEnd: "Zeit abgelaufen! Punkte: {count}. Zurück zum Menü...",
+        toastWaitTurn: "Warte, bis du dran bist!", toastCellTaken: "Feld ist schon besetzt!", toastPlayerNotExist: "Fahrer existiert nicht!",
+        toastWrongCountry: "FEHLER! Land erforderlich:", toastMissedClubs: "Daneben! {name} ist nicht für beide Klubs gefahren.", toastTurn: "DU BIST DRAN!",
+        toastSavedClub: "Gespeichert!", toastRemovedClub: "Klub entfernt", toastAchievement: "🏆 Erfolg:",
+        toastPPM: "⛔ Rechtsklick deaktiviert!", toastConsole: "⛔ Konsole deaktiviert!", toastTabSwitch: "⚠️ Tab-Wechsel! Zug verloren.",
+        alertSurrenderConfirm: "Willst du wirklich aufgeben?", alertSurrenderTitle: "Aufgeben?", alertSurrenderBtn: "JA, ICH GEBE AUF",
+        alertReturnConfirm: "Zurück zum Menü? Endless-Fortschritt geht verloren.", alertReturnTitle: "Zurück zum Menü", alertReturnBtn: "ZUM MENÜ",
+        alertNickLength: "Nick muss min. 3 Zeichen haben!", alertNickRules: "Nick verstößt gegen Regeln.", alertNickTaken: "Nick ist vergeben!", alertNickSame: "Das ist dein aktueller Nick!",
+        alertClashLeave: "Raum wird für beide geschlossen. Verlassen?", alertClashLeaveTitle: "Spiel verlassen?", alertClashLeaveBtn: "VERLASSEN",
+        alertClashSurrender: "Du verlierst das Spiel und ELO. Aufgeben?", alertClashSurrenderBtn: "AUFGEBEN",
+        
+        desktopRankDaily: "LEADERBOARD (TÄGLICH)", desktopRankWeekly: "LEADERBOARD (WOCHE)", desktopRankMonthly: "LEADERBOARD (MONAT)", desktopRankAllTime: "LEADERBOARD (GESAMT)",
+        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        colPos: "Pos.", colNick: "Nick", colRank: "Rang", colElo: "ELO", colRecord: "Rekord", colSolved: "Gelöst", colTotalWins: "Gesamtsiege", colTries: "Versuche", yes: "JA", no: "NEIN",
+        
+        ach_title_first_try: "Adlerauge", ach_desc_first_try: "Fahrer im 1. Versuch erraten.",
+        ach_title_close_call: "Knappe Kiste", ach_desc_close_call: "Fahrer im 10. Versuch erraten.",
+        ach_title_no_hint_1: "Schlaumeier", ach_desc_no_hint_1: "Ohne Tipps gewinnen.",
+        ach_title_no_hint_5: "Wandelndes Lexikon", ach_desc_no_hint_5: "5 Siege in Folge ohne Tipps.",
+        ach_title_play_10: "Aufwärmen", ach_desc_play_10: "10 Spiele spielen.",
+        ach_title_play_50: "Maniac", ach_desc_play_50: "50 Spiele spielen.",
+        ach_title_streak_3: "Heiße Serie I", ach_desc_streak_3: "3er Siegesserie.",
+        ach_title_streak_7: "Heiße Serie II", ach_desc_streak_7: "7er Siegesserie.",
+        ach_title_streak_15: "Heiße Serie III", ach_desc_streak_15: "15er Siegesserie.",
+        ach_title_clash_1: "Erstes Blut", ach_desc_clash_1: "Erster Clash-Sieg.",
+        ach_title_clash_10: "Gladiator", ach_desc_clash_10: "10 Clash-Siege.",
+        ach_title_clash_50: "Dominator", ach_desc_clash_50: "50 Clash-Siege.",
+        ach_title_clash_flawless: "Perfekter Clash!", ach_desc_clash_flawless: "Clash gewinnen, ohne ein Feld abzugeben.",
+        ach_title_rank_silver: "Silberfuchs", ach_desc_rank_silver: "Silber-Rang erreichen.",
+        ach_title_rank_gold: "Goldjunge", ach_desc_rank_gold: "Gold-Rang erreichen.",
+        ach_title_rank_diamond: "Elite", ach_desc_rank_diamond: "Diamant-Rang erreichen.",
+        ach_title_clash_legend: "Legende", ach_desc_clash_legend: "Höchsten Rang erreichen.",
+        ach_title_ta_10: "Time Attack Experte I", ach_desc_ta_10: "10 Fahrer in Time Attack.",
+        ach_title_ta_20: "Time Attack Experte II", ach_desc_ta_20: "20 Fahrer in Time Attack.",
+        ach_title_ta_30: "Time Attack Experte III", ach_desc_ta_30: "30 Fahrer in Time Attack.",
+        ach_title_ta_50: "Time Attack Experte IV", ach_desc_ta_50: "50 Fahrer in Time Attack.",
+        ach_title_ta_100: "Time Attack Gott", ach_desc_ta_100: "100 Fahrer in Time Attack.",
+        ach_title_easter_club: "Klubfarben", ach_desc_easter_club: "Lieblingsklub wählen.",
+        ach_title_easter_lang: "Polyglott", ach_desc_easter_lang: "Sprache ändern.",
+        ach_title_easter_theme: "Zwei Gesichter", ach_desc_easter_theme: "Design ändern."
+    },
+    ru: {
+        account: "ТВОЙ ПРОФИЛЬ", loginDesc: "Войдите через Google, чтобы сохранить прогресс!", btnLoginGoogle: "ВОЙТИ ЧЕРЕЗ GOOGLE", orGuest: "ИЛИ ВВЕДИТЕ ИМЯ ГОСТЯ", guestPlaceholder: "Имя (макс. 12 симв.)", btnSavePlay: "СОХРАНИТЬ И ИГРАТЬ", btnLogout: "ВЫЙТИ",
+        settingsTitle: "НАСТРОЙКИ", sound: "Звук:", soundOn: "Вкл 🔊", soundOff: "Выкл 🔇",
+        subtitle: "Спидвей Версия", lastGames: "Последние Daily:", btnDaily: "Играть Daily", btnReview: "Просмотр игры", btnEndless: "Endless Guessr", searchPlaceholder: "Введите имя гонщика...", btnGuess: "УГАДАТЬ",
+        teams: "Команды:", colName: "Гонщик", colCountry: "Страна", colYear: "Год", colGP: "SGP?", colDMP: "Медали DMP", colStatus: "Статус", colClubs: "История клубов",
+        stats: "СТАТИСТИКА", statPlayed: "Сыграно", statWon: "Побед", statStreak: "Текущая серия", statMax: "Лучшая серия", btnClose: "ЗАКРЫТЬ", archive: "АРХИВ DAILY",
+        winTitle: "БРАВО!", winSub: "Вы угадали гонщика!", loseTitle: "ПОПЫТКИ ЗАКОНЧИЛИСЬ", loseSub: "К сожалению, вы не угадали.", btnShare: "ПОДЕЛИТЬСЯ 📋", btnPlayEndless: "ИГРАТЬ ENDLESS", btnPlayAgain: "ИГРАТЬ СНОВА", btnMenu: "ГЛАВНОЕ МЕНЮ", 
+        theme: "Тема:", themeLight: "Светлая", themeDark: "Темная", themeSystem: "Системная", lang: "Язык:", modeDaily: "Режим: Daily", modeEndless: "Режим: Endless",
+        tabDaily: "ДЕНЬ", tabWeekly: "НЕДЕЛЯ", tabMonthly: "МЕСЯЦ", tabAllTime: "ЗА ВСЕ ВРЕМЯ", rankWonToday: "Победы", rankTotalWins: "Всего побед", rankGuesses: "Попытки",
+        months: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"], weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Выберите режим", clashElo: "Играть на ELO", clashFriendly: "Товарищеский матч", clashFriendlyDesc: "(Играть с другом)", clashLobbyTitle: "🤝 Товарищеский матч", clashHost: "СОЗДАТЬ КОМНАТУ (HOST)", clashJoinCode: "КОД КОМНАТЫ...", clashJoinBtn: "ПРИСОЕДИНИТЬСЯ", clashYourCode: "Ваш код комнаты:", clashWaiting: "Ожидание соперника...", clashReady: "Я ГОТОВ", clashTime: "Время на ответ:", clashSurrender: "СДАТЬСЯ / ВЫЙТИ", clashClaim: "ЗАХВАТИТЬ ПОЛЕ", clashConfirm: "ПОДТВЕРДИТЬ", clashCancel: "ОТМЕНА", clashSeries: "СЧЕТ СЕРИИ", clashRematch: "ИГРАТЬ РЕВАНШ", clashQuit: "ЗАКОНЧИТЬ И ВЫЙТИ", clashRulesTitle: "Правила: Speedway Clash ⚔️", clashRules1: "Игра идет на поле 3x3 (крестики-нолики).", clashRules2: "Чтобы захватить поле, угадайте гонщика, выступавшего за оба клуба.", clashRules3: "Учитывается только польская лига.", clashRules4: "У вас есть 2 минуты! Неверный ответ или конец времени = пропуск хода.", clashRules5: "Соедините 3 поля в ряд для победы!", clashUnderstood: "ПОНЯТНО, ИГРАТЬ!", clashGuessPlaceholder: "Имя и фамилия гонщика...", clashWaitBtn: "ОЖИДАНИЕ...", clashWaitP2: "ОЖИДАНИЕ СОПЕРНИКА...",
+        
+        dailyProgress: "ВАШ ПРОГРЕСС DAILY:", missingRider: "💡 Нет гонщика?", reportBug: "🐛 Сообщить об ошибке", joinDiscord: "ПРИСОЕДИНИТЬСЯ К DISCORD",
+        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "СЧЕТ:", whoAreWeLookingFor: "КОГО МЫ ИЩЕМ?", taEmptyList: "Угаданные гонщики появятся здесь.",
+        expertMode: "РЕЖИМ ЭКСПЕРТА", games: "Игры", record: "Рекорд", average: "В среднем", startGame: "НАЧАТЬ ИГРУ ►", howToPlay: "КАК ИГРАТЬ?", backToMenu: "🔙 В ГЛАВНОЕ МЕНЮ",
+        taRulesTitle: "Правила: Time Attack ⏱️", taRulesDesc: "Примите вызов и узнайте, сколько гонщиков вы угадаете на время!",
+        taRule1Title: "Часы тикают", taRule1Desc: "У вас есть 120 секунд. Время идет без остановок.",
+        taRule2Title: "Никаких подсказок", taRule2Desc: "Вы сразу видите страну, год, медали и клубы. Нужно сразу узнать гонщика.",
+        taRule3Title: "Бонусы времени", taRule3Desc: "Каждый угаданный гонщик дает +15 секунд. Игра заканчивается, когда время истекает.",
+        understoodBack: "ПОНЯТНО, НАЗАД!",
+        localGameTitle: "🖥️ Локальная игра", localGameDesc: "Введите имена для игры на одном экране.", p1Red: "Игрок 1 (Красный)", p2Blue: "Игрок 2 (Синий)", startMatch: "НАЧАТЬ МАТЧ",
+        boardPreview: "ПРЕДПРОСМОТР ДОСКИ 👁️", searching: "Поиск...", waitingForOpponentElo: "Ожидание соперника с похожим ELO", cancel: "ОТМЕНА",
+        sugTitle: "СООБЩИТЬ О ГОНЩИКЕ", sugDesc: "Заметили отсутствие гонщика? Дайте знать, и мы его добавим! 🤝", sugName: "Имя и Фамилия *", sugCountry: "Страна", sugNotes: "Клубы / Заметки", send: "ОТПРАВИТЬ",
+        bugTitle: "СООБЩИТЬ ОБ ОШИБКЕ 🐛", bugDesc: "Что-то пошло не так? Опишите проблему!", bugDescInput: "Описание проблемы *", sendBug: "ОТПРАВИТЬ ОШИБКУ",
+        footerPrivacy: "Политика конфиденциальности", footerTerms: "Условия использования", footerContact: "Контакт (Ошибка)", footerRights: "Все права защищены.",
+        linkedAccounts: "ПРИВЯЗАННЫЕ АККАУНТЫ", linkDiscord: "ПРИВЯЗАТЬ DISCORD", yourNick: "ВАШ ТЕКУЩИЙ НИК:", change: "ИЗМЕНИТЬ", yourClub: "ВАШ ЛЮБИМЫЙ КЛУБ:", chooseClub: "ВЫБРАТЬ КЛУБ 🛡️", myAchievements: "МОИ ДОСТИЖЕНИЯ", playerAchievements: "ДОСТИЖЕНИЯ ИГРОКА", backToProfile: "НАЗАД В ПРОФИЛЬ",
+        removeSelection: "УДАЛИТЬ ВЫБОР", chooseYourClub: "ВЫБЕРИТЕ СВОЙ КЛУБ", chooseClubDesc: "Выберите команду, которую вы поддерживаете. Ее логотип будет виден рядом с вашим ником!",
+        updatesTitle: "ОБНОВЛЕНИЯ ИГРЫ 📢", updatesDesc: "Узнайте о последних изменениях!", understoodBtn: "ПОНЯТНО",
+        maintTitle: "ТЕХНИЧЕСКИЙ ПЕРЕРЫВ", maintDesc: "Сервер на обслуживании.<br>Игра временно недоступна.",
+        dToday: "СЕГОДНЯШНЯЯ ИГРА ►", dArchive: "АРХИВ DAILY", dLeague: "МАТЧ ЛИГИ ►", dFriendly: "ТОВАРИЩЕСКИЙ МАТЧ", dLocal: "ЛОКАЛЬНАЯ ИГРА (1 ПК)", dSettings: "НАСТРОЙКИ", dProfile: "ПРОФИЛЬ",
+        clashRule1Title: "Цель игры", clashRule2Title: "Захват полей", clashRule3Title: "Правила и время", clashRule4Title: "Доп. Требование (Хардкор)", clashRule4Desc: "Иногда под логотипом клуба будет флаг. Гонщик должен быть из этой страны!",
+        leagueHistory: "История Лиги",
+        
+        loadingData: "Загрузка данных...", noResults: "Нет результатов. Сыграйте первым!", noResultsCalib: "Нет результатов. Все игроки проходят калибровку! ⚖️",
+        noPlayedMatches: "Нет сыгранных матчей.", errorDB: "Ошибка базы данных.",
+        taP1Name: "Игрок 1", taP2Name: "Игрок 2", defaultPlayer: "Игрок",
+        toastHintUsed: "Подсказка использована!", toastPlayerGuessed: "Этот гонщик уже угадан.", toastTimeEnd: "Время вышло! Счет: {count}. Возврат в меню через 5с...",
+        toastWaitTurn: "Ждите своей очереди!", toastCellTaken: "Это поле уже занято!", toastPlayerNotExist: "Гонщик не существует или уже выбран!",
+        toastWrongCountry: "ОШИБКА! В этой колонке нужен гонщик из:", toastMissedClubs: "Промах! {name} не выступал за оба эти клуба.", toastTurn: "ВАШ ХОД!",
+        toastSavedClub: "Сохранено! Вы представляете:", toastRemovedClub: "Клуб удален", toastAchievement: "🏆 Достижение:",
+        toastPPM: "⛔ Правый клик заблокирован!", toastConsole: "⛔ Доступ к консоли заблокирован!", toastTabSwitch: "⚠️ Вы свернули вкладку! Пропуск хода.",
+        alertSurrenderConfirm: "Вы уверены, что хотите сдаться и открыть гонщика?", alertSurrenderTitle: "Сдаетесь?", alertSurrenderBtn: "ДА, Я СДАЮСЬ",
+        alertReturnConfirm: "Вернуться в меню? Прогресс Daily сохранится, но Endless будет потерян.", alertReturnTitle: "Возврат в меню", alertReturnBtn: "В МЕНЮ",
+        alertNickLength: "Ник должен содержать мин. 3 символа!", alertNickRules: "Этот ник нарушает правила. Выберите другой.", alertNickTaken: "Этот ник уже занят!", alertNickSame: "Это ваш текущий ник!",
+        alertClashLeave: "Выход закроет комнату для обоих игроков.\nВы уверены?", alertClashLeaveTitle: "Покинуть матч?", alertClashLeaveBtn: "ВЫЙТИ",
+        alertClashSurrender: "Вы проиграете техническим поражением.\nПотеряете ELO. Уверены?", alertClashSurrenderBtn: "СДАТЬСЯ",
+        
+        desktopRankDaily: "ЛЕДЕРБОРД (ДЕНЬ)", desktopRankWeekly: "ЛЕДЕРБОРД (НЕДЕЛЯ)", desktopRankMonthly: "ЛЕДЕРБОРД (МЕСЯЦ)", desktopRankAllTime: "ЛЕДЕРБОРД (ВЕЧНЫЙ)",
+        desktopRankClash: "ЛЕДЕРБОРД (CLASH)", desktopRankTA: "ЛЕДЕРБОРД (TIME ATTACK)",
+        colPos: "Поз.", colNick: "Имя", colRank: "Ранг", colElo: "ELO", colRecord: "Рекорд", colSolved: "Решено", colTotalWins: "Всего побед", colTries: "Попытки", yes: "ДА", no: "НЕТ",
+        
+        ach_title_first_try: "Орлиный глаз", ach_desc_first_try: "Угадайте гонщика с 1 попытки.",
+        ach_title_close_call: "На волоске", ach_desc_close_call: "Угадайте гонщика с последней, 10 попытки.",
+        ach_title_no_hint_1: "Умник", ach_desc_no_hint_1: "Выиграйте без подсказок.",
+        ach_title_no_hint_5: "Ходячая энциклопедия", ach_desc_no_hint_5: "Выиграйте 5 раз подряд без подсказок.",
+        ach_title_play_10: "Разминка", ach_desc_play_10: "Сыграйте 10 игр.",
+        ach_title_play_50: "Маньяк", ach_desc_play_50: "Сыграйте 50 игр.",
+        ach_title_streak_3: "Горячая серия I", ach_desc_streak_3: "Победная серия: 3.",
+        ach_title_streak_7: "Горячая серия II", ach_desc_streak_7: "Победная серия: 7.",
+        ach_title_streak_15: "Горячая серия III", ach_desc_streak_15: "Победная серия: 15.",
+        ach_title_clash_1: "Первая кровь", ach_desc_clash_1: "Первая победа в Clash.",
+        ach_title_clash_10: "Гладиатор", ach_desc_clash_10: "10 побед в Clash.",
+        ach_title_clash_50: "Доминатор", ach_desc_clash_50: "50 побед в Clash.",
+        ach_title_clash_flawless: "Безупречный Clash!", ach_desc_clash_flawless: "Выиграйте Clash, не отдав ни одного поля.",
+        ach_title_rank_silver: "Серебряный лис", ach_desc_rank_silver: "Достигните ранга Серебро.",
+        ach_title_rank_gold: "Золотой мальчик", ach_desc_rank_gold: "Достигните ранга Золото.",
+        ach_title_rank_diamond: "Элита спидвея", ach_desc_rank_diamond: "Достигните ранга Бриллиант.",
+        ach_title_clash_legend: "Живая легенда", ach_desc_clash_legend: "Достигните максимального ранга: Легенда.",
+        ach_title_ta_10: "Эксперт Time Attack I", ach_desc_ta_10: "10 гонщиков в Time Attack.",
+        ach_title_ta_20: "Эксперт Time Attack II", ach_desc_ta_20: "20 гонщиков в Time Attack.",
+        ach_title_ta_30: "Эксперт Time Attack III", ach_desc_ta_30: "30 гонщиков в Time Attack.",
+        ach_title_ta_50: "Эксперт Time Attack IV", ach_desc_ta_50: "50 гонщиков в Time Attack.",
+        ach_title_ta_100: "Бог Time Attack", ach_desc_ta_100: "100 гонщиков в Time Attack.",
+        ach_title_easter_club: "Цвета клуба", ach_desc_easter_club: "Выберите любимый клуб.",
+        ach_title_easter_lang: "Полиглот", ach_desc_easter_lang: "Смените язык в Настройках.",
+        ach_title_easter_theme: "Два лица", ach_desc_easter_theme: "Смените тему (Светлая/Темная)."
     }
 };
 
@@ -3247,17 +3421,17 @@ async function loadDesktopRanking(type) {
     
     if (!tbody || !thead || !title) return;
 
-    // Obsługa zakładek i stylizacji tytułów
     if (type === 'league') {
-        title.innerHTML = '<i>LEADERBOARD (CLASH)</i>';
+        title.innerHTML = `<i>${t('desktopRankClash')}</i>`;
         title.style.color = '#3399ff';
         if (tabs) tabs.style.display = 'none';
     } else if (type === 'timeattack') {
-        title.innerHTML = '<i>LEADERBOARD (TIME ATTACK)</i>';
+        title.innerHTML = `<i>${t('desktopRankTA')}</i>`;
         title.style.color = '#1dd1a1';
         if (tabs) tabs.style.display = 'none';
     } else {
-        title.innerHTML = `<i>LEADERBOARD (${type.toUpperCase()})</i>`;
+        let titleKey = type === 'daily' ? 'desktopRankDaily' : (type === 'weekly' ? 'desktopRankWeekly' : (type === 'monthly' ? 'desktopRankMonthly' : 'desktopRankAllTime'));
+        title.innerHTML = `<i>${t(titleKey)}</i>`;
         title.style.color = 'var(--accent)';
         if (tabs) {
             tabs.style.display = 'flex';
@@ -3269,25 +3443,24 @@ async function loadDesktopRanking(type) {
         }
     }
 
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Ładowanie danych...</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">${t('loadingData')}</td></tr>`;
 
     try {
         if (type === 'league') {
-            thead.innerHTML = `<tr><th>Poz.</th><th>Nick</th><th>Ranga</th><th>ELO</th></tr>`;
+            thead.innerHTML = `<tr><th>${t('colPos')}</th><th>${t('colNick')}</th><th>${t('colRank')}</th><th>${t('colElo')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
             tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
                 if (row.provisional || row.matchesPlayed < 5) return; 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-                
-                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 safeNick += getMiniClubBadge(row.club); 
-                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 tbody.innerHTML += `
                     <tr ${isMe}>
@@ -3299,18 +3472,18 @@ async function loadDesktopRanking(type) {
                 pos++;
             });
         } else if (type === 'timeattack') {
-            thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th style="color: #1dd1a1;">Rekord</th></tr>`;
+            thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th style="color: #1dd1a1;">${t('colRecord')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
             tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
-                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 safeNick += getMiniClubBadge(row.club); 
-                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
                 tbody.innerHTML += `
@@ -3322,8 +3495,8 @@ async function loadDesktopRanking(type) {
                 pos++;
             });
         } else {
-            let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
-            thead.innerHTML = `<tr><th>Poz.</th><th style="text-align:left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
+            let headerText = (type === 'daily') ? t('colSolved') : t('colTotalWins');
+            thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align:left;">${t('colNick')}</th><th>${headerText}</th><th>${t('colTries')}</th></tr>`;
             
             let snapshot;
             if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
@@ -3343,15 +3516,15 @@ async function loadDesktopRanking(type) {
             });
             
             tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników.</td></tr>`; return; }
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
 
             scores.forEach((row, index) => {
                 let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
-                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
+                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 
-                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 safeNick += getMiniClubBadge(row.club); 
-                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="color: var(--accent);"' : '';
+                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="color: var(--accent);"' : '';
                 
                 tbody.innerHTML += `
                     <tr ${isMe}>
@@ -3363,7 +3536,7 @@ async function loadDesktopRanking(type) {
             });
         }
     } catch (e) { 
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">${t('errorDB')}</td></tr>`; 
     }
 }
 
