@@ -1428,6 +1428,15 @@ const i18n = {
 
 let currentLang = localStorage.getItem('speedwayLang') || 'pl';
 
+function t(key, params = {}) {
+    let langObj = i18n[currentLang] || i18n['pl'];
+    let str = langObj[key] !== undefined ? langObj[key] : (i18n['pl'][key] !== undefined ? i18n['pl'][key] : key);
+    for (let p in params) {
+        str = str.replace(`{${p}}`, params[p]);
+    }
+    return str;
+}
+
 
 // Ensure function is available from inline onclick handlers in HTML
 try { window.setLang = setLang; } catch (e) {}
@@ -3224,7 +3233,7 @@ async function loadDesktopRanking(type) {
 
     tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">${t('loadingData')}</td></tr>`;
 
-   try {
+    try {
         if (type === 'league') {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
@@ -5070,18 +5079,17 @@ async function submitBugReport() {
 }
 
 // --- OBSŁUGA STOPKI (FOOTERA) ---
-
 function showLegalModal(title, htmlContent) {
     const overlay = document.getElementById('appModalOverlay');
     const titleEl = document.getElementById('appModalTitle');
     const messageEl = document.getElementById('appModalMessage');
-    const confirmBtn = confirmBtn.innerText = t('understoodBtn');
+    const confirmBtn = document.getElementById('appModalConfirm'); // POPRAWKA: Usunięto błąd przypisania
     const cancelBtn = document.getElementById('appModalCancel');
 
     titleEl.innerText = title;
     messageEl.innerHTML = htmlContent; 
     
-    confirmBtn.innerText = "ZROZUMIANO";
+    confirmBtn.innerText = t('understoodBtn') || "ZROZUMIANO";
     cancelBtn.style.display = 'none';
 
     confirmBtn.onclick = () => {
