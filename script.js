@@ -1179,86 +1179,50 @@ function getMiniClubBadge(clubName) {
 // ====== SŁOWNIK I18N I TŁUMACZENIA ============
 // ==============================================
 
+// ==============================================
+// ====== SŁOWNIK I18N I TŁUMACZENIA ============
+// ==============================================
+
 const i18n = {
     pl: {
-        // Base
-        account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby zsynchronizować postęp i wejść do rankingu!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick (max 12 znaków)", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ",
+        account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby zsynchronizować postęp!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick (max 12 znaków)", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ",
         settingsTitle: "USTAWIENIA", sound: "Dźwięk:", soundOn: "Włączony 🔊", soundOff: "Wyłączony 🔇",
-        subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry Daily:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ",
+        subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ",
         teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "W GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów",
         stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Obecna Seria", statMax: "Najlepsza Seria", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY",
         winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", 
         theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", themeSystem: "System", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
         tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane", rankTotalWins: "Suma Wygranych", rankGuesses: "Próby",
         months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Wybierz tryb gry", clashElo: "Graj o ELO", clashFriendly: "Mecz Towarzyski", clashFriendlyDesc: "(Graj ze znajomym)", clashLobbyTitle: "🤝 Mecz Towarzyski", clashHost: "UTWÓRZ POKÓJ (HOST)", clashJoinCode: "KOD POKOJU...", clashJoinBtn: "DOŁĄCZ", clashYourCode: "Twój kod pokoju:", clashWaiting: "Oczekiwanie na przeciwnika...", clashReady: "JESTEM GOTÓW", clashTime: "Czas na odpowiedź:", clashSurrender: "PODDAJ SIĘ / WYJDŹ", clashClaim: "PRZEJMIJ POLE", clashConfirm: "POTWIERDŹ", clashCancel: "ANULUJ", clashSeries: "WYNIK SERII", clashRematch: "ZAGRAJ REWANŻ", clashQuit: "ZAKOŃCZ I WYJDŹ", clashRulesTitle: "Zasady gry: Speedway Clash ⚔️", clashRules1: "Gra toczy się na planszy 3x3 na zasadach 'Kółko i Krzyżyk'.", clashRules2: "Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował oba krzyżujące się kluby.", clashRules3: "Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).", clashRules4: "Masz 2 minuty na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę.", clashRules5: "Wygrywa gracz, który jako pierwszy połączy 3 swoje pola w linii!", clashUnderstood: "ZROZUMIANO, WCHODZĘ DO GRY!", clashGuessPlaceholder: "Imię i nazwisko zawodnika...", clashWaitBtn: "OCZEKIWANIE...", clashWaitP2: "CZEKANIE NA DRUGIEGO GRACZA...",
-        
-        // New UI additions & Tables
-        dailyProgress: "TWÓJ POSTĘP DAILY:", missingRider: "💡 Brak zawodnika?", reportBug: "🐛 Zgłoś błąd", joinDiscord: "DOŁĄCZ DO DISCORDA",
+        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Mecz Towarzyski", clashFriendlyDesc: "(Graj ze znajomym)", clashLobbyTitle: "🤝 Mecz Towarzyski", clashHost: "UTWÓRZ POKÓJ (HOST)", clashJoinCode: "KOD POKOJU...", clashJoinBtn: "DOŁĄCZ", clashYourCode: "Twój kod pokoju:", clashWaiting: "Oczekiwanie na przeciwnika...", clashReady: "JESTEM GOTÓW", clashTime: "Czas na odpowiedź:", clashSurrender: "PODDAJ SIĘ / WYJDŹ", clashClaim: "PRZEJMIJ POLE", clashConfirm: "POTWIERDŹ", clashCancel: "ANULUJ", clashSeries: "WYNIK SERII", clashRematch: "ZAGRAJ REWANŻ", clashQuit: "ZAKOŃCZ I WYJDŹ", clashRulesTitle: "Zasady gry: Speedway Clash ⚔️", clashRules1: "Gra toczy się na planszy 3x3 na zasadach 'Kółko i Krzyżyk'.", clashRules2: "Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował oba krzyżujące się kluby.", clashRules3: "Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).", clashRules4: "Masz 2 minuty na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę.", clashRules5: "Wygrywa gracz, który jako pierwszy połączy 3 swoje pola w linii!", clashUnderstood: "ZROZUMIANO, WCHODZĘ DO GRY!", clashGuessPlaceholder: "Imię i nazwisko zawodnika...", clashWaitBtn: "OCZEKIWANIE...", clashWaitP2: "CZEKANIE NA DRUGIEGO GRACZA...",
+        dailyProgress: "TWÓJ POSTĘP DAILY:", missingRider: "💡 Brak zawodnika?", reportBug: "🚩 Zgłoś błąd", joinDiscord: "DOŁĄCZ DO DISCORDA",
         timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "WYNIK:", whoAreWeLookingFor: "KOGO SZUKAMY?", taEmptyList: "Rozwiązani zawodnicy pojawią się tutaj.",
         expertMode: "TRYB EKSPERCKI", games: "Gier", record: "Rekord", average: "Średnia", startGame: "ROZPOCZNIJ GRĘ ►", howToPlay: "JAK GRAĆ?", backToMenu: "🔙 POWRÓT DO MENU GŁÓWNEGO",
-        taRulesTitle: "Zasady gry: Time Attack ⏱️", taRulesDesc: "Podejmij wyzwanie i sprawdź, ilu żużlowców odgadniesz pod presją czasu!",
-        taRule1Title: "Zegar Tyka", taRule1Desc: "Rozpoczynasz grę mając dokładnie 120 sekund. Zegar odlicza w dół bez przerwy.",
-        taRule2Title: "Brak podpowiedzi", taRule2Desc: "W tym trybie nie zgadujesz metodą prób i błędów. Od razu widzisz kraj, rocznik, medale i całą karierę klubową. Musisz natychmiast rozpoznać zawodnika i wpisać jego nazwisko.",
-        taRule3Title: "Bonusy Czasowe", taRule3Desc: "Każdy poprawnie odgadnięty zawodnik dodaje +15 sekund do Twojego licznika. Gra kończy się, gdy czas spadnie do zera.",
-        understoodBack: "ZROZUMIANO, WRACAM DO MENU!",
+        taRulesTitle: "Zasady gry: Time Attack ⏱️", taRulesDesc: "Podejmij wyzwanie i sprawdź, ilu żużlowców odgadniesz pod presją czasu!", taRule1Title: "Zegar Tyka", taRule1Desc: "Rozpoczynasz grę mając dokładnie 120 sekund. Zegar odlicza w dół bez przerwy.", taRule2Title: "Brak podpowiedzi", taRule2Desc: "W tym trybie nie zgadujesz metodą prób i błędów. Od razu widzisz kraj, rocznik, medale i całą karierę klubową.", taRule3Title: "Bonusy Czasowe", taRule3Desc: "Każdy poprawnie odgadnięty zawodnik dodaje +15 sekund do Twojego licznika. Gra kończy się, gdy czas spadnie do zera.", understoodBack: "ZROZUMIANO, WRACAM DO MENU!",
         localGameTitle: "🖥️ Gra Lokalna", localGameDesc: "Wpiszcie swoje nicki, aby zagrać na jednym ekranie.", p1Red: "Gracz 1 (Czerwony)", p2Blue: "Gracz 2 (Niebieski)", startMatch: "ROZPOCZNIJ MECZ",
         boardPreview: "PODGLĄD PLANSZY 👁️", searching: "Wyszukiwanie...", waitingForOpponentElo: "Czekamy na przeciwnika z podobnym ELO", cancel: "PRZERWIJ",
         sugTitle: "ZGŁOŚ ZAWODNIKA", sugDesc: "Zauważyłeś brak żużlowca podczas gry? Podaj jego dane, a po weryfikacji dodam go do oficjalnej bazy! 🤝", sugName: "Imię i Nazwisko *", sugCountry: "Kraj pochodzenia", sugNotes: "Kluby / Uwagi (opcjonalnie)", send: "WYŚLIJ",
-        bugTitle: "ZGŁOŚ BŁĄD 🐛", bugDesc: "Coś poszło nie tak? Gra się zacięła? Opisz problem, a postaram się go jak najszybciej naprawić!", bugDescInput: "Opis problemu *", sendBug: "WYŚLIJ BŁĄD",
-        footerPrivacy: "Polityka Prywatności", footerTerms: "Regulamin", footerContact: "Kontakt (Zgłoś błąd)", footerRights: "Wszelkie prawa zastrzeżone.",
+        bugTitle: "ZGŁOŚ BŁĄD 🐛", bugDesc: "Coś poszło nie tak? Gra się zacięła? Opisz problem!", bugDescInput: "Opis problemu *", sendBug: "WYŚLIJ BŁĄD",
+        footerPrivacy: "Polityka Prywatności", footerTerms: "Regulamin", footerContact: "Kontakt", footerRights: "Wszelkie prawa zastrzeżone.",
         linkedAccounts: "POWIĄZANE KONTA", linkDiscord: "POŁĄCZ Z DISCORDEM", yourNick: "TWÓJ OBECNY NICK:", change: "ZMIEŃ", yourClub: "TWÓJ ULUBIONY KLUB:", chooseClub: "WYBIERZ KLUB 🛡️", myAchievements: "MOJE OSIĄGNIĘCIA", playerAchievements: "OSIĄGNIĘCIA GRACZA", backToProfile: "WRÓĆ DO PROFILU",
         removeSelection: "USUŃ WYBÓR", chooseYourClub: "WYBIERZ SWÓJ KLUB", chooseClubDesc: "Wybierz drużynę, której kibicujesz. Jej skrót będzie widoczny przy Twoim nicku w rankingach i podczas meczów w trybie Clash!",
         updatesTitle: "NOWOŚCI W GRZE 📢", updatesDesc: "Sprawdź, co ostatnio zmieniliśmy!", understoodBtn: "ZROZUMIANO",
-        maintTitle: "PRZERWA TECHNICZNA", maintDesc: "Trwają prace konserwacyjne serwera.<br>Gra jest w tym momencie wyłączona.<br>Zajrzyj ponownie za chwilę!",
+        maintTitle: "PRZERWA TECHNICZNA", maintDesc: "Trwają prace konserwacyjne serwera.<br>Gra jest w tym momencie wyłączona.",
         dToday: "DZISIEJSZA GRA ►", dArchive: "ARCHIWUM DAILY", dLeague: "MECZ LIGOWY ►", dFriendly: "MECZ TOWARZYSKI", dLocal: "GRA LOKALNA (1 PC)", dSettings: "USTAWIENIA", dProfile: "PROFIL",
-        clashRule1Title: "Cel Gry", clashRule2Title: "Przejmowanie Pól", clashRule3Title: "Zasady i Czas", clashRule4Title: "Dodatkowy Wymóg (Hardcore)", clashRule4Desc: "Czasami pod herbem klubu pojawi się flaga kraju. Zawodnik musi dodatkowo pochodzić z tego państwa!",
-        leagueHistory: "Historia Ligowa",
-        
-        // JS dynamic strings & Tables
-        loadingData: "Ładowanie danych...", noResults: "Brak wyników. Zagraj pierwszy!", noResultsCalib: "Brak wyników. Wszyscy gracze są w trakcie kalibracji! ⚖️",
-        noPlayedMatches: "Brak rozegranych meczów.", errorDB: "Błąd bazy danych.",
-        taP1Name: "Gracz 1", taP2Name: "Gracz 2", defaultPlayer: "Gracz",
+        clashRule1Title: "Cel Gry", clashRule2Title: "Przejmowanie Pól", clashRule3Title: "Zasady i Czas", clashRule4Title: "Dodatkowy Wymóg (Hardcore)", clashRule4Desc: "Czasami pod herbem klubu pojawi się flaga kraju. Zawodnik musi dodatkowo pochodzić z tego państwa!", leagueHistory: "Historia Ligowa",
+        loadingData: "Ładowanie danych...", noResults: "Brak wyników. Zagraj pierwszy!", selectModeMenu: "Wybierz tryb z menu po lewej...", taP1Name: "Gracz 1", taP2Name: "Gracz 2", defaultPlayer: "Gracz",
         toastHintUsed: "Użyto podpowiedzi!", toastPlayerGuessed: "Ten zawodnik jest już na liście trafionych.", toastTimeEnd: "Koniec czasu! Zdobyto: {count} pkt. Wrócisz do menu za 5s...",
-        toastWaitTurn: "Czekaj na swoją kolej!", toastCellTaken: "To pole jest już zajęte!", toastPlayerNotExist: "Zawodnik nie istnieje lub został podany!",
-        toastWrongCountry: "BŁĄD! Ta kolumna wymaga zawodnika z kraju:", toastMissedClubs: "Pudło! {name} nie jeździł w obu tych klubach.", toastTurn: "TWÓJ RUCH!",
-        toastSavedClub: "Zapisano! Reprezentujesz:", toastRemovedClub: "Usunięto przynależność klubową", toastAchievement: "🏆 Osiągnięcie:",
-        toastPPM: "⛔ Prawy przycisk myszy zablokowany!", toastConsole: "⛔ Dostęp do konsoli zablokowany!", toastTabSwitch: "⚠️ Wykryto zmianę karty! Tracisz turę.",
+        toastWaitTurn: "Czekaj na swoją kolej!", toastCellTaken: "To pole jest już zajęte!", toastPlayerNotExist: "Zawodnik nie istnieje lub został podany!", toastWrongCountry: "BŁĄD! Ta kolumna wymaga zawodnika z kraju:", toastMissedClubs: "Pudło! {name} nie jeździł w obu tych klubach.", toastTurn: "TWÓJ RUCH!", toastSavedClub: "Zapisano! Reprezentujesz:", toastRemovedClub: "Usunięto przynależność klubową", toastAchievement: "🏆 Osiągnięcie:", toastPPM: "⛔ Prawy przycisk myszy zablokowany!", toastConsole: "⛔ Dostęp do konsoli zablokowany!", toastTabSwitch: "⚠️ Wykryto zmianę karty! Tracisz turę.",
         alertSurrenderConfirm: "Czy na pewno chcesz się poddać i odkryć zawodnika?", alertSurrenderTitle: "Poddajesz się?", alertSurrenderBtn: "TAK, PODDAJĘ SIĘ",
         alertReturnConfirm: "Czy na pewno chcesz wrócić do menu? Zapiszemy Twój postęp w Daily, ale w trybie Endless stracisz tę grę.", alertReturnTitle: "Powrót do menu", alertReturnBtn: "WRÓĆ DO MENU",
         alertNickLength: "Nick musi mieć minimum 3 znaki!", alertNickRules: "Ten nick narusza zasady. Wybierz inny.", alertNickTaken: "Ten nick jest już zajęty! Wymyśl inny.", alertNickSame: "To jest Twój obecny nick!",
         alertClashLeave: "Wyjście zamknie aktualny pokój dla obu graczy.\nCzy na pewno chcesz wyjść?", alertClashLeaveTitle: "Opuścić mecz?", alertClashLeaveBtn: "WYJDŹ",
         alertClashSurrender: "Poddasz mecz ligowy walkowerem.\nTy otrzymasz porażkę i ujemne ELO, a przeciwnik dostanie wygraną oraz nagrodę ELO.\nCzy na pewno chcesz poddać mecz?", alertClashSurrenderBtn: "PODDAJ MECZ",
-        
-        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (TYDZIEŃ)", desktopRankMonthly: "LEADERBOARD (MIESIĄC)", desktopRankAllTime: "LEADERBOARD (OGÓLNY)",
-        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (TYDZIEŃ)", desktopRankMonthly: "LEADERBOARD (MIESIĄC)", desktopRankAllTime: "LEADERBOARD (OGÓLNY)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
         colPos: "Poz.", colNick: "Nick", colRank: "Ranga", colElo: "ELO", colRecord: "Rekord", colSolved: "Rozwiązane", colTotalWins: "Suma Wygranych", colTries: "Próby", yes: "TAK", no: "NIE",
-        
-        ach_title_first_try: "Sokole Oko", ach_desc_first_try: "Zgadnij zawodnika w 1. próbie.",
-        ach_title_close_call: "O włos", ach_desc_close_call: "Zgadnij zawodnika w ostatniej, 10. próbie.",
-        ach_title_no_hint_1: "Bystrzak", ach_desc_no_hint_1: "Wygraj grę bez użycia podpowiedzi.",
-        ach_title_no_hint_5: "Chodząca Encyklopedia", ach_desc_no_hint_5: "Wygraj 5 gier z rzędu bez podpowiedzi.",
-        ach_title_play_10: "Rozgrzewka", ach_desc_play_10: "Rozegraj łącznie 10 gier.",
-        ach_title_play_50: "Maniak", ach_desc_play_50: "Rozegraj łącznie 50 gier.",
-        ach_title_streak_3: "Gorąca Seria I", ach_desc_streak_3: "Osiągnij Win Streak równy 3.",
-        ach_title_streak_7: "Gorąca Seria II", ach_desc_streak_7: "Osiągnij Win Streak równy 7.",
-        ach_title_streak_15: "Gorąca Seria III", ach_desc_streak_15: "Osiągnij Win Streak równy 15.",
-        ach_title_clash_1: "Pierwsza Krew", ach_desc_clash_1: "Wygraj swój pierwszy mecz w Speedway Clash.",
-        ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Wygraj 10 meczów w Clashu.",
-        ach_title_clash_50: "Dominator", ach_desc_clash_50: "Wygraj 50 meczów w Clashu.",
-        ach_title_clash_flawless: "Bezbłędny Clash!", ach_desc_clash_flawless: "Wygraj mecz ligowy, nie oddając przeciwnikowi ani jednego pola.",
-        ach_title_rank_silver: "Srebrny Lis", ach_desc_rank_silver: "Awansuj do rangi Srebro w lidze Clash.",
-        ach_title_rank_gold: "Złoty Chłopak", ach_desc_rank_gold: "Awansuj do rangi Złoto w lidze Clash.",
-        ach_title_rank_diamond: "Żużlowa Elita", ach_desc_rank_diamond: "Awansuj do rangi Diament w lidze Clash.",
-        ach_title_clash_legend: "Żywa Legenda", ach_desc_clash_legend: "Osiągnij najwyższą rangę: Legenda.",
-        ach_title_ta_10: "Time Attack Ekspert I", ach_desc_ta_10: "Odgadnij 10 zawodników w jednej grze Time Attack.",
-        ach_title_ta_20: "Time Attack Ekspert II", ach_desc_ta_20: "Odgadnij 20 zawodników w jednej grze Time Attack.",
-        ach_title_ta_30: "Time Attack Ekspert III", ach_desc_ta_30: "Odgadnij 30 zawodników w jednej grze Time Attack.",
-        ach_title_ta_50: "Time Attack Ekspert IV", ach_desc_ta_50: "Odgadnij 50 zawodników w jednej grze Time Attack.",
-        ach_title_ta_100: "Time Attack God", ach_desc_ta_100: "Odgadnij 100 zawodników w jednej grze Time Attack.",
-        ach_title_easter_club: "Klubowe Barwy", ach_desc_easter_club: "Wybierz swój ulubiony klub w profilu gracza.",
-        ach_title_easter_lang: "Poliglota", ach_desc_easter_lang: "Zmień język gry w Ustawieniach.",
-        ach_title_easter_theme: "Dwa Oblicza", ach_desc_easter_theme: "Zmień motyw gry (Jasny/Ciemny)."
+        privacyTitle: "POLITYKA PRYWATNOŚCI", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Aplikacja zapisuje minimalne dane (Nick z Google, ID, statystyki) wymagane do obsługi trybu multiplayer i tabel rankingowych. Nie wysyłamy spamu. Ciasteczka lokalne przechowują Twój motyw i język.</div>",
+        termsTitle: "REGULAMIN", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Gra to darmowy, nieoficjalny projekt fanowski. Nazwy klubów są używane na prawach cytatu. Oszukiwanie, wulgaryzmy w nazwach graczy lub wychodzenie z meczów Clash może skutkować banem.</div>",
+        ach_title_first_try: "Sokole Oko", ach_desc_first_try: "Zgadnij zawodnika w 1. próbie.", ach_title_close_call: "O włos", ach_desc_close_call: "Zgadnij zawodnika w ostatniej, 10. próbie.", ach_title_no_hint_1: "Bystrzak", ach_desc_no_hint_1: "Wygraj grę bez użycia podpowiedzi.", ach_title_no_hint_5: "Chodząca Encyklopedia", ach_desc_no_hint_5: "Wygraj 5 gier z rzędu bez podpowiedzi.", ach_title_play_10: "Rozgrzewka", ach_desc_play_10: "Rozegraj łącznie 10 gier.", ach_title_play_50: "Maniak", ach_desc_play_50: "Rozegraj łącznie 50 gier.", ach_title_streak_3: "Gorąca Seria I", ach_desc_streak_3: "Osiągnij Win Streak równy 3.", ach_title_streak_7: "Gorąca Seria II", ach_desc_streak_7: "Osiągnij Win Streak równy 7.", ach_title_streak_15: "Gorąca Seria III", ach_desc_streak_15: "Osiągnij Win Streak równy 15.", ach_title_clash_1: "Pierwsza Krew", ach_desc_clash_1: "Wygraj swój pierwszy mecz w Speedway Clash.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Wygraj 10 meczów w Clashu.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Wygraj 50 meczów w Clashu.", ach_title_clash_flawless: "Bezbłędny Clash!", ach_desc_clash_flawless: "Wygraj mecz ligowy, nie oddając przeciwnikowi ani jednego pola.", ach_title_rank_silver: "Srebrny Lis", ach_desc_rank_silver: "Awansuj do rangi Srebro w lidze Clash.", ach_title_rank_gold: "Złoty Chłopak", ach_desc_rank_gold: "Awansuj do rangi Złoto w lidze Clash.", ach_title_rank_diamond: "Żużlowa Elita", ach_desc_rank_diamond: "Awansuj do rangi Diament w lidze Clash.", ach_title_clash_legend: "Żywa Legenda", ach_desc_clash_legend: "Osiągnij najwyższą rangę: Legenda.", ach_title_ta_10: "Time Attack Ekspert I", ach_desc_ta_10: "Odgadnij 10 zawodników w jednej grze Time Attack.", ach_title_ta_20: "Time Attack Ekspert II", ach_desc_ta_20: "Odgadnij 20 zawodników w jednej grze Time Attack.", ach_title_ta_30: "Time Attack Ekspert III", ach_desc_ta_30: "Odgadnij 30 zawodników w jednej grze Time Attack.", ach_title_ta_50: "Time Attack Ekspert IV", ach_desc_ta_50: "Odgadnij 50 zawodników w jednej grze Time Attack.", ach_title_ta_100: "Time Attack God", ach_desc_ta_100: "Odgadnij 100 zawodników w jednej grze Time Attack.", ach_title_easter_club: "Klubowe Barwy", ach_desc_easter_club: "Wybierz swój ulubiony klub w profilu gracza.", ach_title_easter_lang: "Poliglota", ach_desc_easter_lang: "Zmień język gry w Ustawieniach.", ach_title_easter_theme: "Dwa Oblicza", ach_desc_easter_theme: "Zmień motyw gry (Jasny/Ciemny)."
     },
     en: {
         account: "YOUR PROFILE", loginDesc: "Log in with Google to sync progress and enter the leaderboard!", btnLoginGoogle: "LOGIN WITH GOOGLE", orGuest: "OR ENTER GUEST NICK", guestPlaceholder: "Enter nick (max 12 chars)", btnSavePlay: "SAVE & PLAY", btnLogout: "LOGOUT",
@@ -1270,75 +1234,38 @@ const i18n = {
         theme: "Theme:", themeLight: "Light", themeDark: "Dark", themeSystem: "Auto", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
         tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
         months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Choose game mode", clashElo: "Play for ELO", clashFriendly: "Friendly Match", clashFriendlyDesc: "(Play with a friend)", clashLobbyTitle: "🤝 Friendly Match", clashHost: "CREATE ROOM (HOST)", clashJoinCode: "ROOM CODE...", clashJoinBtn: "JOIN", clashYourCode: "Your room code:", clashWaiting: "Waiting for opponent...", clashReady: "I'M READY", clashTime: "Time to answer:", clashSurrender: "SURRENDER / LEAVE", clashClaim: "CLAIM CELL", clashConfirm: "CONFIRM", clashCancel: "CANCEL", clashSeries: "SERIES SCORE", clashRematch: "PLAY REMATCH", clashQuit: "QUIT AND LEAVE", clashRulesTitle: "Rules: Speedway Clash ⚔️", clashRules1: "The game is played on a 3x3 grid like Tic-Tac-Toe.", clashRules2: "To claim a cell, click it and guess a rider who represented both intersecting clubs.", clashRules3: "Remember, only the Polish league history counts.", clashRules4: "You have 2 minutes to answer! Wrong guess or timeout means you lose your turn.", clashRules5: "Connect 3 cells in a line to win!", clashUnderstood: "UNDERSTOOD", clashGuessPlaceholder: "Rider's name and surname...", clashWaitBtn: "WAITING...", clashWaitP2: "WAITING FOR OPPONENT...",
-        
-        dailyProgress: "YOUR DAILY PROGRESS:", missingRider: "💡 Missing rider?", reportBug: "🐛 Report Bug", joinDiscord: "JOIN DISCORD",
+        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Friendly Match", clashFriendlyDesc: "(Play with a friend)", clashLobbyTitle: "🤝 Friendly Match", clashHost: "CREATE ROOM (HOST)", clashJoinCode: "ROOM CODE...", clashJoinBtn: "JOIN", clashYourCode: "Your room code:", clashWaiting: "Waiting for opponent...", clashReady: "I'M READY", clashTime: "Time to answer:", clashSurrender: "SURRENDER / LEAVE", clashClaim: "CLAIM CELL", clashConfirm: "CONFIRM", clashCancel: "CANCEL", clashSeries: "SERIES SCORE", clashRematch: "PLAY REMATCH", clashQuit: "QUIT AND LEAVE", clashRulesTitle: "Rules: Speedway Clash ⚔️", clashRules1: "The game is played on a 3x3 grid like Tic-Tac-Toe.", clashRules2: "To claim a cell, click it and guess a rider who represented both intersecting clubs.", clashRules3: "Remember, only the Polish league history counts.", clashRules4: "You have 2 minutes to answer! Wrong guess or timeout means you lose your turn.", clashRules5: "Connect 3 cells in a line to win!", clashUnderstood: "UNDERSTOOD!", clashGuessPlaceholder: "Rider's name and surname...", clashWaitBtn: "WAITING...", clashWaitP2: "WAITING FOR OPPONENT...",
+        dailyProgress: "YOUR DAILY PROGRESS:", missingRider: "💡 Missing rider?", reportBug: "🚩 Report Bug", joinDiscord: "JOIN DISCORD",
         timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "SCORE:", whoAreWeLookingFor: "WHO ARE WE LOOKING FOR?", taEmptyList: "Guessed riders will appear here.",
         expertMode: "EXPERT MODE", games: "Games", record: "Record", average: "Average", startGame: "START GAME ►", howToPlay: "HOW TO PLAY?", backToMenu: "🔙 BACK TO MAIN MENU",
-        taRulesTitle: "Rules: Time Attack ⏱️", taRulesDesc: "Take the challenge and see how many riders you can guess under time pressure!",
-        taRule1Title: "Clock is Ticking", taRule1Desc: "You start the game with exactly 120 seconds. The clock counts down continuously.",
-        taRule2Title: "No step-by-step hints", taRule2Desc: "You don't guess by trial and error here. You instantly see the country, year of birth, medals, and club history. You must recognize the rider immediately.",
-        taRule3Title: "Time Bonuses", taRule3Desc: "Every correctly guessed rider adds +15 seconds to your timer. The game ends when the time runs out.",
-        understoodBack: "UNDERSTOOD, BACK TO MENU!",
+        taRulesTitle: "Rules: Time Attack ⏱️", taRulesDesc: "Take the challenge and see how many riders you can guess under time pressure!", taRule1Title: "Clock is Ticking", taRule1Desc: "You start the game with exactly 120 seconds. The clock counts down continuously.", taRule2Title: "No hints", taRule2Desc: "You instantly see the country, year of birth, medals, and club history. You must recognize the rider immediately.", taRule3Title: "Time Bonuses", taRule3Desc: "Every correctly guessed rider adds +15 seconds to your timer. The game ends when the time runs out.", understoodBack: "UNDERSTOOD, BACK TO MENU!",
         localGameTitle: "🖥️ Local Game", localGameDesc: "Enter your nicknames to play on a single screen.", p1Red: "Player 1 (Red)", p2Blue: "Player 2 (Blue)", startMatch: "START MATCH",
         boardPreview: "BOARD PREVIEW 👁️", searching: "Searching...", waitingForOpponentElo: "Waiting for an opponent with similar ELO", cancel: "CANCEL",
         sugTitle: "REPORT A RIDER", sugDesc: "Noticed a missing rider? Provide their details and we'll add them to the database! 🤝", sugName: "Full Name *", sugCountry: "Country", sugNotes: "Clubs / Notes (optional)", send: "SEND",
-        bugTitle: "REPORT A BUG 🐛", bugDesc: "Something went wrong? Describe the problem so we can fix it quickly!", bugDescInput: "Problem description *", sendBug: "SEND BUG",
-        footerPrivacy: "Privacy Policy", footerTerms: "Terms of Service", footerContact: "Contact (Report Bug)", footerRights: "All rights reserved.",
+        bugTitle: "REPORT A BUG 🐛", bugDesc: "Something went wrong? Describe the problem!", bugDescInput: "Problem description *", sendBug: "SEND BUG",
+        footerPrivacy: "Privacy Policy", footerTerms: "Terms of Service", footerContact: "Contact", footerRights: "All rights reserved.",
         linkedAccounts: "LINKED ACCOUNTS", linkDiscord: "LINK DISCORD", yourNick: "YOUR CURRENT NICK:", change: "CHANGE", yourClub: "YOUR FAVORITE CLUB:", chooseClub: "CHOOSE CLUB 🛡️", myAchievements: "MY ACHIEVEMENTS", playerAchievements: "PLAYER ACHIEVEMENTS", backToProfile: "BACK TO PROFILE",
         removeSelection: "REMOVE SELECTION", chooseYourClub: "CHOOSE YOUR CLUB", chooseClubDesc: "Select the team you support. Its badge will be visible next to your nick in leaderboards and Clash matches!",
         updatesTitle: "GAME UPDATES 📢", updatesDesc: "Check out our latest changes!", understoodBtn: "UNDERSTOOD",
-        maintTitle: "MAINTENANCE BREAK", maintDesc: "Server maintenance in progress.<br>The game is temporarily disabled.<br>Check back soon!",
+        maintTitle: "MAINTENANCE BREAK", maintDesc: "Server maintenance in progress.<br>The game is temporarily disabled.",
         dToday: "TODAY'S GAME ►", dArchive: "DAILY ARCHIVE", dLeague: "LEAGUE MATCH ►", dFriendly: "FRIENDLY MATCH", dLocal: "LOCAL PLAY (1 PC)", dSettings: "SETTINGS", dProfile: "PROFILE",
-        clashRule1Title: "Game Goal", clashRule2Title: "Claiming Cells", clashRule3Title: "Rules and Time", clashRule4Title: "Extra Requirement (Hardcore)", clashRule4Desc: "Sometimes a country flag will appear under the club badge. The rider must also be from that country!",
-        leagueHistory: "League History",
-        
-        loadingData: "Loading data...", noResults: "No results. Be the first to play!", noResultsCalib: "No results. All players are currently in calibration! ⚖️",
-        noPlayedMatches: "No matches played.", errorDB: "Database error.",
-        taP1Name: "Player 1", taP2Name: "Player 2", defaultPlayer: "Player",
+        clashRule1Title: "Game Goal", clashRule2Title: "Claiming Cells", clashRule3Title: "Rules and Time", clashRule4Title: "Extra Requirement", clashRule4Desc: "Sometimes a country flag will appear under the club badge. The rider must also be from that country!", leagueHistory: "League History",
+        loadingData: "Loading data...", noResults: "No results. Be the first to play!", selectModeMenu: "Select a game mode from the menu...", taP1Name: "Player 1", taP2Name: "Player 2", defaultPlayer: "Player",
         toastHintUsed: "Hint used!", toastPlayerGuessed: "This rider is already guessed.", toastTimeEnd: "Time's up! Score: {count} pts. Returning to menu in 5s...",
-        toastWaitTurn: "Wait for your turn!", toastCellTaken: "This cell is already taken!", toastPlayerNotExist: "Rider does not exist or was already picked!",
-        toastWrongCountry: "ERROR! This column requires a rider from:", toastMissedClubs: "Miss! {name} hasn't ridden for both these clubs.", toastTurn: "YOUR TURN!",
-        toastSavedClub: "Saved! You represent:", toastRemovedClub: "Club affiliation removed", toastAchievement: "🏆 Achievement:",
-        toastPPM: "⛔ Right click disabled!", toastConsole: "⛔ Console access disabled!", toastTabSwitch: "⚠️ Tab switch detected! You lose your turn.",
+        toastWaitTurn: "Wait for your turn!", toastCellTaken: "This cell is already taken!", toastPlayerNotExist: "Rider does not exist or was already picked!", toastWrongCountry: "ERROR! This column requires a rider from:", toastMissedClubs: "Miss! {name} hasn't ridden for both these clubs.", toastTurn: "YOUR TURN!", toastSavedClub: "Saved! You represent:", toastRemovedClub: "Club affiliation removed", toastAchievement: "🏆 Achievement:", toastPPM: "⛔ Right click disabled!", toastConsole: "⛔ Console access disabled!", toastTabSwitch: "⚠️ Tab switch detected! You lose your turn.",
         alertSurrenderConfirm: "Are you sure you want to give up and reveal the rider?", alertSurrenderTitle: "Giving up?", alertSurrenderBtn: "YES, I GIVE UP",
         alertReturnConfirm: "Are you sure you want to return to menu? Daily progress will be saved, but Endless progress will be lost.", alertReturnTitle: "Return to menu", alertReturnBtn: "RETURN TO MENU",
         alertNickLength: "Nick must have at least 3 characters!", alertNickRules: "This nick violates the rules. Choose another.", alertNickTaken: "This nick is already taken! Choose another.", alertNickSame: "This is your current nick!",
         alertClashLeave: "Leaving will close the room for both players.\nAre you sure you want to leave?", alertClashLeaveTitle: "Leave match?", alertClashLeaveBtn: "LEAVE",
-        alertClashSurrender: "You will forfeit the match.\nYou'll receive a loss and negative ELO, and your opponent will get a win.\nAre you sure you want to surrender?", alertClashSurrenderBtn: "SURRENDER",
-        
-        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (WEEK)", desktopRankMonthly: "LEADERBOARD (MONTH)", desktopRankAllTime: "LEADERBOARD (ALL-TIME)",
-        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        alertClashSurrender: "You will forfeit the match.\nYou'll receive a loss and negative ELO.\nAre you sure you want to surrender?", alertClashSurrenderBtn: "SURRENDER",
+        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (WEEK)", desktopRankMonthly: "LEADERBOARD (MONTH)", desktopRankAllTime: "LEADERBOARD (ALL-TIME)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
         colPos: "Pos.", colNick: "Nick", colRank: "Rank", colElo: "ELO", colRecord: "Record", colSolved: "Solved", colTotalWins: "Total Wins", colTries: "Guesses", yes: "YES", no: "NO",
-        
-        ach_title_first_try: "Eagle Eye", ach_desc_first_try: "Guess the rider on the 1st try.",
-        ach_title_close_call: "Close Call", ach_desc_close_call: "Guess the rider on the last, 10th try.",
-        ach_title_no_hint_1: "Smarty Pants", ach_desc_no_hint_1: "Win a game without using a hint.",
-        ach_title_no_hint_5: "Walking Encyclopedia", ach_desc_no_hint_5: "Win 5 games in a row without hints.",
-        ach_title_play_10: "Warm-up", ach_desc_play_10: "Play 10 games in total.",
-        ach_title_play_50: "Maniac", ach_desc_play_50: "Play 50 games in total.",
-        ach_title_streak_3: "Hot Streak I", ach_desc_streak_3: "Achieve a Win Streak of 3.",
-        ach_title_streak_7: "Hot Streak II", ach_desc_streak_7: "Achieve a Win Streak of 7.",
-        ach_title_streak_15: "Hot Streak III", ach_desc_streak_15: "Achieve a Win Streak of 15.",
-        ach_title_clash_1: "First Blood", ach_desc_clash_1: "Win your first Speedway Clash match.",
-        ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Win 10 matches in Clash.",
-        ach_title_clash_50: "Dominator", ach_desc_clash_50: "Win 50 matches in Clash.",
-        ach_title_clash_flawless: "Flawless Clash!", ach_desc_clash_flawless: "Win a league match without giving your opponent a single cell.",
-        ach_title_rank_silver: "Silver Fox", ach_desc_rank_silver: "Reach the Silver rank in Clash league.",
-        ach_title_rank_gold: "Golden Boy", ach_desc_rank_gold: "Reach the Gold rank in Clash league.",
-        ach_title_rank_diamond: "Speedway Elite", ach_desc_rank_diamond: "Reach the Diamond rank in Clash league.",
-        ach_title_clash_legend: "Living Legend", ach_desc_clash_legend: "Reach the highest rank: Legend.",
-        ach_title_ta_10: "Time Attack Expert I", ach_desc_ta_10: "Guess 10 riders in a single Time Attack game.",
-        ach_title_ta_20: "Time Attack Expert II", ach_desc_ta_20: "Guess 20 riders in a single Time Attack game.",
-        ach_title_ta_30: "Time Attack Expert III", ach_desc_ta_30: "Guess 30 riders in a single Time Attack game.",
-        ach_title_ta_50: "Time Attack Expert IV", ach_desc_ta_50: "Guess 50 riders in a single Time Attack game.",
-        ach_title_ta_100: "Time Attack God", ach_desc_ta_100: "Guess 100 riders in a single Time Attack game.",
-        ach_title_easter_club: "Club Colors", ach_desc_easter_club: "Select your favorite club in your player profile.",
-        ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Change the game language in Settings.",
-        ach_title_easter_theme: "Two Faces", ach_desc_easter_theme: "Change the game theme (Light/Dark)."
+        privacyTitle: "PRIVACY POLICY", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>We store minimal data (Google Nick, ID, stats) to provide multiplayer features and leaderboards. We don't send spam. Local cookies store your theme and language.</div>",
+        termsTitle: "TERMS OF SERVICE", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>The game is a free, unofficial fan project. Cheating, using vulgar nicknames, or leaving Clash matches on purpose will result in a ban.</div>",
+        ach_title_first_try: "Eagle Eye", ach_desc_first_try: "Guess the rider on the 1st try.", ach_title_close_call: "Close Call", ach_desc_close_call: "Guess the rider on the last, 10th try.", ach_title_no_hint_1: "Smarty Pants", ach_desc_no_hint_1: "Win a game without using a hint.", ach_title_no_hint_5: "Walking Encyclopedia", ach_desc_no_hint_5: "Win 5 games in a row without hints.", ach_title_play_10: "Warm-up", ach_desc_play_10: "Play 10 games in total.", ach_title_play_50: "Maniac", ach_desc_play_50: "Play 50 games in total.", ach_title_streak_3: "Hot Streak I", ach_desc_streak_3: "Achieve a Win Streak of 3.", ach_title_streak_7: "Hot Streak II", ach_desc_streak_7: "Achieve a Win Streak of 7.", ach_title_streak_15: "Hot Streak III", ach_desc_streak_15: "Achieve a Win Streak of 15.", ach_title_clash_1: "First Blood", ach_desc_clash_1: "Win your first Speedway Clash match.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Win 10 matches in Clash.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Win 50 matches in Clash.", ach_title_clash_flawless: "Flawless Clash!", ach_desc_clash_flawless: "Win a league match without giving your opponent a single cell.", ach_title_rank_silver: "Silver Fox", ach_desc_rank_silver: "Reach the Silver rank in Clash league.", ach_title_rank_gold: "Golden Boy", ach_desc_rank_gold: "Reach the Gold rank in Clash league.", ach_title_rank_diamond: "Speedway Elite", ach_desc_rank_diamond: "Reach the Diamond rank in Clash league.", ach_title_clash_legend: "Living Legend", ach_desc_clash_legend: "Reach the highest rank: Legend.", ach_title_ta_10: "Time Attack Expert I", ach_desc_ta_10: "Guess 10 riders in a single Time Attack game.", ach_title_ta_20: "Time Attack Expert II", ach_desc_ta_20: "Guess 20 riders in a single Time Attack game.", ach_title_ta_30: "Time Attack Expert III", ach_desc_ta_30: "Guess 30 riders in a single Time Attack game.", ach_title_ta_50: "Time Attack Expert IV", ach_desc_ta_50: "Guess 50 riders in a single Time Attack game.", ach_title_ta_100: "Time Attack God", ach_desc_ta_100: "Guess 100 riders in a single Time Attack game.", ach_title_easter_club: "Club Colors", ach_desc_easter_club: "Select your favorite club in your player profile.", ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Change the game language in Settings.", ach_title_easter_theme: "Two Faces", ach_desc_easter_theme: "Change the game theme (Light/Dark)."
     },
     sv: {
-        account: "DIN PROFIL", loginDesc: "Logga in med Google för att synkronisera framsteg och delta i rankningen!", btnLoginGoogle: "LOGGA IN MED GOOGLE", orGuest: "ELLER ANGE GÄSTNICK", guestPlaceholder: "Ange nick (max 12 teck)", btnSavePlay: "SPARA & SPELA", btnLogout: "LOGGA UT",
+        account: "DIN PROFIL", loginDesc: "Logga in med Google för att delta i rankningen!", btnLoginGoogle: "LOGGA IN MED GOOGLE", orGuest: "ELLER ANGE GÄSTNICK", guestPlaceholder: "Ange nick (max 12 teck)", btnSavePlay: "SPARA & SPELA", btnLogout: "LOGGA UT",
         settingsTitle: "INSTÄLLNINGAR", sound: "Ljud:", soundOn: "På 🔊", soundOff: "Av 🔇",
         subtitle: "Speedway Edition", lastGames: "Senaste Daily:", btnDaily: "Spela Daily", btnReview: "Granska spel", btnEndless: "Endless Guessr", searchPlaceholder: "Ange förarens namn...", btnGuess: "GISSA",
         teams: "Klubbar:", colName: "Förare", colCountry: "Land", colYear: "Född", colGP: "SGP?", colDMP: "Lagmedaljer", colStatus: "Status", colClubs: "Klubbhistorik",
@@ -1347,75 +1274,38 @@ const i18n = {
         theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", themeSystem: "System", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
         tabDaily: "DAGLIG", tabWeekly: "VECKA", tabMonthly: "MÅNAD", tabAllTime: "ALLMÄN", rankWonToday: "Vinster", rankTotalWins: "Totala Vinster", rankGuesses: "Gissningar",
         months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"], weekdays: ["Må", "Ti", "On", "To", "Fr", "Lö", "Sö"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Välj spelläge", clashElo: "Spela för ELO", clashFriendly: "Vänskapsmatch", clashFriendlyDesc: "(Spela med en vän)", clashLobbyTitle: "🤝 Vänskapsmatch", clashHost: "SKAPA RUM (HOST)", clashJoinCode: "RUMKOD...", clashJoinBtn: "GÅ MED", clashYourCode: "Din rumkod:", clashWaiting: "Väntar på motståndare...", clashReady: "JAG ÄR REDO", clashTime: "Tid att svara:", clashSurrender: "GE UPP / LÄMNA", clashClaim: "TA ÖVER RUTA", clashConfirm: "BEKRÄFTA", clashCancel: "AVBRYT", clashSeries: "SERIERESULTAT", clashRematch: "SPELA RETURMATCH", clashQuit: "AVSLUTA OCH LÄMNA", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spelet spelas på ett 3x3 rutnät som Luffarschack.", clashRules2: "För att ta över en ruta, klicka på den och gissa en förare som representerat båda klubbarna.", clashRules3: "Kom ihåg att endast den polska ligahistoriken räknas.", clashRules4: "Du har 2 minuter på dig att svara! Vid fel gissning eller om tiden går ut förlorar du din tur.", clashRules5: "Anslut 3 rutor i rad för att vinna!", clashUnderstood: "FÖRSTÅTT, JAG SPELAR!", clashGuessPlaceholder: "Förarens för- och efternamn...", clashWaitBtn: "VÄNTAR...", clashWaitP2: "VÄNTAR PÅ MOTSTÅNDARE...",
-        
-        dailyProgress: "DIN DAGLIGA FRAMSTEG:", missingRider: "💡 Saknad förare?", reportBug: "🐛 Rapportera Bugg", joinDiscord: "GÅ MED I DISCORD",
+        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Vänskapsmatch", clashFriendlyDesc: "(Spela med en vän)", clashLobbyTitle: "🤝 Vänskapsmatch", clashHost: "SKAPA RUM (HOST)", clashJoinCode: "RUMKOD...", clashJoinBtn: "GÅ MED", clashYourCode: "Din rumkod:", clashWaiting: "Väntar på motståndare...", clashReady: "JAG ÄR REDO", clashTime: "Tid att svara:", clashSurrender: "GE UPP / LÄMNA", clashClaim: "TA ÖVER RUTA", clashConfirm: "BEKRÄFTA", clashCancel: "AVBRYT", clashSeries: "SERIERESULTAT", clashRematch: "SPELA RETURMATCH", clashQuit: "AVSLUTA OCH LÄMNA", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spelet spelas på ett 3x3 rutnät som Luffarschack.", clashRules2: "För att ta över en ruta, klicka på den och gissa en förare som representerat båda klubbarna.", clashRules3: "Kom ihåg att endast den polska ligahistoriken räknas.", clashRules4: "Du har 2 minuter på dig att svara! Vid fel gissning förlorar du din tur.", clashRules5: "Anslut 3 rutor i rad för att vinna!", clashUnderstood: "FÖRSTÅTT, JAG SPELAR!", clashGuessPlaceholder: "Förarens för- och efternamn...", clashWaitBtn: "VÄNTAR...", clashWaitP2: "VÄNTAR PÅ MOTSTÅNDARE...",
+        dailyProgress: "DIN DAGLIGA FRAMSTEG:", missingRider: "💡 Saknad förare?", reportBug: "🚩 Rapportera Bugg", joinDiscord: "GÅ MED I DISCORD",
         timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "POÄNG:", whoAreWeLookingFor: "VEM LETER VI EFTER?", taEmptyList: "Gissade förare visas här.",
         expertMode: "EXPERT LÄGE", games: "Spel", record: "Rekord", average: "Snitt", startGame: "BÖRJA SPELA ►", howToPlay: "HUR SPELAR MAN?", backToMenu: "🔙 TILLBAKA TILL MENYN",
-        taRulesTitle: "Regler: Time Attack ⏱️", taRulesDesc: "Ta antagningen och se hur många förare du kan gissa under tidspress!",
-        taRule1Title: "Klockan tickar", taRule1Desc: "Du börjar spelet med exakt 120 sekunder. Klockan räknar ner oavbrutet.",
-        taRule2Title: "Inga steg-för-steg-tips", taRule2Desc: "Du gissar inte genom försök och misstag här. Du ser direkt land, födelseår, medaljer och klubbhistorik.",
-        taRule3Title: "Tidsbonusar", taRule3Desc: "Varje korrekt gissad förare lägger till +15 sekunder till din timer. Spelet slutar när tiden är ute.",
-        understoodBack: "FÖRSTÅTT, TILLBAKA!",
+        taRulesTitle: "Regler: Time Attack ⏱️", taRulesDesc: "Ta antagningen och se hur många förare du kan gissa under tidspress!", taRule1Title: "Klockan tickar", taRule1Desc: "Du börjar spelet med exakt 120 sekunder. Klockan räknar ner oavbrutet.", taRule2Title: "Inga tips", taRule2Desc: "Du ser direkt land, födelseår, medaljer och klubbhistorik.", taRule3Title: "Tidsbonusar", taRule3Desc: "Varje korrekt gissad förare lägger till +15 sekunder till din timer.", understoodBack: "FÖRSTÅTT, TILLBAKA!",
         localGameTitle: "🖥️ Lokalt Spel", localGameDesc: "Ange era nicks för att spela på en skärm.", p1Red: "Spelare 1 (Röd)", p2Blue: "Spelare 2 (Blå)", startMatch: "BÖRJA MATCH",
         boardPreview: "BRÄDENS FÖRHANDSGRANSKNING 👁️", searching: "Söker...", waitingForOpponentElo: "Väntar på en motståndare med liknande ELO", cancel: "AVBRYT",
-        sugTitle: "RAPPORTERA EN FÖRARE", sugDesc: "Märkte du en saknad förare? Ge oss deras detaljer så lägger vi till dem! 🤝", sugName: "För- och efternamn *", sugCountry: "Land", sugNotes: "Klubbar / Anteckningar", send: "SKICKA",
-        bugTitle: "RAPPORTERA ETT FEL 🐛", bugDesc: "Gick något fel? Beskriv problemet så fixar vi det!", bugDescInput: "Problembeskrivning *", sendBug: "SKICKA FEL",
-        footerPrivacy: "Integritetspolicy", footerTerms: "Användarvillkor", footerContact: "Kontakt (Rapportera fel)", footerRights: "Alla rättigheter förbehållna.",
+        sugTitle: "RAPPORTERA EN FÖRARE", sugDesc: "Märkte du en saknad förare? Ge oss detaljer! 🤝", sugName: "För- och efternamn *", sugCountry: "Land", sugNotes: "Klubbar / Anteckningar", send: "SKICKA",
+        bugTitle: "RAPPORTERA ETT FEL 🐛", bugDesc: "Gick något fel? Beskriv problemet!", bugDescInput: "Problembeskrivning *", sendBug: "SKICKA FEL",
+        footerPrivacy: "Integritetspolicy", footerTerms: "Användarvillkor", footerContact: "Kontakt", footerRights: "Alla rättigheter förbehållna.",
         linkedAccounts: "LÄNKADE KONTON", linkDiscord: "LÄNKA DISCORD", yourNick: "DITT NUVARANDE NICK:", change: "ÄNDRA", yourClub: "DIN FAVORITKLUBB:", chooseClub: "VÄLJ KLUBB 🛡️", myAchievements: "MINA PRESTATIONER", playerAchievements: "SPELARPRESTATIONER", backToProfile: "TILLBAKA TILL PROFILEN",
-        removeSelection: "TA BORT VAL", chooseYourClub: "VÄLJ DIN KLUBB", chooseClubDesc: "Välj laget du stöder. Dess logotyp visas bredvid ditt nick i rankingar och Clash-matcher!",
+        removeSelection: "TA BORT VAL", chooseYourClub: "VÄLJ DIN KLUBB", chooseClubDesc: "Välj laget du stöder. Dess logotyp visas bredvid ditt nick!",
         updatesTitle: "SPELUPPDATERINGAR 📢", updatesDesc: "Kolla in våra senaste ändringar!", understoodBtn: "FÖRSTÅTT",
-        maintTitle: "UNDERHÅLL", maintDesc: "Serverunderhåll pågår.<br>Spelet är tillfälligt inaktiverat.<br>Kom tillbaka snart!",
-        dToday: "DAGENS SPEL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAMATCH ►", dFriendly: "VÄNSKAPSMATCH", dLocal: "LOKALT SPEL (1 PC)", dSettings: "INSTÄLLNINGAR", dProfile: "PROFIL",
-        clashRule1Title: "Spelmål", clashRule2Title: "Överta rutor", clashRule3Title: "Regler och tid", clashRule4Title: "Extra Krav (Hardcore)", clashRule4Desc: "Ibland visas en landsflagga under klubbloggan. Föraren måste också komma från det landet!",
-        leagueHistory: "Ligahistorik",
-        
-        loadingData: "Laddar data...", noResults: "Inga resultat. Var den första att spela!", noResultsCalib: "Inga resultat. Alla spelare kalibreras just nu! ⚖️",
-        noPlayedMatches: "Inga spelade matcher.", errorDB: "Databasfel.",
-        taP1Name: "Spelare 1", taP2Name: "Spelare 2", defaultPlayer: "Spelare",
+        maintTitle: "UNDERHÅLL", maintDesc: "Serverunderhåll pågår.<br>Spelet är tillfälligt inaktiverat.",
+        dToday: "DAGENS SPEL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAMATCH ►", dFriendly: "VÄNSKAPSMATCH", dLocal: "LOKALT SPIL (1 PC)", dSettings: "INSTÄLLNINGAR", dProfile: "PROFIL",
+        clashRule1Title: "Spelmål", clashRule2Title: "Överta rutor", clashRule3Title: "Regler och tid", clashRule4Title: "Extra Krav", clashRule4Desc: "Ibland visas en landsflagga under klubbloggan. Föraren måste också komma från det landet!", leagueHistory: "Ligahistorik",
+        loadingData: "Laddar data...", noResults: "Inga resultat. Var den första att spela!", selectModeMenu: "Välj ett spelläge från menyn...", taP1Name: "Spelare 1", taP2Name: "Spelare 2", defaultPlayer: "Spelare",
         toastHintUsed: "Tips använt!", toastPlayerGuessed: "Denna förare är redan gissad.", toastTimeEnd: "Tiden är ute! Poäng: {count}. Tillbaka till menyn om 5s...",
-        toastWaitTurn: "Vänta på din tur!", toastCellTaken: "Denna ruta är redan tagen!", toastPlayerNotExist: "Föraren finns inte eller är redan vald!",
-        toastWrongCountry: "FEL! Denna kolumn kräver en förare från:", toastMissedClubs: "Miss! {name} har inte kört för båda dessa klubbar.", toastTurn: "DIN TUR!",
-        toastSavedClub: "Sparat! Du representerar:", toastRemovedClub: "Klubbtillhörighet borttagen", toastAchievement: "🏆 Prestation:",
-        toastPPM: "⛔ Högerklick inaktiverat!", toastConsole: "⛔ Konsolåtkomst inaktiverat!", toastTabSwitch: "⚠️ Flikbyte upptäckt! Du förlorar din tur.",
+        toastWaitTurn: "Vänta på din tur!", toastCellTaken: "Denna ruta är redan tagen!", toastPlayerNotExist: "Föraren finns inte eller är redan vald!", toastWrongCountry: "FEL! Denna kolumn kräver en förare från:", toastMissedClubs: "Miss! {name} har inte kört för båda dessa klubbar.", toastTurn: "DIN TUR!", toastSavedClub: "Sparat! Du representerar:", toastRemovedClub: "Klubbtillhörighet borttagen", toastAchievement: "🏆 Prestation:", toastPPM: "⛔ Högerklick inaktiverat!", toastConsole: "⛔ Konsolåtkomst inaktiverat!", toastTabSwitch: "⚠️ Flikbyte upptäckt! Du förlorar din tur.",
         alertSurrenderConfirm: "Är du säker på att du vill ge upp och avslöja föraren?", alertSurrenderTitle: "Ger du upp?", alertSurrenderBtn: "JA, JAG GER UPP",
         alertReturnConfirm: "Är du säker på att du vill återvända till menyn? Daily-framsteg sparas, men Endless går förlorad.", alertReturnTitle: "Återvänd till menyn", alertReturnBtn: "TILL MENYN",
         alertNickLength: "Nicket måste ha minst 3 tecken!", alertNickRules: "Detta nick bryter mot reglerna. Välj ett annat.", alertNickTaken: "Detta nick är redan upptaget!", alertNickSame: "Detta är ditt nuvarande nick!",
-        alertClashLeave: "Att lämna stänger rummet för båda spelarna.\nÄr du säker på att du vill lämna?", alertClashLeaveTitle: "Lämna match?", alertClashLeaveBtn: "LÄMNA",
+        alertClashLeave: "Att lämna stänger rummet för båda spelarna.\nÄr du säker?", alertClashLeaveTitle: "Lämna match?", alertClashLeaveBtn: "LÄMNA",
         alertClashSurrender: "Du kommer att förlora matchen på walkover.\nDu får en förlust och minus-ELO.\nÄr du säker?", alertClashSurrenderBtn: "GE UPP",
-        
-        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (VECKA)", desktopRankMonthly: "LEADERBOARD (MÅNAD)", desktopRankAllTime: "LEADERBOARD (ALLMÄN)",
-        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (VECKA)", desktopRankMonthly: "LEADERBOARD (MÅNAD)", desktopRankAllTime: "LEADERBOARD (ALLMÄN)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
         colPos: "Pos.", colNick: "Nick", colRank: "Rank", colElo: "ELO", colRecord: "Rekord", colSolved: "Lösta", colTotalWins: "Totala Vinster", colTries: "Gissningar", yes: "JA", no: "NEJ",
-        
-        ach_title_first_try: "Örnöga", ach_desc_first_try: "Gissa föraren på 1:a försöket.",
-        ach_title_close_call: "Nära ögat", ach_desc_close_call: "Gissa föraren på sista, 10:e försöket.",
-        ach_title_no_hint_1: "Smartskalle", ach_desc_no_hint_1: "Vinn ett spel utan att använda tips.",
-        ach_title_no_hint_5: "Vandrande uppslagsverk", ach_desc_no_hint_5: "Vinn 5 spel i rad utan tips.",
-        ach_title_play_10: "Uppvärmning", ach_desc_play_10: "Spela 10 spel totalt.",
-        ach_title_play_50: "Galning", ach_desc_play_50: "Spela 50 spel totalt.",
-        ach_title_streak_3: "Hett flow I", ach_desc_streak_3: "Uppnå en vinstsvit på 3.",
-        ach_title_streak_7: "Hett flow II", ach_desc_streak_7: "Uppnå en vinstsvit på 7.",
-        ach_title_streak_15: "Hett flow III", ach_desc_streak_15: "Uppnå en vinstsvit på 15.",
-        ach_title_clash_1: "Första blodet", ach_desc_clash_1: "Vinn din första Speedway Clash-match.",
-        ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Vinn 10 matcher i Clash.",
-        ach_title_clash_50: "Dominator", ach_desc_clash_50: "Vinn 50 matcher i Clash.",
-        ach_title_clash_flawless: "Felfri Clash!", ach_desc_clash_flawless: "Vinn en ligamatch utan att ge motståndaren en enda ruta.",
-        ach_title_rank_silver: "Silverräven", ach_desc_rank_silver: "Nå Silver-rank i Clash-ligan.",
-        ach_title_rank_gold: "Guldgossen", ach_desc_rank_gold: "Nå Guld-rank i Clash-ligan.",
-        ach_title_rank_diamond: "Speedwayelit", ach_desc_rank_diamond: "Nå Diamant-rank i Clash-ligan.",
-        ach_title_clash_legend: "Levande legend", ach_desc_clash_legend: "Nå högsta ranken: Legend.",
-        ach_title_ta_10: "Time Attack Expert I", ach_desc_ta_10: "Gissa 10 förare i ett enda Time Attack-spel.",
-        ach_title_ta_20: "Time Attack Expert II", ach_desc_ta_20: "Gissa 20 förare i ett enda Time Attack-spel.",
-        ach_title_ta_30: "Time Attack Expert III", ach_desc_ta_30: "Gissa 30 förare i ett enda Time Attack-spel.",
-        ach_title_ta_50: "Time Attack Expert IV", ach_desc_ta_50: "Gissa 50 förare i ett enda Time Attack-spel.",
-        ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gissa 100 förare i ett enda Time Attack-spel.",
-        ach_title_easter_club: "Klubbfärger", ach_desc_easter_club: "Välj din favoritklubb i din spelarprofil.",
-        ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Byt spelspråk i Inställningar.",
-        ach_title_easter_theme: "Två ansikten", ach_desc_easter_theme: "Byt speltema (Ljust/Mörkt)."
+        privacyTitle: "INTEGRITETSPOLICY", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Vi sparar minimala data för rankningar. Inget spam.</div>",
+        termsTitle: "ANVÄNDARVILLKOR", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Detta är ett inofficiellt fan-projekt. Fusk leder till ban.</div>",
+        ach_title_first_try: "Örnöga", ach_desc_first_try: "Gissa föraren på 1:a försöket.", ach_title_close_call: "Nära ögat", ach_desc_close_call: "Gissa föraren på sista, 10:e försöket.", ach_title_no_hint_1: "Smartskalle", ach_desc_no_hint_1: "Vinn ett spel utan att använda tips.", ach_title_no_hint_5: "Vandrande uppslagsverk", ach_desc_no_hint_5: "Vinn 5 spel i rad utan tips.", ach_title_play_10: "Uppvärmning", ach_desc_play_10: "Spela 10 spel totalt.", ach_title_play_50: "Galning", ach_desc_play_50: "Spela 50 spel totalt.", ach_title_streak_3: "Hett flow I", ach_desc_streak_3: "Uppnå en vinstsvit på 3.", ach_title_streak_7: "Hett flow II", ach_desc_streak_7: "Uppnå en vinstsvit på 7.", ach_title_streak_15: "Hett flow III", ach_desc_streak_15: "Uppnå en vinstsvit på 15.", ach_title_clash_1: "Första blodet", ach_desc_clash_1: "Vinn din första Speedway Clash-match.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Vinn 10 matcher i Clash.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Vinn 50 matcher i Clash.", ach_title_clash_flawless: "Felfri Clash!", ach_desc_clash_flawless: "Vinn en ligamatch utan att ge motståndaren en enda ruta.", ach_title_rank_silver: "Silverräven", ach_desc_rank_silver: "Nå Silver-rank i Clash-ligan.", ach_title_rank_gold: "Guldgossen", ach_desc_rank_gold: "Nå Guld-rank i Clash-ligan.", ach_title_rank_diamond: "Speedwayelit", ach_desc_rank_diamond: "Nå Diamant-rank i Clash-ligan.", ach_title_clash_legend: "Levande legend", ach_desc_clash_legend: "Nå högsta ranken: Legend.", ach_title_ta_10: "Time Attack Expert I", ach_desc_ta_10: "Gissa 10 förare i ett enda Time Attack-spel.", ach_title_ta_20: "Time Attack Expert II", ach_desc_ta_20: "Gissa 20 förare i ett enda Time Attack-spel.", ach_title_ta_30: "Time Attack Expert III", ach_desc_ta_30: "Gissa 30 förare i ett enda Time Attack-spel.", ach_title_ta_50: "Time Attack Expert IV", ach_desc_ta_50: "Gissa 50 förare i ett enda Time Attack-spel.", ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gissa 100 förare i ett enda Time Attack-spel.", ach_title_easter_club: "Klubbfärger", ach_desc_easter_club: "Välj din favoritklubb i din spelarprofil.", ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Byt spelspråk i Inställningar.", ach_title_easter_theme: "Två ansikten", ach_desc_easter_theme: "Byt speltema (Ljust/Mörkt)."
     },
     da: {
-        account: "DIN PROFIL", loginDesc: "Log ind med Google for at synkronisere fremskridt og deltage i ranglisten!", btnLoginGoogle: "LOG IND MED GOOGLE", orGuest: "ELLER INDTAST GÆSTENICK", guestPlaceholder: "Indtast nick...", btnSavePlay: "GEM & SPIL", btnLogout: "LOG UD",
+        account: "DIN PROFIL", loginDesc: "Log ind med Google for at deltage i ranglisten!", btnLoginGoogle: "LOG IND MED GOOGLE", orGuest: "ELLER INDTAST GÆSTENICK", guestPlaceholder: "Indtast nick...", btnSavePlay: "GEM & SPIL", btnLogout: "LOG UD",
         settingsTitle: "INDSTILLINGER", sound: "Lyd:", soundOn: "Til 🔊", soundOff: "Fra 🔇",
         subtitle: "Speedway Edition", lastGames: "Seneste Daily:", btnDaily: "Spil Daily", btnReview: "Gennemse spil", btnEndless: "Endless Guessr", searchPlaceholder: "Indtast kørers navn...", btnGuess: "GÆT",
         teams: "Hold:", colName: "Kører", colCountry: "Land", colYear: "Født", colGP: "SGP?", colDMP: "Holdmedaljer", colStatus: "Status", colClubs: "Klubhistorik",
@@ -1424,72 +1314,35 @@ const i18n = {
         theme: "Tema:", themeLight: "Lyst", themeDark: "Mørkt", themeSystem: "System", lang: "Sprog:", modeDaily: "Tilstand: Daily", modeEndless: "Tilstand: Endless",
         tabDaily: "DAGLIG", tabWeekly: "UGE", tabMonthly: "MÅNED", tabAllTime: "GENEREL", rankWonToday: "Sejre", rankTotalWins: "Samlede Sejre", rankGuesses: "Gæt",
         months: ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"], weekdays: ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Vælg spiltilstand", clashElo: "Spil om ELO", clashFriendly: "Venskabskamp", clashFriendlyDesc: "(Spil med en ven)", clashLobbyTitle: "🤝 Venskabskamp", clashHost: "OPRET RUM (HOST)", clashJoinCode: "RUMKODE...", clashJoinBtn: "TILSLUT", clashYourCode: "Din rumkode:", clashWaiting: "Venter på modstander...", clashReady: "JEG ER KLAR", clashTime: "Tid til at svare:", clashSurrender: "GIV OP / FORLAD", clashClaim: "OVERTAG FELT", clashConfirm: "BEKRÆFT", clashCancel: "ANNULLER", clashSeries: "SERIERESULTAT", clashRematch: "SPIL REVANCHE", clashQuit: "AFSLUT OG FORLAD", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spillet spilles på et 3x3 gitter som Kryds og Bolle.", clashRules2: "For at overtage et felt skal du klikke på det og gætte en kører, der har repræsenteret begge klubber.", clashRules3: "Husk, at kun den polska ligahistorie tæller.", clashRules4: "Du har 2 minutter til at svare! Forkert gæt eller timeout betyder, at du mister din tur.", clashRules5: "Forbind 3 felter på stribe for at vinde!", clashUnderstood: "FORSTÅET, JEG SPILLER!", clashGuessPlaceholder: "Kørerens for- og efternavn...", clashWaitBtn: "VENTER...", clashWaitP2: "VENTER PÅ MODSTANDER...",
-        
-        dailyProgress: "DIT DAGLIGE FREMSKRIDT:", missingRider: "💡 Manglende kører?", reportBug: "🐛 Rapportér Bug", joinDiscord: "TILSLUT DISCORD",
+        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Venskabskamp", clashFriendlyDesc: "(Spil med en ven)", clashLobbyTitle: "🤝 Venskabskamp", clashHost: "OPRET RUM (HOST)", clashJoinCode: "RUMKODE...", clashJoinBtn: "TILSLUT", clashYourCode: "Din rumkode:", clashWaiting: "Venter på modstander...", clashReady: "JEG ER KLAR", clashTime: "Tid til at svare:", clashSurrender: "GIV OP / FORLAD", clashClaim: "OVERTAG FELT", clashConfirm: "BEKRÆFT", clashCancel: "ANNULLER", clashSeries: "SERIERESULTAT", clashRematch: "SPIL REVANCHE", clashQuit: "AFSLUT OG FORLAD", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spillet spilles på et 3x3 gitter som Kryds og Bolle.", clashRules2: "For at overtage et felt skal du klikke på det og gætte en kører, der har repræsenteret begge klubber.", clashRules3: "Husk, at kun den polska ligahistorie tæller.", clashRules4: "Du har 2 minutter til at svare! Forkert gæt betyder, at du mister din tur.", clashRules5: "Forbind 3 felter på stribe for at vinde!", clashUnderstood: "FORSTÅET, JEG SPILLER!", clashGuessPlaceholder: "Kørerens for- og efternavn...", clashWaitBtn: "VENTER...", clashWaitP2: "VENTER PÅ MODSTANDER...",
+        dailyProgress: "DIT DAGLIGE FREMSKRIDT:", missingRider: "💡 Manglende kører?", reportBug: "🚩 Rapportér Bug", joinDiscord: "TILSLUT DISCORD",
         timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "SCORE:", whoAreWeLookingFor: "HVEM LEDER VI EFTER?", taEmptyList: "Gættede kørere vises her.",
         expertMode: "EKSPERT TILSTAND", games: "Spil", record: "Rekord", average: "Gns.", startGame: "START SPIL ►", howToPlay: "SÅDAN SPILLER DU", backToMenu: "🔙 TILBAGE TIL HOVEDMENU",
-        taRulesTitle: "Regler: Time Attack ⏱️", taRulesDesc: "Tag udfordringen op, og se, hvor mange kørere du kan gætte under tidspres!",
-        taRule1Title: "Uret Tikker", taRule1Desc: "Du starter spillet med nøjagtig 120 sekunder. Uret tæller ned kontinuerligt.",
-        taRule2Title: "Ingen trin-for-trin hints", taRule2Desc: "Du gætter ikke ved trial and error her. Du ser straks land, fødselsår, medaljer og klubhistorie.",
-        taRule3Title: "Tidsbonusser", taRule3Desc: "Hver korrekt gættet kører tilføjer +15 sekunder til din timer. Spillet slutter, når tiden løber ud.",
-        understoodBack: "FORSTÅET, TILBAGE!",
+        taRulesTitle: "Regler: Time Attack ⏱️", taRulesDesc: "Tag udfordringen op, og se, hvor mange kørere du kan gætte under tidspres!", taRule1Title: "Uret Tikker", taRule1Desc: "Du starter spillet med nøjagtig 120 sekunder. Uret tæller ned kontinuerligt.", taRule2Title: "Ingen hints", taRule2Desc: "Du ser straks land, fødselsår, medaljer og klubhistorie.", taRule3Title: "Tidsbonusser", taRule3Desc: "Hver korrekt gættet kører tilføjer +15 sekunder til din timer.", understoodBack: "FORSTÅET, TILBAGE!",
         localGameTitle: "🖥️ Lokalt Spil", localGameDesc: "Indtast jeres nicks for at spille på én skærm.", p1Red: "Spiller 1 (Rød)", p2Blue: "Spiller 2 (Blå)", startMatch: "START KAMP",
         boardPreview: "BRÆT PREVIEW 👁️", searching: "Søger...", waitingForOpponentElo: "Venter på en modstander med lignende ELO", cancel: "ANNULLER",
-        sugTitle: "RAPPORTER EN KØRER", sugDesc: "Bemærkede du en manglende kører? Giv os deres detaljer, så tilføjer vi dem! 🤝", sugName: "Fulde navn *", sugCountry: "Land", sugNotes: "Klubber / Noter", send: "SEND",
-        bugTitle: "RAPPORTER EN FEJL 🐛", bugDesc: "Gik noget galt? Beskriv problemet, så vi kan rette det!", bugDescInput: "Problembeskrivelse *", sendBug: "SEND FEJL",
-        footerPrivacy: "Privatlivspolitik", footerTerms: "Betingelser for brug", footerContact: "Kontakt (Rapporter fejl)", footerRights: "Alle rettigheder forbeholdes.",
+        sugTitle: "RAPPORTER EN KØRER", sugDesc: "Bemærkede du en manglende kører? Giv os detaljer! 🤝", sugName: "Fulde navn *", sugCountry: "Land", sugNotes: "Klubber / Noter", send: "SEND",
+        bugTitle: "RAPPORTER EN FEJL 🐛", bugDesc: "Gik noget galt? Beskriv problemet!", bugDescInput: "Problembeskrivelse *", sendBug: "SEND FEJL",
+        footerPrivacy: "Privatlivspolitik", footerTerms: "Betingelser for brug", footerContact: "Kontakt", footerRights: "Alle rettigheder forbeholdes.",
         linkedAccounts: "TILKNYTTEDE KONTI", linkDiscord: "TILKNYT DISCORD", yourNick: "DIT NUVÆRENDE NICK:", change: "ÆNDR", yourClub: "DIN FAVORITKLUB:", chooseClub: "VÆLG KLUB 🛡️", myAchievements: "MINE PRÆSTATIONER", playerAchievements: "SPILLERPRÆSTATIONER", backToProfile: "TILBAGE TIL PROFIL",
-        removeSelection: "FJERN VALG", chooseYourClub: "VÆLG DIN KLUB", chooseClubDesc: "Vælg det hold du støtter. Dets logo vil være synligt ved dit nick i ranglister og Clash-kampe!",
+        removeSelection: "FJERN VALG", chooseYourClub: "VÆLG DIN KLUB", chooseClubDesc: "Vælg det hold du støtter. Dets logo vil være synligt ved dit nick!",
         updatesTitle: "SPILOPDATERINGER 📢", updatesDesc: "Tjek vores seneste ændringer!", understoodBtn: "FORSTÅET",
-        maintTitle: "VEDLIGEHOLDELSE", maintDesc: "Servervedligeholdelse i gang.<br>Spillet er midlertidigt deaktiveret.<br>Tjek tilbage snart!",
+        maintTitle: "VEDLIGEHOLDELSE", maintDesc: "Servervedligeholdelse i gang.<br>Spillet er midlertidigt deaktiveret.",
         dToday: "DAGENS SPIL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAKAMP ►", dFriendly: "VENSKABSKAMP", dLocal: "LOKALT SPIL (1 PC)", dSettings: "INDSTILLINGER", dProfile: "PROFIL",
-        clashRule1Title: "Spillets mål", clashRule2Title: "Overtagelse af felter", clashRule3Title: "Regler og tid", clashRule4Title: "Ekstra Krav (Hardcore)", clashRule4Desc: "Nogle gange vises et landeflag under klublogoet. Køreren skal også være fra det land!",
-        leagueHistory: "Ligahistorie",
-        
-        loadingData: "Indlæser data...", noResults: "Ingen resultater. Vær den første til at spille!", noResultsCalib: "Ingen resultater. Alle spillere kalibreres lige nu! ⚖️",
-        noPlayedMatches: "Ingen spillede kampe.", errorDB: "Databasefejl.",
-        taP1Name: "Spiller 1", taP2Name: "Spiller 2", defaultPlayer: "Spiller",
+        clashRule1Title: "Spillets mål", clashRule2Title: "Overtagelse af felter", clashRule3Title: "Regler og tid", clashRule4Title: "Ekstra Krav", clashRule4Desc: "Nogle gange vises et landeflag under klublogoet. Køreren skal også være fra det land!", leagueHistory: "Ligahistorie",
+        loadingData: "Indlæser data...", noResults: "Ingen resultater. Vær den første til at spille!", selectModeMenu: "Vælg en spiltilstand fra menuen...", taP1Name: "Spiller 1", taP2Name: "Spiller 2", defaultPlayer: "Spiller",
         toastHintUsed: "Tip brugt!", toastPlayerGuessed: "Denne kører er allerede gættet.", toastTimeEnd: "Tiden er gået! Score: {count}. Tilbage til menu om 5s...",
-        toastWaitTurn: "Vent på din tur!", toastCellTaken: "Dette felt er allerede taget!", toastPlayerNotExist: "Køreren findes ikke eller er allerede valgt!",
-        toastWrongCountry: "FEJL! Denne kolonne kræver en kører fra:", toastMissedClubs: "Forbi! {name} har ikke kørt for begge disse klubber.", toastTurn: "DIN TUR!",
-        toastSavedClub: "Gemt! Du repræsenterer:", toastRemovedClub: "Klubtilhørsforhold fjernet", toastAchievement: "🏆 Præstation:",
-        toastPPM: "⛔ Højreklik deaktiveret!", toastConsole: "⛔ Konsoladgang deaktiveret!", toastTabSwitch: "⚠️ Fanebladsskift opdaget! Du mister din tur.",
+        toastWaitTurn: "Vent på din tur!", toastCellTaken: "Dette felt er allerede taget!", toastPlayerNotExist: "Køreren findes ikke eller er allerede valgt!", toastWrongCountry: "FEJL! Denne kolonne kræver en kører fra:", toastMissedClubs: "Forbi! {name} har ikke kørt for begge disse klubber.", toastTurn: "DIN TUR!", toastSavedClub: "Gemt! Du repræsenterer:", toastRemovedClub: "Klubtilhørsforhold fjernet", toastAchievement: "🏆 Præstation:", toastPPM: "⛔ Højreklik deaktiveret!", toastConsole: "⛔ Konsoladgang deaktiveret!", toastTabSwitch: "⚠️ Fanebladsskift opdaget! Du mister din tur.",
         alertSurrenderConfirm: "Er du sikker på, at du vil give op og afsløre køreren?", alertSurrenderTitle: "Giver du op?", alertSurrenderBtn: "JA, JEG GIVER OP",
         alertReturnConfirm: "Er du sikker på, at du vil vende tilbage til menuen? Daily-fremskridt gemmes, men Endless går tabt.", alertReturnTitle: "Tilbage til menu", alertReturnBtn: "TIL MENU",
-        alertNickLength: "Nick skal have mindst 3 tegn!", alertNickRules: "Dette nick overtræder reglerne. Vælg et andet.", alertNickTaken: "Dette nick er allerede taget!", alertNickSame: "Dette er dit nuværende nick!",
+        alertNickLength: "Nick skal have mindst 3 tegn!", alertNickRules: "Dette nick overtræder reglerne.", alertNickTaken: "Dette nick er allerede taget!", alertNickSame: "Dette er dit nuværende nick!",
         alertClashLeave: "At forlade vil lukke rummet for begge spillere.\nEr du sikker på, at du vil forlade det?", alertClashLeaveTitle: "Forlad kamp?", alertClashLeaveBtn: "FORLAD",
         alertClashSurrender: "Du vil tabe kampen på walkover.\nDu får et tab og minus-ELO.\nEr du sikker?", alertClashSurrenderBtn: "GIV OP",
-        
-        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (UGE)", desktopRankMonthly: "LEADERBOARD (MÅNED)", desktopRankAllTime: "LEADERBOARD (GENEREL)",
-        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (UGE)", desktopRankMonthly: "LEADERBOARD (MÅNED)", desktopRankAllTime: "LEADERBOARD (GENEREL)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
         colPos: "Pos.", colNick: "Nick", colRank: "Rang", colElo: "ELO", colRecord: "Rekord", colSolved: "Løst", colTotalWins: "Samlede Sejre", colTries: "Gæt", yes: "JA", no: "NEJ",
-        
-        ach_title_first_try: "Ørneøje", ach_desc_first_try: "Gæt køreren i 1. forsøg.",
-        ach_title_close_call: "Lige ved og næsten", ach_desc_close_call: "Gæt køreren i sidste, 10. forsøg.",
-        ach_title_no_hint_1: "Kloge Åge", ach_desc_no_hint_1: "Vind et spil uden at bruge hints.",
-        ach_title_no_hint_5: "Vandrende leksikon", ach_desc_no_hint_5: "Vind 5 spil i træk uden hints.",
-        ach_title_play_10: "Opvarmning", ach_desc_play_10: "Spil 10 spil i alt.",
-        ach_title_play_50: "Galskab", ach_desc_play_50: "Spil 50 spil i alt.",
-        ach_title_streak_3: "Varm stime I", ach_desc_streak_3: "Opnå en sejrsstime på 3.",
-        ach_title_streak_7: "Varm stime II", ach_desc_streak_7: "Opnå en sejrsstime på 7.",
-        ach_title_streak_15: "Varm stime III", ach_desc_streak_15: "Opnå en sejrsstime på 15.",
-        ach_title_clash_1: "Første blod", ach_desc_clash_1: "Vind din første Speedway Clash-kamp.",
-        ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Vind 10 kampe i Clash.",
-        ach_title_clash_50: "Dominator", ach_desc_clash_50: "Vind 50 kampe i Clash.",
-        ach_title_clash_flawless: "Fejlfri Clash!", ach_desc_clash_flawless: "Vind en ligakamp uden at give modstanderen et eneste felt.",
-        ach_title_rank_silver: "Sølvræv", ach_desc_rank_silver: "Nå Sølv-rang i Clash-ligaen.",
-        ach_title_rank_gold: "Gulddreng", ach_desc_rank_gold: "Nå Guld-rang i Clash-ligaen.",
-        ach_title_rank_diamond: "Speedway Elite", ach_desc_rank_diamond: "Nå Diamant-rang i Clash-ligaen.",
-        ach_title_clash_legend: "Levende legende", ach_desc_clash_legend: "Nå den højeste rang: Legende.",
-        ach_title_ta_10: "Time Attack Ekspert I", ach_desc_ta_10: "Gæt 10 kørere i et enkelt Time Attack-spil.",
-        ach_title_ta_20: "Time Attack Ekspert II", ach_desc_ta_20: "Gæt 20 kørere i et enkelt Time Attack-spil.",
-        ach_title_ta_30: "Time Attack Ekspert III", ach_desc_ta_30: "Gæt 30 kørere i et enkelt Time Attack-spil.",
-        ach_title_ta_50: "Time Attack Ekspert IV", ach_desc_ta_50: "Gæt 50 kørere i et enkelt Time Attack-spil.",
-        ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gæt 100 kørere i et enkelt Time Attack-spil.",
-        ach_title_easter_club: "Klubfarver", ach_desc_easter_club: "Vælg din favoritklubb i din spillerprofil.",
-        ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Skift sprog i indstillinger.",
-        ach_title_easter_theme: "To ansigter", ach_desc_easter_theme: "Skift spillets tema (Ljust/Mørkt)."
+        privacyTitle: "PRIVATLIVSPOLITIK", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Vi gemmer kun minimale data til ranglister.</div>",
+        termsTitle: "BETINGELSER", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Dette er et uofficielt fan-projekt. Snyd medfører ban.</div>",
+        ach_title_first_try: "Ørneøje", ach_desc_first_try: "Gæt køreren i 1. forsøg.", ach_title_close_call: "Lige ved og næsten", ach_desc_close_call: "Gæt køreren i sidste, 10. forsøg.", ach_title_no_hint_1: "Kloge Åge", ach_desc_no_hint_1: "Vind et spil uden at bruge hints.", ach_title_no_hint_5: "Vandrende leksikon", ach_desc_no_hint_5: "Vind 5 spil i træk uden hints.", ach_title_play_10: "Opvarmning", ach_desc_play_10: "Spil 10 spil i alt.", ach_title_play_50: "Galskab", ach_desc_play_50: "Spil 50 spil i alt.", ach_title_streak_3: "Varm stime I", ach_desc_streak_3: "Opnå en sejrsstime på 3.", ach_title_streak_7: "Varm stime II", ach_desc_streak_7: "Opnå en sejrsstime på 7.", ach_title_streak_15: "Varm stime III", ach_desc_streak_15: "Opnå en sejrsstime på 15.", ach_title_clash_1: "Første blod", ach_desc_clash_1: "Vind din første Speedway Clash-kamp.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Vind 10 kampe i Clash.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Vind 50 kampe i Clash.", ach_title_clash_flawless: "Fejlfri Clash!", ach_desc_clash_flawless: "Vind en ligakamp uden at give modstanderen et eneste felt.", ach_title_rank_silver: "Sølvræv", ach_desc_rank_silver: "Nå Sølv-rang i Clash-ligaen.", ach_title_rank_gold: "Gulddreng", ach_desc_rank_gold: "Nå Guld-rang i Clash-ligaen.", ach_title_rank_diamond: "Speedway Elite", ach_desc_rank_diamond: "Nå Diamant-rang i Clash-ligaen.", ach_title_clash_legend: "Levende legende", ach_desc_clash_legend: "Nå den højeste rang: Legende.", ach_title_ta_10: "Time Attack Ekspert I", ach_desc_ta_10: "Gæt 10 kørere i et enkelt Time Attack-spil.", ach_title_ta_20: "Time Attack Ekspert II", ach_desc_ta_20: "Gæt 20 kørere i et enkelt Time Attack-spil.", ach_title_ta_30: "Time Attack Ekspert III", ach_desc_ta_30: "Gæt 30 kørere i et enkelt Time Attack-spil.", ach_title_ta_50: "Time Attack Ekspert IV", ach_desc_ta_50: "Gæt 50 kørere i et enkelt Time Attack-spil.", ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gæt 100 kørere i et enkelt Time Attack-spil.", ach_title_easter_club: "Klubfarver", ach_desc_easter_club: "Vælg din favoritklubb i din spillerprofil.", ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Skift sprog i indstillinger.", ach_title_easter_theme: "To ansigter", ach_desc_easter_theme: "Skift spillets tema (Lyst/Mørkt)."
     },
     de: {
         account: "DEIN PROFIL", loginDesc: "Mit Google anmelden, um Fortschritte zu speichern!", btnLoginGoogle: "MIT GOOGLE ANMELDEN", orGuest: "ODER GAST-NICK EINGEBEN", guestPlaceholder: "Nick (max 12 Zeichen)", btnSavePlay: "SPEICHERN & SPIELEN", btnLogout: "ABMELDEN",
@@ -1501,72 +1354,35 @@ const i18n = {
         theme: "Design:", themeLight: "Hell", themeDark: "Dunkel", themeSystem: "System", lang: "Sprache:", modeDaily: "Modus: Daily", modeEndless: "Modus: Endless",
         tabDaily: "TÄGLICH", tabWeekly: "WOCHE", tabMonthly: "MONAT", tabAllTime: "GESAMT", rankWonToday: "Siege", rankTotalWins: "Gesamtsiege", rankGuesses: "Versuche",
         months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"], weekdays: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Spielmodus wählen", clashElo: "Um ELO spielen", clashFriendly: "Freundschaftsspiel", clashFriendlyDesc: "(Mit Freund spielen)", clashLobbyTitle: "🤝 Freundschaftsspiel", clashHost: "RAUM ERSTELLEN (HOST)", clashJoinCode: "RAUMCODE...", clashJoinBtn: "BEITRETEN", clashYourCode: "Dein Raumcode:", clashWaiting: "Warte auf Gegner...", clashReady: "ICH BIN BEREIT", clashTime: "Antwortzeit:", clashSurrender: "AUFGEBEN / VERLASSEN", clashClaim: "FELD ÜBERNEHMEN", clashConfirm: "BESTÄTIGEN", clashCancel: "ABBRECHEN", clashSeries: "SERIENSTAND", clashRematch: "REVANCHE SPIELEN", clashQuit: "BEENDEN UND VERLASSEN", clashRulesTitle: "Regeln: Speedway Clash ⚔️", clashRules1: "Gespielt wird auf einem 3x3 Raster wie Tic-Tac-Toe.", clashRules2: "Klicke auf ein Feld und rate einen Fahrer, der für beide Klubs gefahren ist.", clashRules3: "Es zählt nur die polnische Ligahistorie.", clashRules4: "Du hast 2 Minuten Zeit! Falsche Antwort = Zugverlust.", clashRules5: "Verbinde 3 Felder in einer Reihe, um zu gewinnen!", clashUnderstood: "VERSTANDEN, ICH SPIELE!", clashGuessPlaceholder: "Vor- und Nachname des Fahrers...", clashWaitBtn: "WARTEN...", clashWaitP2: "WARTE AUF GEGNER...",
-        
-        dailyProgress: "DEIN DAILY-FORTSCHRITT:", missingRider: "💡 Fehlender Fahrer?", reportBug: "🐛 Fehler melden", joinDiscord: "DISCORD BEITRETEN",
+        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Freundschaftsspiel", clashFriendlyDesc: "(Mit Freund spielen)", clashLobbyTitle: "🤝 Freundschaftsspiel", clashHost: "RAUM ERSTELLEN (HOST)", clashJoinCode: "RAUMCODE...", clashJoinBtn: "BEITRETEN", clashYourCode: "Dein Raumcode:", clashWaiting: "Warte auf Gegner...", clashReady: "ICH BIN BEREIT", clashTime: "Antwortzeit:", clashSurrender: "AUFGEBEN / VERLASSEN", clashClaim: "FELD ÜBERNEHMEN", clashConfirm: "BESTÄTIGEN", clashCancel: "ABBRECHEN", clashSeries: "SERIENSTAND", clashRematch: "REVANCHE SPIELEN", clashQuit: "BEENDEN UND VERLASSEN", clashRulesTitle: "Regeln: Speedway Clash ⚔️", clashRules1: "Gespielt wird auf einem 3x3 Raster wie Tic-Tac-Toe.", clashRules2: "Klicke auf ein Feld und rate einen Fahrer, der für beide Klubs gefahren ist.", clashRules3: "Es zählt nur die polnische Ligahistorie.", clashRules4: "Du hast 2 Minuten Zeit! Falsche Antwort = Zugverlust.", clashRules5: "Verbinde 3 Felder in einer Reihe, um zu gewinnen!", clashUnderstood: "VERSTANDEN, ICH SPIELE!", clashGuessPlaceholder: "Vor- und Nachname des Fahrers...", clashWaitBtn: "WARTEN...", clashWaitP2: "WARTE AUF GEGNER...",
+        dailyProgress: "DEIN DAILY-FORTSCHRITT:", missingRider: "💡 Fehlender Fahrer?", reportBug: "🚩 Fehler melden", joinDiscord: "DISCORD BEITRETEN",
         timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "PUNKTE:", whoAreWeLookingFor: "WEN SUCHEN WIR?", taEmptyList: "Erratene Fahrer erscheinen hier.",
         expertMode: "EXPERTENMODUS", games: "Spiele", record: "Rekord", average: "Schnitt", startGame: "SPIEL STARTEN ►", howToPlay: "WIE WIRD GESPIELT?", backToMenu: "🔙 ZURÜCK ZUM HAUPTMENÜ",
-        taRulesTitle: "Regeln: Time Attack ⏱️", taRulesDesc: "Nimm die Herausforderung an und schau, wie viele Fahrer du unter Zeitdruck erraten kannst!",
-        taRule1Title: "Die Uhr tickt", taRule1Desc: "Du startest mit exakt 120 Sekunden. Die Uhr läuft gnadenlos ab.",
-        taRule2Title: "Keine schrittweisen Tipps", taRule2Desc: "Du siehst sofort Land, Geburtsjahr, Medaillen und die Klubhistorie. Erkenne den Fahrer sofort.",
-        taRule3Title: "Zeitboni", taRule3Desc: "Jeder richtig erratene Fahrer gibt +15 Sekunden. Das Spiel endet, wenn die Zeit abläuft.",
-        understoodBack: "VERSTANDEN, ZURÜCK!",
+        taRulesTitle: "Regeln: Time Attack ⏱️", taRulesDesc: "Nimm die Herausforderung an und schau, wie viele Fahrer du unter Zeitdruck erraten kannst!", taRule1Title: "Die Uhr tickt", taRule1Desc: "Du startest mit exakt 120 Sekunden. Die Uhr läuft gnadenlos ab.", taRule2Title: "Keine Tipps", taRule2Desc: "Du siehst sofort Land, Geburtsjahr, Medaillen und die Klubhistorie.", taRule3Title: "Zeitboni", taRule3Desc: "Jeder richtig erratene Fahrer gibt +15 Sekunden.", understoodBack: "VERSTANDEN, ZURÜCK!",
         localGameTitle: "🖥️ Lokales Spiel", localGameDesc: "Nicknames eingeben, um an einem Bildschirm zu spielen.", p1Red: "Spieler 1 (Rot)", p2Blue: "Spieler 2 (Blau)", startMatch: "MATCH STARTEN",
         boardPreview: "BRETT-VORSCHAU 👁️", searching: "Suchen...", waitingForOpponentElo: "Warte auf Gegner mit ähnlicher ELO", cancel: "ABBRECHEN",
         sugTitle: "FAHRER MELDEN", sugDesc: "Fehlt ein Fahrer? Gib uns seine Daten und wir fügen ihn hinzu! 🤝", sugName: "Vor- und Nachname *", sugCountry: "Land", sugNotes: "Klubs / Notizen", send: "SENDEN",
         bugTitle: "FEHLER MELDEN 🐛", bugDesc: "Etwas ist schiefgelaufen? Beschreibe das Problem!", bugDescInput: "Problembeschreibung *", sendBug: "FEHLER SENDEN",
-        footerPrivacy: "Datenschutzerklärung", footerTerms: "Nutzungsbedingungen", footerContact: "Kontakt (Fehler melden)", footerRights: "Alle Rechte vorbehalten.",
+        footerPrivacy: "Datenschutzerklärung", footerTerms: "Nutzungsbedingungen", footerContact: "Kontakt", footerRights: "Alle Rechte vorbehalten.",
         linkedAccounts: "VERKNÜPFTE KONTEN", linkDiscord: "DISCORD VERKNÜPFEN", yourNick: "DEIN AKTUELLER NICK:", change: "ÄNDERN", yourClub: "DEIN LIEBLINGSKLUB:", chooseClub: "KLUB WÄHLEN 🛡️", myAchievements: "MEINE ERFOLGE", playerAchievements: "SPIELER-ERFOLGE", backToProfile: "ZURÜCK ZUM PROFIL",
         removeSelection: "AUSWAHL ENTFERNEN", chooseYourClub: "WÄHLE DEINEN KLUB", chooseClubDesc: "Wähle das Team, das du unterstützt. Sein Logo wird neben deinem Nick angezeigt!",
         updatesTitle: "SPIEL-UPDATES 📢", updatesDesc: "Sieh dir unsere neuesten Änderungen an!", understoodBtn: "VERSTANDEN",
         maintTitle: "WARTUNGSARBEITEN", maintDesc: "Serverwartung im Gange.<br>Das Spiel ist vorübergehend deaktiviert.",
         dToday: "HEUTIGES SPIEL ►", dArchive: "DAILY-ARCHIV", dLeague: "LIGASPIEL ►", dFriendly: "FREUNDSCHAFTSSPIEL", dLocal: "LOKALES SPIEL (1 PC)", dSettings: "EINSTELLUNGEN", dProfile: "PROFIL",
-        clashRule1Title: "Spielziel", clashRule2Title: "Felder übernehmen", clashRule3Title: "Regeln und Zeit", clashRule4Title: "Zusätzliche Bedingung (Hardcore)", clashRule4Desc: "Manchmal erscheint eine Flagge unter dem Klub. Der Fahrer muss auch aus diesem Land kommen!",
-        leagueHistory: "Liga-Historie",
-        
-        loadingData: "Lade Daten...", noResults: "Keine Ergebnisse. Sei der Erste!", noResultsCalib: "Keine Ergebnisse. Alle in der Kalibrierung! ⚖️",
-        noPlayedMatches: "Keine Spiele gespielt.", errorDB: "Datenbankfehler.",
-        taP1Name: "Spieler 1", taP2Name: "Spieler 2", defaultPlayer: "Spieler",
+        clashRule1Title: "Spielziel", clashRule2Title: "Felder übernehmen", clashRule3Title: "Regeln und Zeit", clashRule4Title: "Zusätzliche Bedingung", clashRule4Desc: "Manchmal erscheint eine Flagge unter dem Klub. Der Fahrer muss auch aus diesem Land kommen!", leagueHistory: "Liga-Historie",
+        loadingData: "Lade Daten...", noResults: "Keine Ergebnisse. Sei der Erste!", selectModeMenu: "Wähle einen Spielmodus...", taP1Name: "Spieler 1", taP2Name: "Spieler 2", defaultPlayer: "Spieler",
         toastHintUsed: "Tipp benutzt!", toastPlayerGuessed: "Fahrer bereits erraten.", toastTimeEnd: "Zeit abgelaufen! Punkte: {count}. Zurück zum Menü...",
-        toastWaitTurn: "Warte, bis du dran bist!", toastCellTaken: "Feld ist schon besetzt!", toastPlayerNotExist: "Fahrer existiert nicht!",
-        toastWrongCountry: "FEHLER! Land erforderlich:", toastMissedClubs: "Daneben! {name} ist nicht für beide Klubs gefahren.", toastTurn: "DU BIST DRAN!",
-        toastSavedClub: "Gespeichert!", toastRemovedClub: "Klub entfernt", toastAchievement: "🏆 Erfolg:",
-        toastPPM: "⛔ Rechtsklick deaktiviert!", toastConsole: "⛔ Konsole deaktiviert!", toastTabSwitch: "⚠️ Tab-Wechsel! Zug verloren.",
+        toastWaitTurn: "Warte, bis du dran bist!", toastCellTaken: "Feld ist schon besetzt!", toastPlayerNotExist: "Fahrer existiert nicht!", toastWrongCountry: "FEHLER! Land erforderlich:", toastMissedClubs: "Daneben! {name} ist nicht für beide Klubs gefahren.", toastTurn: "DU BIST DRAN!", toastSavedClub: "Gespeichert!", toastRemovedClub: "Klub entfernt", toastAchievement: "🏆 Erfolg:", toastPPM: "⛔ Rechtsklick deaktiviert!", toastConsole: "⛔ Konsole deaktiviert!", toastTabSwitch: "⚠️ Tab-Wechsel! Zug verloren.",
         alertSurrenderConfirm: "Willst du wirklich aufgeben?", alertSurrenderTitle: "Aufgeben?", alertSurrenderBtn: "JA, ICH GEBE AUF",
         alertReturnConfirm: "Zurück zum Menü? Endless-Fortschritt geht verloren.", alertReturnTitle: "Zurück zum Menü", alertReturnBtn: "ZUM MENÜ",
         alertNickLength: "Nick muss min. 3 Zeichen haben!", alertNickRules: "Nick verstößt gegen Regeln.", alertNickTaken: "Nick ist vergeben!", alertNickSame: "Das ist dein aktueller Nick!",
         alertClashLeave: "Raum wird für beide geschlossen. Verlassen?", alertClashLeaveTitle: "Spiel verlassen?", alertClashLeaveBtn: "VERLASSEN",
         alertClashSurrender: "Du verlierst das Spiel und ELO. Aufgeben?", alertClashSurrenderBtn: "AUFGEBEN",
-        
-        desktopRankDaily: "LEADERBOARD (TÄGLICH)", desktopRankWeekly: "LEADERBOARD (WOCHE)", desktopRankMonthly: "LEADERBOARD (MONAT)", desktopRankAllTime: "LEADERBOARD (GESAMT)",
-        desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
+        desktopRankDaily: "LEADERBOARD (TÄGLICH)", desktopRankWeekly: "LEADERBOARD (WOCHE)", desktopRankMonthly: "LEADERBOARD (MONAT)", desktopRankAllTime: "LEADERBOARD (GESAMT)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
         colPos: "Pos.", colNick: "Nick", colRank: "Rang", colElo: "ELO", colRecord: "Rekord", colSolved: "Gelöst", colTotalWins: "Gesamtsiege", colTries: "Versuche", yes: "JA", no: "NEIN",
-        
-        ach_title_first_try: "Adlerauge", ach_desc_first_try: "Fahrer im 1. Versuch erraten.",
-        ach_title_close_call: "Knappe Kiste", ach_desc_close_call: "Fahrer im 10. Versuch erraten.",
-        ach_title_no_hint_1: "Schlaumeier", ach_desc_no_hint_1: "Ohne Tipps gewinnen.",
-        ach_title_no_hint_5: "Wandelndes Lexikon", ach_desc_no_hint_5: "5 Siege in Folge ohne Tipps.",
-        ach_title_play_10: "Aufwärmen", ach_desc_play_10: "10 Spiele spielen.",
-        ach_title_play_50: "Maniac", ach_desc_play_50: "50 Spiele spielen.",
-        ach_title_streak_3: "Heiße Serie I", ach_desc_streak_3: "3er Siegesserie.",
-        ach_title_streak_7: "Heiße Serie II", ach_desc_streak_7: "7er Siegesserie.",
-        ach_title_streak_15: "Heiße Serie III", ach_desc_streak_15: "15er Siegesserie.",
-        ach_title_clash_1: "Erstes Blut", ach_desc_clash_1: "Erster Clash-Sieg.",
-        ach_title_clash_10: "Gladiator", ach_desc_clash_10: "10 Clash-Siege.",
-        ach_title_clash_50: "Dominator", ach_desc_clash_50: "50 Clash-Siege.",
-        ach_title_clash_flawless: "Perfekter Clash!", ach_desc_clash_flawless: "Clash gewinnen, ohne ein Feld abzugeben.",
-        ach_title_rank_silver: "Silberfuchs", ach_desc_rank_silver: "Silber-Rang erreichen.",
-        ach_title_rank_gold: "Goldjunge", ach_desc_rank_gold: "Gold-Rang erreichen.",
-        ach_title_rank_diamond: "Elite", ach_desc_rank_diamond: "Diamant-Rang erreichen.",
-        ach_title_clash_legend: "Legende", ach_desc_clash_legend: "Höchsten Rang erreichen.",
-        ach_title_ta_10: "Time Attack Experte I", ach_desc_ta_10: "10 Fahrer in Time Attack.",
-        ach_title_ta_20: "Time Attack Experte II", ach_desc_ta_20: "20 Fahrer in Time Attack.",
-        ach_title_ta_30: "Time Attack Experte III", ach_desc_ta_30: "30 Fahrer in Time Attack.",
-        ach_title_ta_50: "Time Attack Experte IV", ach_desc_ta_50: "50 Fahrer in Time Attack.",
-        ach_title_ta_100: "Time Attack Gott", ach_desc_ta_100: "100 Fahrer in Time Attack.",
-        ach_title_easter_club: "Klubfarben", ach_desc_easter_club: "Lieblingsklub wählen.",
-        ach_title_easter_lang: "Polyglott", ach_desc_easter_lang: "Sprache ändern.",
-        ach_title_easter_theme: "Zwei Gesichter", ach_desc_easter_theme: "Design ändern."
+        privacyTitle: "DATENSCHUTZERKLÄRUNG", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Wir speichern nur minimale Daten.</div>",
+        termsTitle: "NUTZUNGSBEDINGUNGEN", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Dies ist ein inoffizielles Fan-Projekt. Cheaten führt zum Ban.</div>",
+        ach_title_first_try: "Adlerauge", ach_desc_first_try: "Fahrer im 1. Versuch erraten.", ach_title_close_call: "Knappe Kiste", ach_desc_close_call: "Fahrer im 10. Versuch erraten.", ach_title_no_hint_1: "Schlaumeier", ach_desc_no_hint_1: "Ohne Tipps gewinnen.", ach_title_no_hint_5: "Wandelndes Lexikon", ach_desc_no_hint_5: "5 Siege in Folge ohne Tipps.", ach_title_play_10: "Aufwärmen", ach_desc_play_10: "10 Spiele spielen.", ach_title_play_50: "Maniac", ach_desc_play_50: "50 Spiele spielen.", ach_title_streak_3: "Heiße Serie I", ach_desc_streak_3: "3er Siegesserie.", ach_title_streak_7: "Heiße Serie II", ach_desc_streak_7: "7er Siegesserie.", ach_title_streak_15: "Heiße Serie III", ach_desc_streak_15: "15er Siegesserie.", ach_title_clash_1: "Erstes Blut", ach_desc_clash_1: "Erster Clash-Sieg.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "10 Clash-Siege.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "50 Clash-Siege.", ach_title_clash_flawless: "Perfekter Clash!", ach_desc_clash_flawless: "Clash gewinnen, ohne ein Feld abzugeben.", ach_title_rank_silver: "Silberfuchs", ach_desc_rank_silver: "Silber-Rang erreichen.", ach_title_rank_gold: "Goldjunge", ach_desc_rank_gold: "Gold-Rang erreichen.", ach_title_rank_diamond: "Elite", ach_desc_rank_diamond: "Diamant-Rang erreichen.", ach_title_clash_legend: "Legende", ach_desc_clash_legend: "Höchsten Rang erreichen.", ach_title_ta_10: "Time Attack Experte I", ach_desc_ta_10: "10 Fahrer in Time Attack.", ach_title_ta_20: "Time Attack Experte II", ach_desc_ta_20: "20 Fahrer in Time Attack.", ach_title_ta_30: "Time Attack Experte III", ach_desc_ta_30: "30 Fahrer in Time Attack.", ach_title_ta_50: "Time Attack Experte IV", ach_desc_ta_50: "50 Fahrer in Time Attack.", ach_title_ta_100: "Time Attack Gott", ach_desc_ta_100: "100 Fahrer in Time Attack.", ach_title_easter_club: "Klubfarben", ach_desc_easter_club: "Lieblingsklub wählen.", ach_title_easter_lang: "Polyglott", ach_desc_easter_lang: "Sprache ändern.", ach_title_easter_theme: "Zwei Gesichter", ach_desc_easter_theme: "Design ändern."
     },
     ru: {
         account: "ТВОЙ ПРОФИЛЬ", loginDesc: "Войдите через Google, чтобы сохранить прогресс!", btnLoginGoogle: "ВОЙТИ ЧЕРЕЗ GOOGLE", orGuest: "ИЛИ ВВЕДИТЕ ИМЯ ГОСТЯ", guestPlaceholder: "Имя (макс. 12 симв.)", btnSavePlay: "СОХРАНИТЬ И ИГРАТЬ", btnLogout: "ВЫЙТИ",
@@ -1575,75 +1391,38 @@ const i18n = {
         teams: "Команды:", colName: "Гонщик", colCountry: "Страна", colYear: "Год", colGP: "SGP?", colDMP: "Медали DMP", colStatus: "Статус", colClubs: "История клубов",
         stats: "СТАТИСТИКА", statPlayed: "Сыграно", statWon: "Побед", statStreak: "Текущая серия", statMax: "Лучшая серия", btnClose: "ЗАКРЫТЬ", archive: "АРХИВ DAILY",
         winTitle: "БРАВО!", winSub: "Вы угадали гонщика!", loseTitle: "ПОПЫТКИ ЗАКОНЧИЛИСЬ", loseSub: "К сожалению, вы не угадали.", btnShare: "ПОДЕЛИТЬСЯ 📋", btnPlayEndless: "ИГРАТЬ ENDLESS", btnPlayAgain: "ИГРАТЬ СНОВА", btnMenu: "ГЛАВНОЕ МЕНЮ", 
-        theme: "Тема:", themeLight: "Светлая", themeDark: "Темная", themeSystem: "Системная", lang: "Язык:", modeDaily: "Режим: Daily", modeEndless: "Режим: Endless",
+        theme: "Тема:", themeLight: "Светлая", themeDark: "Темная", themeSystem: "Авто", lang: "Язык:", modeDaily: "Режим: Daily", modeEndless: "Режим: Endless",
         tabDaily: "ДЕНЬ", tabWeekly: "НЕДЕЛЯ", tabMonthly: "МЕСЯЦ", tabAllTime: "ЗА ВСЕ ВРЕМЯ", rankWonToday: "Победы", rankTotalWins: "Всего побед", rankGuesses: "Попытки",
         months: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"], weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
-        clashTitle: "⚔️ Speedway Clash", clashChooseMode: "Выберите режим", clashElo: "Играть на ELO", clashFriendly: "Товарищеский матч", clashFriendlyDesc: "(Играть с другом)", clashLobbyTitle: "🤝 Товарищеский матч", clashHost: "СОЗДАТЬ КОМНАТУ (HOST)", clashJoinCode: "КОД КОМНАТЫ...", clashJoinBtn: "ПРИСОЕДИНИТЬСЯ", clashYourCode: "Ваш код комнаты:", clashWaiting: "Ожидание соперника...", clashReady: "Я ГОТОВ", clashTime: "Время на ответ:", clashSurrender: "СДАТЬСЯ / ВЫЙТИ", clashClaim: "ЗАХВАТИТЬ ПОЛЕ", clashConfirm: "ПОДТВЕРДИТЬ", clashCancel: "ОТМЕНА", clashSeries: "СЧЕТ СЕРИИ", clashRematch: "ИГРАТЬ РЕВАНШ", clashQuit: "ЗАКОНЧИТЬ И ВЫЙТИ", clashRulesTitle: "Правила: Speedway Clash ⚔️", clashRules1: "Игра идет на поле 3x3 (крестики-нолики).", clashRules2: "Чтобы захватить поле, угадайте гонщика, выступавшего за оба клуба.", clashRules3: "Учитывается только польская лига.", clashRules4: "У вас есть 2 минуты! Неверный ответ или конец времени = пропуск хода.", clashRules5: "Соедините 3 поля в ряд для победы!", clashUnderstood: "ПОНЯТНО, ИГРАТЬ!", clashGuessPlaceholder: "Имя и фамилия гонщика...", clashWaitBtn: "ОЖИДАНИЕ...", clashWaitP2: "ОЖИДАНИЕ СОПЕРНИКА...",
-        
-        dailyProgress: "ВАШ ПРОГРЕСС DAILY:", missingRider: "💡 Нет гонщика?", reportBug: "🐛 Сообщить об ошибке", joinDiscord: "ПРИСОЕДИНИТЬСЯ К DISCORD",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "СЧЕТ:", whoAreWeLookingFor: "КОГО МЫ ИЩЕМ?", taEmptyList: "Угаданные гонщики появятся здесь.",
-        expertMode: "РЕЖИМ ЭКСПЕРТА", games: "Игры", record: "Рекорд", average: "В среднем", startGame: "НАЧАТЬ ИГРУ ►", howToPlay: "КАК ИГРАТЬ?", backToMenu: "🔙 В ГЛАВНОЕ МЕНЮ",
-        taRulesTitle: "Правила: Time Attack ⏱️", taRulesDesc: "Примите вызов и узнайте, сколько гонщиков вы угадаете на время!",
-        taRule1Title: "Часы тикают", taRule1Desc: "У вас есть 120 секунд. Время идет без остановок.",
-        taRule2Title: "Никаких подсказок", taRule2Desc: "Вы сразу видите страну, год, медали и клубы. Нужно сразу узнать гонщика.",
-        taRule3Title: "Бонусы времени", taRule3Desc: "Каждый угаданный гонщик дает +15 секунд. Игра заканчивается, когда время истекает.",
-        understoodBack: "ПОНЯТНО, НАЗАД!",
+        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Товарищеский матч", clashFriendlyDesc: "(Играть с другом)", clashLobbyTitle: "🤝 Товарищеский матч", clashHost: "СОЗДАТЬ КОМНАТУ", clashJoinCode: "КОД КОМНАТЫ...", clashJoinBtn: "ВХОД", clashYourCode: "Ваш код комнаты:", clashWaiting: "Ожидание соперника...", clashReady: "Я ГОТОВ", clashTime: "Время на ответ:", clashSurrender: "СДАТЬСЯ / ВЫЙТИ", clashClaim: "ЗАХВАТИТЬ ПОЛЕ", clashConfirm: "ПОДТВЕРДИТЬ", clashCancel: "ОТМЕНА", clashSeries: "СЧЕТ СЕРИИ", clashRematch: "ИГРАТЬ РЕВАНШ", clashQuit: "ЗАКОНЧИТЬ И ВЫЙТИ", clashRulesTitle: "Правила: Speedway Clash ⚔️", clashRules1: "Игра идет на поле 3x3 (крестики-нолики).", clashRules2: "Чтобы захватить поле, угадайте гонщика, выступавшего за оба клуба.", clashRules3: "Учитывается только польская лига.", clashRules4: "У вас есть 2 минуты! Неверный ответ или конец времени = пропуск хода.", clashRules5: "Соедините 3 поля в ряд для победы!", clashUnderstood: "ПОНЯТНО, ИГРАТЬ!", clashGuessPlaceholder: "Имя гонщика...", clashWaitBtn: "ОЖИДАНИЕ...", clashWaitP2: "ОЖИДАНИЕ СОПЕРНИКА...",
+        dailyProgress: "ПРОГРЕСС DAILY:", missingRider: "💡 Нет гонщика?", reportBug: "🚩 Сообщить об ошибке", joinDiscord: "В DISCORD",
+        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "СЧЕТ:", whoAreWeLookingFor: "КОГО ИЩЕМ?", taEmptyList: "Угаданные появятся здесь.",
+        expertMode: "РЕЖИМ ЭКСПЕРТА", games: "Игры", record: "Рекорд", average: "В среднем", startGame: "НАЧАТЬ ИГРУ ►", howToPlay: "КАК ИГРАТЬ?", backToMenu: "🔙 В МЕНЮ",
+        taRulesTitle: "Правила: Time Attack ⏱️", taRulesDesc: "Узнайте, сколько гонщиков вы угадаете на время!", taRule1Title: "Часы тикают", taRule1Desc: "У вас есть 120 секунд.", taRule2Title: "Без подсказок", taRule2Desc: "Вы сразу видите страну, год, медали и клубы.", taRule3Title: "Бонусы времени", taRule3Desc: "Каждый гонщик дает +15 секунд.", understoodBack: "ПОНЯТНО, НАЗАД!",
         localGameTitle: "🖥️ Локальная игра", localGameDesc: "Введите имена для игры на одном экране.", p1Red: "Игрок 1 (Красный)", p2Blue: "Игрок 2 (Синий)", startMatch: "НАЧАТЬ МАТЧ",
-        boardPreview: "ПРЕДПРОСМОТР ДОСКИ 👁️", searching: "Поиск...", waitingForOpponentElo: "Ожидание соперника с похожим ELO", cancel: "ОТМЕНА",
-        sugTitle: "СООБЩИТЬ О ГОНЩИКЕ", sugDesc: "Заметили отсутствие гонщика? Дайте знать, и мы его добавим! 🤝", sugName: "Имя и Фамилия *", sugCountry: "Страна", sugNotes: "Клубы / Заметки", send: "ОТПРАВИТЬ",
-        bugTitle: "СООБЩИТЬ ОБ ОШИБКЕ 🐛", bugDesc: "Что-то пошло не так? Опишите проблему!", bugDescInput: "Описание проблемы *", sendBug: "ОТПРАВИТЬ ОШИБКУ",
-        footerPrivacy: "Политика конфиденциальности", footerTerms: "Условия использования", footerContact: "Контакт (Ошибка)", footerRights: "Все права защищены.",
-        linkedAccounts: "ПРИВЯЗАННЫЕ АККАУНТЫ", linkDiscord: "ПРИВЯЗАТЬ DISCORD", yourNick: "ВАШ ТЕКУЩИЙ НИК:", change: "ИЗМЕНИТЬ", yourClub: "ВАШ ЛЮБИМЫЙ КЛУБ:", chooseClub: "ВЫБРАТЬ КЛУБ 🛡️", myAchievements: "МОИ ДОСТИЖЕНИЯ", playerAchievements: "ДОСТИЖЕНИЯ ИГРОКА", backToProfile: "НАЗАД В ПРОФИЛЬ",
-        removeSelection: "УДАЛИТЬ ВЫБОР", chooseYourClub: "ВЫБЕРИТЕ СВОЙ КЛУБ", chooseClubDesc: "Выберите команду, которую вы поддерживаете. Ее логотип будет виден рядом с вашим ником!",
-        updatesTitle: "ОБНОВЛЕНИЯ ИГРЫ 📢", updatesDesc: "Узнайте о последних изменениях!", understoodBtn: "ПОНЯТНО",
-        maintTitle: "ТЕХНИЧЕСКИЙ ПЕРЕРЫВ", maintDesc: "Сервер на обслуживании.<br>Игра временно недоступна.",
-        dToday: "СЕГОДНЯШНЯЯ ИГРА ►", dArchive: "АРХИВ DAILY", dLeague: "МАТЧ ЛИГИ ►", dFriendly: "ТОВАРИЩЕСКИЙ МАТЧ", dLocal: "ЛОКАЛЬНАЯ ИГРА (1 ПК)", dSettings: "НАСТРОЙКИ", dProfile: "ПРОФИЛЬ",
-        clashRule1Title: "Цель игры", clashRule2Title: "Захват полей", clashRule3Title: "Правила и время", clashRule4Title: "Доп. Требование (Хардкор)", clashRule4Desc: "Иногда под логотипом клуба будет флаг. Гонщик должен быть из этой страны!",
-        leagueHistory: "История Лиги",
-        
-        loadingData: "Загрузка данных...", noResults: "Нет результатов. Сыграйте первым!", noResultsCalib: "Нет результатов. Все игроки проходят калибровку! ⚖️",
-        noPlayedMatches: "Нет сыгранных матчей.", errorDB: "Ошибка базы данных.",
-        taP1Name: "Игрок 1", taP2Name: "Игрок 2", defaultPlayer: "Игрок",
-        toastHintUsed: "Подсказка использована!", toastPlayerGuessed: "Этот гонщик уже угадан.", toastTimeEnd: "Время вышло! Счет: {count}. Возврат в меню через 5с...",
-        toastWaitTurn: "Ждите своей очереди!", toastCellTaken: "Это поле уже занято!", toastPlayerNotExist: "Гонщик не существует или уже выбран!",
-        toastWrongCountry: "ОШИБКА! В этой колонке нужен гонщик из:", toastMissedClubs: "Промах! {name} не выступал за оба эти клуба.", toastTurn: "ВАШ ХОД!",
-        toastSavedClub: "Сохранено! Вы представляете:", toastRemovedClub: "Клуб удален", toastAchievement: "🏆 Достижение:",
-        toastPPM: "⛔ Правый клик заблокирован!", toastConsole: "⛔ Доступ к консоли заблокирован!", toastTabSwitch: "⚠️ Вы свернули вкладку! Пропуск хода.",
-        alertSurrenderConfirm: "Вы уверены, что хотите сдаться и открыть гонщика?", alertSurrenderTitle: "Сдаетесь?", alertSurrenderBtn: "ДА, Я СДАЮСЬ",
-        alertReturnConfirm: "Вернуться в меню? Прогресс Daily сохранится, но Endless будет потерян.", alertReturnTitle: "Возврат в меню", alertReturnBtn: "В МЕНЮ",
-        alertNickLength: "Ник должен содержать мин. 3 символа!", alertNickRules: "Этот ник нарушает правила. Выберите другой.", alertNickTaken: "Этот ник уже занят!", alertNickSame: "Это ваш текущий ник!",
-        alertClashLeave: "Выход закроет комнату для обоих игроков.\nВы уверены?", alertClashLeaveTitle: "Покинуть матч?", alertClashLeaveBtn: "ВЫЙТИ",
-        alertClashSurrender: "Вы проиграете техническим поражением.\nПотеряете ELO. Уверены?", alertClashSurrenderBtn: "СДАТЬСЯ",
-        
-        desktopRankDaily: "ЛЕДЕРБОРД (ДЕНЬ)", desktopRankWeekly: "ЛЕДЕРБОРД (НЕДЕЛЯ)", desktopRankMonthly: "ЛЕДЕРБОРД (МЕСЯЦ)", desktopRankAllTime: "ЛЕДЕРБОРД (ВЕЧНЫЙ)",
-        desktopRankClash: "ЛЕДЕРБОРД (CLASH)", desktopRankTA: "ЛЕДЕРБОРД (TIME ATTACK)",
+        boardPreview: "ДОСКА 👁️", searching: "Поиск...", waitingForOpponentElo: "Ожидание соперника", cancel: "ОТМЕНА",
+        sugTitle: "СООБЩИТЬ О ГОНЩИКЕ", sugDesc: "Заметили отсутствие гонщика? Дайте знать! 🤝", sugName: "Имя *", sugCountry: "Страна", sugNotes: "Клубы", send: "ОТПРАВИТЬ",
+        bugTitle: "ОШИБКА 🐛", bugDesc: "Опишите проблему!", bugDescInput: "Описание *", sendBug: "ОТПРАВИТЬ",
+        footerPrivacy: "Конфиденциальность", footerTerms: "Правила", footerContact: "Контакт", footerRights: "Все права защищены.",
+        linkedAccounts: "АККАУНТЫ", linkDiscord: "ПРИВЯЗАТЬ DISCORD", yourNick: "ВАШ НИК:", change: "ИЗМЕНИТЬ", yourClub: "ВАШ КЛУБ:", chooseClub: "ВЫБРАТЬ КЛУБ 🛡️", myAchievements: "МОИ ДОСТИЖЕНИЯ", playerAchievements: "ДОСТИЖЕНИЯ ИГРОКА", backToProfile: "НАЗАД В ПРОФИЛЬ",
+        removeSelection: "УДАЛИТЬ", chooseYourClub: "ВЫБЕРИТЕ КЛУБ", chooseClubDesc: "Его логотип будет виден рядом с вашим ником!",
+        updatesTitle: "ОБНОВЛЕНИЯ 📢", updatesDesc: "Последние изменения!", understoodBtn: "ПОНЯТНО",
+        maintTitle: "ТЕХНИЧЕСКИЙ ПЕРЕРЫВ", maintDesc: "Сервер на обслуживании.<br>Игра недоступна.",
+        dToday: "СЕГОДНЯШНЯЯ ИГРА ►", dArchive: "АРХИВ DAILY", dLeague: "МАТЧ ЛИГИ ►", dFriendly: "ТОВАРИЩЕСКИЙ МАТЧ", dLocal: "ЛОКАЛЬНАЯ ИГРА", dSettings: "НАСТРОЙКИ", dProfile: "ПРОФИЛЬ",
+        clashRule1Title: "Цель", clashRule2Title: "Захват полей", clashRule3Title: "Правила", clashRule4Title: "Доп. Требование", clashRule4Desc: "Иногда под клубом будет флаг. Гонщик должен быть из этой страны!", leagueHistory: "История Лиги",
+        loadingData: "Загрузка...", noResults: "Нет результатов.", selectModeMenu: "Выберите режим в меню слева...", taP1Name: "Игрок 1", taP2Name: "Игрок 2", defaultPlayer: "Игрок",
+        toastHintUsed: "Подсказка использована!", toastPlayerGuessed: "Уже угадан.", toastTimeEnd: "Время вышло! Счет: {count}. Возврат в меню...",
+        toastWaitTurn: "Ждите своей очереди!", toastCellTaken: "Поле занято!", toastPlayerNotExist: "Гонщик не найден!", toastWrongCountry: "ОШИБКА! Нужен гонщик из:", toastMissedClubs: "Промах! {name} не выступал за оба клуба.", toastTurn: "ВАШ ХОД!", toastSavedClub: "Сохранено!", toastRemovedClub: "Клуб удален", toastAchievement: "🏆 Достижение:", toastPPM: "⛔ Правый клик заблокирован!", toastConsole: "⛔ Доступ к консоли заблокирован!", toastTabSwitch: "⚠️ Вы свернули вкладку! Пропуск хода.",
+        alertSurrenderConfirm: "Вы уверены, что хотите сдаться?", alertSurrenderTitle: "Сдаетесь?", alertSurrenderBtn: "СДАЮСЬ",
+        alertReturnConfirm: "Вернуться в меню? Прогресс Endless будет потерян.", alertReturnTitle: "В меню", alertReturnBtn: "В МЕНЮ",
+        alertNickLength: "Мин. 3 символа!", alertNickRules: "Ник нарушает правила.", alertNickTaken: "Ник занят!", alertNickSame: "Это ваш ник!",
+        alertClashLeave: "Выход закроет комнату.\nВы уверены?", alertClashLeaveTitle: "Покинуть матч?", alertClashLeaveBtn: "ВЫЙТИ",
+        alertClashSurrender: "Вы проиграете техническим поражением. Уверены?", alertClashSurrenderBtn: "СДАТЬСЯ",
+        desktopRankDaily: "ЛЕДЕРБОРД (ДЕНЬ)", desktopRankWeekly: "ЛЕДЕРБОРД (НЕДЕЛЯ)", desktopRankMonthly: "ЛЕДЕРБОРД (МЕСЯЦ)", desktopRankAllTime: "ЛЕДЕРБОРД (ВЕЧНЫЙ)", desktopRankClash: "ЛЕДЕРБОРД (CLASH)", desktopRankTA: "ЛЕДЕРБОРД (TIME ATTACK)",
         colPos: "Поз.", colNick: "Имя", colRank: "Ранг", colElo: "ELO", colRecord: "Рекорд", colSolved: "Решено", colTotalWins: "Всего побед", colTries: "Попытки", yes: "ДА", no: "НЕТ",
-        
-        ach_title_first_try: "Орлиный глаз", ach_desc_first_try: "Угадайте гонщика с 1 попытки.",
-        ach_title_close_call: "На волоске", ach_desc_close_call: "Угадайте гонщика с последней, 10 попытки.",
-        ach_title_no_hint_1: "Умник", ach_desc_no_hint_1: "Выиграйте без подсказок.",
-        ach_title_no_hint_5: "Ходячая энциклопедия", ach_desc_no_hint_5: "Выиграйте 5 раз подряд без подсказок.",
-        ach_title_play_10: "Разминка", ach_desc_play_10: "Сыграйте 10 игр.",
-        ach_title_play_50: "Маньяк", ach_desc_play_50: "Сыграйте 50 игр.",
-        ach_title_streak_3: "Горячая серия I", ach_desc_streak_3: "Победная серия: 3.",
-        ach_title_streak_7: "Горячая серия II", ach_desc_streak_7: "Победная серия: 7.",
-        ach_title_streak_15: "Горячая серия III", ach_desc_streak_15: "Победная серия: 15.",
-        ach_title_clash_1: "Первая кровь", ach_desc_clash_1: "Первая победа в Clash.",
-        ach_title_clash_10: "Гладиатор", ach_desc_clash_10: "10 побед в Clash.",
-        ach_title_clash_50: "Доминатор", ach_desc_clash_50: "50 побед в Clash.",
-        ach_title_clash_flawless: "Безупречный Clash!", ach_desc_clash_flawless: "Выиграйте Clash, не отдав ни одного поля.",
-        ach_title_rank_silver: "Серебряный лис", ach_desc_rank_silver: "Достигните ранга Серебро.",
-        ach_title_rank_gold: "Золотой мальчик", ach_desc_rank_gold: "Достигните ранга Золото.",
-        ach_title_rank_diamond: "Элита спидвея", ach_desc_rank_diamond: "Достигните ранга Бриллиант.",
-        ach_title_clash_legend: "Живая легенда", ach_desc_clash_legend: "Достигните максимального ранга: Легенда.",
-        ach_title_ta_10: "Эксперт Time Attack I", ach_desc_ta_10: "10 гонщиков в Time Attack.",
-        ach_title_ta_20: "Эксперт Time Attack II", ach_desc_ta_20: "20 гонщиков в Time Attack.",
-        ach_title_ta_30: "Эксперт Time Attack III", ach_desc_ta_30: "30 гонщиков в Time Attack.",
-        ach_title_ta_50: "Эксперт Time Attack IV", ach_desc_ta_50: "50 гонщиков в Time Attack.",
-        ach_title_ta_100: "Бог Time Attack", ach_desc_ta_100: "100 гонщиков в Time Attack.",
-        ach_title_easter_club: "Цвета клуба", ach_desc_easter_club: "Выберите любимый клуб.",
-        ach_title_easter_lang: "Полиглот", ach_desc_easter_lang: "Смените язык в Настройках.",
-        ach_title_easter_theme: "Два лица", ach_desc_easter_theme: "Смените тему (Светлая/Темная)."
+        privacyTitle: "КОНФИДЕНЦИАЛЬНОСТЬ", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Мы сохраняем минимум данных.</div>",
+        termsTitle: "ПРАВИЛА", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Это фанатский проект. Читы ведут к бану.</div>",
+        ach_title_first_try: "Орлиный глаз", ach_desc_first_try: "Угадайте гонщика с 1 попытки.", ach_title_close_call: "На волоске", ach_desc_close_call: "Угадайте гонщика с 10 попытки.", ach_title_no_hint_1: "Умник", ach_desc_no_hint_1: "Выиграйте без подсказок.", ach_title_no_hint_5: "Энциклопедия", ach_desc_no_hint_5: "5 побед подряд без подсказок.", ach_title_play_10: "Разминка", ach_desc_play_10: "Сыграйте 10 игр.", ach_title_play_50: "Маньяк", ach_desc_play_50: "Сыграйте 50 игр.", ach_title_streak_3: "Серия I", ach_desc_streak_3: "Победная серия: 3.", ach_title_streak_7: "Серия II", ach_desc_streak_7: "Победная серия: 7.", ach_title_streak_15: "Серия III", ach_desc_streak_15: "Победная серия: 15.", ach_title_clash_1: "Первая кровь", ach_desc_clash_1: "Первая победа в Clash.", ach_title_clash_10: "Гладиатор", ach_desc_clash_10: "10 побед в Clash.", ach_title_clash_50: "Доминатор", ach_desc_clash_50: "50 побед в Clash.", ach_title_clash_flawless: "Безупречно!", ach_desc_clash_flawless: "Clash без потери полей.", ach_title_rank_silver: "Серебро", ach_desc_rank_silver: "Ранг Серебро.", ach_title_rank_gold: "Золото", ach_desc_rank_gold: "Ранг Золото.", ach_title_rank_diamond: "Элита", ach_desc_rank_diamond: "Ранг Бриллиант.", ach_title_clash_legend: "Легенда", ach_desc_clash_legend: "Ранг Легенда.", ach_title_ta_10: "TA Эксперт I", ach_desc_ta_10: "10 гонщиков в Time Attack.", ach_title_ta_20: "TA Эксперт II", ach_desc_ta_20: "20 гонщиков в Time Attack.", ach_title_ta_30: "TA Эксперт III", ach_desc_ta_30: "30 гонщиков в Time Attack.", ach_title_ta_50: "TA Эксперт IV", ach_desc_ta_50: "50 гонщиков в Time Attack.", ach_title_ta_100: "Бог Time Attack", ach_desc_ta_100: "100 гонщиков в Time Attack.", ach_title_easter_club: "Цвета клуба", ach_desc_easter_club: "Выберите клуб.", ach_title_easter_lang: "Полиглот", ach_desc_easter_lang: "Смените язык.", ach_title_easter_theme: "Два лица", ach_desc_easter_theme: "Смените тему."
     }
 };
 
@@ -3445,9 +3224,9 @@ async function loadDesktopRanking(type) {
 
     tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">${t('loadingData')}</td></tr>`;
 
-    try {
+   try {
         if (type === 'league') {
-            thead.innerHTML = `<tr><th>${t('colPos')}</th><th>${t('colNick')}</th><th>${t('colRank')}</th><th>${t('colElo')}</th></tr>`;
+            thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
@@ -3472,7 +3251,7 @@ async function loadDesktopRanking(type) {
                 pos++;
             });
         } else if (type === 'timeattack') {
-            thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th style="color: #1dd1a1;">${t('colRecord')}</th></tr>`;
+            thead.innerHTML = `<tr><th style="width: 15%;">${t('colPos')}</th><th style="text-align: left; width: 60%;">${t('colNick')}</th><th style="color: #1dd1a1; width: 25%; text-align: center;">${t('colRecord')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
@@ -3490,13 +3269,13 @@ async function loadDesktopRanking(type) {
                     <tr ${isMe}>
                         <td class="${rankClass}" style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
-                        <td style="color:#1dd1a1; font-weight:900;">${row.score}</td>
+                        <td style="color:#1dd1a1; font-weight:900; text-align: center;">${row.score}</td>
                     </tr>`;
                 pos++;
             });
         } else {
             let headerText = (type === 'daily') ? t('colSolved') : t('colTotalWins');
-            thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align:left;">${t('colNick')}</th><th>${headerText}</th><th>${t('colTries')}</th></tr>`;
+            thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:45%;">${t('colNick')}</th><th style="width:20%;">${headerText}</th><th style="width:20%;">${t('colTries')}</th></tr>`;
             
             let snapshot;
             if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
@@ -5296,7 +5075,7 @@ function showLegalModal(title, htmlContent) {
     const overlay = document.getElementById('appModalOverlay');
     const titleEl = document.getElementById('appModalTitle');
     const messageEl = document.getElementById('appModalMessage');
-    const confirmBtn = document.getElementById('appModalConfirm');
+    const confirmBtn = confirmBtn.innerText = t('understoodBtn');
     const cancelBtn = document.getElementById('appModalCancel');
 
     titleEl.innerText = title;
@@ -5315,53 +5094,11 @@ function showLegalModal(title, htmlContent) {
 }
 
 function showPrivacyPolicy() {
-    const html = `
-        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main); max-height: 50vh; overflow-y: auto; padding-right: 10px;">
-            <p style="margin-top: 0; margin-bottom: 15px;">Niniejsza Polityka Prywatności określa zasady gromadzenia i przetwarzania danych w grze <b>Speedway Guessr</b>.</p>
-            
-            <h3 style="color: var(--accent); margin-bottom: 5px; font-size: 14px;">1. Gromadzenie Danych (Logowanie Google)</h3>
-            <p style="margin-top: 0; color: #ccc;">Aby umożliwić zapisywanie postępów w grze oraz udział w globalnych rankingach, aplikacja oferuje możliwość logowania za pomocą usługi Google (OAuth 2.0). Pobieramy wyłącznie podstawowe dane udostępniane przez dostawcę (unikalny identyfikator użytkownika, publiczna nazwa profilu oraz adres e-mail). Zapisywany adres e-mail służy wyłącznie weryfikacji konta i nie jest wyświetlany publicznie.</p>
-            
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">2. Cel Przetwarzania Danych</h3>
-            <p style="margin-top: 0; color: #ccc;">Zgromadzone dane są wykorzystywane <b>wyłącznie</b> w celach prawidłowego funkcjonowania gry, tj.: przypisywania punktów ELO, generowania publicznych rankingów graczy oraz zapisywania ustawień profilu (np. wybranego klubu). Nie udostępniamy, nie sprzedajemy i nie profilujemy Twoich danych. Twój adres e-mail nigdy nie zostanie użyty do celów marketingowych.</p>
-            
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">3. Ciasteczka (Cookies) i LocalStorage</h3>
-            <p style="margin-top: 0; color: #ccc;">Aplikacja wykorzystuje technologie pamięci przeglądarki (tzw. <i>LocalStorage</i>) w celu zapisania Twoich preferencji (wybrany motyw jasny/ciemny, stan dźwięku, język) oraz tymczasowego stanu gry (abyś mógł powrócić do rozpoczętej zagadki). Te pliki są przechowywane wyłącznie na Twoim urządzeniu.</p>
-            
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">4. Powiązanie z platformą Discord</h3>
-            <p style="margin-top: 0; color: #ccc;">Jeśli dobrowolnie zdecydujesz się na powiązanie swojego konta z komunikatorem Discord, pobierzemy Twój identyfikator Discord ID. Dane te służą tylko jednemu celowi – automatycznemu przypisywaniu specjalnych Ról (odzwierciedlających Twoją rangę ELO w grze) na oficjalnym serwerze społeczności.</p>
-
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">5. Kontakt i Prawa Użytkownika</h3>
-            <p style="margin-top: 0; color: #ccc;">W każdej chwili masz prawo zażądać wglądu w swoje dane lub ich całkowitego usunięcia z naszych baz (co spowoduje wyczyszczenie Twoich wyników z rankingów). W takich sprawach prosimy o kontakt pod adresem: <br><a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--accent); font-weight: bold; text-decoration: none;">kontakt@speedwayguessr.pl</a></p>
-        </div>
-    `;
-    showLegalModal("POLITYKA PRYWATNOŚCI", html);
+    showLegalModal(t('privacyTitle'), t('privacyContent'));
 }
 
 function showTerms() {
-    const html = `
-        <div style="text-align: left; font-size: 13px; line-height: 1.6; color: var(--text-main); max-height: 50vh; overflow-y: auto; padding-right: 10px;">
-            <p style="margin-top: 0; margin-bottom: 15px;">Korzystanie z gry przeglądarkowej <b>Speedway Guessr</b> oznacza akceptację poniższego Regulaminu.</p>
-            
-            <h3 style="color: var(--accent); margin-bottom: 5px; font-size: 14px;">1. Postanowienia Ogólne i Charakter Projektu</h3>
-            <p style="margin-top: 0; color: #ccc;">Gra <b>Speedway Guessr</b> jest darmowym, nieoficjalnym projektem fanowskim, stworzonym z pasji do sportu żużlowego i nie przynosi korzyści majątkowych z tytułu subskrypcji. Projekt nie jest w żaden sposób powiązany, sponsorowany ani popierany przez Ekstraligę Żużlową sp. z o.o., Speedway Ekstraligę, PZMot ani konkretne kluby sportowe.</p>
-            
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">2. Prawa Własności Intelektualnej</h3>
-            <p style="margin-top: 0; color: #ccc;">Wszelkie nazwy klubów, zawodników, skróty nazw, suche dane statystyczne oraz logotypy w postaci niewielkich herbów są używane w aplikacji na zasadach dozwolonego użytku oraz prawa cytatu (w celach edukacyjno-informacyjnych oraz rozrywkowych). Wszystkie prawa do wizerunku, znaków towarowych oraz logotypów należą do ich prawowitych właścicieli.</p>
-            
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">3. Zasady Fair Play</h3>
-            <p style="margin-top: 0; color: #ccc;">W trybach rankingowych (w szczególności w trybie <b>Speedway Clash</b>) obowiązują bezwzględne zasady sportowej rywalizacji. <br><br>Zabrania się używania skryptów zewnętrznych i oszukiwania. Nakładane są zautomatyzowane blokady czasowe (od 5 minut do 7 dni) za:<br>
-            • Celowe wychodzenie (rage quit) z wylosowanych spotkań rankingowych.<br>
-            • Opuszczanie aktywnej karty przeglądarki podczas trwania meczu sieciowego.</p>
-            
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">4. Treści Tworzone Przez Użytkowników</h3>
-            <p style="margin-top: 0; color: #ccc;">Gracze są w pełni odpowiedzialni za nazwy kont (pseudonimy/nicki) podawane przy rejestracji w rankingach. Administracja zastrzega sobie bezwzględne prawo do trwałego usuwania kont i blokowania adresów IP graczy, którzy używają w pseudonimach słów wulgarnych, obraźliwych, naruszających dobra osobiste osób trzecich lub godzących w dobre imię klubów sportowych.</p>
-
-            <h3 style="color: var(--accent); margin-top: 15px; margin-bottom: 5px; font-size: 14px;">5. Dostępność Usługi</h3>
-            <p style="margin-top: 0; color: #ccc;">Będąc projektem hobbystycznym, autorzy nie gwarantują 100% dostępności usługi. Gra, jej algorytmy (w tym system punktacji ELO) oraz statystyki mogą być resetowane, modyfikowane lub zawieszane w dowolnym momencie w celach technicznych. W razie pytań zapraszamy do kontaktu: <a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--accent); text-decoration: none; font-weight: bold;">kontakt@speedwayguessr.pl</a></p>
-        </div>
-    `;
-    showLegalModal("REGULAMIN GRY", html);
+    showLegalModal(t('termsTitle'), t('termsContent'));
 }
 
 // Globalny eksport (żeby kliknięcie w footer zadziałało)
