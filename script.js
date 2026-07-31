@@ -835,12 +835,17 @@ const ACHIEVEMENTS_DB = [
     { id: 'ta_100', icon: '⏱️', title: 'Time Attack God', desc: 'Odgadnij 100 zawodników w jednej grze Time Attack.' },
     { id: 'easter_club', icon: '🏟️', title: 'Klubowe Barwy', desc: 'Wybierz swój ulubiony klub w profilu gracza.' },
     { id: 'easter_lang', icon: '🌍', title: 'Poliglota', desc: 'Zmień język gry w Ustawieniach.' }
+    { id: 'easter_theme', icon: '🌗', title: 'Dwa Oblicza', desc: 'Zmień motyw gry (Jasny/Ciemny).' }
 ];
 
 function ensureAchievementsStats() {
     if(!userStats.achievements) userStats.achievements = [];
-    if(!userStats.achievementsDates) userStats.achievementsDates = {}; // Nowość: pamiętamy kiedy odblokowano
+    if(!userStats.achievementsDates) userStats.achievementsDates = {}; 
     if(!userStats.trackers) userStats.trackers = { winsNoHint: 0, flawlessClash: false };
+    
+    // Dodajemy bezpieczne trackery dla nowych osiągnięć
+    if(typeof userStats.trackers.changedLang === 'undefined') userStats.trackers.changedLang = false;
+    if(typeof userStats.trackers.changedTheme === 'undefined') userStats.trackers.changedTheme = false;
 }
 
 function checkAchievements() {
@@ -871,7 +876,10 @@ function checkAchievements() {
         'ta_30': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 30,
         'ta_50': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 50,
         'ta_100': () => userStats.timeAttack && userStats.timeAttack.highestScore >= 100,
-        'easter_club': () => userStats.favoriteClub !== null && userStats.favoriteClub !== undefined
+        'easter_club': () => userStats.favoriteClub !== null && userStats.favoriteClub !== undefined,
+        // NOWE WARUNKI:
+        'easter_lang': () => userStats.trackers && userStats.trackers.changedLang === true,
+        'easter_theme': () => userStats.trackers && userStats.trackers.changedTheme === true
     };
 
     Object.keys(conditions).forEach(id => {
@@ -1225,9 +1233,9 @@ const i18n = {
 let currentLang = localStorage.getItem('speedwayLang') || 'pl';
 
 function setLang(lang) {
-    try {
-        console.log('setLang called:', lang);
-    } catch (e) {}
+    try { console.log('setLang called:', lang); } catch (e) {}
+    
+    let oldLang = localStorage.getItem('speedwayLang'); // Pobieramy stary przed zmianą
     currentLang = i18n[lang] ? lang : 'pl';
     localStorage.setItem('speedwayLang', currentLang);
     document.querySelectorAll('.lang-flag').forEach(el => el.classList.remove('active'));
@@ -1249,13 +1257,12 @@ function setLang(lang) {
         }
     });
 
-    // Tooltip keys mapping (data-i18n-tip -> data-tip)
+    // Tooltip keys mapping
     document.querySelectorAll('[data-i18n-tip]').forEach(el => {
         const tipKey = el.getAttribute('data-i18n-tip');
         if (tipKey && strings[tipKey]) el.setAttribute('data-tip', strings[tipKey]);
     });
 
-    try { console.log(`i18n: applied ${applied}/${nodes.length} elements; missing keys:`, Array.from(missing).slice(0,20)); } catch (e) {}
     updateDailyMenu(); updateSoundBtn(); updateAuthUI(auth.currentUser);
     if(document.getElementById('calendarOverlay').style.display === 'block') renderCalendar();
     
@@ -1264,6 +1271,14 @@ function setLang(lang) {
     const modeDisplay = document.getElementById('gameModeDisplay');
     if (gameMode === 'daily') modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
     else modeDisplay.innerText = i18n[currentLang].modeEndless;
+    
+    // ODBLOKOWANIE OSIĄGNIĘCIA
+    if (oldLang && oldLang !== currentLang && typeof userStats !== 'undefined' && userStats.trackers) {
+        ensureAchievementsStats();
+        userStats.trackers.changedLang = true;
+        checkAchievements();
+        saveStats();
+    }
 }
 
 // Ensure function is available from inline onclick handlers in HTML
@@ -1625,7 +1640,19 @@ function closeSettings() {
     const overlay = document.getElementById('settingsOverlay');
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
-function setTheme(themeName) { document.documentElement.setAttribute('data-theme', themeName); localStorage.setItem('theme', themeName); }
+function setTheme(themeName) { 
+    let oldTheme = localStorage.getItem('theme');
+    document.documentElement.setAttribute('data-theme', themeName); 
+    localStorage.setItem('theme', themeName); 
+    
+    // Odblokowanie osiągnięcia, jeśli temat faktycznie się zmienił
+    if (oldTheme && oldTheme !== themeName && typeof userStats !== 'undefined' && userStats.trackers) {
+        ensureAchievementsStats();
+        userStats.trackers.changedTheme = true;
+        checkAchievements();
+        saveStats();
+    }
+}
 
 
 // ==============================================
