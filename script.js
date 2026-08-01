@@ -175,7 +175,8 @@ let customClashSettings = {
     filterMode: 'leagues', // 'leagues' lub 'clubs'
     leagues: { ext: true, m2e: true, klz: true, other: true },
     excludedClubs: [], // Lista klubów odznaczonych ręcznie
-    requiredCountries: 0 // ile kolumn musi mieć ograniczenie narodowosci
+        requiredCountries: 0, // ile kolumn musi mieć ograniczenie narodowosci
+        excludeInactivePlayers: false
 };
 
 // ==============================================
@@ -263,6 +264,9 @@ function saveClashCustomSettings() {
     } else {
         customClashSettings.requiredCountries = customClashSettings.requiredCountries || 0;
     }
+    // Exclude inactive players checkbox
+    const exclEl = document.getElementById('customClashExcludeInactive');
+    if (exclEl) customClashSettings.excludeInactivePlayers = !!exclEl.checked;
     
     if (customClashSettings.filterMode === 'leagues') {
         customClashSettings.leagues.ext = document.getElementById('customLeagueExt').checked;

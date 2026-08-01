@@ -1143,6 +1143,23 @@
                 </div>
             </div>
 
+            <div class="form-group-clash text-left" style="margin-top:10px;">
+                <label>Wymagana liczba narodowości (kolumny)</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input id="customClashRequiredCountries" type="range" min="0" max="3" value="0" style="flex:1;" oninput="document.getElementById('customClashRequiredCountriesLabel').innerText = this.value">
+                    <span id="customClashRequiredCountriesLabel" style="min-width:28px; text-align:center;">0</span>
+                </div>
+                <div class="text-xs text-dim mt-8">Wybierz ile kolumn wymaga zawodnika z określonego kraju. (0 = brak wymogu)</div>
+            </div>
+
+            <div class="form-group-clash text-left" style="margin-top:8px;">
+                <label class="modern-checkbox-label" style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="customClashExcludeInactive">
+                    <span class="modern-checkbox-text">Wyklucz zawodników nieaktywnych / zawieszonych</span>
+                </label>
+                <div class="text-xs text-dim mt-8">Jeśli włączone, generator puli pominie zawodników oznaczonych jako nieaktywni.</div>
+            </div>
+
             <button onclick="saveClashCustomSettings()" class="btn-reset w-100 text-sm p-15">ZAPISZ USTAWIENIA</button>
             <button onclick="closeClashCustomSettings()" class="btn-close w-100 mt-10 text-sm p-15">ANULUJ</button>
         </div>
@@ -1181,7 +1198,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.3"></script>
+    <script src="script.js?v2.4"></script>
 
     
 </body>
