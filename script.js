@@ -3840,6 +3840,7 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
+// --- POPRAWIONE WYŚWIETLANIE PLANSZY ---
 function updateClashBoardUI(data) {
     const clashContainer = document.getElementById('clashContainer');
     if (!clashContainer) return;
@@ -3855,86 +3856,97 @@ function updateClashBoardUI(data) {
     
     closeClashSearch();
     
-    // ZABEZPIECZENIE: Pobieramy rozmiar planszy stricte z długości wierszy ułożonych przez bazę
-    // Gwarantuje to, że JS nigdy nie wejdzie w pętlę na zły rozmiar i nie odrzuci nulla!
-    let bSize = data.board ? Math.sqrt(data.board.length) : 3;
-    
-    // Tylko dla pewności rzutujemy, gdyby plansza była zepsuta
+    // Bezpieczne sprawdzanie rozmiaru
+    let bSize = 3;
+    if (data.board && data.board.length) {
+        bSize = Math.sqrt(data.board.length);
+    } else if (data.boardSize) {
+        bSize = data.boardSize;
+    }
     if (!Number.isInteger(bSize)) bSize = 3;
 
-    buildDynamicClashGridHTML(bSize);
-
-    for(let r=0; r<bSize; r++) {
-        for(let c=0; c<bSize; c++) {
-            let idx = r * bSize + c; 
-            let cell = document.getElementById(`cell-${r}-${c}`); 
-            
-            // Twarde zabezpieczenie w razie laga DOM
-            if (!cell) {
-                console.warn(`Cell cell-${r}-${c} not found in DOM!`);
-                continue; 
-            }
-            
-            let val = data.board[idx];
-            
-            if(val === 'red' || val === 'blue') { 
-                cell.className = `clash-cell clash-playable claimed-${val}`; 
-                let playerName = data.guessedPlayers[idx] || "Gracz";
-                cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
-            } else { 
-                cell.className = 'clash-cell clash-playable'; 
-                cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
-            }
-        }
-    }
-
-    updateClashTurnUI();
+    // Najpierw wymuszamy budowę gridu (zwraca true jeśli grid istnieje w DOM)
+    let isGridBuilt = buildDynamicClashGridHTML(bSize);
     
-    // Zaktualizuj nagłówki osi X i Y
-    for (let i = 0; i < bSize; i++) {
-        const colHeader = document.getElementById(`col${i}`);
-        if (colHeader && clashCols[i]) {
-            let headerHTML = `${getClubAbbr(clashCols[i])}`;
-            if (data.constraints && data.constraints.col === i) {
-                headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+    if (!isGridBuilt) {
+        console.error("Critical error: Could not build Clash Grid HTML.");
+        return;
+    }
+
+    // Bezpieczne wstawianie klas (timeout chroni przed rozjechaniem się ramy z DOM rendererem)
+    setTimeout(() => {
+        for(let r = 0; r < bSize; r++) {
+            for(let c = 0; c < bSize; c++) {
+                let idx = r * bSize + c; 
+                let cell = document.getElementById(`cell-${r}-${c}`); 
+                
+                if (!cell) {
+                    console.warn(`Skrypt nie znalazł cell-${r}-${c}. Powtórne logowanie.`);
+                    continue; 
+                }
+                
+                let val = data.board[idx];
+                
+                if(val === 'red' || val === 'blue') { 
+                    cell.className = `clash-cell clash-playable claimed-${val}`; 
+                    let playerName = data.guessedPlayers[idx] || "Gracz";
+                    cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
+                } else { 
+                    cell.className = 'clash-cell clash-playable'; 
+                    cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
+                }
             }
-            colHeader.innerHTML = headerHTML;
         }
-        const rowHeader = document.getElementById(`row${i}`);
-        if (rowHeader && clashRows[i]) {
-            rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+
+        updateClashTurnUI();
+        
+        // Zaktualizuj nagłówki
+        for (let i = 0; i < bSize; i++) {
+            const colHeader = document.getElementById(`col${i}`);
+            if (colHeader && clashCols[i]) {
+                let headerHTML = `${getClubAbbr(clashCols[i])}`;
+                if (data.constraints && data.constraints.col === i) {
+                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+                }
+                colHeader.innerHTML = headerHTML;
+            }
+            const rowHeader = document.getElementById(`row${i}`);
+            if (rowHeader && clashRows[i]) {
+                rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+            }
         }
-    }
 
-    if (clashStatus === 'viewing' || clashStatus === 'summary') {
-        document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
-        document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
-        if(clashTimerInterval) clearInterval(clashTimerInterval);
-        return; 
-    }
-
-    if(clashTurn === myClashColor || isLocalClash) { 
-        document.getElementById('clashTimerDisplay').style.color = '#00ff66'; 
-        if (isLocalClash || (window.lastTurnColor !== clashTurn)) {
-            playSound('flip');
-            window.lastTurnColor = clashTurn;
+        if (clashStatus === 'viewing' || clashStatus === 'summary') {
+            document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
+            document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
+            if(clashTimerInterval) clearInterval(clashTimerInterval);
+            return; 
         }
-    } else { 
-        document.getElementById('clashTimerDisplay').style.color = '#fff'; 
-    }
 
-    if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
-        setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
-        if (isLocalClash) {
-            localClashData.lastAction = '';
-        } else {
-            db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
+        if(clashTurn === myClashColor || isLocalClash) { 
+            document.getElementById('clashTimerDisplay').style.color = '#00ff66'; 
+            if (isLocalClash || (window.lastTurnColor !== clashTurn)) {
+                playSound('flip');
+                window.lastTurnColor = clashTurn;
+            }
+        } else { 
+            document.getElementById('clashTimerDisplay').style.color = '#fff'; 
         }
-    } else if (data.turn === myClashColor && clashStatus === 'playing' && window.lastTurnColor !== clashTurn) {
-        showToast("TWÓJ RUCH!", "normal");
-    }
 
-    startClashTimer(data.deadline);
+        if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
+            setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
+            if (isLocalClash) {
+                localClashData.lastAction = '';
+            } else {
+                db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
+            }
+        } else if (data.turn === myClashColor && clashStatus === 'playing' && window.lastTurnColor !== clashTurn) {
+            showToast("TWÓJ RUCH!", "normal");
+        }
+
+        startClashTimer(data.deadline);
+
+    }, 10); // Bardzo krótki timeout pozwala przeglądarce załadować nowo wygenerowany HTML do DOM.
 }
 
 function setElementDisplay(id, value) {
@@ -4321,6 +4333,7 @@ function backToClashModeSelectFromLocal() {
     document.getElementById('clashModeSelectContainer').style.display = 'flex';
 }
 
+// --- POPRAWIONA LOGIKA WYŚWIETLANIA I UPDATE DANYCH LOKALNYCH ---
 function startLocalClashMatch() {
     let p1Nick = document.getElementById('localPlayer1Input').value.trim() || 'Gracz 1';
     let p2Nick = document.getElementById('localPlayer2Input').value.trim() || 'Gracz 2';
@@ -4362,32 +4375,41 @@ function startLocalClashMatch() {
     };
     
     document.getElementById('clashLocalLobbyContainer').style.display = 'none';
+    
+    // Zbuduj strukturę w tle jeszcze ZANIM odpalisz główny mechanizm!
+    buildDynamicClashGridHTML(bSize);
+    
     updateLocalClashData({}); 
 }
 
 function updateLocalClashData(updates) {
     if (!isLocalClash) return;
-    localClashData = { ...localClashData, ...updates }; const data = localClashData;
+    localClashData = { ...localClashData, ...updates }; 
+    const data = localClashData;
     
-    clashStatus = data.status; clashTurn = data.turn; clashBoardState = data.board;
-    clashGuessedPlayers = data.guessedPlayers || []; clashRows = data.rows; clashCols = data.cols;
+    clashStatus = data.status; 
+    clashTurn = data.turn; 
+    clashBoardState = data.board;
+    clashGuessedPlayers = data.guessedPlayers || []; 
+    clashRows = data.rows; 
+    clashCols = data.cols;
 
-    for (let i = 0; i < 3; i++) {
-        const colHeader = document.getElementById(`col${i}`);
-        if (colHeader) {
-            let headerHTML = `${getClubAbbr(clashCols[i])}`;
-            if (data.constraints && data.constraints.col === i) headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
-            colHeader.innerHTML = headerHTML;
+    // Przekierowanie statusów: najpierw vsScreen, potem coinToss, na końcu samo playing. 
+    // Odłączamy tutaj zbędne renderowanie gridu, jeśli wciąż leci rzut monetą.
+    if(clashStatus === 'vsScreen') {
+        showVsScreen(data);
+    } else if(clashStatus === 'coinToss') {
+        playCoinToss(data);
+    } else if(clashStatus === 'playing') {
+        updateClashBoardUI(data);
+    } else if(clashStatus === 'summary') {
+        updateClashBoardUI(data); // Dla podglądu z wynikiem rysujemy
+        if(document.getElementById('clashSummaryOverlay').style.display === 'none') {
+            handleClashEnd(data);
         }
-        const rowHeader = document.getElementById(`row${i}`);
-        if (rowHeader) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
     }
+}
 
-    if(clashStatus === 'vsScreen') showVsScreen(data);
-    if(clashStatus === 'coinToss') playCoinToss(data);
-    if(clashStatus === 'playing') updateClashBoardUI(data);
-    if(clashStatus === 'summary' && document.getElementById('clashSummaryOverlay').style.display === 'none') handleClashEnd(data);
-} 
 // --- LOBBY TOWARZYSKIE ---
 async function createClashRoom() {
     document.getElementById('clashLobbyError').style.display = 'none';
@@ -5370,13 +5392,12 @@ function generateValidClashConstraint(rows, cols, size = 3) {
 
 function buildDynamicClashGridHTML(size) {
     const grid = document.getElementById('clashGrid');
-    if (!grid) return;
+    if (!grid) return false;
     
-    // Reset klas rozmiaru CSS
+    // Zresetuj wszystkie klasy dla pewności
     grid.className = 'clash-grid';
     grid.classList.add(`size-${size}`);
     
-    // Wyliczamy kolumny dla CSS
     if (window.innerWidth <= 768) {
         grid.style.gridTemplateColumns = `40px repeat(${size}, 1fr)`;
     } else {
@@ -5385,19 +5406,21 @@ function buildDynamicClashGridHTML(size) {
 
     let html = `<div class="clash-cell clash-header-cell empty"></div>`;
     
-    // Górny wiersz nagłówków (Kolumny)
-    for(let c=0; c<size; c++) {
+    // Generowanie headerów w poziomie (Kolumny)
+    for(let c = 0; c < size; c++) {
         html += `<div class="clash-cell clash-header-cell" id="col${c}"></div>`;
     }
 
-    // Wiersze
-    for(let r=0; r<size; r++) {
+    // Generowanie rzędów
+    for(let r = 0; r < size; r++) {
         html += `<div class="clash-cell clash-header-cell" id="row${r}"></div>`;
-        for(let c=0; c<size; c++) {
+        for(let c = 0; c < size; c++) {
             html += `<div class="clash-cell clash-playable" onclick="handleClashCell(${r}, ${c})" id="cell-${r}-${c}"></div>`;
         }
     }
+    
     grid.innerHTML = html;
+    return true; // Potwierdzenie, że HTML został zbudowany poprawnie
 }
 
 function showClashInfo() {
