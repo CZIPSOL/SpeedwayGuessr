@@ -107,62 +107,7 @@ function applyAdminState(isServerAdmin, isServerTester) {
             el.style.display = 'none';
         }
     });
-        let bSize = (data.board && data.board.length) ? Math.sqrt(data.board.length) : (data.boardSize || 3);
-        if (!Number.isInteger(bSize)) bSize = 3;
-
-        if (!buildDynamicClashGridHTML(bSize)) {
-            console.error('Critical error: Could not build Clash Grid HTML.');
-            return;
-        }
-
-        for(let r = 0; r < bSize; r++) {
-            for(let c = 0; c < bSize; c++) {
-                let idx = r * bSize + c; 
-                let cell = document.getElementById(`cell-${r}-${c}`); 
-                if (!cell) {
-                    console.warn(`Skrypt nie znalazł cell-${r}-${c}.`);
-                    continue;
-                }
-                let val = data.board[idx];
-            
-                if(val === 'red' || val === 'blue') { 
-                    cell.className = `clash-cell clash-playable claimed-${val}`; 
-                    let playerName = (data.guessedPlayers && data.guessedPlayers[idx]) || "Gracz";
-                    cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
-                } else { 
-                    cell.className = 'clash-cell clash-playable'; 
-                    cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
-                }
-            }
-        }
-
-        for (let i = 0; i < bSize; i++) {
-            const colHeader = document.getElementById(`col${i}`);
-            if (colHeader && clashCols[i]) {
-                let headerHTML = `${getClubAbbr(clashCols[i])}`;
-                if (data.constraints && data.constraints.col === i) {
-                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
-                }
-                colHeader.innerHTML = headerHTML;
-            }
-
-            const rowHeader = document.getElementById(`row${i}`);
-            if (rowHeader && clashRows[i]) {
-                rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
-            }
-        }
-    const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
-    const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
-    const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
-    const isViewSource = e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85);
-
-    if (isF12 || isInspect || isConsole || isElement || isViewSource) {
-        e.preventDefault();
-        e.stopPropagation();
-        showToast("⛔ Dostęp do konsoli zablokowany!", "error");
-        return false;
-    }
-}, true);
+}
 
 // ==============================================
 // ====== 2. INICJALIZACJA FIREBASE (PIERWSZE) ==
