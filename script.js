@@ -1,4 +1,4 @@
-// ==============================================
+````````````````// ==============================================
 // ====== SEJF ZAWODNIKA (ZABEZPIECZENIE) =======
 // ==============================================
 let _gVault = null;
@@ -519,13 +519,13 @@ function updateAuthUI(user) {
     if (!btn || !info) return; 
     
     if (user) {
-        btn.innerHTML = i18n[currentLang].btnLogout || "WYLOGUJ SIĘ";
+        btn.innerHTML = t('btnLogout');
         btn.onclick = logOut;
         btn.style.background = "#e74c3c";
-        info.innerText = `Konto Google: ${user.displayName}`;
+        info.innerText = `Konto Google: ${user.displayName}`; // Można to zostawić, bo pobiera nazwę z Google
         info.style.display = 'block';
     } else {
-        btn.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ` + (i18n[currentLang].btnLoginGoogle || "ZALOGUJ PRZEZ GOOGLE");
+        btn.innerHTML = `<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ` + t('btnLoginGoogle');
         btn.onclick = signInWithGoogle;
         btn.style.background = "#4285F4";
         info.style.display = 'none';
@@ -549,21 +549,10 @@ async function syncStatsFromFirebase() {
 
 
 function ensureLeagueStats(stats) {
-    if (!stats.clashLeague) {
-        stats.clashLeague = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 };
-    }
-    if (typeof stats.clashLeague.matchesPlayed !== 'number') stats.clashLeague.matchesPlayed = 0;
-    if (typeof stats.clashLeague.wins !== 'number') stats.clashLeague.wins = 0;
-    if (typeof stats.clashLeague.losses !== 'number') stats.clashLeague.losses = 0;
-    if (typeof stats.clashLeague.draws !== 'number') stats.clashLeague.draws = 0;
-    if (typeof stats.clashLeague.elo !== 'number') stats.clashLeague.elo = 1000;
-    return stats;
-}
-// Zmiana w ensureLeagueStats - dodajemy zmienne dla banów
-function ensureLeagueStats(stats) {
     if (!stats.clashLeague) stats.clashLeague = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 };
-    if (typeof stats.clashLeague.abandons !== 'number') stats.clashLeague.abandons = 0; // Licznik przewinień
-    if (typeof stats.clashLeague.banUntil !== 'number') stats.clashLeague.banUntil = 0; // Czas trwania bana
+    if (typeof stats.clashLeague.abandons !== 'number') stats.clashLeague.abandons = 0; 
+    if (typeof stats.clashLeague.banUntil !== 'number') stats.clashLeague.banUntil = 0; 
+    if (typeof stats.clashLeague.tabSwitches !== 'number') stats.clashLeague.tabSwitches = 0; // Dodano nowy tracker
     return stats;
 }
 
@@ -3261,8 +3250,10 @@ async function loadDesktopRanking(type) {
                 if (safeNick === playerNickname) myScoreFound = true; // Sprawdzamy czy złapaliśmy go w Top 20
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+                // DOKLEJANIE KLUBU
                 safeNick += getMiniClubBadge(row.club); 
-                let isMe = safeNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                
+                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 tbody.innerHTML += `
                     <tr ${isMe}>
@@ -3278,6 +3269,7 @@ async function loadDesktopRanking(type) {
             if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5) {
                 let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                // DOKLEJANIE KLUBU
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 
                 tbody.innerHTML += `<tr><td colspan="4" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
@@ -3311,7 +3303,9 @@ async function loadDesktopRanking(type) {
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 if (safeNick === playerNickname) myScoreFound = true;
 
+                // DOKLEJANIE KLUBU
                 safeNick += getMiniClubBadge(row.club); 
+                
                 let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
@@ -3327,6 +3321,8 @@ async function loadDesktopRanking(type) {
             // Dodaj gracza poniżej limitu
             if (!myScoreFound && myPersonalScore) {
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                
+                // DOKLEJANIE KLUBU
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 
                 tbody.innerHTML += `<tr><td colspan="3" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
@@ -3367,7 +3363,10 @@ async function loadDesktopRanking(type) {
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                
+                // DOKLEJANIE KLUBU (Daily, Weekly, Monthly, All-time)
                 safeNick += getMiniClubBadge(row.club); 
+                
                 let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="color: var(--accent);"' : '';
                 
                 tbody.innerHTML += `
@@ -3383,7 +3382,6 @@ async function loadDesktopRanking(type) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">${t('errorDB')}</td></tr>`; 
     }
 }
-
 // ==============================================
 // ====== WERSJA MOBILNA RANKINGU (MODAL) =======
 // ==============================================
@@ -3434,7 +3432,9 @@ async function loadRanking(type) {
                 else if (currentRankPosition === 2) rankClass = "rank-2"; 
                 else if (currentRankPosition === 3) rankClass = "rank-3";
                 
+                // DOKLEJANIE KLUBU W CLASH (Mobile)
                 safeRenderNick += getMiniClubBadge(row.club); 
+                
                 let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
@@ -3444,7 +3444,7 @@ async function loadRanking(type) {
                 if (tbody) { 
                     tbody.innerHTML += `<tr ${isMe}>
                         <td class="${rankClass}">${currentRankPosition}</td>
-                        <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
+                        <td class="rank-nick ${rankClass}" style="text-align:left;">${safeRenderNick}</td>
                         <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
                             <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
                                 ${rangaImg} <span>${rangaText}</span>
@@ -3463,13 +3463,15 @@ async function loadRanking(type) {
                 let myRankClass = getRankClass(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let myRankImg = getLeagueImageTag(myPersonalScore.elo, myPersonalScore.matchesPlayed, 18);
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                
+                // DOKLEJANIE KLUBU
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 
                 tbody.innerHTML += `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
                 tbody.innerHTML += `
                     <tr style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
                         <td style="color:var(--accent); font-weight:900;">--</td>
-                        <td class="rank-nick">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
+                        <td class="rank-nick" style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
                         <td style="font-size:10px; font-weight:900;" class="${myRankClass}">
                             <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
                                 ${myRankImg} <span>${myRank}</span>
@@ -3505,10 +3507,10 @@ async function loadRanking(type) {
 
     try {
         let snapshot;
-        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").get();
-        else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").get();
-        else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").get();
-        else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").get();
+        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(100).get(); // Dałem limit 100 żeby było spójnie z Clashem na mobile
+        else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(100).get();
+        else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(100).get();
+        else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(100).get();
         
         let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
         scores.sort((a, b) => { 
@@ -3537,13 +3539,16 @@ async function loadRanking(type) {
             let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? t('no') : '0'}</span>`;
             
             let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+            
+            // DOKLEJANIE KLUBU W ZWYKLYCH TRYBACH (Mobile)
             safeRenderNick += getMiniClubBadge(row.club); 
+            
             let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             if (tbody) { 
                 tbody.innerHTML += `<tr ${isMe}>
                     <td class="${rankClass}">${index + 1}</td>
-                    <td class="rank-nick ${rankClass}">${safeRenderNick}</td>
+                    <td class="rank-nick ${rankClass}" style="text-align:left;">${safeRenderNick}</td>
                     <td>${wonText}</td>
                     <td>${row.guesses}</td>
                 </tr>`; 
@@ -3669,7 +3674,7 @@ function updateLeagueUI() {
         const rank = getLeagueRankName(elo, played);
         const imgTag = getLeagueImageTag(elo, played, 24); 
         
-        displays.forEach(display => {
+        displays.forEach(display => {``
             if (display) {
                 if (played < 5) display.innerText = `KALIBRACJA (${played}/5) | ELO: ${Math.round(elo)}`;
                 else display.innerHTML = `${imgTag} <span style="vertical-align: middle;">${rank} | ELO: ${Math.round(elo)}</span>`;
@@ -3684,12 +3689,40 @@ function updateLeagueUI() {
 document.addEventListener('visibilitychange', () => {
     if (document.hidden && currentClashRoom && clashStatus === 'playing') {
         if (clashTurn === myClashColor) {
-            // UŻYWAMY TOASTA ZAMIAST ALERT(), ABY NIE ZAMRAŻAĆ PRZEGLĄDARKI!
-            showToast("⚠️ Wykryto zmianę karty! Tracisz turę.", "error"); 
+            
+            ensureLeagueStats(userStats);
+            if (typeof userStats.clashLeague.tabSwitches !== 'number') {
+                userStats.clashLeague.tabSwitches = 0;
+            }
+            
             skipClashTurn("Opuścił okno gry (KARA)");
             
             if (currentClashData && currentClashData.type === 'league') {
-                applyMatchmakingBan("Oszukiwanie - Opuszczenie karty przeglądarki.");
+                userStats.clashLeague.tabSwitches++;
+                saveStats();
+                
+                let offenses = userStats.clashLeague.tabSwitches;
+                
+                if (offenses >= 3) {
+                    applyMatchmakingBan("Nagminne opuszczanie okna gry (3 ostrzeżenia).");
+                    userStats.clashLeague.tabSwitches = 0;
+                    saveStats();
+                } else {
+                    // Przetłumaczony modal z dynamiczną zmienną
+                    let warnTitle = currentLang === 'pl' ? "OSTRZEŻENIE ⚠️" : "WARNING ⚠️";
+                    let warnMsg = currentLang === 'pl' 
+                        ? `Wykryto opuszczenie ekranu gry.\nStraciłeś swoją turę!\n\nTo Twoje ${offenses}. ostrzeżenie. Po 3 ostrzeżeniach otrzymasz blokadę na grę ligową!`
+                        : `Tab switch detected.\nYou lost your turn!\n\nThis is your ${offenses}. warning. After 3 warnings you will be banned from matchmaking!`;
+                    let warnBtn = currentLang === 'pl' ? "ROZUMIEM" : "I UNDERSTAND";
+
+                    showAppModal({ 
+                        title: warnTitle, 
+                        message: warnMsg, 
+                        confirmText: warnBtn 
+                    });
+                }
+            } else {
+                showToast(t('toastTabSwitch'), "error"); 
             }
         }
     }
@@ -4015,6 +4048,8 @@ async function updateLeagueStats(gameData) {
     const opponentElo = opponent ? (opponent.elo || 1000) : 1000;
     const finishedBySurrender = gameData.finishReason === 'surrender';
 
+     league.tabSwitches = 0; 
+
     let eloChange = 0;
     let resultText = "";
 
@@ -4242,6 +4277,7 @@ async function toggleClashRematch() {
 }
 
 // --- SILNIK SIECIOWY GRY ---
+// --- SILNIK SIECIOWY GRY ---
 function listenToClashRoom() {
     if(!currentClashRoom) return;
     
@@ -4253,6 +4289,26 @@ function listenToClashRoom() {
         }
         const data = doc.data();
         currentClashData = data;
+        
+        // ==========================================
+        // 🚨 ZABEZPIECZENIE ANTI-ZOMBIE (BŁĄD WYŚCIGU)
+        // Jeśli nasz kolor to czerwony (Host), to my musimy być w data.p1.
+        // Jeśli nasz kolor to niebieski (Gość), to my musimy być w data.p2.
+        // Jeśli nas tam nie ma, oznacza to, że w ułamku sekundy Firebase wrzucił kogoś innego!
+        // ==========================================
+        if (data.type === 'league') {
+            if (myClashColor === 'red' && data.p1 && data.p1.id !== playerId) {
+                console.warn("WYRZUCONO: Nie jestem już hostem tego pokoju.");
+                closeRoomCleanup({ deleteRoom: false });
+                return;
+            }
+            if (myClashColor === 'blue' && data.p2 && data.p2.id !== playerId) {
+                console.warn("WYRZUCONO: Zostałem nadpisany przez innego gracza.");
+                closeRoomCleanup({ deleteRoom: false });
+                return;
+            }
+        }
+
         clashStatus = data.status; 
         clashTurn = data.turn; 
         clashBoardState = data.board;
@@ -4313,6 +4369,12 @@ function listenToClashRoom() {
                     if (data.queueId) db.collection("clash_queue").doc(data.queueId).delete().catch(() => {});
                 }
 
+                // Gość (Niebieski) w Lidze również MUSI przejść ekran VS, w przeciwnym razie utknie w Lobby!
+                if (data.type === 'league' && myClashColor === 'blue' && !window.vsScreenTriggered) {
+                    window.vsScreenTriggered = true; 
+                }
+
+                // Standardowy Matchmaking (Gra towarzyska - wymaga wciśnięcia GOTOWY)
                 if (data.type !== 'league' && myClashColor === 'red' && data.p1Ready && data.p2Ready && !window.vsScreenTriggered) {
                     window.vsScreenTriggered = true;
                     db.collection("clash_rooms").doc(currentClashRoom).update({ status: 'vsScreen' });
@@ -4329,23 +4391,22 @@ function listenToClashRoom() {
                 window.lastRenderedClashStatus = null; // Resetujemy dla rewanżu
                 window.vsScreenTriggered = false;
                 
+                let allClubs = getCleanClubsList();
                 let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
                 if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
                 
-                let constraints = generateValidClashConstraint(clashRows, clashCols); // <-- DODANO TUTAJ
+                let constraints = generateValidClashConstraint(clashRows, clashCols); 
 
                 db.collection("clash_rooms").doc(currentClashRoom).update({
                     status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
                     board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
-                    rows: clashRows, cols: clashCols, constraints: constraints, rematchP1: false, rematchP2: false // <-- DODANO constraints: constraints,
+                    rows: clashRows, cols: clashCols, constraints: constraints, rematchP1: false, rematchP2: false 
                 });
             }
         }
 
         // ==========================================================
-        // OSTATECZNY FIX WIZUALNY: ZAWSZE RYSYJEMY PLANSZĘ
-        // To sprawia, że ostatni (wygrywający) punkt zostanie narysowany na ekranie
-        // zanim zdąży wysunąć się duże okienko "Wygrał X".
+        // RYSOWANIE PLANSZY
         // ==========================================================
         if (clashStatus === 'playing' || clashStatus === 'summary') {
             updateClashBoardUI(data); 
@@ -4362,8 +4423,7 @@ function listenToClashRoom() {
             if(clashStatus === 'summary') {
                 const summaryOverlay = document.getElementById('clashSummaryOverlay');
                 if (summaryOverlay && summaryOverlay.style.display === 'none') {
-                    // Lekkie 500ms opóźnienie, aby narysowany sekundę wcześniej "zwycięski kafel" 
-                    // wybrzmiał, zanim okienko go zasłoni!
+                    // Lekkie 500ms opóźnienie
                     setTimeout(() => { handleClashEnd(data); }, 500);
                 }
             }
