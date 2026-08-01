@@ -199,7 +199,9 @@ if (!playerId) {
 let customClashSettings = {
     size: 3, 
     turnTime: 120, 
-    leagues: { ext: true, m2e: true, klz: true, other: true }
+    filterMode: 'leagues', // 'leagues' lub 'clubs'
+    leagues: { ext: true, m2e: true, klz: true, other: true },
+    excludedClubs: [] // Lista klubów odznaczonych ręcznie
 };
 
 // ==============================================
@@ -210,6 +212,7 @@ function openClashCustomSettings() {
     const overlay = document.getElementById('clashCustomSettingsOverlay');
     overlay.style.display = 'block'; 
     setTimeout(() => overlay.style.opacity = '1', 10);
+    renderCustomClubsChips(); // Generuje listę klubów za każdym otwarciem okna
 }
 
 function closeClashCustomSettings() {
@@ -218,27 +221,89 @@ function closeClashCustomSettings() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
+function toggleClubFilterMode() {
+    const isClubsMode = document.getElementById('clubFilterToggle').checked;
+    customClashSettings.filterMode = isClubsMode ? 'clubs' : 'leagues';
+    
+    document.getElementById('labelLeagues').classList.toggle('active', !isClubsMode);
+    document.getElementById('labelClubs').classList.toggle('active', isClubsMode);
+    
+    document.getElementById('filterLeaguesSection').style.display = isClubsMode ? 'none' : 'flex';
+    document.getElementById('filterClubsSection').style.display = isClubsMode ? 'block' : 'none';
+}
+
+function renderCustomClubsChips() {
+    const container = document.getElementById('customClubsChipsContainer');
+    container.innerHTML = '';
+    
+    // Pobieranie wszystkich unikalnych klubów z bazy
+    let allClubs = new Set();
+    playersDB.forEach(p => {
+        p.pastClubs.forEach(c => allClubs.add(getCleanClubName(c).toLowerCase()));
+        if (p.currentClub) allClubs.add(getCleanClubName(p.currentClub).toLowerCase());
+    });
+    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => allClubs.delete(c));
+    
+    let sortedClubs = Array.from(allClubs).sort();
+
+    sortedClubs.forEach(club => {
+        const chip = document.createElement('div');
+        const isExcluded = customClashSettings.excludedClubs.includes(club);
+        chip.className = `club-chip ${isExcluded ? '' : 'active'}`;
+        chip.innerText = club;
+        chip.onclick = () => {
+            chip.classList.toggle('active');
+        };
+        container.appendChild(chip);
+    });
+}
+
+function toggleAllClubs(state) {
+    const chips = document.querySelectorAll('#customClubsChipsContainer .club-chip');
+    chips.forEach(chip => {
+        chip.classList.toggle('active', state);
+    });
+}
+
 function saveClashCustomSettings() {
     customClashSettings.size = parseInt(document.getElementById('customClashSize').value);
     customClashSettings.turnTime = parseInt(document.getElementById('customClashTime').value);
-    customClashSettings.leagues.ext = document.getElementById('customLeagueExt').checked;
-    customClashSettings.leagues.m2e = document.getElementById('customLeagueM2e').checked;
-    customClashSettings.leagues.klz = document.getElementById('customLeagueKlz').checked;
-    customClashSettings.leagues.other = document.getElementById('customLeagueOther').checked;
     
-    // Zabezpieczenie przed wyłączeniem wszystkiego
-    if (!customClashSettings.leagues.ext && !customClashSettings.leagues.m2e && !customClashSettings.leagues.klz && !customClashSettings.leagues.other) {
-        customClashSettings.leagues.ext = true;
-        document.getElementById('customLeagueExt').checked = true;
-        showToast("Musisz wybrać co najmniej jedną pulę klubów!", "error");
-        return;
+    if (customClashSettings.filterMode === 'leagues') {
+        customClashSettings.leagues.ext = document.getElementById('customLeagueExt').checked;
+        customClashSettings.leagues.m2e = document.getElementById('customLeagueM2e').checked;
+        customClashSettings.leagues.klz = document.getElementById('customLeagueKlz').checked;
+        customClashSettings.leagues.other = document.getElementById('customLeagueOther').checked;
+        
+        if (!customClashSettings.leagues.ext && !customClashSettings.leagues.m2e && !customClashSettings.leagues.klz && !customClashSettings.leagues.other) {
+            appAlert("Musisz wybrać co najmniej jedną pulę klubów!", "Błąd ustawień");
+            return;
+        }
+    } else {
+        // Zbieramy odznaczone kluby
+        const chips = document.querySelectorAll('#customClubsChipsContainer .club-chip');
+        customClashSettings.excludedClubs = [];
+        let activeCount = 0;
+        
+        chips.forEach(chip => {
+            if (!chip.classList.contains('active')) {
+                customClashSettings.excludedClubs.push(chip.innerText.toLowerCase());
+            } else {
+                activeCount++;
+            }
+        });
+
+        // Wymóg absolutnego minimum, żeby plansza w ogóle miała szansę się wygenerować
+        const requiredClubs = customClashSettings.size * 2;
+        if (activeCount < requiredClubs) {
+            appAlert(`Musisz zostawić włączonych co najmniej ${requiredClubs} klubów dla planszy ${customClashSettings.size}x${customClashSettings.size}!`, "Błąd ustawień");
+            return;
+        }
     }
     
     showToast("Zapisano ustawienia pokoju!", "success");
     closeClashCustomSettings();
 }
-
-
 
 // ==============================================
 // ====== LOSOWE TŁA (STADIONY) =================
@@ -3790,14 +3855,26 @@ function updateClashBoardUI(data) {
     
     closeClashSearch();
     
-    let bSize = data.boardSize || 3;
-    buildDynamicClashGridHTML(bSize); // Budujemy planszę!
+    // ZABEZPIECZENIE: Pobieramy rozmiar planszy stricte z długości wierszy ułożonych przez bazę
+    // Gwarantuje to, że JS nigdy nie wejdzie w pętlę na zły rozmiar i nie odrzuci nulla!
+    let bSize = data.board ? Math.sqrt(data.board.length) : 3;
+    
+    // Tylko dla pewności rzutujemy, gdyby plansza była zepsuta
+    if (!Number.isInteger(bSize)) bSize = 3;
+
+    buildDynamicClashGridHTML(bSize);
 
     for(let r=0; r<bSize; r++) {
         for(let c=0; c<bSize; c++) {
             let idx = r * bSize + c; 
             let cell = document.getElementById(`cell-${r}-${c}`); 
-            if (!cell) continue;
+            
+            // Twarde zabezpieczenie w razie laga DOM
+            if (!cell) {
+                console.warn(`Cell cell-${r}-${c} not found in DOM!`);
+                continue; 
+            }
+            
             let val = data.board[idx];
             
             if(val === 'red' || val === 'blue') { 
@@ -3813,16 +3890,20 @@ function updateClashBoardUI(data) {
 
     updateClashTurnUI();
     
-    // Zaktualizuj nagłówki po zbudowaniu gridu
+    // Zaktualizuj nagłówki osi X i Y
     for (let i = 0; i < bSize; i++) {
         const colHeader = document.getElementById(`col${i}`);
         if (colHeader && clashCols[i]) {
             let headerHTML = `${getClubAbbr(clashCols[i])}`;
-            if (data.constraints && data.constraints.col === i) headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+            if (data.constraints && data.constraints.col === i) {
+                headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+            }
             colHeader.innerHTML = headerHTML;
         }
         const rowHeader = document.getElementById(`row${i}`);
-        if (rowHeader && clashRows[i]) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+        if (rowHeader && clashRows[i]) {
+            rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+        }
     }
 
     if (clashStatus === 'viewing' || clashStatus === 'summary') {
@@ -4247,11 +4328,10 @@ function startLocalClashMatch() {
     isLocalClash = true; 
     currentClashRoom = "LOCAL";
     
-    // Pobranie ustawień dla gry lokalnej
     let bSize = customClashSettings.size || 3;
     let turnTime = customClashSettings.turnTime || 120;
     
-    let allClubs = getCleanClubsList(customClashSettings.leagues);
+    let allClubs = getCleanClubsList();
     let validBoard = tryGenerateBoard(allClubs, 3, 500, bSize) || tryGenerateBoard(allClubs, 2, 300, bSize);
     
     if (!validBoard) { 
@@ -4266,8 +4346,8 @@ function startLocalClashMatch() {
     localClashData = {
         type: 'local', 
         status: 'vsScreen',
-        boardSize: bSize,     // Zapis rozmiaru
-        turnTime: turnTime,   // Zapis czasu tury
+        boardSize: bSize,     
+        turnTime: turnTime,   
         p1: { nick: p1Nick, color: 'red' }, 
         p2: { nick: p2Nick, color: 'blue' },
         score: { p1: 0, p2: 0 }, 
@@ -4282,7 +4362,7 @@ function startLocalClashMatch() {
     };
     
     document.getElementById('clashLocalLobbyContainer').style.display = 'none';
-    updateLocalClashData({}); // Inicjalizacja widoku
+    updateLocalClashData({}); 
 }
 
 function updateLocalClashData(updates) {
@@ -4311,23 +4391,21 @@ function updateLocalClashData(updates) {
 // --- LOBBY TOWARZYSKIE ---
 async function createClashRoom() {
     document.getElementById('clashLobbyError').style.display = 'none';
-    const btn = document.querySelector('#clashLobbySelect .menu-btn');
-    btn.innerText = "TWORZENIE..."; 
+    const btn = document.querySelector('#clashLobbySelect .menu-btn.btn-green');
+    btn.innerHTML = `<span class="btn-icon">⏳</span><span class="btn-text">TWORZENIE...</span>`; 
     btn.disabled = true;
 
     const code = generateRoomCode(); 
     myClashColor = 'red';
     
-    // Wczytywanie z konfiguracji globalnej Custom Lobby
     let bSize = customClashSettings.size || 3;
     let turnTime = customClashSettings.turnTime || 120;
     
-    // Generowanie planszy z podanym rozmiarem i pulą lig
-    let allClubs = getCleanClubsList(customClashSettings.leagues);
+    let allClubs = getCleanClubsList();
     let validBoard = tryGenerateBoard(allClubs, 3, 500, bSize) || tryGenerateBoard(allClubs, 2, 300, bSize);
     
     if (!validBoard) { 
-        // Awaryjne (twarde) kluby dla trudnych plansz (5x5) jeśli algorytm nie znajdzie pasujących
+        // Fallback w razie zbyt drastycznego wycięcia klubów przez gracza
         const fbRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa', 'sparta wrocław', 'apator toruń'];
         const fbCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra', 'motor lublin', 'gkm grudziądz'];
         clashRows = fbRows.slice(0, bSize); 
@@ -4340,17 +4418,18 @@ async function createClashRoom() {
         await db.collection("clash_rooms").doc(code).set({
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'waiting', 
+            type: 'friendly',
             p1: { id: playerId, nick: playerNickname, color: 'red' }, 
             p2: null,
             p1Ready: false, 
             p2Ready: false, 
             score: { p1: 0, p2: 0 },
-            boardSize: bSize,       // Zapis do Firebase!
-            turnTime: turnTime,     // Zapis do Firebase!
+            boardSize: bSize,       
+            turnTime: turnTime,     
             rows: clashRows, 
             cols: clashCols, 
             constraints: constraints, 
-            board: Array(bSize * bSize).fill(null), // Dynamiczna tablica planszy
+            board: Array(bSize * bSize).fill(null), 
             guessedPlayers: Array(bSize * bSize).fill(null), 
             turn: 'red', 
             deadline: 0, 
@@ -4366,17 +4445,21 @@ async function createClashRoom() {
         
         document.getElementById('waitingText').style.display = 'block';
         document.getElementById('readyPlayersDiv').style.display = 'none';
-        document.getElementById('btnReady').innerText = "JESTEM GOTÓW";
-        document.getElementById('btnReady').disabled = false;
-        document.getElementById('btnReady').style.background = "var(--accent)";
+        
+        const btnReady = document.getElementById('btnReady');
+        btnReady.innerText = "JESTEM GOTÓW";
+        btnReady.disabled = false;
+        btnReady.style.background = "var(--accent)";
+        
         document.getElementById('clashLobbyWaiting').style.display = 'block';
         
         btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`; 
         btn.disabled = false;
         listenToClashRoom();
+        
     } catch(e) { 
         console.error(e);
-        document.getElementById('clashLobbyError').innerText = "Błąd połączenia."; 
+        document.getElementById('clashLobbyError').innerText = "Błąd połączenia z serwerem."; 
         document.getElementById('clashLobbyError').style.display = 'block'; 
         btn.disabled = false; 
         btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`;
@@ -4910,8 +4993,8 @@ async function executeValidClashMove(playerName) {
     let newBoard = [...clashBoardState]; 
     newBoard[clashActiveCellIdx] = turnColor;
     
-    // Dynamiczny rozmiar i czas gry na podstawie bazy
-    let bSize = (isLocalClash ? localClashData.boardSize : currentClashData.boardSize) || 3;
+    // Obliczanie bSize dynamicznie dla ochrony przed starymi danymi
+    let bSize = (isLocalClash ? localClashData.board : currentClashData.board) ? Math.sqrt(isLocalClash ? localClashData.board.length : currentClashData.board.length) : 3;
     let turnTime = (isLocalClash ? localClashData.turnTime : currentClashData.turnTime) || 120;
     
     let newGuessed = clashGuessedPlayers.length === (bSize * bSize) ? [...clashGuessedPlayers] : Array(bSize * bSize).fill(null);
@@ -4924,16 +5007,12 @@ async function executeValidClashMove(playerName) {
     let gameStatus = 'playing';
     let winnerObj = null;
 
-    // 1. Sprawdzamy czy ułożono wygrywającą linię (zależną od planszy)
     if (checkWinCondition(newBoard, turnColor, bSize)) {
         gameStatus = 'summary';
         winnerObj = turnColor;
     } 
-    // 2. Jeśli nikt nie ułożył linii, a cała plansza jest pełna
     else if (!newBoard.includes(null)) {
         gameStatus = 'summary';
-        
-        // Wygrywa dominator planszy
         let redCount = newBoard.filter(color => color === 'red').length;
         let blueCount = newBoard.filter(color => color === 'blue').length;
 
@@ -4942,14 +5021,12 @@ async function executeValidClashMove(playerName) {
         } else if (blueCount > redCount) {
             winnerObj = 'blue';
         } else {
-            winnerObj = 'draw'; // Bardzo rzadki przypadek na 4x4
+            winnerObj = 'draw'; 
         }
     }
 
-    // Wyliczamy nową deadline na podstawie czasu przypisanego do danego pokoju
     let nextDeadline = Date.now() + (turnTime * 1000);
 
-    // --- Aktualizacja Danych ---
     if (gameStatus === 'summary') {
         if(isLocalClash) {
             let p1Score = localClashData.score.p1;
@@ -5184,34 +5261,39 @@ function closeClashHistory() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-function getCleanClubsList(leagueConfig = null) {
+// Zmieniona funkcja pobierania klubów uwzględniająca nowy filterMode
+function getCleanClubsList() {
     let clubs = new Set();
-    let dbToUse = playersDB;
 
-    // Filtrowanie z ustawień (jeśli przekazano)
-    if (leagueConfig) {
-        const allowedExt = leagueConfig.ext ? LEAGUES_DB.ext.map(c => c.toLowerCase()) : [];
-        const allowedM2e = leagueConfig.m2e ? LEAGUES_DB.m2e.map(c => c.toLowerCase()) : [];
-        const allowedKlz = leagueConfig.klz ? LEAGUES_DB.klz.map(c => c.toLowerCase()) : [];
+    if (customClashSettings.filterMode === 'leagues') {
+        const allowedExt = customClashSettings.leagues.ext ? LEAGUES_DB.ext.map(c => c.toLowerCase()) : [];
+        const allowedM2e = customClashSettings.leagues.m2e ? LEAGUES_DB.m2e.map(c => c.toLowerCase()) : [];
+        const allowedKlz = customClashSettings.leagues.klz ? LEAGUES_DB.klz.map(c => c.toLowerCase()) : [];
         const allAllowedStandard = [...allowedExt, ...allowedM2e, ...allowedKlz];
 
         playersDB.forEach(p => {
             p.pastClubs.forEach(c => {
                 let clean = getCleanClubName(c).toLowerCase();
                 let isStandard = allAllowedStandard.includes(clean);
-                if (isStandard || (leagueConfig.other && !isStandard)) clubs.add(clean);
+                if (isStandard || (customClashSettings.leagues.other && !isStandard)) clubs.add(clean);
             });
             if (p.currentClub) {
                 let clean = getCleanClubName(p.currentClub).toLowerCase();
                 let isStandard = allAllowedStandard.includes(clean);
-                if (isStandard || (leagueConfig.other && !isStandard)) clubs.add(clean);
+                if (isStandard || (customClashSettings.leagues.other && !isStandard)) clubs.add(clean);
             }
         });
     } else {
-        // Domyślne zachowanie (wszystko dozwolone)
+        // Mode 'clubs' - bierzemy wszystko co NIE jest w excludedClubs
         playersDB.forEach(p => { 
-            p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); 
-            if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); 
+            p.pastClubs.forEach(c => {
+                let clean = getCleanClubName(c).toLowerCase();
+                if (!customClashSettings.excludedClubs.includes(clean)) clubs.add(clean);
+            }); 
+            if (p.currentClub) {
+                let clean = getCleanClubName(p.currentClub).toLowerCase();
+                if (!customClashSettings.excludedClubs.includes(clean)) clubs.add(clean);
+            }
         });
     }
 

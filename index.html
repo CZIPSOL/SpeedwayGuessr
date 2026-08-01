@@ -1079,40 +1079,67 @@
         <div class="stats-modal modal-md">
             <h2 class="text-accent mb-15">USTAWIENIA POKOJU</h2>
             
-            <div class="flex-col gap-15 text-left mb-25">
-                <div class="form-group">
-                    <label class="text-white">Wymiary planszy</label>
-                    <select id="customClashSize" class="custom-select">
-                        <option value="3" selected>Klasyczna (3x3)</option>
-                        <option value="4">Powiększona (4x4) - Trudna</option>
-                        <option value="5">Ogromna (5x5) - Bardzo trudna</option>
-                    </select>
+            <div class="form-group-clash text-left">
+                <label>Wymiary planszy</label>
+                <select id="customClashSize" class="custom-select">
+                    <option value="3" selected>Klasyczna (3x3)</option>
+                    <option value="4">Powiększona (4x4) - Trudna</option>
+                    <option value="5">Ogromna (5x5) - Bardzo trudna</option>
+                </select>
+            </div>
+
+            <div class="form-group-clash text-left">
+                <label>Czas na odpowiedź</label>
+                <select id="customClashTime" class="custom-select">
+                    <option value="30">30 sekund (Speedrun)</option>
+                    <option value="60">60 sekund</option>
+                    <option value="120" selected>120 sekund (Standard)</option>
+                    <option value="300">5 minut</option>
+                </select>
+            </div>
+
+            <div class="form-group-clash text-left">
+                <label class="text-center">Pula klubów</label>
+                
+                <!-- Przełącznik Trybu Filtracji -->
+                <div class="filter-toggle-container">
+                    <span id="labelLeagues" class="filter-toggle-label active">WG LIG</span>
+                    <label class="switch">
+                        <input type="checkbox" id="clubFilterToggle" onchange="toggleClubFilterMode()">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="labelClubs" class="filter-toggle-label">WG KLUBÓW</span>
                 </div>
 
-                <div class="form-group">
-                    <label class="text-white">Czas na odpowiedź</label>
-                    <select id="customClashTime" class="custom-select">
-                        <option value="30">30 sekund (Speedrun)</option>
-                        <option value="60">60 sekund</option>
-                        <option value="120" selected>120 sekund (Standard)</option>
-                        <option value="300">5 minut</option>
-                    </select>
+                <!-- Sekcja LIG -->
+                <div id="filterLeaguesSection" class="modern-checkbox-list">
+                    <label class="modern-checkbox-label">
+                        <input type="checkbox" id="customLeagueExt" checked>
+                        <span class="modern-checkbox-text">PGE Ekstraliga</span>
+                    </label>
+                    <label class="modern-checkbox-label">
+                        <input type="checkbox" id="customLeagueM2e" checked>
+                        <span class="modern-checkbox-text">Metalkas 2. Ekstraliga</span>
+                    </label>
+                    <label class="modern-checkbox-label">
+                        <input type="checkbox" id="customLeagueKlz" checked>
+                        <span class="modern-checkbox-text">Krajowa Liga Żużlowa</span>
+                    </label>
+                    <label class="modern-checkbox-label">
+                        <input type="checkbox" id="customLeagueOther" checked>
+                        <span class="modern-checkbox-text">Kluby Historyczne / Inne</span>
+                    </label>
                 </div>
 
-                <div class="form-group">
-                    <label class="text-white mb-5">Pula klubów</label>
-                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
-                        <input type="checkbox" id="customLeagueExt" checked> PGE Ekstraliga
-                    </label>
-                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
-                        <input type="checkbox" id="customLeagueM2e" checked> Metalkas 2. Ekstraliga
-                    </label>
-                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
-                        <input type="checkbox" id="customLeagueKlz" checked> Krajowa Liga Żużlowa
-                    </label>
-                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
-                        <input type="checkbox" id="customLeagueOther" checked> Kluby Historyczne / Inne
-                    </label>
+                <!-- Sekcja KONKRETNYCH KLUBÓW -->
+                <div id="filterClubsSection" style="display: none;">
+                    <div class="flex-row gap-10 justify-center mb-10">
+                        <button onclick="toggleAllClubs(true)" class="btn-flat" style="font-size:10px; padding:6px 12px; border-radius:8px;">ZAZNACZ WSZYSTKIE</button>
+                        <button onclick="toggleAllClubs(false)" class="btn-flat" style="font-size:10px; padding:6px 12px; border-radius:8px;">ODZNACZ WSZYSTKIE</button>
+                    </div>
+                    <div class="club-chips-wrapper" id="customClubsChipsContainer">
+                        <!-- Generowane z JS -->
+                    </div>
                 </div>
             </div>
 
