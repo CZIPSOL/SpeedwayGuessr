@@ -174,7 +174,8 @@ let customClashSettings = {
     turnTime: 120, 
     filterMode: 'leagues', // 'leagues' lub 'clubs'
     leagues: { ext: true, m2e: true, klz: true, other: true },
-    excludedClubs: [] // Lista klubów odznaczonych ręcznie
+    excludedClubs: [], // Lista klubów odznaczonych ręcznie
+    requiredCountries: 0 // ile kolumn musi mieć ograniczenie narodowosci
 };
 
 // ==============================================
@@ -186,6 +187,17 @@ function openClashCustomSettings() {
     overlay.style.display = 'block'; 
     setTimeout(() => overlay.style.opacity = '1', 10);
     renderCustomClubsChips(); // Generuje listę klubów za każdym otwarciem okna
+    // Setup required-countries slider UI if present
+    const reqSlider = document.getElementById('customClashRequiredCountries');
+    const reqLabel = document.getElementById('customClashRequiredCountriesLabel');
+    const size = customClashSettings.size || 3;
+    if (reqSlider) {
+        reqSlider.min = 0;
+        reqSlider.max = size;
+        reqSlider.value = customClashSettings.requiredCountries || 0;
+        if (reqLabel) reqLabel.innerText = reqSlider.value;
+        reqSlider.oninput = () => { if (reqLabel) reqLabel.innerText = reqSlider.value; };
+    }
 }
 
 function closeClashCustomSettings() {
@@ -241,6 +253,16 @@ function toggleAllClubs(state) {
 function saveClashCustomSettings() {
     customClashSettings.size = parseInt(document.getElementById('customClashSize').value);
     customClashSettings.turnTime = parseInt(document.getElementById('customClashTime').value);
+    // Required countries (number of column constraints)
+    const reqEl = document.getElementById('customClashRequiredCountries');
+    if (reqEl) {
+        let reqVal = parseInt(reqEl.value) || 0;
+        if (reqVal < 0) reqVal = 0;
+        if (reqVal > customClashSettings.size) reqVal = customClashSettings.size;
+        customClashSettings.requiredCountries = reqVal;
+    } else {
+        customClashSettings.requiredCountries = customClashSettings.requiredCountries || 0;
+    }
     
     if (customClashSettings.filterMode === 'leagues') {
         customClashSettings.leagues.ext = document.getElementById('customLeagueExt').checked;
@@ -3878,8 +3900,9 @@ function updateClashBoardUI(data) {
             const colHeader = document.getElementById(`col${i}`);
             if (colHeader && clashCols[i]) {
                 let headerHTML = `${getClubAbbr(clashCols[i])}`;
-                if (data.constraints && data.constraints.col === i) {
-                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+                const consCountry = getConstraintCountry(data.constraints, i);
+                if (consCountry) {
+                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${consCountry}]</span>`;
                 }
                 colHeader.innerHTML = headerHTML;
             }
@@ -4554,8 +4577,9 @@ function listenToClashRoom() {
             const colHeader = document.getElementById(`col${i}`);
             if (colHeader && clashCols[i]) {
                 let headerHTML = `${getClubAbbr(clashCols[i])}`;
-                if (data.constraints && data.constraints.col === i) {
-                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+                const consCountry = getConstraintCountry(data.constraints, i);
+                if (consCountry) {
+                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${consCountry}]</span>`;
                 }
                 colHeader.innerHTML = headerHTML;
             }
@@ -4813,8 +4837,9 @@ function updateClashBoardUI(data) {
         const colHeader = document.getElementById(`col${i}`);
         if (colHeader && clashCols[i]) {
             let headerHTML = `${getClubAbbr(clashCols[i])}`;
-            if (data.constraints && data.constraints.col === i) {
-                headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+            const consCountry = getConstraintCountry(data.constraints, i);
+            if (consCountry) {
+                headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${consCountry}]</span>`;
             }
             colHeader.innerHTML = headerHTML;
         }
@@ -4959,8 +4984,8 @@ async function submitClashGuess() {
     let bSize = roomData.boardSize || 3;
     let r = Math.floor(clashActiveCellIdx / bSize); let c = clashActiveCellIdx % bSize;
 
-    if (roomData.constraints && roomData.constraints.col === c) {
-        const reqCountry = roomData.constraints.country;
+    const reqCountry = getConstraintCountry(roomData.constraints, c);
+    if (reqCountry) {
         const pCountries = player.country.split("/").map(s => s.trim());
         if (!pCountries.includes(reqCountry)) {
             playSound('error');
@@ -5361,41 +5386,73 @@ function tryGenerateBoard(allClubs, minMatches, maxAttempts, boardSize = 3) {
 }
 
 function generateValidClashConstraint(rows, cols, size = 3) {
-    if (Math.random() > 0.5) return null; 
+    // Small chance to not apply any constraints
+    if (Math.random() > 0.5) return null;
 
-    const candidateCountries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
-    
-    // Generujemy indeksy kolumn bazując na rozmiarze (0..size-1)
+    // Build list of candidate countries from DB to ensure realism
+    let countrySet = new Set();
+    playersDB.forEach(p => {
+        p.country.split('/').map(s => s.trim()).forEach(c => { if (c) countrySet.add(c); });
+    });
+    const candidateCountries = Array.from(countrySet);
+    if (candidateCountries.length === 0) return null;
+
+    // Number of required constrained columns (from settings)
+    const required = (customClashSettings && customClashSettings.requiredCountries) ? customClashSettings.requiredCountries : 0;
+
+    // Shuffle helpers
     let colsIndices = Array.from({length: size}, (_, i) => i).sort(() => 0.5 - Math.random());
     let shuffledCountries = [...candidateCountries].sort(() => 0.5 - Math.random());
 
+    const constraints = [];
+
     for (let c of colsIndices) {
-        let colClub = cols[c]; 
-        
+        if (required > 0 && constraints.length >= required) break;
+        let colClub = cols[c];
+
         for (let country of shuffledCountries) {
+            // avoid reusing same country multiple times for now
+            if (constraints.some(x => x.country === country)) continue;
+
             let isValidForAllRows = true;
-            
             for (let r = 0; r < size; r++) {
                 let rowClub = rows[r];
                 let matchFound = playersDB.some(p => {
-                    let pCountries = p.country.split("/").map(s => s.trim());
+                    let pCountries = p.country.split('/').map(s => s.trim());
                     if (!pCountries.includes(country)) return false;
-                    
+
                     let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase());
                     if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
-                    
+
                     return pClubs.includes(rowClub) && pClubs.includes(colClub);
                 });
-                
-                if (!matchFound) {
-                    isValidForAllRows = false;
-                    break;
-                }
+
+                if (!matchFound) { isValidForAllRows = false; break; }
             }
-            if (isValidForAllRows) return { col: c, country: country };
+
+            if (isValidForAllRows) {
+                constraints.push({ col: c, country: country });
+                break;
+            }
         }
     }
-    return null; 
+
+    // If user requested 0 constraints, or we failed to find any, return null
+    if (required <= 0) return (constraints.length ? constraints[0] : null);
+    if (constraints.length === 0) return null;
+
+    // If we found at least one, return array (may be smaller than requested)
+    return constraints;
+}
+
+function getConstraintCountry(constraints, colIndex) {
+    if (!constraints) return null;
+    if (Array.isArray(constraints)) {
+        const found = constraints.find(x => x && x.col === colIndex);
+        return found ? found.country : null;
+    }
+    if (constraints.col === colIndex) return constraints.country;
+    return null;
 }
 
 function buildDynamicClashGridHTML(size) {
@@ -5435,10 +5492,26 @@ function updateClashTurnUI() {
     const display = document.getElementById('clashTimerDisplay');
     if (!display) return;
 
+    const cp1 = document.getElementById('cp1Nick');
+    const cp2 = document.getElementById('cp2Nick');
+
     if (clashStatus === 'viewing' || clashStatus === 'summary') {
         display.innerText = 'KONIEC MECZU';
         display.style.color = 'var(--text-dim)';
+        if (cp1) cp1.classList.remove('active');
+        if (cp2) cp2.classList.remove('active');
         return;
+    }
+
+    // Highlight which player's turn it is (works for local and online)
+    if (cp1) cp1.classList.toggle('active', clashTurn === 'red');
+    if (cp2) cp2.classList.toggle('active', clashTurn === 'blue');
+
+    // Timer color: green if it's your turn or in local mode, white otherwise
+    if (clashTurn === myClashColor || isLocalClash) {
+        display.style.color = '#00ff66';
+    } else {
+        display.style.color = '#fff';
     }
 
     display.title = clashTurn === myClashColor ? 'Twoja kolej' : 'Ruch przeciwnika';
