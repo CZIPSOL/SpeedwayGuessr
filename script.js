@@ -107,22 +107,50 @@ function applyAdminState(isServerAdmin, isServerTester) {
             el.style.display = 'none';
         }
     });
-    return window.isAdmin || window.isTester;
-}
+        let bSize = (data.board && data.board.length) ? Math.sqrt(data.board.length) : (data.boardSize || 3);
+        if (!Number.isInteger(bSize)) bSize = 3;
 
-// Blokada Prawego Przycisku Myszy (PPM) - UWAGA: Testerzy MAJĄ blokadę!
-document.addEventListener('contextmenu', function (e) {
-    if (window.isAdmin === true) return true; 
-    e.preventDefault();
-    showToast("⛔ Prawy przycisk myszy zablokowany!", "error");
-    return false;
-}, true);
+        if (!buildDynamicClashGridHTML(bSize)) {
+            console.error('Critical error: Could not build Clash Grid HTML.');
+            return;
+        }
 
-// Blokada Skrótów (F12 / DevTools) - UWAGA: Testerzy MAJĄ blokadę!
-document.addEventListener('keydown', function (e) {
-    if (window.isAdmin === true) return true;
+        for(let r = 0; r < bSize; r++) {
+            for(let c = 0; c < bSize; c++) {
+                let idx = r * bSize + c; 
+                let cell = document.getElementById(`cell-${r}-${c}`); 
+                if (!cell) {
+                    console.warn(`Skrypt nie znalazł cell-${r}-${c}.`);
+                    continue;
+                }
+                let val = data.board[idx];
+            
+                if(val === 'red' || val === 'blue') { 
+                    cell.className = `clash-cell clash-playable claimed-${val}`; 
+                    let playerName = (data.guessedPlayers && data.guessedPlayers[idx]) || "Gracz";
+                    cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
+                } else { 
+                    cell.className = 'clash-cell clash-playable'; 
+                    cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
+                }
+            }
+        }
 
-    const isF12 = e.key === 'F12' || e.keyCode === 123;
+        for (let i = 0; i < bSize; i++) {
+            const colHeader = document.getElementById(`col${i}`);
+            if (colHeader && clashCols[i]) {
+                let headerHTML = `${getClubAbbr(clashCols[i])}`;
+                if (data.constraints && data.constraints.col === i) {
+                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+                }
+                colHeader.innerHTML = headerHTML;
+            }
+
+            const rowHeader = document.getElementById(`row${i}`);
+            if (rowHeader && clashRows[i]) {
+                rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+            }
+        }
     const isInspect = e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73);
     const isConsole = e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74);
     const isElement = e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67);
@@ -4162,22 +4190,23 @@ async function startLeagueMatchmaking() {
             const roomCode = generateRoomCode(); myClashColor = 'red'; currentClashRoom = roomCode;
             
             let allClubs = getCleanClubsList(); 
+            let bSize = customClashSettings.size || 3;
             // Najpierw szukamy 3 pasujących, jak nie to tniemy trudność do 2 pasujących (zapobiega crashom u graczy)
-            let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
+            let validBoard = tryGenerateBoard(allClubs, 3, 500, bSize) || tryGenerateBoard(allClubs, 2, 300, bSize);
             if (!validBoard) { 
                 clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; 
                 clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; 
             }
 
-            let constraints = generateValidClashConstraint(clashRows, clashCols);
+            let constraints = generateValidClashConstraint(clashRows, clashCols, bSize);
 
             await db.collection("clash_rooms").doc(roomCode).set({
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 status: 'waiting', type: 'league',
                 p1: { id: playerId, nick: playerNickname, elo: userStats.clashLeague.elo, matchesPlayed: userStats.clashLeague.matchesPlayed, color: 'red' }, p2: null,
                 p1Ready: true, p2Ready: false, score: { p1: 0, p2: 0 },
-                rows: clashRows, cols: clashCols, constraints: constraints, board: Array(9).fill(null),
-                guessedPlayers: Array(9).fill(null), turn: 'red', deadline: 0, lastAction: ''
+                rows: clashRows, cols: clashCols, constraints: constraints, board: Array(bSize * bSize).fill(null),
+                guessedPlayers: Array(bSize * bSize).fill(null), turn: 'red', deadline: 0, lastAction: ''
             });
 
             const queueDoc = await queueRef.add({
@@ -4572,10 +4601,13 @@ function listenToClashRoom() {
         clashRows = data.rows; 
         clashCols = data.cols;
 
+        let bSize = (data.board && data.board.length) ? Math.sqrt(data.board.length) : (data.boardSize || 3);
+        if (!Number.isInteger(bSize)) bSize = 3;
+
         // Renderowanie nagłówków klubów (osi X i Y)
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < bSize; i++) {
             const colHeader = document.getElementById(`col${i}`);
-            if (colHeader) {
+            if (colHeader && clashCols[i]) {
                 let headerHTML = `${getClubAbbr(clashCols[i])}`;
                 if (data.constraints && data.constraints.col === i) {
                     headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
@@ -4583,7 +4615,7 @@ function listenToClashRoom() {
                 colHeader.innerHTML = headerHTML;
             }
             const rowHeader = document.getElementById(`row${i}`);
-            if (rowHeader) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+            if (rowHeader && clashRows[i]) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
         }
 
         // Aktualizacja ligi na zakończenie meczu
@@ -4651,11 +4683,13 @@ function listenToClashRoom() {
                 let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
                 if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
                 
-                let constraints = generateValidClashConstraint(clashRows, clashCols); 
+                let constraints = generateValidClashConstraint(clashRows, clashCols, bSize); 
+                let bSize = (data.board && data.board.length) ? Math.sqrt(data.board.length) : (data.boardSize || 3);
+                if (!Number.isInteger(bSize)) bSize = 3;
 
                 db.collection("clash_rooms").doc(currentClashRoom).update({
                     status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
-                    board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
+                    board: Array(bSize * bSize).fill(null), guessedPlayers: Array(bSize * bSize).fill(null), lastAction: '',
                     rows: clashRows, cols: clashCols, constraints: constraints, rematchP1: false, rematchP2: false 
                 });
             }
@@ -5145,10 +5179,11 @@ function handleClashEnd(data) {
              let allClubs = getCleanClubsList();
              let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
              if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
-             let constraints = generateValidClashConstraint(clashRows, clashCols);
+             let constraints = generateValidClashConstraint(clashRows, clashCols, bSize);
+             let bSize = (localClashData && localClashData.boardSize) || 3;
              updateLocalClashData({
                  status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
-                 board: Array(9).fill(null), guessedPlayers: Array(9).fill(null), lastAction: '',
+                 board: Array(bSize * bSize).fill(null), guessedPlayers: Array(bSize * bSize).fill(null), lastAction: '',
                  rows: clashRows, cols: clashCols, constraints: constraints
              });
         };
@@ -5425,6 +5460,19 @@ function buildDynamicClashGridHTML(size) {
     
     grid.innerHTML = html;
     return true; // Potwierdzenie, że HTML został zbudowany poprawnie
+}
+
+function updateClashTurnUI() {
+    const display = document.getElementById('clashTimerDisplay');
+    if (!display) return;
+
+    if (clashStatus === 'viewing' || clashStatus === 'summary') {
+        display.innerText = 'KONIEC MECZU';
+        display.style.color = 'var(--text-dim)';
+        return;
+    }
+
+    display.title = clashTurn === myClashColor ? 'Twoja kolej' : 'Ruch przeciwnika';
 }
 
 function showClashInfo() {
