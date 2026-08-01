@@ -14,6 +14,8 @@ function _unlockTarget() {
     return playersDB.find(p => p.id === unsalted);
 }
 
+
+
 function _generateDailyTarget(dayNumber) {
     let targetDay = Number(dayNumber) || 1;
     
@@ -192,6 +194,51 @@ if (!playerId) {
     playerId = 'guest_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('speedwayUserId', playerId);
 }
+
+// Konfiguracja własnych pokoi Clash
+let customClashSettings = {
+    size: 3, 
+    turnTime: 120, 
+    leagues: { ext: true, m2e: true, klz: true, other: true }
+};
+
+// ==============================================
+// ====== Custom Clash Lobby ====================
+// ==============================================
+
+function openClashCustomSettings() {
+    const overlay = document.getElementById('clashCustomSettingsOverlay');
+    overlay.style.display = 'block'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeClashCustomSettings() {
+    const overlay = document.getElementById('clashCustomSettingsOverlay');
+    overlay.style.opacity = '0'; 
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+function saveClashCustomSettings() {
+    customClashSettings.size = parseInt(document.getElementById('customClashSize').value);
+    customClashSettings.turnTime = parseInt(document.getElementById('customClashTime').value);
+    customClashSettings.leagues.ext = document.getElementById('customLeagueExt').checked;
+    customClashSettings.leagues.m2e = document.getElementById('customLeagueM2e').checked;
+    customClashSettings.leagues.klz = document.getElementById('customLeagueKlz').checked;
+    customClashSettings.leagues.other = document.getElementById('customLeagueOther').checked;
+    
+    // Zabezpieczenie przed wyłączeniem wszystkiego
+    if (!customClashSettings.leagues.ext && !customClashSettings.leagues.m2e && !customClashSettings.leagues.klz && !customClashSettings.leagues.other) {
+        customClashSettings.leagues.ext = true;
+        document.getElementById('customLeagueExt').checked = true;
+        showToast("Musisz wybrać co najmniej jedną pulę klubów!", "error");
+        return;
+    }
+    
+    showToast("Zapisano ustawienia pokoju!", "success");
+    closeClashCustomSettings();
+}
+
+
 
 // ==============================================
 // ====== LOSOWE TŁA (STADIONY) =================
@@ -3728,38 +3775,85 @@ document.addEventListener('visibilitychange', () => {
     }
 });
 
-function updateClashTurnUI() {
-    let p1El = document.getElementById('clashPlayer1'); 
-    let p2El = document.getElementById('clashPlayer2');
+function updateClashBoardUI(data) {
+    const clashContainer = document.getElementById('clashContainer');
+    if (!clashContainer) return;
+
+    if (clashStatus !== 'viewing') {
+        setElementDisplay('mainMenuContainer', 'none');
+        setElementDisplay('gameContainer', 'none');
+        setElementDisplay('clashModeSelectContainer', 'none');
+        setElementDisplay('clashLobbyContainer', 'none');
+        setElementDisplay('clashLocalLobbyContainer', 'none');
+        setElementDisplay('clashContainer', 'block');
+    }
     
-    // Podświetlanie czyja jest tura
-    if(p1El) p1El.className = clashTurn === 'red' ? 'clash-player active' : 'clash-player';
-    if(p2El) p2El.className = clashTurn === 'blue' ? 'clash-player active' : 'clash-player';
+    closeClashSearch();
+    
+    let bSize = data.boardSize || 3;
+    buildDynamicClashGridHTML(bSize); // Budujemy planszę!
 
-    // Aktualizacja tekstów (jeśli mamy załadowane dane meczowe)
-    const data = isLocalClash ? localClashData : currentClashData;
-    if (data && data.p1 && data.p2) {
-        
-        // Przygotowanie herbów (jeśli ktoś ma klub)
-        let badge1 = getMiniClubBadge(data.p1.club);
-        let badge2 = getMiniClubBadge(data.p2.club);
-        
-        let nick1 = data.p1.nick;
-        let nick2 = data.p2.nick;
-
-        // Jeśli to mecz ligowy, dodajemy z boku ELO w małym szarym polu (oraz ukrytą ikonkę rangi, aby nie robić bałaganu na froncie)
-        if (data.type === 'league') {
-            const p1Elo = `<span style="font-size: 10px; color: var(--accent); background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; margin-left: 5px;">${data.p1.elo}</span>`;
-            const p2Elo = `<span style="font-size: 10px; color: var(--accent); background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; margin-left: 5px;">${data.p2.elo}</span>`;
+    for(let r=0; r<bSize; r++) {
+        for(let c=0; c<bSize; c++) {
+            let idx = r * bSize + c; 
+            let cell = document.getElementById(`cell-${r}-${c}`); 
+            if (!cell) continue;
+            let val = data.board[idx];
             
-            document.getElementById('cp1Nick').innerHTML = nick1 + badge1 + p1Elo; 
-            document.getElementById('cp2Nick').innerHTML = nick2 + badge2 + p2Elo;
-        } else {
-            // Zwykły mecz towarzyski/lokalny - tylko nick + herb
-            document.getElementById('cp1Nick').innerHTML = nick1 + badge1; 
-            document.getElementById('cp2Nick').innerHTML = nick2 + badge2;
+            if(val === 'red' || val === 'blue') { 
+                cell.className = `clash-cell clash-playable claimed-${val}`; 
+                let playerName = data.guessedPlayers[idx] || "Gracz";
+                cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
+            } else { 
+                cell.className = 'clash-cell clash-playable'; 
+                cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
+            }
         }
     }
+
+    updateClashTurnUI();
+    
+    // Zaktualizuj nagłówki po zbudowaniu gridu
+    for (let i = 0; i < bSize; i++) {
+        const colHeader = document.getElementById(`col${i}`);
+        if (colHeader && clashCols[i]) {
+            let headerHTML = `${getClubAbbr(clashCols[i])}`;
+            if (data.constraints && data.constraints.col === i) headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${data.constraints.country}]</span>`;
+            colHeader.innerHTML = headerHTML;
+        }
+        const rowHeader = document.getElementById(`row${i}`);
+        if (rowHeader && clashRows[i]) rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
+    }
+
+    if (clashStatus === 'viewing' || clashStatus === 'summary') {
+        document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
+        document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
+        if(clashTimerInterval) clearInterval(clashTimerInterval);
+        return; 
+    }
+
+    if(clashTurn === myClashColor || isLocalClash) { 
+        document.getElementById('clashTimerDisplay').style.color = '#00ff66'; 
+        if (isLocalClash || (window.lastTurnColor !== clashTurn)) {
+            playSound('flip');
+            window.lastTurnColor = clashTurn;
+        }
+    } else { 
+        document.getElementById('clashTimerDisplay').style.color = '#fff'; 
+    }
+
+    if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
+        setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
+        if (isLocalClash) {
+            localClashData.lastAction = '';
+        } else {
+            db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
+        }
+    } else if (data.turn === myClashColor && clashStatus === 'playing' && window.lastTurnColor !== clashTurn) {
+        showToast("TWÓJ RUCH!", "normal");
+    }
+
+    startClashTimer(data.deadline);
 }
 
 function setElementDisplay(id, value) {
@@ -4150,20 +4244,41 @@ function startLocalClashMatch() {
     let p1Nick = document.getElementById('localPlayer1Input').value.trim() || 'Gracz 1';
     let p2Nick = document.getElementById('localPlayer2Input').value.trim() || 'Gracz 2';
     
-    isLocalClash = true; currentClashRoom = "LOCAL";
+    isLocalClash = true; 
+    currentClashRoom = "LOCAL";
     
-    let allClubs = getCleanClubsList();
-    let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
-    if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+    // Pobranie ustawień dla gry lokalnej
+    let bSize = customClashSettings.size || 3;
+    let turnTime = customClashSettings.turnTime || 120;
     
-let constraints = generateValidClashConstraint(clashRows, clashCols);
+    let allClubs = getCleanClubsList(customClashSettings.leagues);
+    let validBoard = tryGenerateBoard(allClubs, 3, 500, bSize) || tryGenerateBoard(allClubs, 2, 300, bSize);
+    
+    if (!validBoard) { 
+        const fbRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa', 'sparta wrocław', 'apator toruń'];
+        const fbCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra', 'motor lublin', 'gkm grudziądz'];
+        clashRows = fbRows.slice(0, bSize); 
+        clashCols = fbCols.slice(0, bSize); 
+    }
+    
+    let constraints = generateValidClashConstraint(clashRows, clashCols, bSize);
 
     localClashData = {
-        type: 'local', status: 'vsScreen',
-        p1: { nick: p1Nick, color: 'red' }, p2: { nick: p2Nick, color: 'blue' },
-        score: { p1: 0, p2: 0 }, rows: clashRows, cols: clashCols, constraints: constraints,
-        board: Array(9).fill(null), guessedPlayers: Array(9).fill(null),
-        turn: Math.random() < 0.5 ? 'red' : 'blue', deadline: 0, lastAction: ''
+        type: 'local', 
+        status: 'vsScreen',
+        boardSize: bSize,     // Zapis rozmiaru
+        turnTime: turnTime,   // Zapis czasu tury
+        p1: { nick: p1Nick, color: 'red' }, 
+        p2: { nick: p2Nick, color: 'blue' },
+        score: { p1: 0, p2: 0 }, 
+        rows: clashRows, 
+        cols: clashCols, 
+        constraints: constraints,
+        board: Array(bSize * bSize).fill(null), 
+        guessedPlayers: Array(bSize * bSize).fill(null),
+        turn: Math.random() < 0.5 ? 'red' : 'blue', 
+        deadline: 0, 
+        lastAction: ''
     };
     
     document.getElementById('clashLocalLobbyContainer').style.display = 'none';
@@ -4197,22 +4312,51 @@ function updateLocalClashData(updates) {
 async function createClashRoom() {
     document.getElementById('clashLobbyError').style.display = 'none';
     const btn = document.querySelector('#clashLobbySelect .menu-btn');
-    btn.innerText = "TWORZENIE..."; btn.disabled = true;
+    btn.innerText = "TWORZENIE..."; 
+    btn.disabled = true;
 
-    const code = generateRoomCode(); myClashColor = 'red';
-    let allClubs = getCleanClubsList();
-    let validBoard = tryGenerateBoard(allClubs, 3, 500) || tryGenerateBoard(allClubs, 2, 300);
-    if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
+    const code = generateRoomCode(); 
+    myClashColor = 'red';
+    
+    // Wczytywanie z konfiguracji globalnej Custom Lobby
+    let bSize = customClashSettings.size || 3;
+    let turnTime = customClashSettings.turnTime || 120;
+    
+    // Generowanie planszy z podanym rozmiarem i pulą lig
+    let allClubs = getCleanClubsList(customClashSettings.leagues);
+    let validBoard = tryGenerateBoard(allClubs, 3, 500, bSize) || tryGenerateBoard(allClubs, 2, 300, bSize);
+    
+    if (!validBoard) { 
+        // Awaryjne (twarde) kluby dla trudnych plansz (5x5) jeśli algorytm nie znajdzie pasujących
+        const fbRows = ['unia leszno', 'stal gorzów wielkopolski', 'włókniarz częstochowa', 'sparta wrocław', 'apator toruń'];
+        const fbCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra', 'motor lublin', 'gkm grudziądz'];
+        clashRows = fbRows.slice(0, bSize); 
+        clashCols = fbCols.slice(0, bSize); 
+    }
 
-    let constraints = generateValidClashConstraint(clashRows, clashCols); // <-- DODANO TUTAJ
+    let constraints = generateValidClashConstraint(clashRows, clashCols, bSize);
 
     try {
         await db.collection("clash_rooms").doc(code).set({
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'waiting', p1: { id: playerId, nick: playerNickname, color: 'red' }, p2: null,
-            p1Ready: false, p2Ready: false, score: { p1: 0, p2: 0 },
-            rows: clashRows, cols: clashCols, board: Array(9).fill(null), turn: 'red', deadline: 0,
-            guessedPlayers: Array(9).fill(null), lastAction: '', rematchP1: false, rematchP2: false,
+            status: 'waiting', 
+            p1: { id: playerId, nick: playerNickname, color: 'red' }, 
+            p2: null,
+            p1Ready: false, 
+            p2Ready: false, 
+            score: { p1: 0, p2: 0 },
+            boardSize: bSize,       // Zapis do Firebase!
+            turnTime: turnTime,     // Zapis do Firebase!
+            rows: clashRows, 
+            cols: clashCols, 
+            constraints: constraints, 
+            board: Array(bSize * bSize).fill(null), // Dynamiczna tablica planszy
+            guessedPlayers: Array(bSize * bSize).fill(null), 
+            turn: 'red', 
+            deadline: 0, 
+            lastAction: '', 
+            rematchP1: false, 
+            rematchP2: false,
             coinTossWinner: null
         });
 
@@ -4227,9 +4371,16 @@ async function createClashRoom() {
         document.getElementById('btnReady').style.background = "var(--accent)";
         document.getElementById('clashLobbyWaiting').style.display = 'block';
         
-        btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`; btn.disabled = false;
+        btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`; 
+        btn.disabled = false;
         listenToClashRoom();
-    } catch(e) { document.getElementById('clashLobbyError').innerText = "Błąd połączenia."; document.getElementById('clashLobbyError').style.display = 'block'; btn.disabled = false; }
+    } catch(e) { 
+        console.error(e);
+        document.getElementById('clashLobbyError').innerText = "Błąd połączenia."; 
+        document.getElementById('clashLobbyError').style.display = 'block'; 
+        btn.disabled = false; 
+        btn.innerHTML = `<span class="btn-icon">🏠</span><span class="btn-text">UTWÓRZ POKÓJ (HOST)</span>`;
+    }
 }
 
 async function joinClashRoom() {
@@ -4652,7 +4803,11 @@ function startClashTimer(deadlineTime) {
 
 function handleClashCell(r, c) {
     if (!isLocalClash && clashTurn !== myClashColor) { showToast("Czekaj na swoją kolej!", "error"); return; }
-    let idx = r * 3 + c; if(clashBoardState[idx] !== null) { showToast("To pole jest już zajęte!", "error"); return; }
+    
+    let bSize = (currentClashData && currentClashData.boardSize) || (localClashData && localClashData.boardSize) || 3;
+    let idx = r * bSize + c; 
+    
+    if(clashBoardState[idx] !== null) { showToast("To pole jest już zajęte!", "error"); return; }
     
     clashActiveCellIdx = idx;
     document.getElementById('clashSearchDesc').innerText = `${getClubAbbr(clashRows[r])} 🤝 ${getClubAbbr(clashCols[c])}`;
@@ -4689,7 +4844,8 @@ async function submitClashGuess() {
 
     const roomData = isLocalClash ? localClashData : await db.collection("clash_rooms").doc(currentClashRoom).get().then(doc => doc.data());
 
-    let r = Math.floor(clashActiveCellIdx / 3); let c = clashActiveCellIdx % 3;
+    let bSize = roomData.boardSize || 3;
+    let r = Math.floor(clashActiveCellIdx / bSize); let c = clashActiveCellIdx % bSize;
 
     if (roomData.constraints && roomData.constraints.col === c) {
         const reqCountry = roomData.constraints.country;
@@ -4716,14 +4872,37 @@ async function submitClashGuess() {
     }
 }
 
-// Sprawdzanie czy gracz ułożył 3 w linii w Clashu
-function checkWinCondition(board, color) {
-    const lines = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rzędy poziom
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Kolumny pion
-        [0, 4, 8], [2, 4, 6]             // Skosy
-    ];
-    return lines.some(line => line.every(index => board[index] === color));
+function checkWinCondition(board, color, size = 3) {
+    // 3 w rzędzie dla 3x3, 4 w rzędzie dla 4x4 i 5x5
+    const winNeeded = size === 3 ? 3 : 4; 
+    
+    const checkDirection = (startR, startC, dR, dC) => {
+        let count = 0;
+        for (let i = 0; i < winNeeded; i++) {
+            let r = startR + i * dR;
+            let c = startC + i * dC;
+            if (r >= 0 && r < size && c >= 0 && c < size) {
+                if (board[r * size + c] === color) count++;
+                else break;
+            }
+        }
+        return count === winNeeded;
+    };
+
+    for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+            if (board[r * size + c] === color) {
+                // Sprawdzamy poziomo, pionowo i na dwa skosy
+                if (checkDirection(r, c, 0, 1) || 
+                    checkDirection(r, c, 1, 0) || 
+                    checkDirection(r, c, 1, 1) || 
+                    checkDirection(r, c, 1, -1)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 async function executeValidClashMove(playerName) {
@@ -4731,7 +4910,11 @@ async function executeValidClashMove(playerName) {
     let newBoard = [...clashBoardState]; 
     newBoard[clashActiveCellIdx] = turnColor;
     
-    let newGuessed = clashGuessedPlayers.length === 9 ? [...clashGuessedPlayers] : Array(9).fill(null);
+    // Dynamiczny rozmiar i czas gry na podstawie bazy
+    let bSize = (isLocalClash ? localClashData.boardSize : currentClashData.boardSize) || 3;
+    let turnTime = (isLocalClash ? localClashData.turnTime : currentClashData.turnTime) || 120;
+    
+    let newGuessed = clashGuessedPlayers.length === (bSize * bSize) ? [...clashGuessedPlayers] : Array(bSize * bSize).fill(null);
     newGuessed[clashActiveCellIdx] = playerName;
 
     closeClashSearch(); 
@@ -4741,31 +4924,32 @@ async function executeValidClashMove(playerName) {
     let gameStatus = 'playing';
     let winnerObj = null;
 
-    // 1. Sprawdzamy czy ułożono klasyczne 3 w linii
-    if (checkWinCondition(newBoard, turnColor)) {
+    // 1. Sprawdzamy czy ułożono wygrywającą linię (zależną od planszy)
+    if (checkWinCondition(newBoard, turnColor, bSize)) {
         gameStatus = 'summary';
         winnerObj = turnColor;
     } 
-    // 2. Jeśli nie ułożono 3 w linii, sprawdzamy czy CAŁA plansza jest już pełna
+    // 2. Jeśli nikt nie ułożył linii, a cała plansza jest pełna
     else if (!newBoard.includes(null)) {
         gameStatus = 'summary';
         
-        // Policz przejęte pola
+        // Wygrywa dominator planszy
         let redCount = newBoard.filter(color => color === 'red').length;
         let blueCount = newBoard.filter(color => color === 'blue').length;
 
-        // Wygrywa ten, kto zdominował planszę (ma więcej kratek)
         if (redCount > blueCount) {
             winnerObj = 'red';
         } else if (blueCount > redCount) {
             winnerObj = 'blue';
         } else {
-            // Bezpiecznik (niezwykle mało prawdopodobny na planszy 3x3)
-            winnerObj = 'draw';
+            winnerObj = 'draw'; // Bardzo rzadki przypadek na 4x4
         }
     }
 
-    // --- Aktualizacja Bazy Danych ---
+    // Wyliczamy nową deadline na podstawie czasu przypisanego do danego pokoju
+    let nextDeadline = Date.now() + (turnTime * 1000);
+
+    // --- Aktualizacja Danych ---
     if (gameStatus === 'summary') {
         if(isLocalClash) {
             let p1Score = localClashData.score.p1;
@@ -4783,19 +4967,22 @@ async function executeValidClashMove(playerName) {
         }
     } else {
         if(isLocalClash) {
-            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, turn: nextTurn, deadline: Date.now() + 120000, lastAction: '' });
+            updateLocalClashData({ board: newBoard, guessedPlayers: newGuessed, turn: nextTurn, deadline: nextDeadline, lastAction: '' });
         } else {
-            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, turn: nextTurn, deadline: Date.now() + 120000, lastAction: '' });
+            await db.collection("clash_rooms").doc(currentClashRoom).update({ board: newBoard, guessedPlayers: newGuessed, turn: nextTurn, deadline: nextDeadline, lastAction: '' });
         }
     }
 }
 
 function skipClashTurn(reason) { 
     let nextTurn = clashTurn === 'red' ? 'blue' : 'red';
+    let turnTime = (isLocalClash ? localClashData.turnTime : (currentClashData ? currentClashData.turnTime : 120)) || 120;
+    let nextDeadline = Date.now() + (turnTime * 1000);
+
     if (isLocalClash) {
-        updateLocalClashData({ turn: nextTurn, deadline: Date.now() + 120000, lastAction: reason });
+        updateLocalClashData({ turn: nextTurn, deadline: nextDeadline, lastAction: reason });
     } else {
-        db.collection("clash_rooms").doc(currentClashRoom).update({ turn: nextTurn, deadline: Date.now() + 120000, lastAction: reason }); 
+        db.collection("clash_rooms").doc(currentClashRoom).update({ turn: nextTurn, deadline: nextDeadline, lastAction: reason }); 
     }
 }
 
@@ -4997,54 +5184,87 @@ function closeClashHistory() {
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-function getCleanClubsList() {
+function getCleanClubsList(leagueConfig = null) {
     let clubs = new Set();
-    playersDB.forEach(p => { p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); });
-    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c)); return Array.from(clubs);
+    let dbToUse = playersDB;
+
+    // Filtrowanie z ustawień (jeśli przekazano)
+    if (leagueConfig) {
+        const allowedExt = leagueConfig.ext ? LEAGUES_DB.ext.map(c => c.toLowerCase()) : [];
+        const allowedM2e = leagueConfig.m2e ? LEAGUES_DB.m2e.map(c => c.toLowerCase()) : [];
+        const allowedKlz = leagueConfig.klz ? LEAGUES_DB.klz.map(c => c.toLowerCase()) : [];
+        const allAllowedStandard = [...allowedExt, ...allowedM2e, ...allowedKlz];
+
+        playersDB.forEach(p => {
+            p.pastClubs.forEach(c => {
+                let clean = getCleanClubName(c).toLowerCase();
+                let isStandard = allAllowedStandard.includes(clean);
+                if (isStandard || (leagueConfig.other && !isStandard)) clubs.add(clean);
+            });
+            if (p.currentClub) {
+                let clean = getCleanClubName(p.currentClub).toLowerCase();
+                let isStandard = allAllowedStandard.includes(clean);
+                if (isStandard || (leagueConfig.other && !isStandard)) clubs.add(clean);
+            }
+        });
+    } else {
+        // Domyślne zachowanie (wszystko dozwolone)
+        playersDB.forEach(p => { 
+            p.pastClubs.forEach(c => clubs.add(getCleanClubName(c).toLowerCase())); 
+            if (p.currentClub) clubs.add(getCleanClubName(p.currentClub).toLowerCase()); 
+        });
+    }
+
+    ['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery'].forEach(c => clubs.delete(c)); 
+    return Array.from(clubs);
 }
 
-function tryGenerateBoard(allClubs, minMatches, maxAttempts) {
+function tryGenerateBoard(allClubs, minMatches, maxAttempts, boardSize = 3) {
     let attempts = 0;
     while (attempts < maxAttempts) {
-        attempts++; let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, 3); let validCols = [];
+        attempts++; 
+        let tempRows = [...allClubs].sort(() => 0.5 - Math.random()).slice(0, boardSize); 
+        let validCols = [];
+        
         for (let c of allClubs) {
             if (tempRows.includes(c)) continue; 
             let intersectsAll = tempRows.every(r => {
                 let matchCount = 0;
                 for (let p of playersDB) {
-                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
+                    let pClubs = p.pastClubs.map(pc => getCleanClubName(pc).toLowerCase()); 
+                    if (p.currentClub) pClubs.push(getCleanClubName(p.currentClub).toLowerCase());
                     if (pClubs.includes(c) && pClubs.includes(r)) matchCount++;
                 }
                 return matchCount >= minMatches;
             });
             if (intersectsAll) validCols.push(c);
         }
-        if (validCols.length >= 3) { clashRows = tempRows; clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, 3); return true; }
+        if (validCols.length >= boardSize) { 
+            clashRows = tempRows; 
+            clashCols = [...validCols].sort(() => 0.5 - Math.random()).slice(0, boardSize); 
+            return true; 
+        }
     }
     return false;
 }
 
-function generateValidClashConstraint(rows, cols) {
-    // 50% szans na to, że w ogóle spróbujemy dodać wymóg narodowości (jak wcześniej)
+function generateValidClashConstraint(rows, cols, size = 3) {
     if (Math.random() > 0.5) return null; 
 
     const candidateCountries = ["Polska", "Dania", "Australia", "Wielka Brytania", "Szwecja"];
     
-    // Tasujemy kolumny i kraje, żeby losowość była naturalna
-    let colsIndices = [0, 1, 2].sort(() => 0.5 - Math.random());
+    // Generujemy indeksy kolumn bazując na rozmiarze (0..size-1)
+    let colsIndices = Array.from({length: size}, (_, i) => i).sort(() => 0.5 - Math.random());
     let shuffledCountries = [...candidateCountries].sort(() => 0.5 - Math.random());
 
     for (let c of colsIndices) {
-        let colClub = cols[c]; // np. 'apator toruń'
+        let colClub = cols[c]; 
         
         for (let country of shuffledCountries) {
             let isValidForAllRows = true;
             
-            // Sprawdzamy wszystkie 3 rzędy (0, 1, 2) dla tej kolumny
-            for (let r = 0; r < 3; r++) {
+            for (let r = 0; r < size; r++) {
                 let rowClub = rows[r];
-                
-                // Szukamy w bazie zawodnika, który spełnia 3 warunki: Kraj + Klub 1 + Klub 2
                 let matchFound = playersDB.some(p => {
                     let pCountries = p.country.split("/").map(s => s.trim());
                     if (!pCountries.includes(country)) return false;
@@ -5055,22 +5275,47 @@ function generateValidClashConstraint(rows, cols) {
                     return pClubs.includes(rowClub) && pClubs.includes(colClub);
                 });
                 
-                // Jeśli choć jedno pole w tej kolumnie byłoby nie do odgadnięcia - odrzucamy ten kraj
                 if (!matchFound) {
                     isValidForAllRows = false;
                     break;
                 }
             }
-            
-            // Jeśli znaleźliśmy kraj, który pasuje do wszystkich 3 rzędów w tej kolumnie, zwracamy go
-            if (isValidForAllRows) {
-                return { col: c, country: country };
-            }
+            if (isValidForAllRows) return { col: c, country: country };
         }
     }
-    
-    // Jeśli na tej planszy nie da się nałożyć żadnego wymogu, zwracamy null (brak wymogu)
     return null; 
+}
+
+function buildDynamicClashGridHTML(size) {
+    const grid = document.getElementById('clashGrid');
+    if (!grid) return;
+    
+    // Reset klas rozmiaru CSS
+    grid.className = 'clash-grid';
+    grid.classList.add(`size-${size}`);
+    
+    // Wyliczamy kolumny dla CSS
+    if (window.innerWidth <= 768) {
+        grid.style.gridTemplateColumns = `40px repeat(${size}, 1fr)`;
+    } else {
+        grid.style.gridTemplateColumns = `80px repeat(${size}, 1fr)`;
+    }
+
+    let html = `<div class="clash-cell clash-header-cell empty"></div>`;
+    
+    // Górny wiersz nagłówków (Kolumny)
+    for(let c=0; c<size; c++) {
+        html += `<div class="clash-cell clash-header-cell" id="col${c}"></div>`;
+    }
+
+    // Wiersze
+    for(let r=0; r<size; r++) {
+        html += `<div class="clash-cell clash-header-cell" id="row${r}"></div>`;
+        for(let c=0; c<size; c++) {
+            html += `<div class="clash-cell clash-playable" onclick="handleClashCell(${r}, ${c})" id="cell-${r}-${c}"></div>`;
+        }
+    }
+    grid.innerHTML = html;
 }
 
 function showClashInfo() {

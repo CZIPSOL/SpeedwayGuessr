@@ -716,6 +716,11 @@
         <h1 class="game-title title-lg" data-i18n="clashLobbyTitle">🤝 Mecz Towarzyski</h1>
         
         <div id="clashLobbySelect" class="w-100 max-w-400 mt-20">
+            <!-- Nowy przycisk ustawień pokoju -->
+            <button onclick="openClashCustomSettings()" class="menu-btn btn-flat mb-10 w-100" style="padding: 10px; font-size: 13px;">
+                <span class="btn-icon">⚙️</span><span class="btn-text">USTAWIENIA POKOJU</span>
+            </button>
+
             <button onclick="createClashRoom()" class="menu-btn btn-green mb-20 w-100">
                 <span class="btn-icon">🏠</span><span class="btn-text" data-i18n="clashHost">UTWÓRZ POKÓJ (HOST)</span>
             </button>
@@ -751,6 +756,10 @@
         <h1 class="game-title title-lg">🖥️ Gra Lokalna</h1>
         <p class="text-dim text-center text-xs mb-25">Wpiszcie swoje nicki, aby zagrać na jednym ekranie.</p>
         
+        <button onclick="openClashCustomSettings()" class="menu-btn btn-flat mb-15 w-100 mx-auto max-w-320" style="padding: 10px; font-size: 13px;">
+            <span class="btn-icon">⚙️</span><span class="btn-text">USTAWIENIA PLANSZY</span>
+        </button>
+
         <div class="flex-col gap-15 w-100 max-w-320 mx-auto">
             <div>
                 <label class="text-red font-black text-xs uppercase">Gracz 1 (Czerwony)</label>
@@ -874,14 +883,7 @@
         </div>
 
         <div class="clash-grid" id="clashGrid">
-            <div class="clash-cell clash-header-cell empty"></div>
-            <div class="clash-cell clash-header-cell" id="col0"></div><div class="clash-cell clash-header-cell" id="col1"></div><div class="clash-cell clash-header-cell" id="col2"></div>
-            <div class="clash-cell clash-header-cell" id="row0"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(0, 0)" id="cell-0-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(0, 1)" id="cell-0-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(0, 2)" id="cell-0-2"></div>
-            <div class="clash-cell clash-header-cell" id="row1"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(1, 0)" id="cell-1-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(1, 1)" id="cell-1-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(1, 2)" id="cell-1-2"></div>
-            <div class="clash-cell clash-header-cell" id="row2"></div>
-            <div class="clash-cell clash-playable" onclick="handleClashCell(2, 0)" id="cell-2-0"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 1)" id="cell-2-1"></div><div class="clash-cell clash-playable" onclick="handleClashCell(2, 2)" id="cell-2-2"></div>
+            <!-- Puste, zawartość wygeneruje się z JavaScript w zależności od rozmiaru 3x3, 4x4, 5x5 -->
         </div>
         <button onclick="leaveClashRoom()" class="btn-close mt-30 w-100 border-red text-red" data-i18n="clashSurrender">PODDAJ SIĘ / WYJDŹ</button>
     </div>
@@ -1050,6 +1052,7 @@
             </div>
         </div>
     </div>
+    
 
     <!-- ZGŁASZANIE BŁĘDÓW -->
     <div id="bugReportOverlay" class="win-overlay" style="display: none; z-index: 10010;">
@@ -1068,6 +1071,53 @@
                 <button onclick="submitBugReport()" class="btn-reset flex-1 p-12 text-sm btn-danger" id="btnSubmitBug">WYŚLIJ BŁĄD</button>
                 <button onclick="closeBugReport()" class="btn-close flex-1 p-12 text-sm">ZAMKNIJ</button>
             </div>
+        </div>
+    </div>
+
+    <!-- USTAWIENIA NIESTANDARDOWE CLASH -->
+    <div id="clashCustomSettingsOverlay" class="win-overlay" style="display: none; z-index: 10040;">
+        <div class="stats-modal modal-md">
+            <h2 class="text-accent mb-15">USTAWIENIA POKOJU</h2>
+            
+            <div class="flex-col gap-15 text-left mb-25">
+                <div class="form-group">
+                    <label class="text-white">Wymiary planszy</label>
+                    <select id="customClashSize" class="custom-select">
+                        <option value="3" selected>Klasyczna (3x3)</option>
+                        <option value="4">Powiększona (4x4) - Trudna</option>
+                        <option value="5">Ogromna (5x5) - Bardzo trudna</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="text-white">Czas na odpowiedź</label>
+                    <select id="customClashTime" class="custom-select">
+                        <option value="30">30 sekund (Speedrun)</option>
+                        <option value="60">60 sekund</option>
+                        <option value="120" selected>120 sekund (Standard)</option>
+                        <option value="300">5 minut</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="text-white mb-5">Pula klubów</label>
+                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
+                        <input type="checkbox" id="customLeagueExt" checked> PGE Ekstraliga
+                    </label>
+                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
+                        <input type="checkbox" id="customLeagueM2e" checked> Metalkas 2. Ekstraliga
+                    </label>
+                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
+                        <input type="checkbox" id="customLeagueKlz" checked> Krajowa Liga Żużlowa
+                    </label>
+                    <label style="display: flex; gap: 10px; align-items: center; color: var(--text-dim); text-transform: none; font-size: 13px;">
+                        <input type="checkbox" id="customLeagueOther" checked> Kluby Historyczne / Inne
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="saveClashCustomSettings()" class="btn-reset w-100 text-sm p-15">ZAPISZ USTAWIENIA</button>
+            <button onclick="closeClashCustomSettings()" class="btn-close w-100 mt-10 text-sm p-15">ANULUJ</button>
         </div>
     </div>
 
@@ -1094,6 +1144,8 @@
         &copy; 2026 Speedway Guessr by CZIPSOL. Wszelkie prawa zastrzeżone.<br>
         <a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--text-dim); text-decoration: none; font-size: 11px; margin-top: 5px; display: inline-block;">kontakt@speedwayguessr.pl</a>
     </div>
+
+    
 </footer>
     <!-- Biblioteki Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -1102,7 +1154,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v232"></script>
+    <script src="script.js?v2"></script>
 
     
 </body>
