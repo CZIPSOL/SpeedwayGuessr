@@ -3236,19 +3236,33 @@ async function loadDesktopRanking(type) {
     try {
         if (type === 'league') {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
+            
+            // Pobieramy Top 20 Graczy
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
+            // Fix: Pobieramy dane zalogowanego usera niezależnie od limitu
+            let myScoreFound = false;
+            let myPersonalScore = null;
+            if (playerId) {
+                const myDoc = await db.collection("leaderboard_clash_beta").doc(playerId).get();
+                if (myDoc.exists) myPersonalScore = myDoc.data();
+            }
+
             tbody.innerHTML = '';
             if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
-                if (row.provisional || row.matchesPlayed < 5) return; 
-                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+                // FIX: Odrzucamy tylko bazując na ilości meczy
+                if (row.matchesPlayed < 5) return; 
+                
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                if (safeNick === playerNickname) myScoreFound = true; // Sprawdzamy czy złapaliśmy go w Top 20
+                
+                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 safeNick += getMiniClubBadge(row.club); 
-                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMe = safeNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 tbody.innerHTML += `
                     <tr ${isMe}>
@@ -3259,17 +3273,44 @@ async function loadDesktopRanking(type) {
                     </tr>`;
                 pos++;
             });
+
+            // FIX: Jeśli gracz ma rangę, ale wypadł poza Top 20, doklejamy go na dół tabeli jako "Jego Wynik"
+            if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5) {
+                let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
+                let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                
+                tbody.innerHTML += `<tr><td colspan="4" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
+                tbody.innerHTML += `
+                    <tr style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
+                        <td style="color:var(--accent); font-weight:900;">--</td>
+                        <td style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
+                        <td style="font-size:10px;">${myRank}</td>
+                        <td style="color:#3399ff; font-weight: bold;">${myPersonalScore.elo}</td>
+                    </tr>`;
+            }
+
         } else if (type === 'timeattack') {
             thead.innerHTML = `<tr><th style="width: 15%;">${t('colPos')}</th><th style="text-align: left; width: 60%;">${t('colNick')}</th><th style="color: #1dd1a1; width: 25%; text-align: center;">${t('colRecord')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
+            // To samo dla Time Attack: dbamy by gracz widział siebie
+            let myScoreFound = false;
+            let myPersonalScore = null;
+            if (playerId) {
+                const myDoc = await db.collection("leaderboard_timeattack").doc(playerId).get();
+                if (myDoc.exists) myPersonalScore = myDoc.data();
+            }
+
             tbody.innerHTML = '';
             if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                if (safeNick === playerNickname) myScoreFound = true;
+
                 safeNick += getMiniClubBadge(row.club); 
                 let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
@@ -3282,6 +3323,21 @@ async function loadDesktopRanking(type) {
                     </tr>`;
                 pos++;
             });
+
+            // Dodaj gracza poniżej limitu
+            if (!myScoreFound && myPersonalScore) {
+                let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                
+                tbody.innerHTML += `<tr><td colspan="3" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
+                tbody.innerHTML += `
+                    <tr style="background: rgba(29, 209, 161, 0.1); border: 1px solid #1dd1a1;">
+                        <td style="color:var(--accent); font-weight:900;">--</td>
+                        <td style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #1dd1a1;">(TY)</span></td>
+                        <td style="color:#1dd1a1; font-weight:900; text-align: center;">${myPersonalScore.score}</td>
+                    </tr>`;
+            }
+
         } else {
             let headerText = (type === 'daily') ? t('colSolved') : t('colTotalWins');
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:45%;">${t('colNick')}</th><th style="width:20%;">${headerText}</th><th style="width:20%;">${t('colTries')}</th></tr>`;
@@ -3341,35 +3397,45 @@ async function loadRanking(type) {
     const thead = document.getElementById('rankingTableHead');
     let dateDisplay = document.getElementById('rankingDateDisplay');
     
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Ładowanie z serwera... ⏳</td></tr>';
+    if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px;">${t('loadingData')}</td></tr>`;
 
     if (type === 'league') {
         if (dateDisplay) dateDisplay.style.display = 'none';
-        if (thead) thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>Ranga</th><th>Mecze</th><th style="color:var(--accent);">ELO</th></tr>`;
+        if (thead) thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th>${t('colRank')}</th><th>Mecze</th><th style="color:var(--accent);">${t('colElo')}</th></tr>`;
         
         try {
+            // Pobieramy Top 100 graczy
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+
+            let myScoreFound = false;
+            let myPersonalScore = null;
+            if (playerId) {
+                const myDoc = await db.collection("leaderboard_clash_beta").doc(playerId).get();
+                if (myDoc.exists) myPersonalScore = myDoc.data();
+            }
             
             if (tbody) tbody.innerHTML = '';
             if (scores.length === 0) { 
-                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">Brak wyników. Zagraj swój pierwszy mecz! 🏆</td></tr>`; 
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">${t('noResults')}</td></tr>`; 
                 return; 
             }
 
             let currentRankPosition = 1;
 
             scores.forEach((row) => {
-                if (row.provisional || row.matchesPlayed < 5) return; 
+                if (row.matchesPlayed < 5) return; // Odrzucamy z listy w trakcie kalibracji
                 
+                let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                if (safeRenderNick === playerNickname) myScoreFound = true; // Złapaliśmy go
+
                 let rankClass = ""; 
                 if (currentRankPosition === 1) rankClass = "rank-1"; 
                 else if (currentRankPosition === 2) rankClass = "rank-2"; 
                 else if (currentRankPosition === 3) rankClass = "rank-3";
                 
-                let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
                 safeRenderNick += getMiniClubBadge(row.club); 
-                let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
@@ -3391,19 +3457,42 @@ async function loadRanking(type) {
                 currentRankPosition++;
             });
 
+            // Dodaj gracza jeśli wypadł poza Top 100
+            if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5 && tbody) {
+                let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
+                let myRankClass = getRankClass(myPersonalScore.elo, myPersonalScore.matchesPlayed);
+                let myRankImg = getLeagueImageTag(myPersonalScore.elo, myPersonalScore.matchesPlayed, 18);
+                let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                
+                tbody.innerHTML += `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
+                tbody.innerHTML += `
+                    <tr style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
+                        <td style="color:var(--accent); font-weight:900;">--</td>
+                        <td class="rank-nick">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
+                        <td style="font-size:10px; font-weight:900;" class="${myRankClass}">
+                            <div style="display:flex; align-items:center; justify-content:center; gap: 4px;">
+                                ${myRankImg} <span>${myRank}</span>
+                            </div>
+                        </td>
+                        <td style="color:var(--text-dim); font-size:11px;">${myPersonalScore.matchesPlayed}</td>
+                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${myPersonalScore.elo}</td>
+                    </tr>`;
+            }
+
             if (tbody && tbody.innerHTML === '') {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">Brak wyników. Wszyscy gracze są w trakcie kalibracji! ⚖️</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">${t('noResultsCalib')}</td></tr>`;
             }
 
         } catch (e) { 
             console.error(e); 
-            if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; 
+            if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red-neon);">${t('errorDB')}</td></tr>`; 
         }
         return;
     }
 
-    let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
-    if (thead) thead.innerHTML = `<tr><th>Poz.</th><th style="text-align: left;">Nick</th><th>${headerText}</th><th>Próby</th></tr>`;
+    let headerText = (type === 'daily') ? t('colSolved') : t('colTotalWins');
+    if (thead) thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th>${headerText}</th><th>${t('colTries')}</th></tr>`;
     
     if (type === 'daily') { 
         if (dateDisplay) { 
@@ -3434,7 +3523,7 @@ async function loadRanking(type) {
         
         if (tbody) tbody.innerHTML = '';
         if (scores.length === 0) { 
-            if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Brak wyników. Bądź pierwszy! 🏆</td></tr>`; 
+            if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;">${t('noResults')}</td></tr>`; 
             return; 
         }
 
@@ -3445,11 +3534,11 @@ async function loadRanking(type) {
             else if (index === 2) rankClass = "rank-3";
             
             let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
-            let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? 'TAK' : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? 'NIE' : '0'}</span>`;
+            let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? t('no') : '0'}</span>`;
             
-            let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || "Gracz") : (row.nick || "Gracz");
+            let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
             safeRenderNick += getMiniClubBadge(row.club); 
-            let isMe = (row.nick || "Gracz") === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             if (tbody) { 
                 tbody.innerHTML += `<tr ${isMe}>
@@ -3462,7 +3551,7 @@ async function loadRanking(type) {
         });
     } catch (e) { 
         console.error(e); 
-        if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">Błąd bazy ❌</td></tr>`; 
+        if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">${t('errorDB')}</td></tr>`; 
     }
 }
 function closeRanking() { const overlay = document.getElementById('rankingOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
