@@ -4805,6 +4805,10 @@ function updateClashBoardUI(data) {
         for(let c=0; c<3; c++) {
             let idx = r * 3 + c; 
             let cell = document.getElementById(`cell-${r}-${c}`); 
+            if (!cell) {
+                console.warn(`Skrypt nie znalazł cell-${r}-${c}.`);
+                continue;
+            }
             let val = data.board[idx];
             
             if(val === 'red' || val === 'blue') { 
