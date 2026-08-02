@@ -3350,6 +3350,32 @@ async function loadDesktopRanking(type) {
     const title = document.getElementById('desktopRankingTitle');
     const tabs = document.getElementById('desktopRankTabs');
     
+
+    async function fetchVisibleLeaderboardRows(collectionName, orderField, visibleLimit, rowFilter) {
+        const rows = [];
+        let lastDoc = null;
+        let hadAnyDocs = false;
+
+        while (rows.length < visibleLimit) {
+            let query = db.collection(collectionName).orderBy(orderField, 'desc').limit(100);
+            if (lastDoc) query = query.startAfter(lastDoc);
+
+            const snapshot = await query.get();
+            if (snapshot.empty) break;
+
+            hadAnyDocs = true;
+            for (const doc of snapshot.docs) {
+                if (rows.length >= visibleLimit) break;
+                const row = doc.data();
+                if (!rowFilter || rowFilter(row)) rows.push(row);
+            }
+
+            lastDoc = snapshot.docs[snapshot.docs.length - 1];
+            if (snapshot.size < 100) break;
+        }
+
+        return { rows, hadAnyDocs };
+    }
     if (!tbody || !thead || !title) return;
 
     if (type === 'league') {
@@ -3380,9 +3406,13 @@ async function loadDesktopRanking(type) {
         if (type === 'league') {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
             
-            // Pobieramy Top 20 Graczy
-            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
-            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            const leaderboardData = await fetchVisibleLeaderboardRows(
+                'leaderboard_clash_beta',
+                'elo',
+                20,
+                (row) => (row.matchesPlayed || 0) >= 5
+            );
+            let scores = leaderboardData.rows;
             
             // Fix: Pobieramy dane zalogowanego usera niezależnie od limitu
             let myScoreFound = false;
@@ -3393,13 +3423,14 @@ async function loadDesktopRanking(type) {
             }
 
             tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
+            if (scores.length === 0) {
+                const emptyText = leaderboardData.hadAnyDocs ? t('noResultsCalib') : t('noResults');
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${emptyText}</td></tr>`;
+                return;
+            }
 
             let pos = 1;
             scores.forEach((row) => {
-                // FIX: Odrzucamy tylko bazując na ilości meczy
-                if (row.matchesPlayed < 5) return; 
-                
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 if (safeNick === playerNickname) myScoreFound = true; // Sprawdzamy czy złapaliśmy go w Top 20
                 
@@ -3556,9 +3587,13 @@ async function loadRanking(type) {
         if (thead) thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th>${t('colRank')}</th><th>Mecze</th><th style="color:var(--accent);">${t('colElo')}</th></tr>`;
         
         try {
-            // Pobieramy Top 100 graczy
-            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
-            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            const leaderboardData = await fetchVisibleLeaderboardRows(
+                'leaderboard_clash_beta',
+                'elo',
+                100,
+                (row) => (row.matchesPlayed || 0) >= 5
+            );
+            let scores = leaderboardData.rows;
 
             let myScoreFound = false;
             let myPersonalScore = null;
@@ -3569,15 +3604,13 @@ async function loadRanking(type) {
             
             if (tbody) tbody.innerHTML = '';
             if (scores.length === 0) { 
-                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">${t('noResults')}</td></tr>`; 
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">${leaderboardData.hadAnyDocs ? t('noResultsCalib') : t('noResults')}</td></tr>`; 
                 return; 
             }
 
             let currentRankPosition = 1;
 
             scores.forEach((row) => {
-                if (row.matchesPlayed < 5) return; // Odrzucamy z listy w trakcie kalibracji
-                
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 if (safeRenderNick === playerNickname) myScoreFound = true; // Złapaliśmy go
 
