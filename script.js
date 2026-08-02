@@ -178,12 +178,14 @@ let customClashSettings = {
         requiredCountries: 0, // ile kolumn musi mieć ograniczenie narodowosci
         excludeInactivePlayers: false
 };
+let clashCustomSettingsReadOnly = false;
 
 // ==============================================
 // ====== Custom Clash Lobby ====================
 // ==============================================
 
-function openClashCustomSettings() {
+function openClashCustomSettings(readOnly = false) {
+    clashCustomSettingsReadOnly = !!readOnly;
     const overlay = document.getElementById('clashCustomSettingsOverlay');
     overlay.style.display = 'block'; 
     setTimeout(() => overlay.style.opacity = '1', 10);
@@ -199,12 +201,35 @@ function openClashCustomSettings() {
         if (reqLabel) reqLabel.innerText = reqSlider.value;
         reqSlider.oninput = () => { if (reqLabel) reqLabel.innerText = reqSlider.value; };
     }
+
+    const saveBtn = overlay.querySelector('button[onclick="saveClashCustomSettings()"]');
+    const closeBtn = overlay.querySelector('button[onclick="closeClashCustomSettings()"]');
+    overlay.querySelectorAll('input, select, textarea').forEach(el => {
+        el.disabled = !!readOnly;
+    });
+    if (saveBtn) saveBtn.style.display = readOnly ? 'none' : 'block';
+    if (closeBtn) closeBtn.style.display = 'block';
+    overlay.querySelectorAll('.club-chip').forEach(chip => {
+        chip.style.pointerEvents = readOnly ? 'none' : 'auto';
+        chip.style.opacity = readOnly ? '0.7' : '1';
+    });
+
+    let info = document.getElementById('clashCustomSettingsReadOnlyInfo');
+    if (!info) {
+        info = document.createElement('div');
+        info.id = 'clashCustomSettingsReadOnlyInfo';
+        info.className = 'text-xs text-dim mb-15 text-center';
+        overlay.querySelector('.stats-modal').insertBefore(info, overlay.querySelector('.stats-modal').children[1]);
+    }
+    info.innerText = readOnly ? 'Podgląd ustawień pokoju. Tylko host może je edytować.' : '';
+    info.style.display = readOnly ? 'block' : 'none';
 }
 
 function closeClashCustomSettings() {
     const overlay = document.getElementById('clashCustomSettingsOverlay');
     overlay.style.opacity = '0'; 
     setTimeout(() => overlay.style.display = 'none', 300);
+    clashCustomSettingsReadOnly = false;
 }
 
 function toggleClubFilterMode() {
@@ -252,6 +277,10 @@ function toggleAllClubs(state) {
 }
 
 function saveClashCustomSettings() {
+    if (clashCustomSettingsReadOnly) {
+        closeClashCustomSettings();
+        return;
+    }
     customClashSettings.size = parseInt(document.getElementById('customClashSize').value);
     customClashSettings.turnTime = parseInt(document.getElementById('customClashTime').value);
     // Required countries (number of column constraints)
@@ -1853,7 +1882,7 @@ window.onload = async function() {
             banner.className = 'modern-info-banner';
             banner.innerHTML = `
                 <div class="modern-info-icon">💡</div> 
-                <div><b>INFORMACJA:</b> Aktualnie prowadzone są prace mające na celu umożliwienie połączenia z kontem Discord, aby na serwerze widać było twoją rangę!</div>
+                <div><b>INFORMACJA:</b> W Profilu możesz wybrać swój ulubiony klub, a będzie on widoczny w każdej tabeli!</div>
             `;
             document.body.appendChild(banner);
         }

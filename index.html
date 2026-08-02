@@ -738,6 +738,9 @@
             
             <div id="clashReadySection" class="mt-20">
                 <p id="waitingText" class="loading-pulse font-bold mb-20" data-i18n="clashWaiting">Oczekiwanie na przeciwnika...</p>
+                <button onclick="openClashCustomSettings(true)" class="menu-btn btn-flat mb-15 w-100 mx-auto max-w-320" style="padding: 10px; font-size: 13px;">
+                    <span class="btn-icon">👁️</span><span class="btn-text">PODGLĄD USTAWIEŃ</span>
+                </button>
                 
                 <div id="readyPlayersDiv" class="flex-col gap-10" style="display: none;">
                     <div class="flex-around mb-10 text-sm font-black">
@@ -1198,7 +1201,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.4"></script>
+    <script src="script.js?v2.5"></script>
 
     
 </body>
