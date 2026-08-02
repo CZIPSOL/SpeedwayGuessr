@@ -366,10 +366,17 @@ function setRandomBackground() {
 // ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
 // ==============================================
 
-const CURRENT_GAME_VERSION = "Beta v1.3.1";
+const CURRENT_GAME_VERSION = "Beta v1.3.2";
 
 const changelog = {
     pl: [
+        {
+            version: "Beta v1.3.2", date: "02.08.2026",
+            changes: [
+                "⚙️ <b>Ustawienia pokoju w Clashu:</b> Dodano możliwość podglądu i konfiguracji ustawień pokoju dla meczu Towarzyskiego i Lokalnego. Host może dalej edytować wszystko, a dołączony gracz widzi ustawienia w trybie podglądu.",
+                "🧩 <b>Najważniejsze opcje:</b> Rozmiar planszy (3x3, 4x4, 5x5), czas na odpowiedź, liczba wymaganych narodowości w kolumnach oraz filtr klubów / lig."
+            ]
+        },
         {
             version: "Beta v1.3.1", date: "30.07.2026",
             changes: [
@@ -444,6 +451,13 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.3.2", date: "02.08.2026",
+            changes: [
+                "⚙️ <b>Room settings in Clash:</b> Added room settings preview/configuration for Friendly and Local matches. The host can still edit everything, while the joined player can only view the settings.",
+                "🧩 <b>Key options:</b> Board size (3x3, 4x4, 5x5), answer time, required nationality columns, and club/league filters."
+            ]
+        },
         {
             version: "Beta v1.3.1", date: "30.07.2026",
             changes: [
