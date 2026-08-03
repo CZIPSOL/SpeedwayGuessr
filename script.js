@@ -5807,6 +5807,240 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+// ==============================================
+// ====== SPEEDWAY LEGEND (TRYB KARIERY) ========
+// ==============================================
+
+// BAZA DANYCH GOSPODARKI (Zarobki, Trudność, Rozwój)
+const CAREER_LEAGUES = {
+    "PGE Ekstraliga": {
+        teams: ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+        basePay: { min: 300000, max: 1000000 }, // Za podpis
+        pointPay: { min: 4000, max: 9000 },    // Za punkt
+        difficulty: 82, // OVR potrzebny by regularnie punktować
+        devBonus: -1    // Jeśli nie punktujesz, regres formy (trudna liga)
+    },
+    "Metalkas 2.E": {
+        teams: ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+        basePay: { min: 100000, max: 400000 },
+        pointPay: { min: 2000, max: 4000 },
+        difficulty: 70,
+        devBonus: 1 // Lekki bonus do OVR
+    },
+    "KLŻ": {
+        teams: ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"],
+        basePay: { min: 20000, max: 80000 },
+        pointPay: { min: 800, max: 1500 },
+        difficulty: 55,
+        devBonus: 3 // Dobra liga na start dla juniora (duży przyrost OVR)
+    }
+};
+
+// Stan gry
+let careerState = {
+    active: false,
+    name: "Gracz",
+    nat: "Polska",
+    age: 16,
+    maxAge: 40,
+    season: 1,
+    ovr: 50,
+    money: 0,
+    club: null,
+    league: null,
+    contract: { basePay: 0, pointPay: 0, yearsLeft: 0 },
+    stats: { totalPoints: 0, totalMoney: 0, dmp: 0, ims: 0 }
+};
+
+// --- ZMODYFIKOWANE OTWIERANIE KARIERY Z BLOKADĄ ---
+function openCareerMode() {
+    // BLOKADA DLA ZWYKŁYCH GRACZY
+    if (!window.isAdmin && !window.isTester) {
+        appAlert("Tryb 'Speedway Legend' znajduje się w fazie zamkniętych testów (dostęp wyłącznie dla Adminów i Testerów).", "Brak dostępu 🔒");
+        return;
+    }
+
+    promptForNick(() => {
+        careerState.name = playerNickname;
+        
+        document.getElementById('mainMenuContainer').style.display = 'none';
+        const desktopMenu = document.getElementById('desktopMainMenu');
+        if (desktopMenu) desktopMenu.style.display = 'none';
+
+        document.getElementById('careerContainer').style.display = 'flex';
+        showCareerScreen('careerScreenSetup');
+        updateCareerHeader();
+    });
+}
+
+// --- NOWY SILNIK SYMULACJI (CZĘŚĆ 2) ---
+
+function simulateCareerSeason() {
+    // 1. Pobranie i opłacenie sprzętu
+    let equip = document.querySelector('input[name="careerEquip"]:checked').value;
+    let equipCost = equip === 'elite' ? 400000 : (equip === 'standard' ? 150000 : 50000);
+
+    if (careerState.money < equipCost) {
+        appAlert("Nie masz wystarczająco pieniędzy na ten sprzęt! Zmień wybór.", "Brak Środków");
+        return;
+    }
+
+    careerState.money -= equipCost;
+
+    // 2. Matematyka symulacji
+    let leagueData = CAREER_LEAGUES[careerState.league];
+    let diff = leagueData.difficulty;
+    
+    // Wpływ sprzętu
+    let equipOvrMod = equip === 'elite' ? 2 : (equip === 'cheap' ? -1 : 0);
+    let effectiveOvr = careerState.ovr + equipOvrMod;
+
+    // Obliczanie punktów (Im mniejsza różnica między skillem a ligą, tym wyższa średnia)
+    let baseMatches = 14 + Math.floor(Math.random() * 6); // 14 do 19 meczów w sezonie
+    let avgPtsPerMatch = ((effectiveOvr / diff) * 8); 
+    
+    // Lekki random (+/- 1.5 pkt)
+    avgPtsPerMatch += (Math.random() * 3 - 1.5);
+    
+    if (avgPtsPerMatch > 15) avgPtsPerMatch = 15; // Max 15 pkt na mecz
+    if (avgPtsPerMatch < 2) avgPtsPerMatch = Math.floor(Math.random() * 4); // Zawsze coś tam wpadnie
+    
+    let seasonPts = Math.round(baseMatches * avgPtsPerMatch);
+    let seasonMoney = seasonPts * careerState.contract.pointPay; // Punktówka
+
+    careerState.money += seasonMoney;
+    careerState.stats.totalMoney += seasonMoney;
+    careerState.stats.totalPoints += seasonPts;
+
+    // 3. Medale i tytuły
+    let gotDMP = false;
+    let gotIMS = false;
+
+    // Szansa na mistrza drużynowego (jeśli twój skill jest na poziomie trudności ligi)
+    if (effectiveOvr > diff - 5 && Math.random() < 0.25) { 
+        gotDMP = true;
+        careerState.stats.dmp++;
+    }
+
+    // Szansa na mistrza świata (Tylko dla kocurów z OVR > 85)
+    if (effectiveOvr >= 85) {
+        let chance = (effectiveOvr - 80) / 30; // np. OVR 95 -> 15/30 = 50% szans
+        if (Math.random() < chance) { 
+            gotIMS = true;
+            careerState.stats.ims++;
+        }
+    }
+
+    // 4. Wydarzenia Losowe
+    let eventText = null;
+    let eventOvrMod = 0;
+    if (Math.random() < 0.25) { // 25% szans na event w sezonie
+        let event = generateRandomEvent(effectiveOvr);
+        eventText = event.text;
+        eventOvrMod = event.ovrMod;
+        careerState.money += event.moneyMod;
+        careerState.stats.totalMoney += event.moneyMod;
+    }
+
+    // 5. Rozwój Zawodnika (OVR)
+    // Zależy od wieku (spadek u weteranów) i tego czy punktował w lidze
+    let ageFactor = careerState.age > 34 ? -2 : (careerState.age < 23 ? 2 : 0);
+    let devChange = leagueData.devBonus + ageFactor + eventOvrMod;
+
+    if (avgPtsPerMatch >= 10) devChange += 1;
+    else if (avgPtsPerMatch < 5) devChange -= 1;
+
+    let oldOvr = careerState.ovr;
+    let newOvr = oldOvr + devChange;
+    if (newOvr > 99) newOvr = 99;
+    if (newOvr < 40) newOvr = 40;
+
+    careerState.ovr = newOvr;
+    
+    // 6. Przejście czasu
+    careerState.contract.yearsLeft--;
+    careerState.age++;
+    
+    // 7. Aktualizacja UI podsumowania
+    updateCareerHeader();
+    document.getElementById('seasonPtsDisplay').innerText = seasonPts;
+    document.getElementById('seasonMoneyDisplay').innerText = "+" + seasonMoney.toLocaleString('pl-PL') + " PLN";
+    
+    document.getElementById('seasonDmpBox').style.display = gotDMP ? 'block' : 'none';
+    document.getElementById('seasonImsBox').style.display = gotIMS ? 'block' : 'none';
+    
+    document.getElementById('seasonOvrOld').innerText = oldOvr;
+    document.getElementById('seasonOvrNew').innerText = newOvr;
+    
+    if(newOvr > oldOvr) document.getElementById('seasonOvrNew').style.color = "var(--green-neon)";
+    else if(newOvr < oldOvr) document.getElementById('seasonOvrNew').style.color = "var(--red-neon)";
+    else document.getElementById('seasonOvrNew').style.color = "var(--text-dim)";
+
+    if (eventText) {
+        document.getElementById('careerEventBox').style.display = 'block';
+        document.getElementById('careerEventText').innerText = eventText;
+    } else {
+        document.getElementById('careerEventBox').style.display = 'none';
+    }
+
+    showCareerScreen('careerScreenSeasonResult');
+}
+
+function generateRandomEvent(ovr) {
+    const events = [
+        { text: "Złapałeś kontuzję! Omijasz kluczowe mecze i tracisz formę.", ovrMod: -2, moneyMod: -20000 },
+        { text: "Trafiasz w 'złoty' silnik! Forma życia w drugiej połowie sezonu.", ovrMod: +2, moneyMod: 0 },
+        { text: "Wspaniały sponsor prywatny! Podpisujesz lukratywny kontrakt reklamowy.", ovrMod: 0, moneyMod: 300000 },
+        { text: "Konflikt z prezesem psuje atmosferę. Lekki spadek formy.", ovrMod: -1, moneyMod: 0 },
+        { text: "Ciężkie treningi zimowe z mentorem przynoszą efekty!", ovrMod: +1, moneyMod: -50000 }
+    ];
+    
+    if (ovr > 70 && careerState.league !== "PGE Ekstraliga") {
+        events.push({ text: "Dostałeś Dziką Kartę na turniej SGP! Dobry występ zapewnia premię.", ovrMod: +1, moneyMod: 150000 });
+    }
+    
+    return events[Math.floor(Math.random() * events.length)];
+}
+
+function nextCareerStep() {
+    careerState.season++;
+    
+    // Jeśli wiek wynosi 40 lat -> Emerytura!
+    if (careerState.age >= careerState.maxAge) {
+        retirePlayer();
+        return;
+    }
+
+    // Jeśli kontrakt się skończył -> Okienko transferowe
+    if (careerState.contract.yearsLeft <= 0) {
+        showCareerOffers();
+    } else {
+        // Zostajemy w klubie, wracamy do ekranu sezonu
+        openCareerDashboard();
+    }
+}
+
+function retirePlayer() {
+    // Generowanie karty FUT
+    document.getElementById('futOvr').innerText = careerState.ovr;
+    document.getElementById('futFlag').innerHTML = `<img src="https://flagcdn.com/w40/${countryToCode[careerState.nat] || 'pl'}.png">`;
+    
+    // Ekstrakcja nazwiska z nicku
+    let nameParts = careerState.name.split(' ');
+    let lastName = nameParts[nameParts.length - 1].substring(0, 10);
+    document.getElementById('futName').innerText = lastName;
+
+    document.getElementById('futIms').innerText = careerState.stats.ims;
+    document.getElementById('futDmp').innerText = careerState.stats.dmp;
+    document.getElementById('futPts').innerText = careerState.stats.totalPoints;
+    
+    let cashM = (careerState.stats.totalMoney / 1000000).toFixed(1);
+    document.getElementById('futCash').innerText = cashM + "M";
+
+    showCareerScreen('careerScreenRetirement');
+    playSound('win');
+    launchConfetti(); // Używa funkcji z pliku bazowego!
+}
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
