@@ -5930,24 +5930,35 @@ function updateLeftPanelUI() {
 // --- SYSTEM KONTRAKTÓW ---
 function generateOffers() {
     const area = document.getElementById('careerActionArea');
-    area.innerHTML = `<h3 class="text-white text-sm font-black m-0 mb-10 text-center uppercase">Oferty Klubów</h3>`;
-    
+    area.innerHTML = `
+        <h3 class="text-white text-sm font-black m-0 mb-5 text-center uppercase">Okienko Transferowe</h3>
+        <p class="text-xs text-dim text-center mb-10">Kluby przygotowują dla ciebie kontrakty...</p>
+        
+        <!-- RULETKA -->
+        <div class="career-roulette-container" id="cRouletteBox">
+            <div class="career-roulette-track" id="cRouletteTrack"></div>
+        </div>
+
+        <!-- UKRYTA LISTA OFERT -->
+        <div id="cOffersListContainer" class="career-offers-list"></div>
+    `;
+
+    // Określanie puli lig zależnie od OVR
     let possibleLeagues = [];
-    if (cState.ovr < 50) possibleLeagues = ["KLŻ", "KLŻ"];
-    else if (cState.ovr < 65) possibleLeagues = ["KLŻ", "Metalkas 2.E"];
+    if (cState.ovr < 50) possibleLeagues = ["KLŻ", "KLŻ", "Metalkas 2.E"];
+    else if (cState.ovr < 65) possibleLeagues = ["KLŻ", "Metalkas 2.E", "PGE Ekstraliga"];
     else if (cState.ovr < 80) possibleLeagues = ["Metalkas 2.E", "PGE Ekstraliga"];
     else possibleLeagues = ["PGE Ekstraliga", "PGE Ekstraliga"];
 
-    if(possibleLeagues.length < 3) possibleLeagues.push(possibleLeagues[0]);
+    if (possibleLeagues.length < 3) possibleLeagues.push(possibleLeagues[0]);
 
     cState.pendingOffers = [];
 
-    // Jeśli gracz jeździł dobrze, dodaj opcję przedłużenia!
+    // SZANSA NA PRZEDŁUŻENIE (Dla lojalnych)
     if (cState.club && cState.history.length > 0) {
         let lastSeason = cState.history[cState.history.length - 1];
         if (lastSeason.avg >= 1.60) {
-            let lData = CAREER_CONSTANTS[cState.league];
-            let basePay = Math.floor(cState.contractBase * 1.15); // +15% podwyżki
+            let basePay = Math.floor(cState.contractBase * 1.15); 
             let ptPay = Math.floor(cState.contractPt * 1.10);
             cState.pendingOffers.push({ 
                 league: cState.league, club: cState.club, base: basePay, ptPay: ptPay, years: 2, isExtension: true 
@@ -5955,43 +5966,79 @@ function generateOffers() {
         }
     }
 
-    // Generowanie nowych ofert
+    // TWORZENIE NOWYCH OFERT
     possibleLeagues.forEach(lName => {
         let clubsInLeague = cState.leagues[lName];
         let club = clubsInLeague[Math.floor(Math.random() * clubsInLeague.length)];
-        
         let consts = CAREER_CONSTANTS[lName];
+        
         let ovrFactor = Math.pow(Math.max(cState.ovr - 20, 5), 2) / 3000; 
         if(ovrFactor > 2.5) ovrFactor = 2.5;
 
         let basePay = Math.floor(consts.basePay.min + (consts.basePay.max - consts.basePay.min) * (ovrFactor / 2));
         let ptPay = Math.floor(consts.pointPay.min + (consts.pointPay.max - consts.pointPay.min) * (ovrFactor / 2));
-        
         basePay = Math.round(basePay / 5000) * 5000;
         ptPay = Math.round(ptPay / 50) * 50;
 
-        cState.pendingOffers.push({ league: lName, club: club, base: basePay, ptPay: ptPay, years: Math.floor(Math.random() * 3) + 1 });
+        // ALGORYTM JUNIORA: Jeśli masz < 21 lat i w miarę ok OVR (powyżej minimum ligi), kluby dają długie kontrakty rozwojowe!
+        let years = Math.floor(Math.random() * 2) + 1; // 1-2
+        if (cState.age <= 21 && cState.ovr > consts.minOvr) {
+            years = 3; // Kontrakt na 3 lata dla "młodego gniewnego"
+        }
+
+        cState.pendingOffers.push({ league: lName, club: club, base: basePay, ptPay: ptPay, years: years });
     });
 
-    cState.pendingOffers.forEach((offer, idx) => {
-        let baseK = (offer.base / 1000).toFixed(0) + "k";
-        let yrsText = offer.years === 1 ? "1 ROK" : `${offer.years} LATA`;
-        let extBadge = offer.isExtension ? `<span class="loan-badge" style="position:relative; width:auto; padding:2px 6px; border-radius:4px; font-size:8px; background:var(--green-neon); color:#000; top:0; right:0;">PRZEDŁUŻENIE</span>` : '';
+    // --- ANIMACJA RULETKI ---
+    const track = document.getElementById('cRouletteTrack');
+    let dummyItemsHTML = '';
+    
+    // Generowanie fałszywych klubów do taśmy ruletki (30 elementów)
+    let allClubsMix = [...cState.leagues["PGE Ekstraliga"], ...cState.leagues["Metalkas 2.E"], ...cState.leagues["KLŻ"]];
+    for (let i = 0; i < 30; i++) {
+        let rClub = allClubsMix[Math.floor(Math.random() * allClubsMix.length)];
+        dummyItemsHTML += `<div class="roulette-item"><span class="roulette-item-club">${rClub}</span><span class="roulette-item-league">OFERTA...</span></div>`;
+    }
+    track.innerHTML = dummyItemsHTML;
+
+    // Przesunięcie ruletki (Odtwarzamy dźwięk)
+    playSound('flip');
+    setTimeout(() => {
+        // Zatrzymuje się w losowym miejscu pod koniec taśmy
+        let stopDistance = -(150 * 25 + Math.random() * 50); 
+        track.style.transform = `translateX(${stopDistance}px)`;
+    }, 100);
+
+    // PO ZAKOŃCZENIU ANIMACJI (3 Sekundy) WYSKAKUJĄ KARTY
+    setTimeout(() => {
+        playSound('win');
+        document.getElementById('cRouletteBox').style.display = 'none'; // Chowamy pasek
         
-        area.innerHTML += `
-            <div class="c-offer-card" onclick="signContract(${idx})">
-                <div class="flex-between align-items-center">
-                    <div class="flex-row gap-5 align-items-center"><span class="text-accent font-black text-xs uppercase">${offer.club}</span> ${extBadge}</div>
-                    <span class="text-dim text-xs font-bold">${yrsText}</span>
+        const listContainer = document.getElementById('cOffersListContainer');
+        cState.pendingOffers.forEach((offer, idx) => {
+            let baseK = (offer.base / 1000).toFixed(0) + "k";
+            let yrsText = offer.years === 1 ? "1 ROK" : `${offer.years} LATA`;
+            let extBadge = offer.isExtension ? `<span class="loan-badge" style="position:relative; width:auto; padding:2px 6px; border-radius:4px; font-size:8px; background:var(--green-neon); color:#000; top:0; right:0;">PRZEDŁUŻENIE</span>` : '';
+            
+            listContainer.innerHTML += `
+                <div class="c-offer-card" onclick="signContract(${idx})">
+                    <div class="flex-between align-items-center">
+                        <div class="flex-row gap-5 align-items-center"><span class="text-accent font-black text-xs uppercase">${offer.club}</span> ${extBadge}</div>
+                        <span class="text-dim text-xs font-bold">${yrsText}</span>
+                    </div>
+                    <div class="text-xs text-dim mb-5">${offer.league}</div>
+                    <div class="flex-between text-white text-xs font-bold">
+                        <span>${baseK} PLN (Podpis)</span>
+                        <span>${offer.ptPay} PLN/Pkt</span>
+                    </div>
                 </div>
-                <div class="text-xs text-dim mb-5">${offer.league}</div>
-                <div class="flex-between text-white text-xs font-bold">
-                    <span>${baseK} PLN (Podpis)</span>
-                    <span>${offer.ptPay} PLN/Pkt</span>
-                </div>
-            </div>
-        `;
-    });
+            `;
+        });
+        
+        // Płynne pokazanie
+        setTimeout(() => listContainer.classList.add('visible'), 50);
+        
+    }, 3000);
 }
 
 function signContract(idx) {
@@ -6006,6 +6053,12 @@ function signContract(idx) {
     showToast(`Podpisano z: ${o.club}!`, "success");
     updateLeftPanelUI();
     showSeasonDashboard();
+}
+
+function forceRetirement() {
+    if (confirm("Czy na pewno chcesz zakończyć karierę już teraz? Tej decyzji nie da się cofnąć!")) {
+        showCareerEnd();
+    }
 }
 
 // --- KROK 3: WYBÓR SPRZĘTU (5 POZIOMÓW) ---
@@ -6342,11 +6395,129 @@ function showCareerEnd() {
     document.getElementById('futIms').innerText = cState.stats.ims;
     document.getElementById('futDmp').innerText = cState.stats.dmp;
     document.getElementById('futPts').innerText = cState.stats.pts;
-    document.getElementById('futCash').innerText = (cState.money / 1000000).toFixed(1) + "M";
+    let cashM = (cState.money / 1000000).toFixed(1);
+    document.getElementById('futCash').innerText = cashM + "M";
 
-    document.getElementById('careerRetirement').style.display = 'block';
+    // Zmodyfikowany HTML kontenera Emerytury by dodać guzik Udostępniania!
+    const retContainer = document.getElementById('careerRetirement');
+    retContainer.style.display = 'block';
+    
+    // Dodajemy nowy guzik udostępniania jeśli go tam nie ma
+    if (!document.getElementById('btnShareCareer')) {
+        retContainer.innerHTML += `
+            <button id="btnShareCareer" onclick="shareCareerResult()" class="btn-reset w-100 p-15 text-sm mb-10" style="background: var(--green-neon); color: #000;">UDOSTĘPNIJ KARTĘ 📋</button>
+        `;
+    }
+
     playSound('win');
     try { launchConfetti(); } catch(e) {}
+}
+
+async function shareCareerResult() {
+    const btn = document.getElementById('btnShareCareer');
+    const originalText = btn.innerText;
+    btn.innerText = "GENEROWANIE KARTY...";
+    btn.disabled = true;
+
+    // Tworzenie "Wirtualnego Płótna" na którym narysujemy Kartę Zawodnika
+    const canvas = document.createElement('canvas'); 
+    const ctx = canvas.getContext('2d'); 
+    canvas.width = 600; 
+    canvas.height = 900;
+    
+    // Tło (Złoty Gradient)
+    const grd = ctx.createLinearGradient(0, 0, 600, 900);
+    grd.addColorStop(0, "#d4af37");
+    grd.addColorStop(0.5, "#8e6611");
+    grd.addColorStop(1, "#f1c40f");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Wewnętrzna Ramka
+    ctx.strokeStyle = "#ffee88";
+    ctx.lineWidth = 10;
+    ctx.strokeRect(15, 15, 570, 870);
+
+    // OVR i Flaga
+    ctx.fillStyle = "#111"; 
+    ctx.font = "900 120px Montserrat, sans-serif"; 
+    ctx.textAlign = "left";
+    ctx.fillText(cState.ovr, 40, 140);
+    
+    ctx.font = "900 35px Montserrat, sans-serif"; 
+    ctx.fillText("LEG", 50, 190);
+
+    // Rysowanie "Kevlaru" na Płótnie
+    ctx.font = "200px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("🏍️", 300, 400);
+
+    // Kreska i Nazwisko
+    ctx.fillStyle = "rgba(17,17,17,0.3)";
+    ctx.fillRect(100, 520, 400, 5);
+
+    let nameParts = cState.name.split(' ');
+    let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
+    
+    ctx.fillStyle = "#111"; 
+    ctx.font = "900 65px Montserrat, sans-serif"; 
+    ctx.fillText(lastName, 300, 500);
+
+    // Statystyki
+    ctx.font = "700 35px Montserrat, sans-serif"; 
+    ctx.textAlign = "left";
+    
+    // Lewa kolumna (IMŚ, PKT)
+    ctx.fillStyle = "rgba(17,17,17,0.8)";
+    ctx.fillText("IMŚ", 80, 650);
+    ctx.fillText("PKT", 80, 750);
+    
+    ctx.fillStyle = "#111";
+    ctx.font = "900 50px Montserrat, sans-serif"; 
+    ctx.fillText(cState.stats.ims, 180, 650);
+    ctx.fillText(cState.stats.pts, 180, 750);
+
+    // Prawa kolumna (DMP, PLN)
+    ctx.font = "700 35px Montserrat, sans-serif"; 
+    ctx.fillStyle = "rgba(17,17,17,0.8)";
+    ctx.fillText("DMP", 350, 650);
+    ctx.fillText("PLN", 350, 750);
+
+    ctx.fillStyle = "#111";
+    ctx.font = "900 50px Montserrat, sans-serif"; 
+    ctx.fillText(cState.stats.dmp, 450, 650);
+    let cashM = (cState.money / 1000000).toFixed(1);
+    ctx.fillText(cashM + "M", 450, 750);
+
+    // Stopka
+    ctx.fillStyle = "rgba(17,17,17,0.5)";
+    ctx.font = "900 25px Montserrat, sans-serif"; 
+    ctx.textAlign = "center";
+    ctx.fillText("SPEEDWAYGUESSR.PL", 300, 850);
+
+    // Procedura Kopiowania / Udostępniania
+    try {
+        canvas.toBlob(async (blob) => {
+            if (!blob) { appAlert("Błąd generowania karty.", "Błąd"); resetShareBtn(btn, originalText); return; } 
+            
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
+                try {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    await navigator.clipboard.write([item]);
+                    showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
+                } catch (e) {
+                    shareViaNativeAPI(blob, "speedway-legend-card.png"); 
+                }
+            } else {
+                shareViaNativeAPI(blob, "speedway-legend-card.png");
+            }
+            resetShareBtn(btn, originalText);
+        }, "image/png");
+    } catch (error) { 
+        appAlert("Wystąpił nieoczekiwany błąd podczas udostępniania.", "Błąd"); 
+        resetShareBtn(btn, originalText);
+    }
 }
 
 // EXPORT DO HTML
@@ -6360,7 +6531,15 @@ try {
     window.updateKevlarPreview = updateKevlarPreview;
     window.triggerInteractiveEvent = triggerInteractiveEvent;
     window.nextCareerStep = nextCareerStep;
+    window.forceRetirement = forceRetirement; // Nowe
+    window.shareCareerResult = shareCareerResult; // Nowe
 } catch (e) { console.warn("Global export error", e); }
+
+//-- koniec exportu Career Mode
+
+//-----------------------------------------
+// GLOBALNE FUNKCJE DLA HTML-A
+// ----------------------------------------
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {

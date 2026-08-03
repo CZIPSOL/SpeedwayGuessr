@@ -944,6 +944,8 @@
                     <div class="flex-col text-right" style="flex-shrink:0;">
                         <span class="text-white font-black text-lg">WIEK <span id="cAge">16</span></span>
                         <span class="text-green font-bold text-xs" id="cMoney">0 PLN</span>
+                        <!-- PRZYCISK EMERYTURY -->
+                        <span onclick="forceRetirement()" class="text-red font-bold mt-5 cursor-pointer" style="font-size: 9px; border-bottom: 1px dotted var(--red-neon);">PRZEJDŹ NA EMERYTURĘ</span>
                     </div>
                 </div>
 
@@ -955,7 +957,7 @@
                 </div>
 
                 <!-- MIEJSCE NA AKCJE (OFERTY LUB SYMULACJA) -->
-                <div id="careerActionArea" class="career-action-box">
+                <div id="careerActionArea" class="career-action-box position-relative" style="overflow: hidden;">
                     <!-- Tu wpadają oferty lub wybór sprzętu z JS -->
                 </div>
             </div>
@@ -1380,7 +1382,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.10"></script>
+    <script src="script.js?v2.11"></script>
 
     
 </body>
