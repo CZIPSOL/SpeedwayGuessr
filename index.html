@@ -876,12 +876,23 @@
         </div>
     </div>
 
-    <!-- ============================================== -->
+<!-- ============================================== -->
     <!-- ====== SPEEDWAY LEGEND (TRYB KARIERY) ======== -->
     <!-- ============================================== -->
     
     <div id="careerContainer" class="career-layout" style="display: none;">
         
+        <!-- NAKŁADKA ANIMACJI EVENTÓW -->
+        <div id="careerEventOverlay" class="win-overlay" style="display: none; z-index: 10050; position: absolute; border-radius: 24px;">
+            <div class="stats-modal modal-sm" style="background: rgba(15, 15, 18, 0.95); width: 90%;">
+                <h3 id="eventAnimTitle" class="text-white font-black uppercase mb-15">LOSOWANIE...</h3>
+                <p id="eventAnimDesc" class="text-dim text-xs mb-20">Sprawdzamy efekty twojej decyzji.</p>
+                <div class="ach-progress-bar-bg" style="height: 12px; background: rgba(255,255,255,0.1);">
+                    <div id="eventAnimBar" class="ach-progress-bar-fill" style="width: 0%; background: var(--accent); transition: width 1.5s linear;"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- LEWY PANEL (TOŻSAMOŚĆ I AKCJE) -->
         <div class="career-left-panel">
             <button onclick="exitCareerMode()" class="icon-btn-small text-red" style="position:absolute; top:15px; left:15px; z-index: 10;">✖ Wyjdź</button>
@@ -904,7 +915,6 @@
                         <label>NAZWISKO</label>
                         <input type="text" id="careerNameInput" placeholder="Kowalski" maxlength="12" oninput="updateKevlarPreview()">
                     </div>
-                    <!-- ZMIENIONE POLE NA NUMER (SZERSZE, 3 CYFRY) -->
                     <div class="form-group-clash m-0 text-left" style="width: 130px;">
                         <label>NR INDYWIDUALNY</label>
                         <input type="number" id="careerNumInput" placeholder="99" max="999" min="1" oninput="updateKevlarPreview()">
@@ -967,7 +977,7 @@
                 <h2 class="text-xl font-black mb-10 text-accent">KONIEC SEZONU</h2>
                 
                 <div id="careerEventBox" class="mb-20" style="display: none; padding: 15px; background: rgba(255,204,0,0.15); border: 2px solid var(--yellow-neon); border-radius: 12px;">
-                    <span class="text-yellow-neon font-black text-sm uppercase">WYDARZENIE SPECJALNE</span><br>
+                    <span class="text-yellow-neon font-black text-sm uppercase">WYDARZENIE</span><br>
                     <span id="careerEventText" class="text-white text-xs font-bold mt-5 block">...</span>
                 </div>
     
@@ -1382,7 +1392,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.11"></script>
+    <script src="script.js?v2.12"></script>
 
     
 </body>
