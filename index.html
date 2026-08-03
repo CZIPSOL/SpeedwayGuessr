@@ -904,8 +904,9 @@
                         <label>NAZWISKO</label>
                         <input type="text" id="careerNameInput" placeholder="Kowalski" maxlength="12" oninput="updateKevlarPreview()">
                     </div>
-                    <div class="form-group-clash m-0 text-left" style="width: 80px;">
-                        <label>NUMER</label>
+                    <!-- ZMIENIONE POLE NA NUMER (SZERSZE, 3 CYFRY) -->
+                    <div class="form-group-clash m-0 text-left" style="width: 130px;">
+                        <label>NR INDYWIDUALNY</label>
                         <input type="number" id="careerNumInput" placeholder="99" max="999" min="1" oninput="updateKevlarPreview()">
                     </div>
                 </div>
@@ -1379,7 +1380,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.9"></script>
+    <script src="script.js?v2.10"></script>
 
     
 </body>
