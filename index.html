@@ -880,175 +880,170 @@
     <!-- ====== SPEEDWAY LEGEND (TRYB KARIERY) ======== -->
     <!-- ============================================== -->
     
-    <div id="careerContainer" class="menu-container" style="display: none; max-width: 800px; width: 95%;">
+    <div id="careerContainer" class="career-layout" style="display: none;">
         
-        <!-- NAGŁÓWEK KARIERY -->
-        <div class="flex-between w-100 mb-20" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;">
-            <button onclick="exitCareerMode()" class="icon-btn-small text-red" title="Wyjdź">✖ Zakończ</button>
-            <div class="text-center">
-                <h1 class="game-title-small m-0 text-accent">SPEEDWAY LEGEND</h1>
-                <span id="careerYearDisplay" class="text-xs font-bold text-dim">SEZON 1 (Wiek: 16)</span>
-            </div>
-            <div class="text-right">
-                <div class="text-xs font-bold text-dim">BUDŻET</div>
-                <div id="careerMoneyDisplay" class="text-green font-black text-lg">0 PLN</div>
-            </div>
-        </div>
-
-        <!-- EKRAN 1: KREATOR (WYBÓR NARODOWOŚCI) -->
-        <div id="careerScreenSetup" class="w-100">
-            <h2 class="text-xl font-black mb-15 text-center">KREATOR ZAWODNIKA</h2>
-            <p class="text-sm text-dim mb-25 text-center">Wybierz kraj, który będziesz reprezentować na arenie międzynarodowej.</p>
+        <!-- LEWY PANEL (TOŻSAMOŚĆ I AKCJE) -->
+        <div class="career-left-panel">
+            <button onclick="exitCareerMode()" class="icon-btn-small text-red" style="position:absolute; top:15px; left:15px; z-index: 10;">✖ Wyjdź</button>
             
-            <div class="flags-grid mb-25" style="grid-template-columns: repeat(4, 1fr);">
-                <!-- Pol, Dan, Aus, GB, Szwecja itd. -->
-                <div class="flag-card active" onclick="selectCareerNat('Polska', this)"><img src="https://flagcdn.com/w40/pl.png"><br><span class="text-xs font-bold mt-5">Polska</span></div>
-                <div class="flag-card" onclick="selectCareerNat('Dania', this)"><img src="https://flagcdn.com/w40/dk.png"><br><span class="text-xs font-bold mt-5">Dania</span></div>
-                <div class="flag-card" onclick="selectCareerNat('Australia', this)"><img src="https://flagcdn.com/w40/au.png"><br><span class="text-xs font-bold mt-5">Australia</span></div>
-                <div class="flag-card" onclick="selectCareerNat('W. Brytania', this)"><img src="https://flagcdn.com/w40/gb.png"><br><span class="text-xs font-bold mt-5">W. Brytania</span></div>
-                <div class="flag-card" onclick="selectCareerNat('Szwecja', this)"><img src="https://flagcdn.com/w40/se.png"><br><span class="text-xs font-bold mt-5">Szwecja</span></div>
-                <div class="flag-card" onclick="selectCareerNat('Łotwa', this)"><img src="https://flagcdn.com/w40/lv.png"><br><span class="text-xs font-bold mt-5">Łotwa</span></div>
-                <div class="flag-card" onclick="selectCareerNat('Niemcy', this)"><img src="https://flagcdn.com/w40/de.png"><br><span class="text-xs font-bold mt-5">Niemcy</span></div>
-                <div class="flag-card" onclick="selectCareerNat('Czechy', this)"><img src="https://flagcdn.com/w40/cz.png"><br><span class="text-xs font-bold mt-5">Czechy</span></div>
-            </div>
-
-            <button onclick="startCareerAcademy()" class="btn-reset w-100 p-15">ZDAJ LICENCJĘ ŻUŻLOWĄ (START)</button>
-        </div>
-
-        <!-- EKRAN 2: WYNIK SZKÓŁKI (LOSOWANIE POTENCJAŁU) -->
-        <div id="careerScreenAcademy" class="w-100 text-center" style="display: none;">
-            <h2 class="text-xl font-black mb-10 text-accent">WYNIKI LICENCJI</h2>
-            <p class="text-sm text-dim mb-20" id="academyDesc">Trenowałeś w lokalnej szkółce. Trenerzy ocenili twój talent.</p>
-            
-            <div class="stat-box mb-25 mx-auto max-w-320" style="border-color: var(--accent);">
-                <span class="text-dim text-xs font-bold mb-5">TWÓJ STARTOWY OVR (SKILL)</span>
-                <span id="academyOvrDisplay" class="text-accent font-black" style="font-size: 60px;">60</span>
-            </div>
-
-            <button onclick="showCareerOffers()" class="btn-reset w-100 p-15">ZOBACZ OFERTY KLUBÓW</button>
-        </div>
-
-        <!-- EKRAN 3: OFERTY KONTRAKTOWE -->
-        <div id="careerScreenOffers" class="w-100 text-left" style="display: none;">
-            <h2 class="text-xl font-black mb-10 text-center">OFERTY KONTRAKTOWE</h2>
-            <p class="text-xs text-dim text-center mb-20">Kluby złożyły ci propozycje. Ekstraliga kusi kasą, ale KLŻ daje gwarancję startów i rozwój OVR!</p>
-            
-            <div id="careerOffersList" class="flex-col gap-15 mb-20">
-                <!-- Oferty generowane przez JS -->
-            </div>
-        </div>
-
-        <!-- EKRAN 4: GŁÓWNY PANEL (DASHBOARD SEZONU) -->
-        <div id="careerScreenDashboard" class="w-100 text-center" style="display: none;">
-            
-            <div class="flex-row gap-15 justify-center mb-20">
-                <div class="stat-box flex-1">
-                    <span class="text-dim text-xs">TWÓJ OVR</span>
-                    <span id="dashOvr" class="text-accent font-black text-xl">60</span>
-                </div>
-                <div class="stat-box flex-1">
-                    <span class="text-dim text-xs">MÓJ KLUB</span>
-                    <span id="dashClub" class="text-white font-black text-sm uppercase">Unia Leszno</span>
-                    <span id="dashLeague" class="text-dim text-xs">PGE Ekstraliga</span>
-                </div>
-                <div class="stat-box flex-1">
-                    <span class="text-dim text-xs">KONTRAKT</span>
-                    <span id="dashContract" class="text-white font-black text-sm">2 lata</span>
-                </div>
-            </div>
-
-            <h3 class="text-sm font-black text-left mb-10 border-top pt-15">INWESTYCJE PRZED SEZONEM</h3>
-            <p class="text-xs text-dim text-left mb-15">Dobry sprzęt kosztuje, ale chroni przed spadkiem formy i usterkami.</p>
-            
-            <div class="flex-col gap-10 mb-25 text-left">
-                <label class="modern-checkbox-label" style="justify-content: space-between;">
-                    <div class="flex-row gap-10 align-items-center">
-                        <input type="radio" name="careerEquip" value="cheap">
-                        <div class="flex-col"><span class="text-white font-bold">Budżetowy Tuner</span><span class="text-dim text-xs">Szansa na awarie silnika, lekki regres OVR.</span></div>
-                    </div>
-                    <span class="text-red font-bold text-sm">-50,000 PLN</span>
-                </label>
+            <!-- EKRAN 1: KREATOR -->
+            <div id="careerSetup" class="w-100 mt-20">
+                <h2 class="text-accent font-black text-center mb-5">STWÓRZ ZAWODNIKA</h2>
                 
-                <label class="modern-checkbox-label" style="justify-content: space-between;">
-                    <div class="flex-row gap-10 align-items-center">
-                        <input type="radio" name="careerEquip" value="standard" checked>
-                        <div class="flex-col"><span class="text-white font-bold">Zaufany Mechanik</span><span class="text-dim text-xs">Utrzymanie formy, standardowy sprzęt.</span></div>
+                <!-- KEVLAR WIZUALIZACJA -->
+                <div class="kevlar-display mx-auto mb-20 mt-15">
+                    <div class="kevlar-collar"></div>
+                    <div class="kevlar-body">
+                        <span id="kevlarNamePreview" class="kevlar-name">KOWALSKI</span>
+                        <span id="kevlarNumPreview" class="kevlar-number">99</span>
                     </div>
-                    <span class="text-red font-bold text-sm">-150,000 PLN</span>
-                </label>
+                </div>
 
-                <label class="modern-checkbox-label" style="justify-content: space-between;">
-                    <div class="flex-row gap-10 align-items-center">
-                        <input type="radio" name="careerEquip" value="elite">
-                        <div class="flex-col"><span class="text-accent font-bold">R. Kowalski / Elite</span><span class="text-dim text-xs">Rakiety pod tyłkiem! +2 do OVR na sezon.</span></div>
+                <div class="flex-row gap-10 mb-15">
+                    <div class="form-group-clash flex-1 m-0 text-left">
+                        <label>NAZWISKO</label>
+                        <input type="text" id="careerNameInput" placeholder="Kowalski" maxlength="12" oninput="updateKevlarPreview()">
                     </div>
-                    <span class="text-red font-bold text-sm">-400,000 PLN</span>
-                </label>
+                    <div class="form-group-clash m-0 text-left" style="width: 80px;">
+                        <label>NUMER</label>
+                        <input type="number" id="careerNumInput" placeholder="99" max="999" min="1" oninput="updateKevlarPreview()">
+                    </div>
+                </div>
+
+                <div class="form-group-clash text-left m-0 mb-15">
+                    <label>NARODOWOŚĆ</label>
+                    <div class="flags-grid" style="grid-template-columns: repeat(4, 1fr); max-height: 120px; overflow-y: auto;">
+                        <div class="flag-card active" onclick="selectCareerNat('Polska', 'pl', this)"><img src="https://flagcdn.com/w40/pl.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('Dania', 'dk', this)"><img src="https://flagcdn.com/w40/dk.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('Australia', 'au', this)"><img src="https://flagcdn.com/w40/au.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('W. Brytania', 'gb', this)"><img src="https://flagcdn.com/w40/gb.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('Szwecja', 'se', this)"><img src="https://flagcdn.com/w40/se.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('Łotwa', 'lv', this)"><img src="https://flagcdn.com/w40/lv.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('Czechy', 'cz', this)"><img src="https://flagcdn.com/w40/cz.png"></div>
+                        <div class="flag-card" onclick="selectCareerNat('Niemcy', 'de', this)"><img src="https://flagcdn.com/w40/de.png"></div>
+                    </div>
+                </div>
+
+                <button onclick="startCareerAcademy()" class="btn-reset w-100 mt-10 p-15">ROZPOCZNIJ KARIERĘ</button>
             </div>
 
-            <button onclick="simulateCareerSeason()" class="btn-reset w-100 p-15" style="background: linear-gradient(135deg, #1dd1a1, #0e7c63); color: white;">JEDŹ SEZON 🏁</button>
-        </div>
-        <!-- EKRAN 5: PODSUMOWANIE SEZONU I EVENTY -->
-        <div id="careerScreenSeasonResult" class="w-100 text-center" style="display: none;">
-            <h2 class="text-xl font-black mb-10 text-accent">KONIEC SEZONU</h2>
+            <!-- EKRAN 2: GŁÓWNY PANEL ZAWODNIKA -->
+            <div id="careerMainPanel" class="w-100" style="display: none;">
+                
+                <!-- TOP INFO -->
+                <div class="flex-between mb-20 align-items-center">
+                    <div class="career-ovr-badge" id="cOvr">35</div>
+                    <div class="flex-col text-left" style="flex:1; padding-left:15px; min-width:0;">
+                        <div class="flex-row gap-5 align-items-center mb-5">
+                            <img id="cFlag" src="https://flagcdn.com/w40/pl.png" style="width: 24px; border-radius:3px;">
+                            <span class="text-white font-black text-sm" id="cFullName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">KOWALSKI #99</span>
+                        </div>
+                        <span id="cCurrentClub" class="text-dim text-xs font-bold uppercase" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Brak Klubu</span>
+                    </div>
+                    <div class="flex-col text-right" style="flex-shrink:0;">
+                        <span class="text-white font-black text-lg">WIEK <span id="cAge">16</span></span>
+                        <span class="text-green font-bold text-xs" id="cMoney">0 PLN</span>
+                    </div>
+                </div>
+
+                <!-- STATYSTYKI KARIERY -->
+                <div class="career-stats-summary mb-20">
+                    <div><span class="lbl">BIEGI</span><span class="val" id="cHeats">0</span></div>
+                    <div><span class="lbl">PUNKTY</span><span class="val" id="cPts">0</span></div>
+                    <div><span class="lbl">ŚREDNIA</span><span class="val" id="cAvg">0.00</span></div>
+                </div>
+
+                <!-- MIEJSCE NA AKCJE (OFERTY LUB SYMULACJA) -->
+                <div id="careerActionArea" class="career-action-box">
+                    <!-- Tu wpadają oferty lub wybór sprzętu z JS -->
+                </div>
+            </div>
             
-            <div id="careerEventBox" class="mb-20" style="display: none; padding: 15px; background: rgba(255,204,0,0.15); border: 2px solid var(--yellow-neon); border-radius: 12px;">
-                <span class="text-yellow-neon font-black text-sm uppercase">WYDARZENIE SPECJALNE</span><br>
-                <span id="careerEventText" class="text-white text-xs font-bold mt-5 block">...</span>
-            </div>
-
-            <div class="stats-grid mb-20">
-                <div class="stat-box" style="border-color: #fff;">
-                    <span class="text-dim text-xs">PUNKTY W LIDZE</span>
-                    <span id="seasonPtsDisplay" class="text-white font-black text-xl">0</span>
+            <!-- EKRAN 3: PODSUMOWANIE SEZONU (ZASTĘPUJE ACTION AREA) -->
+            <div id="careerSeasonSummary" class="w-100 text-center" style="display: none;">
+                <h2 class="text-xl font-black mb-10 text-accent">KONIEC SEZONU</h2>
+                
+                <div id="careerEventBox" class="mb-20" style="display: none; padding: 15px; background: rgba(255,204,0,0.15); border: 2px solid var(--yellow-neon); border-radius: 12px;">
+                    <span class="text-yellow-neon font-black text-sm uppercase">WYDARZENIE SPECJALNE</span><br>
+                    <span id="careerEventText" class="text-white text-xs font-bold mt-5 block">...</span>
                 </div>
-                <div class="stat-box" style="border-color: var(--green-neon);">
-                    <span class="text-dim text-xs">ZAROBKI</span>
-                    <span id="seasonMoneyDisplay" class="text-green font-black text-xl">0</span>
-                </div>
-                <div class="stat-box" id="seasonDmpBox" style="display: none; border-color: var(--accent); grid-column: 1 / -1;">
-                    <span class="text-accent font-black text-sm">🏆 MEDAL DMP ZESPOŁU!</span>
-                </div>
-                <div class="stat-box" id="seasonImsBox" style="display: none; border-color: var(--accent); grid-column: 1 / -1;">
-                    <span class="text-accent font-black text-sm">🌍 MEDAL IMŚ (GRAND PRIX)!</span>
-                </div>
-            </div>
-
-            <div class="stat-box mb-25 mx-auto max-w-320">
-                <span class="text-dim text-xs mb-5">NOWY OVR (ROZWÓJ)</span>
-                <div class="flex-center gap-10">
-                    <span id="seasonOvrOld" class="text-dim font-bold" style="text-decoration: line-through;">60</span>
-                    <span class="text-white">➡</span>
-                    <span id="seasonOvrNew" class="text-accent font-black text-xl">62</span>
-                </div>
-            </div>
-
-            <button onclick="nextCareerStep()" class="btn-reset w-100 p-15">DALEJ</button>
-        </div>
-
-        <!-- EKRAN 6: EMERYTURA / KARTA LEGENDY -->
-        <div id="careerScreenRetirement" class="w-100 text-center" style="display: none;">
-            <h2 class="text-xl font-black mb-10 text-white">KONIEC KARIERY</h2>
-            <p class="text-xs text-dim mb-20">Odwieszasz kevlar na kołek. Oto jak zapisałeś się w historii czarnego sportu.</p>
-            
-            <!-- KARTA STYL FUT -->
-            <div id="careerFutCard" class="fut-card mx-auto mb-25">
-                <div class="fut-card-inner">
-                    <div class="fut-ovr" id="futOvr">99</div>
-                    <div class="fut-pos">LEG</div>
-                    <div class="fut-flag" id="futFlag"><img src="https://flagcdn.com/w40/pl.png"></div>
-                    <div class="fut-photo">🏍️</div>
-                    <div class="fut-name" id="futName">KOWALSKI</div>
-                    <div class="fut-stats">
-                        <div class="fut-stat"><span>IMŚ</span><span id="futIms">3</span></div>
-                        <div class="fut-stat"><span>DMP</span><span id="futDmp">5</span></div>
-                        <div class="fut-stat"><span>PKT</span><span id="futPts">2500</span></div>
-                        <div class="fut-stat"><span>PLN</span><span id="futCash">12M</span></div>
+    
+                <div class="stats-grid mb-20">
+                    <div class="stat-box" style="border-color: #fff;">
+                        <span class="text-dim text-xs">PUNKTY LIGOWE</span>
+                        <span id="seasonPtsDisplay" class="text-white font-black text-xl">0</span>
+                    </div>
+                    <div class="stat-box" style="border-color: var(--green-neon);">
+                        <span class="text-dim text-xs">ZAROBKI</span>
+                        <span id="seasonMoneyDisplay" class="text-green font-black text-xl">0</span>
+                    </div>
+                    <div class="stat-box" id="seasonDmpBox" style="display: none; border-color: var(--accent); grid-column: 1 / -1;">
+                        <span class="text-accent font-black text-sm">🏆 MEDAL DMP ZESPOŁU!</span>
+                    </div>
+                    <div class="stat-box" id="seasonImsBox" style="display: none; border-color: var(--accent); grid-column: 1 / -1;">
+                        <span class="text-accent font-black text-sm">🌍 MEDAL IMŚ (GRAND PRIX)!</span>
                     </div>
                 </div>
+    
+                <div class="stat-box mb-25 mx-auto max-w-320">
+                    <span class="text-dim text-xs mb-5">NOWY OVR (ROZWÓJ)</span>
+                    <div class="flex-center gap-10">
+                        <span id="seasonOvrOld" class="text-dim font-bold" style="text-decoration: line-through;">60</span>
+                        <span class="text-white">➡</span>
+                        <span id="seasonOvrNew" class="text-accent font-black text-xl">62</span>
+                    </div>
+                </div>
+    
+                <button onclick="nextCareerStep()" class="btn-reset w-100 p-15">DALEJ</button>
+            </div>
+            
+            <!-- EKRAN 4: KARTA EMERYTA -->
+            <div id="careerRetirement" class="w-100 text-center" style="display: none;">
+                <h2 class="text-xl font-black mb-10 text-white">KONIEC KARIERY</h2>
+                <p class="text-xs text-dim mb-20">Odwieszasz kevlar na kołek. Oto jak zapisałeś się w historii czarnego sportu.</p>
+                
+                <!-- KARTA STYL FUT -->
+                <div id="careerFutCard" class="fut-card mx-auto mb-25">
+                    <div class="fut-card-inner">
+                        <div class="fut-ovr" id="futOvr">99</div>
+                        <div class="fut-pos">LEG</div>
+                        <div class="fut-flag" id="futFlag"><img src="https://flagcdn.com/w40/pl.png"></div>
+                        <div class="fut-photo">🏍️</div>
+                        <div class="fut-name" id="futName">KOWALSKI</div>
+                        <div class="fut-stats">
+                            <div class="fut-stat"><span>IMŚ</span><span id="futIms">3</span></div>
+                            <div class="fut-stat"><span>DMP</span><span id="futDmp">5</span></div>
+                            <div class="fut-stat"><span>PKT</span><span id="futPts">2500</span></div>
+                            <div class="fut-stat"><span>PLN</span><span id="futCash">12M</span></div>
+                        </div>
+                    </div>
+                </div>
+    
+                <button onclick="exitCareerMode()" class="btn-close w-100 p-15 text-sm">ZAKOŃCZ</button>
             </div>
 
-            <button onclick="exitCareerMode()" class="btn-close w-100 p-15 text-sm">WRÓĆ DO MENU GŁÓWNEGO</button>
+        </div>
+
+        <!-- PRAWY PANEL (OŚ CZASU / HISTORIA) -->
+        <div class="career-timeline">
+            <!-- PUSTY STAN -->
+            <div id="timelineEmpty" class="text-center text-dim mt-30 font-bold text-sm">
+                Historia twoich sezonów pojawi się tutaj...
+            </div>
+            
+            <!-- NAGŁÓWKI TABELI -->
+            <div class="timeline-header" id="timelineHeader" style="display: none;">
+                <div style="width: 35px;">LAT</div>
+                <div style="flex:1; text-align: left; padding-left:10px;">KLUB</div>
+                <div style="width: 35px;">OVR</div>
+                <div style="width: 35px;">MEC</div>
+                <div style="width: 35px;">BIE</div>
+                <div style="width: 40px;">PKT</div>
+                <div style="width: 40px;">AVG</div>
+            </div>
+
+            <!-- LISTA SEZONÓW -->
+            <div id="timelineList" class="flex-col gap-5"></div>
         </div>
 
     </div>
@@ -1384,7 +1379,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.8"></script>
+    <script src="script.js?v2.9"></script>
 
     
 </body>

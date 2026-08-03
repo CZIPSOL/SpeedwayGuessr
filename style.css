@@ -2095,3 +2095,163 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     display: flex; justify-content: space-between; color: #111; font-weight: 900; font-size: 16px;
 }
 .fut-stat span:first-child { font-weight: 700; opacity: 0.8; font-size: 12px; align-self: flex-end; }
+
+/* ============================================== */
+/* ====== KARIERA: UKŁAD COPERO ================= */
+/* ============================================== */
+.career-layout {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    min-height: 80vh;
+    margin: 20px auto;
+    background: transparent;
+}
+
+.career-left-panel {
+    background: rgba(20, 20, 25, 0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.career-timeline {
+    background: rgba(10, 10, 15, 0.8);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 24px;
+    padding: 20px;
+    overflow-y: auto;
+    max-height: 85vh;
+}
+.career-timeline::-webkit-scrollbar { width: 6px; }
+.career-timeline::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+/* KEVLAR WIZUALIZACJA */
+.kevlar-display {
+    width: 140px;
+    height: 160px;
+    position: relative;
+}
+.kevlar-collar {
+    width: 60px; height: 30px;
+    background: #111;
+    border-radius: 50% 50% 0 0;
+    margin: 0 auto;
+    border: 2px solid #333;
+    border-bottom: none;
+}
+.kevlar-body {
+    width: 100%; height: 130px;
+    background: #eaeaea; /* Biały kevlar bazowy */
+    border-radius: 20px 20px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 -10px 20px rgba(0,0,0,0.2), 0 10px 15px rgba(0,0,0,0.5);
+    border: 2px solid #ccc;
+    position: relative;
+}
+.kevlar-body::before, .kevlar-body::after {
+    content: ''; position: absolute; top: 10px; width: 30px; height: 100px; background: #dcdcdc; border-radius: 10px;
+}
+.kevlar-body::before { left: -15px; transform: rotate(15deg); z-index: -1; }
+.kevlar-body::after { right: -15px; transform: rotate(-15deg); z-index: -1; }
+
+.kevlar-name { color: #111; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+.kevlar-number { color: #111; font-weight: 900; font-size: 48px; line-height: 1; text-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
+
+/* WIZYTÓWKA GRACZA (TOP) */
+.career-ovr-badge {
+    background: linear-gradient(135deg, #f39c12, #d35400);
+    color: #fff;
+    width: 60px; height: 60px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-weight: 900;
+    box-shadow: 0 5px 15px rgba(211, 84, 0, 0.4);
+    border: 2px solid #f1c40f;
+}
+.career-stats-summary {
+    display: flex; justify-content: space-around;
+    background: rgba(255,255,255,0.03);
+    border-radius: 16px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);
+}
+.career-stats-summary div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.career-stats-summary .lbl { font-size: 10px; color: var(--text-dim); font-weight: 900; text-transform: uppercase; }
+.career-stats-summary .val { font-size: 16px; color: #fff; font-weight: 900; }
+
+/* AKCJE (OFERTY I SPRZĘT) */
+.career-action-box { background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); flex: 1; display: flex; flex-direction: column; overflow-y: auto;}
+.c-offer-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; margin-bottom: 10px; transition: 0.2s; cursor: pointer; display: flex; flex-direction: column; }
+.c-offer-card:hover { border-color: var(--accent); background: rgba(241,196,15,0.05); }
+
+/* OŚ CZASU (PRAWA STRONA) */
+.timeline-header { display: flex; font-size: 10px; color: var(--text-dim); font-weight: 900; padding: 0 10px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; text-align: center; }
+.timeline-row { display: flex; align-items: center; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px; font-size: 13px; font-weight: 700; color: #fff; text-align: center; transition: 0.2s; border: 1px solid transparent; }
+.timeline-row:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+.t-age { width: 35px; background: var(--accent); color: #000; border-radius: 6px; padding: 4px 0; font-weight: 900; }
+.t-club { flex: 1; text-align: left; padding-left: 10px; color: #eaeaea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px;}
+.t-ovr { width: 35px; color: #feca57; font-weight: 900; }
+.t-mec { width: 35px; color: var(--text-dim); font-size: 11px;}
+.t-bie { width: 35px; color: var(--text-dim); font-size: 11px;}
+.t-pkt { width: 40px; color: #fff; }
+.t-avg { width: 40px; font-weight: 900; }
+
+/* KARTA FUT (EMERYTURA) */
+.fut-card {
+    width: 240px;
+    height: 340px;
+    background: url('https://www.transparenttextures.com/patterns/cubes.png'), linear-gradient(135deg, #d4af37 0%, #aa8015 50%, #f1c40f 100%);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.5);
+    position: relative;
+    border: 2px solid #ffee88;
+    margin: 20px auto;
+}
+.fut-card-inner {
+    width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; position: relative;
+}
+.fut-ovr {
+    position: absolute; top: 10px; left: 10px; font-size: 38px; font-weight: 900; color: #111; line-height: 0.9; text-shadow: 0px 1px 1px rgba(255,255,255,0.5);
+}
+.fut-pos {
+    position: absolute; top: 45px; left: 14px; font-size: 14px; font-weight: 900; color: #111;
+}
+.fut-flag {
+    position: absolute; top: 70px; left: 12px; width: 30px; height: 20px; border: 1px solid #111;
+}
+.fut-flag img { width: 100%; height: 100%; object-fit: cover; }
+.fut-photo {
+    font-size: 90px; margin-top: 30px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+}
+.fut-name {
+    font-size: 22px; font-weight: 900; color: #111; text-transform: uppercase; margin-top: 15px; border-bottom: 2px solid rgba(17,17,17,0.3); width: 80%; text-align: center; padding-bottom: 5px;
+}
+.fut-stats {
+    display: grid; grid-template-columns: 1fr 1fr; width: 90%; gap: 10px; margin-top: 15px;
+}
+.fut-stat {
+    display: flex; justify-content: space-between; color: #111; font-weight: 900; font-size: 16px;
+}
+.fut-stat span:first-child { font-weight: 700; opacity: 0.8; font-size: 12px; align-self: flex-end; }
+
+/* RWD */
+@media (max-width: 768px) {
+    .career-layout { grid-template-columns: 1fr; padding: 10px; gap: 10px; margin: 10px auto; }
+    .career-left-panel { padding: 20px; }
+    .t-club { padding-left: 5px; font-size: 10px; }
+    .t-age { width: 30px; font-size: 11px; }
+}

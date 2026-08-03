@@ -5811,400 +5811,441 @@ document.addEventListener('keydown', function(e) {
 // ====== SPEEDWAY LEGEND (TRYB KARIERY) ========
 // ==============================================
 
-// BAZA DANYCH GOSPODARKI (Zarobki, Trudność, Rozwój)
-const CAREER_LEAGUES = {
+// BAZA DANYCH GOSPODARKI (Stałe)
+const CAREER_CONSTANTS = {
     "PGE Ekstraliga": {
-        teams: ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
-        basePay: { min: 300000, max: 1000000 }, 
-        pointPay: { min: 4000, max: 9000 },    
-        difficulty: 82, 
-        devBonus: -1    
+        diff: 85, // OVR potrzebny do dominacji
+        minOvr: 60,
+        basePay: { min: 300000, max: 1000000 },
+        pointPay: { min: 4000, max: 9000 }
     },
     "Metalkas 2.E": {
-        teams: ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+        diff: 70,
+        minOvr: 45,
         basePay: { min: 100000, max: 400000 },
-        pointPay: { min: 2000, max: 4000 },
-        difficulty: 70,
-        devBonus: 1 
+        pointPay: { min: 2000, max: 4000 }
     },
     "KLŻ": {
-        teams: ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"],
+        diff: 55,
+        minOvr: 0,
         basePay: { min: 20000, max: 80000 },
-        pointPay: { min: 800, max: 1500 },
-        difficulty: 55,
-        devBonus: 3 
+        pointPay: { min: 800, max: 1500 }
     }
 };
 
-// Stan gry
-let careerState = {
+// Stan gry z dynamicznymi ligami
+let cState = {
     active: false,
-    name: "Gracz",
+    name: "KOWALSKI",
+    num: 99,
     nat: "Polska",
+    flagCode: "pl",
     age: 16,
-    maxAge: 40,
-    season: 1,
-    ovr: 50,
+    ovr: 40,
     money: 0,
     club: null,
     league: null,
-    contract: { basePay: 0, pointPay: 0, yearsLeft: 0 },
-    stats: { totalPoints: 0, totalMoney: 0, dmp: 0, ims: 0 }
+    contractYears: 0,
+    contractBase: 0,
+    contractPt: 0,
+    stats: { heats: 0, pts: 0 },
+    history: [],
+    // Dynamiczny układ lig
+    leagues: {
+        "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+        "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+        "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"]
+    }
 };
 
+// --- NAWIGACJA ---
 function openCareerMode() {
-    // BLOKADA DLA ZWYKŁYCH GRACZY
     if (!window.isAdmin && !window.isTester) {
         appAlert("Tryb 'Speedway Legend' znajduje się w fazie zamkniętych testów (dostęp wyłącznie dla Adminów i Testerów).", "Brak dostępu 🔒");
         return;
     }
 
-    promptForNick(() => {
-        careerState.name = playerNickname || "Zawodowiec";
-        
-        // Ukrywamy menu
-        const mainMenu = document.getElementById('mainMenuContainer');
-        const desktopMenu = document.getElementById('desktopMainMenu');
-        if (mainMenu) mainMenu.style.display = 'none';
-        if (desktopMenu) desktopMenu.style.display = 'none';
+    document.getElementById('mainMenuContainer').style.display = 'none';
+    const desktopMenu = document.getElementById('desktopMainMenu');
+    if (desktopMenu) desktopMenu.style.display = 'none';
 
-        // Pokazujemy kontener kariery
-        const careerContainer = document.getElementById('careerContainer');
-        if (careerContainer) careerContainer.style.display = 'flex';
-        
-        showCareerScreen('careerScreenSetup');
-        updateCareerHeader();
-    });
+    document.getElementById('careerContainer').style.display = 'grid';
+    
+    // Reset state and deep copy default leagues
+    cState = { 
+        active: true, name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", age: 16, ovr: 38, money: 0, 
+        club: null, league: null, contractYears: 0, stats: { heats: 0, pts: 0 }, history: [],
+        leagues: {
+            "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+            "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+            "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"]
+        }
+    };
+    
+    document.getElementById('careerSetup').style.display = 'block';
+    document.getElementById('careerMainPanel').style.display = 'none';
+    document.getElementById('timelineHeader').style.display = 'none';
+    document.getElementById('timelineEmpty').style.display = 'block';
+    document.getElementById('timelineList').innerHTML = '';
 }
 
 function exitCareerMode() {
-    if (confirm("Chcesz przerwać karierę? Twój obecny postęp nie zostanie zapisany!")) {
-        window.location.reload();
-    }
+    if (confirm("Chcesz wyjść? Postęp zostanie zresetowany.")) window.location.reload();
 }
 
-function showCareerScreen(screenId) {
-    const screens = ['careerScreenSetup', 'careerScreenAcademy', 'careerScreenOffers', 'careerScreenDashboard', 'careerScreenSeasonResult', 'careerScreenRetirement'];
-    screens.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.style.display = (id === screenId) ? 'block' : 'none';
-        }
-    });
+function updateKevlarPreview() {
+    let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase() || "KOWALSKI";
+    let numVal = document.getElementById('careerNumInput').value || "99";
+    document.getElementById('kevlarNamePreview').innerText = nameVal;
+    document.getElementById('kevlarNumPreview').innerText = numVal;
 }
 
-function updateCareerHeader() {
-    const yearDisplay = document.getElementById('careerYearDisplay');
-    const moneyDisplay = document.getElementById('careerMoneyDisplay');
-    if (yearDisplay) yearDisplay.innerText = `SEZON ${careerState.season} (Wiek: ${careerState.age})`;
-    if (moneyDisplay) moneyDisplay.innerText = careerState.money.toLocaleString('pl-PL') + " PLN";
+function selectCareerNat(name, code, el) {
+    cState.nat = name; cState.flagCode = code;
+    document.querySelectorAll('#careerSetup .flag-card').forEach(f => f.classList.remove('active'));
+    el.classList.add('active');
 }
 
-function selectCareerNat(nat, element) {
-    careerState.nat = nat;
-    document.querySelectorAll('#careerScreenSetup .flag-card').forEach(el => el.classList.remove('active'));
-    element.classList.add('active');
-}
-
+// --- KROK 1: SZKÓŁKA I START ---
 function startCareerAcademy() {
-    // Losujemy OVR na start od 48 do 62.
-    let startingOVR = Math.floor(Math.random() * (62 - 48 + 1)) + 48;
-    
-    // Lekki boost jeśli wybraliśmy silny kraj żużlowy
-    if (['Polska', 'Dania', 'Australia'].includes(careerState.nat)) {
-        startingOVR += Math.floor(Math.random() * 3); 
-    }
+    let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase();
+    if(nameVal) cState.name = nameVal;
+    cState.num = document.getElementById('careerNumInput').value || 99;
 
-    careerState.ovr = startingOVR;
-    const ovrDisplay = document.getElementById('academyOvrDisplay');
-    if (ovrDisplay) ovrDisplay.innerText = careerState.ovr;
-    
-    let desc = "Trenerzy uważają, że ";
-    if(startingOVR > 60) desc += "jesteś diamentem i wkrótce zawojujesz świat!";
-    else if(startingOVR > 55) desc += "masz smykałkę do jazdy. Potrzeba tylko treningu.";
-    else desc += "początki będą trudne. Musisz udowodnić swoją wartość w KLŻ.";
-    
-    const descDisplay = document.getElementById('academyDesc');
-    if (descDisplay) descDisplay.innerText = desc;
+    // ZNERFIONY OVR STARTOWY (35-45)
+    cState.ovr = Math.floor(Math.random() * 11) + 35;
+    if (['pl', 'dk', 'au'].includes(cState.flagCode)) cState.ovr += Math.floor(Math.random() * 3);
 
-    showCareerScreen('careerScreenAcademy');
+    document.getElementById('careerSetup').style.display = 'none';
+    document.getElementById('careerMainPanel').style.display = 'block';
+    
+    updateLeftPanelUI();
+    generateOffers();
 }
 
-function showCareerOffers() {
-    const list = document.getElementById('careerOffersList');
-    if (!list) return;
-    list.innerHTML = '';
+function updateLeftPanelUI() {
+    document.getElementById('cOvr').innerText = cState.ovr;
+    document.getElementById('cFlag').src = `https://flagcdn.com/w40/${cState.flagCode}.png`;
+    document.getElementById('cFullName').innerText = `${cState.name} #${cState.num}`;
+    document.getElementById('cCurrentClub').innerText = cState.club ? `${cState.club} (${cState.league})` : "Szuka Klubu";
+    document.getElementById('cAge').innerText = cState.age;
+    
+    let cashM = cState.money >= 1000000 ? (cState.money / 1000000).toFixed(2) + "M" : (cState.money / 1000).toFixed(0) + "k";
+    document.getElementById('cMoney').innerText = `${cashM} PLN`;
 
-    let offers = generateContractOffers();
+    document.getElementById('cHeats').innerText = cState.stats.heats;
+    document.getElementById('cPts').innerText = cState.stats.pts;
+    let avg = cState.stats.heats > 0 ? (cState.stats.pts / cState.stats.heats).toFixed(2) : "0.00";
+    document.getElementById('cAvg').innerText = avg;
+}
 
-    offers.forEach((offer, idx) => {
-        const div = document.createElement('div');
-        div.className = 'career-offer-card';
+// --- KROK 2: OFERTY KONTRAKTOWE ---
+function generateOffers() {
+    const area = document.getElementById('careerActionArea');
+    area.innerHTML = `<h3 class="text-white text-sm font-black m-0 mb-10 text-center uppercase">Oferty Klubów</h3><p class="text-xs text-dim text-center mb-15">Wybierz mądrze. Zbyt wysoka liga to grzanie ławy i wypożyczenie!</p>`;
+    
+    let possibleLeagues = [];
+    if (cState.ovr < 45) possibleLeagues = ["KLŻ", "KLŻ"];
+    else if (cState.ovr < 60) possibleLeagues = ["KLŻ", "Metalkas 2.E"];
+    else if (cState.ovr < 75) possibleLeagues = ["Metalkas 2.E", "PGE Ekstraliga"];
+    else possibleLeagues = ["PGE Ekstraliga", "PGE Ekstraliga"];
+
+    if(possibleLeagues.length < 3) possibleLeagues.push(possibleLeagues[0]);
+
+    cState.pendingOffers = possibleLeagues.map(lName => {
+        let clubsInLeague = cState.leagues[lName];
+        let club = clubsInLeague[Math.floor(Math.random() * clubsInLeague.length)];
         
-        let yearsText = offer.years === 1 ? "1 Rok" : `${offer.years} Lata`;
+        // ZNERFIONE ZAROBKI BAZOWANE NA STAŁYCH
+        let consts = CAREER_CONSTANTS[lName];
+        let ovrFactor = Math.pow(Math.max(cState.ovr - 25, 5), 2) / 2500; // Skalowanie do akceptowalnych kwot
+        if(ovrFactor > 2.0) ovrFactor = 2.0;
 
-        div.innerHTML = `
-            <div class="career-offer-details">
-                <span class="text-accent font-black text-sm uppercase">${offer.club}</span>
-                <span class="text-dim text-xs">${offer.league} • ⏳ ${yearsText}</span>
-                <div class="flex-row gap-10 mt-5">
-                    <span class="text-white text-xs"><b>${(offer.basePay / 1000).toFixed(0)}k</b> PLN/Podpis</span>
-                    <span class="text-white text-xs"><b>${offer.pointPay}</b> PLN/Pkt</span>
+        let basePay = Math.floor(consts.basePay.min + (consts.basePay.max - consts.basePay.min) * (ovrFactor / 2));
+        let ptPay = Math.floor(consts.pointPay.min + (consts.pointPay.max - consts.pointPay.min) * (ovrFactor / 2));
+        
+        let years = Math.floor(Math.random() * 3) + 1; // 1-3 lata kontraktu
+
+        // Zaokrąglenia
+        basePay = Math.round(basePay / 5000) * 5000;
+        ptPay = Math.round(ptPay / 50) * 50;
+
+        return { league: lName, club: club, base: basePay, ptPay: ptPay, years: years };
+    });
+
+    cState.pendingOffers.forEach((offer, idx) => {
+        let baseK = (offer.base / 1000).toFixed(0) + "k";
+        let yrsText = offer.years === 1 ? "1 ROK" : `${offer.years} LATA`;
+        area.innerHTML += `
+            <div class="c-offer-card" onclick="signContract(${idx})">
+                <div class="flex-between">
+                    <span class="text-accent font-black text-xs uppercase">${offer.club}</span>
+                    <span class="text-dim text-xs font-bold">${yrsText}</span>
+                </div>
+                <div class="text-xs text-dim mb-5">${offer.league}</div>
+                <div class="flex-between text-white text-xs font-bold">
+                    <span>${baseK} PLN (Podpis)</span>
+                    <span>${offer.ptPay} PLN/Pkt</span>
                 </div>
             </div>
-            <button class="btn-reset p-12 text-xs rounded-12" onclick="acceptContract(${idx})">PODPISZ</button>
         `;
-        list.appendChild(div);
+    });
+}
+
+function signContract(idx) {
+    let o = cState.pendingOffers[idx];
+    cState.club = o.club;
+    cState.league = o.league;
+    cState.contractYears = o.years;
+    cState.contractBase = o.base;
+    cState.contractPt = o.ptPay;
+
+    cState.money += o.base;
+    
+    showToast(`Podpisano z: ${o.club}!`, "success");
+    updateLeftPanelUI();
+    showSeasonDashboard();
+}
+
+// --- KROK 3: WYBÓR SPRZĘTU ---
+function showSeasonDashboard() {
+    const area = document.getElementById('careerActionArea');
+    
+    let cheapCost = Math.round(cState.ovr * 400);
+    let normCost = Math.round(cState.ovr * 1200);
+    let eliteCost = Math.round(cState.ovr * 3500);
+
+    area.innerHTML = `
+        <div class="flex-between mb-15">
+            <h3 class="text-white text-sm font-black m-0 uppercase">PRZYGOTOWANIE</h3>
+            <span class="text-accent font-black text-xs">KONTRAKT: ${cState.contractYears} LATA</span>
+        </div>
+        <p class="text-xs text-dim mb-15">Wybierz klasę serwisu na nadchodzący sezon.</p>
+        
+        <div class="flex-col gap-10 text-left mb-20">
+            <label class="modern-checkbox-label" style="justify-content: space-between; padding: 10px;">
+                <div class="flex-row gap-10 align-items-center">
+                    <input type="radio" name="cEquip" value="-2">
+                    <div class="flex-col"><span class="text-white text-xs font-bold">Używane Silniki</span></div>
+                </div>
+                <span class="text-red font-bold text-xs">-${(cheapCost/1000).toFixed(0)}k PLN</span>
+            </label>
+            
+            <label class="modern-checkbox-label" style="justify-content: space-between; padding: 10px;">
+                <div class="flex-row gap-10 align-items-center">
+                    <input type="radio" name="cEquip" value="0" checked>
+                    <div class="flex-col"><span class="text-white text-xs font-bold">Standard</span></div>
+                </div>
+                <span class="text-red font-bold text-xs">-${(normCost/1000).toFixed(0)}k PLN</span>
+            </label>
+
+            <label class="modern-checkbox-label" style="justify-content: space-between; padding: 10px;">
+                <div class="flex-row gap-10 align-items-center">
+                    <input type="radio" name="cEquip" value="2" ${cState.money < eliteCost ? 'disabled' : ''}>
+                    <div class="flex-col"><span class="text-accent text-xs font-bold">Tuner z Topu (+OVR)</span></div>
+                </div>
+                <span class="text-red font-bold text-xs">-${(eliteCost/1000).toFixed(0)}k PLN</span>
+            </label>
+        </div>
+        <button onclick="playSeason(${cheapCost}, ${normCost}, ${eliteCost})" class="btn-reset w-100 p-12 text-sm" style="background: linear-gradient(135deg, #1dd1a1, #0e7c63); color: white;">JEDŹ SEZON 🏁</button>
+    `;
+}
+
+// --- KROK 4: SYMULACJA Z WYPOŻYCZENIAMI I SPADKAMI ---
+function playSeason(c1, c2, c3) {
+    let eqVal = parseInt(document.querySelector('input[name="cEquip"]:checked').value);
+    let cost = eqVal === -2 ? c1 : (eqVal === 2 ? c3 : c2);
+
+    if (cState.money < cost) { appAlert("Brak środków! Wybierz tańszą opcję."); return; }
+    cState.money -= cost;
+
+    let effOvr = cState.ovr + eqVal;
+    
+    // --- SYSTEM WYPOŻYCZEŃ (LOAN) ---
+    let activeLeague = cState.league;
+    let activeClub = cState.club;
+    let isLoaned = false;
+
+    // Sprawdzamy, czy gracz jest "za słaby" na swoją ligę
+    let baseFormRatio = effOvr / CAREER_CONSTANTS[cState.league].diff;
+
+    if (baseFormRatio < 0.70 && cState.league !== "KLŻ") {
+        isLoaned = true;
+        // Wypożyczenie o szczebel niżej
+        activeLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
+        let availableClubs = cState.leagues[activeLeague];
+        activeClub = availableClubs[Math.floor(Math.random() * availableClubs.length)];
+        
+        showToast(`Zbyt słaby na skład! Zostałeś wypożyczony do: ${activeClub}`, "normal");
+    }
+
+    // --- SYMULACJA WŁAŚCIWA ---
+    let lData = CAREER_CONSTANTS[activeLeague];
+    let formRatio = effOvr / lData.diff; 
+    let seasonMatches = 14 + Math.floor(Math.random() * 5); 
+    
+    let heatsPerMatch = 0;
+    if (formRatio < 0.65) heatsPerMatch = Math.random() * 1.5; 
+    else if (formRatio < 0.85) heatsPerMatch = 2 + Math.random() * 2; 
+    else if (formRatio < 1.05) heatsPerMatch = 4 + Math.random() * 1; 
+    else heatsPerMatch = 5 + Math.random() * 1.5; 
+    
+    let totalHeats = Math.round(seasonMatches * heatsPerMatch);
+    if (totalHeats < 3 && !isLoaned) totalHeats = 3; 
+
+    let avg = formRatio * 1.8 + (Math.random() * 0.4 - 0.2);
+    if (avg > 2.6) avg = 2.5 + Math.random() * 0.3; 
+    if (avg < 0.2) avg = 0.2 + Math.random() * 0.3;
+
+    let totalPts = Math.round(totalHeats * avg);
+    
+    // Finanse (Jeśli wypożyczony, dostaje słabszą stawkę za punkt od biedniejszego klubu)
+    let activePtPay = isLoaned ? Math.floor(cState.contractPt * 0.5) : cState.contractPt;
+    let ptMoney = totalPts * activePtPay;
+    cState.money += ptMoney;
+
+    cState.stats.heats += totalHeats;
+    cState.stats.pts += totalPts;
+    
+    // ROZWÓJ (OVR)
+    let ageGrowth = cState.age <= 21 ? 3 : (cState.age > 33 ? -2 : 0);
+    // Jeśli jechałeś świetnie to rośniesz, jeśli siedziałeś na ławce (mimo że bez wypożyczenia) to spadasz
+    let perfGrowth = avg >= 1.8 ? 2 : (avg < 1.0 ? -1 : 0);
+    if (totalHeats < 15) perfGrowth -= 2; // Brak jazdy niszczy OVR
+
+    let totalGrowth = ageGrowth + perfGrowth + eqVal;
+    if (cState.ovr >= 85 && totalGrowth > 0) totalGrowth = Math.floor(totalGrowth / 2); // Cap dla legend
+    
+    cState.ovr += totalGrowth;
+    if (cState.ovr > 99) cState.ovr = 99;
+    if (cState.ovr < 30) cState.ovr = 30;
+
+    // Formatowanie nazwy klubu do Osi Czasu
+    let displayClubName = isLoaned ? `${cState.club} (Wyp: ${activeClub})` : cState.club;
+
+    cState.history.push({
+        age: cState.age, club: displayClubName, ovr: cState.ovr, 
+        mec: seasonMatches, bie: totalHeats, pkt: totalPts, avg: (totalPts/totalHeats).toFixed(2)
     });
 
-    careerState.pendingOffers = offers;
-    showCareerScreen('careerScreenOffers');
-}
+    cState.age++;
+    cState.contractYears--;
 
-function generateContractOffers() {
-    let offers = [];
-    let ovr = careerState.ovr;
+    // --- SYSTEM AWANSÓW I SPADKÓW DRUŻYN NA KONIEC SEZONU ---
+    processLeaguePromotions();
 
-    const getOfferFromLeague = (leagueName) => {
-        let l = CAREER_LEAGUES[leagueName];
-        let club = l.teams[Math.floor(Math.random() * l.teams.length)];
-        
-        let ovrFactor = ovr / l.difficulty; 
-        if(ovrFactor > 1.3) ovrFactor = 1.3; 
-        
-        let base = Math.floor((Math.random() * (l.basePay.max - l.basePay.min) + l.basePay.min) * ovrFactor);
-        let pts = Math.floor((Math.random() * (l.pointPay.max - l.pointPay.min) + l.pointPay.min) * ovrFactor);
-        let yrs = Math.floor(Math.random() * 3) + 1;
+    renderTimeline();
+    updateLeftPanelUI();
 
-        base = Math.round(base / 1000) * 1000;
-        pts = Math.round(pts / 100) * 100;
-
-        return { club: club, league: leagueName, basePay: base, pointPay: pts, years: yrs };
-    };
-
-    if (ovr < 58) {
-        offers.push(getOfferFromLeague("KLŻ"));
-        offers.push(getOfferFromLeague("KLŻ"));
-        offers.push(getOfferFromLeague("Metalkas 2.E"));
-    } else if (ovr <= 75) {
-        offers.push(getOfferFromLeague("KLŻ"));
-        offers.push(getOfferFromLeague("Metalkas 2.E"));
-        offers.push(getOfferFromLeague("PGE Ekstraliga"));
+    if (cState.age >= 40) {
+        showCareerEnd();
     } else {
-        offers.push(getOfferFromLeague("Metalkas 2.E"));
-        offers.push(getOfferFromLeague("PGE Ekstraliga"));
-        offers.push(getOfferFromLeague("PGE Ekstraliga"));
-    }
-
-    return offers;
-}
-
-function acceptContract(index) {
-    let offer = careerState.pendingOffers[index];
-    careerState.club = offer.club;
-    careerState.league = offer.league;
-    careerState.contract.basePay = offer.basePay;
-    careerState.contract.pointPay = offer.pointPay;
-    careerState.contract.yearsLeft = offer.years;
-    
-    careerState.money += offer.basePay;
-    careerState.stats.totalMoney += offer.basePay;
-    updateCareerHeader();
-
-    showToast(`Podpisałeś kontrakt z ${offer.club}!`, "success");
-    openCareerDashboard();
-}
-
-function openCareerDashboard() {
-    document.getElementById('dashOvr').innerText = careerState.ovr;
-    document.getElementById('dashClub').innerText = careerState.club;
-    document.getElementById('dashLeague').innerText = careerState.league;
-    document.getElementById('dashContract').innerText = careerState.contract.yearsLeft + (careerState.contract.yearsLeft === 1 ? " Rok" : " Lata");
-
-    const radios = document.getElementsByName('careerEquip');
-    if(radios.length > 0) {
-        radios[1].checked = true; // Default to standard
-        radios[2].disabled = careerState.money < 400000;
-        radios[1].disabled = careerState.money < 150000;
-    }
-    
-    showCareerScreen('careerScreenDashboard');
-}
-
-function simulateCareerSeason() {
-    const equipElem = document.querySelector('input[name="careerEquip"]:checked');
-    if (!equipElem) {
-        appAlert("Wybierz sprzęt przed sezonem!", "Błąd");
-        return;
-    }
-
-    let equip = equipElem.value;
-    let equipCost = equip === 'elite' ? 400000 : (equip === 'standard' ? 150000 : 50000);
-
-    if (careerState.money < equipCost) {
-        appAlert("Nie masz wystarczająco pieniędzy na ten sprzęt! Zmień wybór.", "Brak Środków");
-        return;
-    }
-
-    careerState.money -= equipCost;
-
-    let leagueData = CAREER_LEAGUES[careerState.league];
-    let diff = leagueData.difficulty;
-    
-    let equipOvrMod = equip === 'elite' ? 2 : (equip === 'cheap' ? -1 : 0);
-    let effectiveOvr = careerState.ovr + equipOvrMod;
-
-    let baseMatches = 14 + Math.floor(Math.random() * 6); 
-    let avgPtsPerMatch = ((effectiveOvr / diff) * 8); 
-    
-    avgPtsPerMatch += (Math.random() * 3 - 1.5);
-    
-    if (avgPtsPerMatch > 15) avgPtsPerMatch = 15; 
-    if (avgPtsPerMatch < 2) avgPtsPerMatch = Math.floor(Math.random() * 4); 
-    
-    let seasonPts = Math.round(baseMatches * avgPtsPerMatch);
-    let seasonMoney = seasonPts * careerState.contract.pointPay;
-
-    careerState.money += seasonMoney;
-    careerState.stats.totalMoney += seasonMoney;
-    careerState.stats.totalPoints += seasonPts;
-
-    let gotDMP = false;
-    let gotIMS = false;
-
-    if (effectiveOvr > diff - 5 && Math.random() < 0.25) { 
-        gotDMP = true;
-        careerState.stats.dmp++;
-    }
-
-    if (effectiveOvr >= 85) {
-        let chance = (effectiveOvr - 80) / 30; 
-        if (Math.random() < chance) { 
-            gotIMS = true;
-            careerState.stats.ims++;
+        if (cState.contractYears <= 0) {
+            cState.club = null;
+            cState.league = null;
+            generateOffers();
+        } else {
+            showSeasonDashboard(); 
         }
     }
-
-    let eventText = null;
-    let eventOvrMod = 0;
-    if (Math.random() < 0.25) { 
-        let event = generateRandomEvent(effectiveOvr);
-        eventText = event.text;
-        eventOvrMod = event.ovrMod;
-        careerState.money += event.moneyMod;
-        careerState.stats.totalMoney += event.moneyMod;
-    }
-
-    let ageFactor = careerState.age > 34 ? -2 : (careerState.age < 23 ? 2 : 0);
-    let devChange = leagueData.devBonus + ageFactor + eventOvrMod;
-
-    if (avgPtsPerMatch >= 10) devChange += 1;
-    else if (avgPtsPerMatch < 5) devChange -= 1;
-
-    let oldOvr = careerState.ovr;
-    let newOvr = oldOvr + devChange;
-    if (newOvr > 99) newOvr = 99;
-    if (newOvr < 40) newOvr = 40;
-
-    careerState.ovr = newOvr;
-    
-    careerState.contract.yearsLeft--;
-    careerState.age++;
-    
-    updateCareerHeader();
-    document.getElementById('seasonPtsDisplay').innerText = seasonPts;
-    document.getElementById('seasonMoneyDisplay').innerText = "+" + seasonMoney.toLocaleString('pl-PL') + " PLN";
-    
-    document.getElementById('seasonDmpBox').style.display = gotDMP ? 'block' : 'none';
-    document.getElementById('seasonImsBox').style.display = gotIMS ? 'block' : 'none';
-    
-    document.getElementById('seasonOvrOld').innerText = oldOvr;
-    document.getElementById('seasonOvrNew').innerText = newOvr;
-    
-    if(newOvr > oldOvr) document.getElementById('seasonOvrNew').style.color = "var(--green-neon)";
-    else if(newOvr < oldOvr) document.getElementById('seasonOvrNew').style.color = "var(--red-neon)";
-    else document.getElementById('seasonOvrNew').style.color = "var(--text-dim)";
-
-    if (eventText) {
-        document.getElementById('careerEventBox').style.display = 'block';
-        document.getElementById('careerEventText').innerText = eventText;
-    } else {
-        document.getElementById('careerEventBox').style.display = 'none';
-    }
-
-    showCareerScreen('careerScreenSeasonResult');
 }
 
-function generateRandomEvent(ovr) {
-    const events = [
-        { text: "Złapałeś kontuzję! Omijasz kluczowe mecze i tracisz formę.", ovrMod: -2, moneyMod: -20000 },
-        { text: "Trafiasz w 'złoty' silnik! Forma życia w drugiej połowie sezonu.", ovrMod: +2, moneyMod: 0 },
-        { text: "Wspaniały sponsor prywatny! Podpisujesz lukratywny kontrakt reklamowy.", ovrMod: 0, moneyMod: 300000 },
-        { text: "Konflikt z prezesem psuje atmosferę. Lekki spadek formy.", ovrMod: -1, moneyMod: 0 },
-        { text: "Ciężkie treningi zimowe z mentorem przynoszą efekty!", ovrMod: +1, moneyMod: -50000 }
-    ];
-    
-    if (ovr > 70 && careerState.league !== "PGE Ekstraliga") {
-        events.push({ text: "Dostałeś Dziką Kartę na turniej SGP! Dobry występ zapewnia premię.", ovrMod: +1, moneyMod: 150000 });
-    }
-    
-    return events[Math.floor(Math.random() * events.length)];
-}
+// Funkcja tasująca ligi (Awanse i Spadki)
+function processLeaguePromotions() {
+    let ex = cState.leagues["PGE Ekstraliga"];
+    let m2e = cState.leagues["Metalkas 2.E"];
+    let klz = cState.leagues["KLŻ"];
 
-function nextCareerStep() {
-    careerState.season++;
+    // Losowanie drużyn, które spadają (z Ekstraligi i M2E)
+    let exDropIdx = Math.floor(Math.random() * ex.length);
+    let m2eDropIdx = Math.floor(Math.random() * m2e.length);
     
-    if (careerState.age >= careerState.maxAge) {
-        retirePlayer();
-        return;
-    }
+    // Losowanie drużyn, które awansują (z M2E i KLŻ)
+    // Zabezpieczenie: drużyna awansująca z M2E nie może być tą, która właśnie z niej spada
+    let m2ePromIdx = Math.floor(Math.random() * m2e.length);
+    while (m2ePromIdx === m2eDropIdx) { m2ePromIdx = Math.floor(Math.random() * m2e.length); }
+    let klzPromIdx = Math.floor(Math.random() * klz.length);
 
-    if (careerState.contract.yearsLeft <= 0) {
-        showCareerOffers();
-    } else {
-        openCareerDashboard();
+    // Wyciągamy zespoły
+    let teamExDrop = ex.splice(exDropIdx, 1)[0];
+    let teamM2eProm = m2e.splice(m2ePromIdx, 1)[0];
+    
+    // Z uwagi na splice u góry, musimy ponownie znaleźć indeks dla spadkowicza z M2E
+    let m2eDropIdxFixed = m2e.indexOf(m2e[Math.floor(Math.random() * m2e.length)]);
+    let teamM2eDrop = m2e.splice(m2eDropIdxFixed, 1)[0];
+    let teamKlzProm = klz.splice(klzPromIdx, 1)[0];
+
+    // Zamiana miejscami
+    ex.push(teamM2eProm);
+    m2e.push(teamExDrop, teamKlzProm);
+    klz.push(teamM2eDrop);
+
+    // Sprawdzamy czy zmiany dotknęły gracza
+    if (cState.club === teamExDrop) {
+        cState.league = "Metalkas 2.E";
+        appAlert(`Zła wiadomość! Twój klub (${cState.club}) zajął ostatnie miejsce i SPADA do Metalkas 2. Ekstraligi.`, "Spadek z ligi 📉");
+    } else if (cState.club === teamM2eDrop) {
+        cState.league = "KLŻ";
+        appAlert(`Koszmar! Twój klub (${cState.club}) zalicza SPADEK do najniższej klasy rozgrywkowej (KLŻ).`, "Spadek z ligi 📉");
+    } else if (cState.club === teamM2eProm) {
+        cState.league = "PGE Ekstraliga";
+        appAlert(`Wspaniałe wieści! Twój klub (${cState.club}) wygrywa ligę i AWANSUJE do PGE Ekstraligi!`, "Awans! 🏆");
+    } else if (cState.club === teamKlzProm) {
+        cState.league = "Metalkas 2.E";
+        appAlert(`Dobra robota! Twój klub (${cState.club}) wywalczył AWANS do Metalkas 2. Ekstraligi!`, "Awans! 🏆");
     }
 }
 
-function retirePlayer() {
-    document.getElementById('futOvr').innerText = careerState.ovr;
-    
-    // Tu upewniamy się, że słownik kodów krajów istnieje (jeśli nie, fallback na 'pl')
-    let cCode = 'pl';
-    try { cCode = countryToCode[careerState.nat]; } catch(e) {}
-    document.getElementById('futFlag').innerHTML = `<img src="https://flagcdn.com/w40/${cCode || 'pl'}.png">`;
-    
-    let nameParts = careerState.name.split(' ');
-    let lastName = nameParts[nameParts.length - 1].substring(0, 10);
-    document.getElementById('futName').innerText = lastName;
+// --- WIDOKI ---
+function renderTimeline() {
+    document.getElementById('timelineEmpty').style.display = 'none';
+    document.getElementById('timelineHeader').style.display = 'flex';
+    const list = document.getElementById('timelineList');
+    list.innerHTML = '';
 
-    document.getElementById('futIms').innerText = careerState.stats.ims;
-    document.getElementById('futDmp').innerText = careerState.stats.dmp;
-    document.getElementById('futPts').innerText = careerState.stats.totalPoints;
-    
-    let cashM = (careerState.stats.totalMoney / 1000000).toFixed(1);
-    document.getElementById('futCash').innerText = cashM + "M";
+    let reversed = [...cState.history].reverse();
 
-    showCareerScreen('careerScreenRetirement');
+    reversed.forEach(h => {
+        // Kolorowanie AVG
+        let avgColor = "var(--text-main)";
+        if (h.avg >= 2.00) avgColor = "var(--green-neon)";
+        else if (h.avg < 1.00) avgColor = "var(--red-neon)";
+
+        list.innerHTML += `
+            <div class="timeline-row">
+                <div class="t-age">${h.age}</div>
+                <div class="t-club" title="${h.club}">${h.club}</div>
+                <div class="t-ovr">${h.ovr}</div>
+                <div class="t-mec">${h.mec}</div>
+                <div class="t-bie">${h.bie}</div>
+                <div class="t-pkt">${h.pkt}</div>
+                <div class="t-avg" style="color: ${avgColor}; font-weight: 900;">${h.avg}</div>
+            </div>
+        `;
+    });
+}
+
+function showCareerEnd() {
+    const area = document.getElementById('careerActionArea');
+    area.innerHTML = `
+        <h3 class="text-red font-black text-center text-xl mb-10">EMERYTURA</h3>
+        <p class="text-sm text-dim text-center mb-20">Dobiegłeś do 40-tki. Czas zawiesić kevlar na kołku.</p>
+        <button onclick="exitCareerMode()" class="btn-close w-100 p-15">ZAKOŃCZ</button>
+    `;
     playSound('win');
-    
-    // Próba odpalenia konfetti (o ile funkcja istnieje w kodzie globalnym)
     try { launchConfetti(); } catch(e) {}
 }
 
-// Udostępnianie funkcji kariery dla interfejsu HTML
+// EXPORT DO HTML
 try {
     window.openCareerMode = openCareerMode;
     window.exitCareerMode = exitCareerMode;
     window.selectCareerNat = selectCareerNat;
     window.startCareerAcademy = startCareerAcademy;
-    window.showCareerOffers = showCareerOffers;
-    window.acceptContract = acceptContract;
-    window.simulateCareerSeason = simulateCareerSeason;
-    window.nextCareerStep = nextCareerStep;
-} catch (e) {
-    console.warn("Global export error in Career Mode", e);
-}
+    window.signContract = signContract;
+    window.playSeason = playSeason;
+    window.updateKevlarPreview = updateKevlarPreview;
+} catch (e) { console.warn("Global export error", e); }
 
 // Udostępnianie okien w przestrzeni globalnej dla HTML-a
 try {
