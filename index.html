@@ -939,52 +939,21 @@
             <button onclick="exitCareerMode()" class="icon-btn-small text-red" style="position:absolute; top:15px; left:15px; z-index: 10;">✖ Wyjdź</button>
             
             <!-- EKRAN 1: KREATOR -->
-            <div id="careerSetup" class="w-100 mt-20">
-                <h2 class="text-white font-black text-left mb-20" style="font-size: 24px;">Zbuduj tożsamość</h2>
-                
-                <!-- KEVLAR WIZUALIZACJA -->
-                <div class="kevlar-display mx-auto mb-20 mt-15">
-                    <div class="kevlar-collar"></div>
-                    <div class="kevlar-body">
-                        <span id="kevlarNamePreview" class="kevlar-name">KOWALSKI</span>
-                        <span id="kevlarNumPreview" class="kevlar-number">99</span>
-                    </div>
-                </div>
-
-                <div class="flex-row gap-10 mb-15">
-                    <div class="form-group-clash flex-1 m-0 text-left">
-                        <label>NAZWISKO</label>
-                        <input type="text" id="careerNameInput" placeholder="Kowalski" maxlength="12" oninput="updateKevlarPreview()" style="background: transparent;">
-                    </div>
-                    <div class="form-group-clash m-0 text-left" style="width: 100px;">
-                        <label>NR INDYWIDUALNY</label>
-                        <input type="number" id="careerNumInput" placeholder="99" max="999" min="1" oninput="updateKevlarPreview()" style="background: transparent;">
-                    </div>
-                </div>
-
-                <div class="form-group-clash text-left m-0 mb-15">
-                    <label>NARODOWOŚĆ</label>
-                    <div class="flags-grid" style="grid-template-columns: repeat(3, 1fr); max-height: 150px; overflow-y: auto;">
-                        <div class="flag-card active" onclick="selectCareerNat('Polska', 'pl', this)"><img src="https://flagcdn.com/w40/pl.png"><span class="ml-5 text-white font-bold text-xs">Polska</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('Dania', 'dk', this)"><img src="https://flagcdn.com/w40/dk.png"><span class="ml-5 text-white font-bold text-xs">Dania</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('Australia', 'au', this)"><img src="https://flagcdn.com/w40/au.png"><span class="ml-5 text-white font-bold text-xs">Australia</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('W. Brytania', 'gb', this)"><img src="https://flagcdn.com/w40/gb.png"><span class="ml-5 text-white font-bold text-xs">W. Bryt.</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('Szwecja', 'se', this)"><img src="https://flagcdn.com/w40/se.png"><span class="ml-5 text-white font-bold text-xs">Szwecja</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('Łotwa', 'lv', this)"><img src="https://flagcdn.com/w40/lv.png"><span class="ml-5 text-white font-bold text-xs">Łotwa</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('Czechy', 'cz', this)"><img src="https://flagcdn.com/w40/cz.png"><span class="ml-5 text-white font-bold text-xs">Czechy</span></div>
-                        <div class="flag-card" onclick="selectCareerNat('Niemcy', 'de', this)"><img src="https://flagcdn.com/w40/de.png"><span class="ml-5 text-white font-bold text-xs">Niemcy</span></div>
-                    </div>
-                </div>
-
-                <button onclick="startCareerAcademy()" class="btn-white-solid w-100 mt-20 p-15">Potwierdź tożsamość</button>
-            </div>
+             <div id="careerSetup" class="w-100 mt-20"></div>
 
             <!-- EKRAN 2: GŁÓWNY PANEL ZAWODNIKA -->
             <div id="careerMainPanel" class="w-100" style="display: none; flex-direction: column; height: 100%;">
                 
                 <!-- TOP INFO (STYL COPERO) -->
                 <div class="copero-header-box mb-20">
-                    <div class="copero-ovr-badge" id="cOvr">35</div>
+                    <!-- ZMIENIONE: Dodany kontener z paskiem postępu -->
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div class="copero-ovr-badge" id="cOvr">35</div>
+                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; position: relative;" title="Postęp treningu do następnego OVR">
+                            <div id="cOvrProgress" style="width: 0%; height: 100%; background: #00ff66; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                    
                     <div class="copero-player-info">
                         <div class="flex-row gap-5 align-items-center mb-5">
                             <img id="cFlag" src="https://flagcdn.com/w40/pl.png" style="width: 20px; border-radius:3px;">
@@ -994,7 +963,6 @@
                     </div>
                     <div class="copero-val-age text-right">
                         <div class="text-dim text-xs font-bold">WIEK <span class="text-white text-xl font-black" id="cAge">16</span></div>
-                        <!-- Usunięto linijkę z KONTO / PLN -->
                         <div onclick="forceRetirement()" class="text-red font-bold mt-10 cursor-pointer" style="font-size: 9px; border-bottom: 1px dotted var(--red-neon); display: inline-block;">EMERYTURA</div>
                     </div>
                 </div>
@@ -1388,7 +1356,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.33"></script>
+    <script src="script.js?v2.34"></script>
 
     
 </body>
