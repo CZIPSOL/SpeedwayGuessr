@@ -6512,10 +6512,11 @@ async function shareCareerResult() {
                     await navigator.clipboard.write([item]);
                     showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
                 } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            } e
-
-//-- koniec exportu Career Mode
-
+            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
+            resetShareBtn(btn, originalText);
+        }, "image/png");
+    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
+}
 //-----------------------------------------
 // GLOBALNE FUNKCJE DLA HTML-A
 // ----------------------------------------
@@ -6590,6 +6591,17 @@ try {
     window.exitTimeAttackMenu = exitTimeAttackMenu;
     window.showTimeAttackInfo = showTimeAttackInfo;
     window.closeTimeAttackInfo = closeTimeAttackInfo;
+    window.openCareerMode = openCareerMode;
+    window.exitCareerMode = exitCareerMode;
+    window.selectCareerNat = selectCareerNat;
+    window.startCareerAcademy = startCareerAcademy;
+    window.signContract = signContract; 
+    window.rejectLoan = rejectLoan;
+    window.resolveRandomEvent = resolveRandomEvent;
+    window.playSeason = playSeason;
+    window.updateKevlarPreview = updateKevlarPreview;
+    window.forceRetirement = forceRetirement;
+    window.shareCareerResult = shareCareerResult;
     
 } catch (e) {
     console.error("Global export error:", e);
