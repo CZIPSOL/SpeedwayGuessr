@@ -5872,6 +5872,15 @@ function getCareerClubColor(clubName, leagueName = null) {
     return "#ffffff";
 }
 
+function getCareerLastClubInfo() {
+    if (cState.history && cState.history.length > 0) {
+        const lastEntry = cState.history[cState.history.length - 1];
+        return { club: lastEntry.club, league: lastEntry.league || cState.league };
+    }
+
+    return { club: cState.club, league: cState.league };
+}
+
 function formatCareerMoney(amount) {
     const absolute = Math.abs(amount);
     const sign = amount < 0 ? "-" : "";
@@ -6600,11 +6609,15 @@ function showCareerEnd() {
         firstRow.remove();
     }
     
+    const lastClubInfo = getCareerLastClubInfo();
+    const lastClubColor = getCareerClubColor(lastClubInfo.club, lastClubInfo.league);
+    const cardGlow = `${lastClubColor}22`;
+
     let botStatsHTML = `
-        <div id="timelineEndStats" style="display:flex; justify-content:space-between; padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+        <div id="timelineEndStats" style="display:flex; justify-content:space-between; padding: 15px; border-top: 1px solid ${lastClubColor}55; margin-top: 10px; background: linear-gradient(90deg, ${cardGlow}, rgba(0,0,0,0.08)); border-radius: 14px; box-shadow: inset 0 0 0 1px ${lastClubColor}20;">
             <div class="flex-row gap-5 align-items-center">
-                <img src="https://flagcdn.com/w40/${cState.flagCode}.png" style="width: 20px; border-radius:3px;">
-                <span class="text-white font-black text-sm">${cState.nat}</span>
+                <span style="display:inline-flex; width: 14px; height: 14px; border-radius: 4px; background: ${lastClubColor}; box-shadow: 0 0 10px ${lastClubColor}88;"></span>
+                <span class="text-white font-black text-sm">${lastClubInfo.club || "Wolny agent"}</span>
             </div>
             <div class="flex-row gap-15 text-white font-black">
                 <span><span style="color:var(--text-dim); font-size:10px;">BIE </span> ${cState.stats.heats}</span>
@@ -6623,38 +6636,43 @@ async function shareCareerResult() {
     btn.innerText = "GENEROWANIE KARTY..."; btn.disabled = true;
 
     const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 600; canvas.height = 900;
+
+    const lastClubInfo = getCareerLastClubInfo();
+    const lastClubColor = getCareerClubColor(lastClubInfo.club, lastClubInfo.league);
     
-    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, "#d4af37"); grd.addColorStop(0.5, "#8e6611"); grd.addColorStop(1, "#f1c40f");
+    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, lastClubColor); grd.addColorStop(0.5, "#1b1b20"); grd.addColorStop(1, "#050507");
     ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.strokeStyle = "#ffee88"; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
+    ctx.strokeStyle = lastClubColor; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
 
-    ctx.fillStyle = "#111"; ctx.font = "900 120px Montserrat, sans-serif"; ctx.textAlign = "left";
+    ctx.fillStyle = "#f4f4f4"; ctx.font = "900 120px Montserrat, sans-serif"; ctx.textAlign = "left";
     ctx.fillText(cState.ovr, 40, 140);
     ctx.font = "900 35px Montserrat, sans-serif"; ctx.fillText("LEG", 50, 190);
 
     ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
 
-    ctx.fillStyle = "rgba(17,17,17,0.3)"; ctx.fillRect(100, 480, 400, 5);
+    ctx.fillStyle = lastClubColor; ctx.fillRect(100, 480, 400, 5);
 
     let nameParts = cState.name.split(' '); let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
-    ctx.fillStyle = "#111"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
+    ctx.fillStyle = "#fff"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
+
+    ctx.font = "700 24px Montserrat, sans-serif"; ctx.fillStyle = lastClubColor; ctx.fillText(lastClubInfo.club || "Wolny agent", 300, 515);
 
     ctx.font = "700 30px Montserrat, sans-serif"; ctx.textAlign = "left";
-    ctx.fillStyle = "rgba(17,17,17,0.8)"; ctx.fillText("IMŚ", 80, 560); ctx.fillText("DMP", 350, 560);
-    ctx.fillStyle = "#111"; ctx.font = "900 45px Montserrat, sans-serif"; 
+    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("IMŚ", 80, 560); ctx.fillText("DMP", 350, 560);
+    ctx.fillStyle = "#fff"; ctx.font = "900 45px Montserrat, sans-serif"; 
     ctx.fillText(cState.stats.ims, 160, 560); ctx.fillText(cState.stats.dmp, 450, 560);
 
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)";
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.fillText("PKT", 80, 660); ctx.fillText("PLN", 350, 660);
-    ctx.fillStyle = "#111"; ctx.font = "900 35px Montserrat, sans-serif"; 
+    ctx.fillStyle = "#fff"; ctx.font = "900 35px Montserrat, sans-serif"; 
     ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 160, 660); ctx.fillText(formatCareerMoney(cState.money), 450, 660);
 
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)"; ctx.textAlign = "center"; ctx.fillText("KARIERA AVG", 300, 750);
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.textAlign = "center"; ctx.fillText("KARIERA AVG", 300, 750);
     let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
-    ctx.fillStyle = "#111"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 810);
+    ctx.fillStyle = "#fff"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 810);
 
-    ctx.fillStyle = "rgba(17,17,17,0.5)"; ctx.font = "900 20px Montserrat, sans-serif"; ctx.fillText("SPEEDWAYGUESSR.PL", 300, 865);
+    ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.font = "900 20px Montserrat, sans-serif"; ctx.fillText("SPEEDWAYGUESSR.PL", 300, 865);
 
     try {
         canvas.toBlob(async (blob) => {
