@@ -5818,22 +5818,19 @@ let cState = {
     ovr: 40, 
     club: null, league: null, 
     contractYears: 0, 
-    stats: { heats: 0, pts: 0, bon: 0, dmp: 0, ims: 0 }, history: [],
+    stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, 
+    history: [],
     guaranteedSpotNextSeason: false,
-    leagues: {
-        "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
-        "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
-        "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów", "Śląsk Świętochłowice", "Kolejarz Rawicz"]
-    }
+    leagues: {}
 };
 
 let activeLoanClub = null;
 let activeLoanLeague = null;
 
 const CAREER_CONSTANTS = {
-    "PGE Ekstraliga": { diff: 80, baseMatches: 14, logo: "🏆" },
-    "Metalkas 2.E": { diff: 64, baseMatches: 14, logo: "🥈" },
-    "KLŻ": { diff: 45, baseMatches: 12, logo: "🥉" }
+    "PGE Ekstraliga": { diff: 82, baseMatches: 14, logo: "🏆" },
+    "Metalkas 2.E": { diff: 68, baseMatches: 14, logo: "🥈" },
+    "KLŻ": { diff: 50, baseMatches: 12, logo: "🥉" }
 };
 
 const CAREER_CLUB_COLORS = {
@@ -5873,65 +5870,13 @@ function getCareerLastClubInfo() {
     return { club: cState.club, league: cState.league };
 }
 
-function getCareerHeatsPerMatch(age, formRatio, benched = false) {
-    if (benched) return Math.random() * 1.1;
-
-    const roll = Math.random();
-    if (age <= 16) {
-        if (roll < 0.25) return 1;
-        if (roll < 0.75) return 2;
-        return 3;
-    }
-    if (age <= 20) {
-        if (formRatio > 1.05 && roll < 0.10) return 5;
-        if (formRatio > 0.95 && roll < 0.28) return 4;
-        if (roll < 0.60) return 3;
-        return 2;
-    }
-    if (age <= 29) {
-        if (formRatio > 1.10 && roll < 0.12) return 5;
-        if (roll < 0.42) return 3;
-        if (roll < 0.82) return 4;
-        return 2;
-    }
-    if (age <= 34) {
-        if (formRatio > 1.12 && roll < 0.08) return 5;
-        if (roll < 0.48) return 3;
-        if (roll < 0.83) return 4;
-        return 2;
-    }
-    if (roll < 0.20) return 2;
-    if (roll < 0.65) return 3;
-    if (roll < 0.92) return 4;
-    return 5;
-}
-
-function getCareerHeatAverage(effOvr, leagueDiff, age, totalHeats, benched = false) {
-    if (totalHeats === 0 || benched) return 0.0;
-
-    let diffPoints = effOvr - leagueDiff;
-    let baseAvg = 1.50;
-    
-    if (diffPoints >= 0) baseAvg += (diffPoints * 0.035);
-    else baseAvg += (diffPoints * 0.040); 
-
-    if (age <= 19) baseAvg += 0.15; 
-    else if (age <= 29) baseAvg += 0.05;
-    else if (age > 35) baseAvg -= 0.10; 
-
-    baseAvg += (Math.random() * 0.40) - 0.20;
-    return Math.max(0.10, Math.min(baseAvg, 2.65));
-}
-
 function showCareerContinuePrompt() {
     const area = document.getElementById('careerActionArea');
     area.innerHTML = `
         <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 290px; margin: 0 auto;" onclick="playSeason(0)">
             <span class="copero-card-title">KONIEC SEZONU</span>
-            <span class="copero-card-club">SIMULUJ NASTĘPNY ROK</span>
+            <span class="copero-card-club">PRZEJDŹ DO NASTĘPNEGO ROKU</span>
             <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">⏭️</div>
-            <span class="text-white font-bold text-xs">Kliknij, aby przejść dalej</span>
-            <span class="text-dim font-bold text-xs">Bez automatycznej pętli sezonów</span>
         </div>
     `;
 }
@@ -5950,24 +5895,18 @@ function openCareerMode() {
         active: true, name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
         age: 15, maxAge: 41, ovr: 35,
         club: null, league: null, contractYears: 0,
-        stats: { heats: 0, pts: 0, bon: 0, dmp: 0, ims: 0 }, history: [],
+        stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, history: [],
         guaranteedSpotNextSeason: false,
-        leagues: JSON.parse(JSON.stringify(CAREER_CONSTANTS))
+        leagues: {
+            "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+            "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+            "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów", "Śląsk Świętochłowice", "Kolejarz Rawicz"]
+        }
     };
     
-    cState.leagues = {
-        "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
-        "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
-        "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów", "Śląsk Świętochłowice", "Kolejarz Rawicz"]
-    };
-    
-    const timelineHeader = document.getElementById('timelineHeader');
-    if(timelineHeader) timelineHeader.children[5].innerText = "PKT";
-
     document.getElementById('careerSetup').style.display = 'block';
     document.getElementById('careerMainPanel').style.display = 'none';
     document.getElementById('careerRetirement').style.display = 'none';
-    
     document.getElementById('timelineHeader').style.display = 'none';
     document.getElementById('timelineEmpty').style.display = 'block';
     document.getElementById('timelineList').innerHTML = '';
@@ -5994,11 +5933,10 @@ function startCareerAcademy() {
     let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase();
     if(nameVal) cState.name = nameVal;
     cState.num = document.getElementById('careerNumInput').value || 99;
-    cState.ovr = Math.floor(Math.random() * 11) + 30;
+    cState.ovr = Math.floor(Math.random() * 6) + 30; // 30-35 na start, nie za wysoko
 
     document.getElementById('careerSetup').style.display = 'none';
     document.getElementById('careerMainPanel').style.display = 'flex'; 
-    
     cState.age = 16;
     updateLeftPanelUI();
     generateAcademyOffers(); 
@@ -6021,16 +5959,328 @@ function updateLeftPanelUI() {
     document.getElementById('cAvg').innerText = avg;
 
     const tBox = document.getElementById('cTrophiesDisplay');
-    if (cState.stats.dmp === 0 && cState.stats.ims === 0) {
+    let totalMedals = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze + cState.stats.ims;
+    
+    if (totalMedals === 0) {
         tBox.innerText = "🏆 BRAK TROFEÓW";
     } else {
         let tHtml = "";
         for(let i=0; i<cState.stats.ims; i++) tHtml += "🌍 ";
-        for(let i=0; i<cState.stats.dmp; i++) tHtml += "🥇 ";
+        for(let i=0; i<cState.stats.dmpGold; i++) tHtml += "🥇 ";
+        for(let i=0; i<cState.stats.dmpSilver; i++) tHtml += "🥈 ";
+        for(let i=0; i<cState.stats.dmpBronze; i++) tHtml += "🥉 ";
         tBox.innerHTML = tHtml;
     }
 }
 
+// ==========================================
+// ====== LOGIKA SYMULACJI SEZONU ===========
+// ==========================================
+
+function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) {
+    let clubs = [...cState.leagues[leagueName]];
+    let table = [];
+    let matches = CAREER_CONSTANTS[leagueName].baseMatches;
+
+    clubs.forEach(club => {
+        let isPlayer = (club === playerClub);
+        let power = Math.random() * 60 + 40; 
+        
+        if (isPlayer) {
+            // Wpływ zawodnika na siłę zespołu zależy od ujechanych punktów
+            let playerImpact = playerPoints / (matches * 15); // max 1.0
+            power += (playerImpact * 60); 
+            if (playerPoints < (matches * 5)) power -= 20; // Słaby lider = słaby zespół
+        }
+        table.push({ name: club, isMe: isPlayer, power: power });
+    });
+
+    table.sort((a, b) => b.power - a.power);
+
+    let currentPts = matches * 2 + Math.floor(Math.random() * 5); 
+    if (currentPts > matches * 2 + 4) currentPts = matches * 2 + 2;
+
+    table.forEach((t, i) => {
+        t.pos = i + 1;
+        t.matches = matches;
+        t.pts = currentPts;
+        currentPts -= Math.floor(Math.random() * 4) + 1; 
+        if (currentPts < 0) currentPts = 0;
+    });
+
+    return table;
+}
+
+// Funkcja pomocnicza tworząca overlay do symulacji na żywo
+function ensureSimOverlay() {
+    if (document.getElementById('simOverlay')) return;
+    const simDiv = document.createElement('div');
+    simDiv.id = 'simOverlay';
+    simDiv.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+    `;
+    simDiv.innerHTML = `
+        <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Sezon...</h2>
+        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 20px;">Runda 1</div>
+        <div style="display:flex; gap: 20px; margin-bottom: 30px;">
+            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
+            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
+        </div>
+        <div id="simEvents" style="max-width: 400px; text-align:center; color: var(--red-neon); font-weight:bold; min-height:50px;"></div>
+        <div id="simProgressContainer" style="width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 20px;">
+            <div id="simProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+        </div>
+    `;
+    document.body.appendChild(simDiv);
+}
+
+// Główny silnik symulacji sezonu
+async function playSeason(ovrMod = 0, benched = false) {
+    ensureSimOverlay();
+    let isGuaranteed = (cState.guaranteedSpotNextSeason === "active");
+    if (isGuaranteed) benched = false; 
+
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
+
+    let lData = CAREER_CONSTANTS[playingLeague];
+    let seasonMatches = lData.baseMatches + 4; // Z play-offami
+    
+    let baseOvr = cState.ovr + ovrMod;
+    
+    // UI setup
+    const simOverlay = document.getElementById('simOverlay');
+    const simMatchInfo = document.getElementById('simMatchInfo');
+    const simPts = document.getElementById('simPts');
+    const simAvg = document.getElementById('simAvg');
+    const simEvents = document.getElementById('simEvents');
+    const simProgressBar = document.getElementById('simProgressBar');
+    
+    simPts.innerText = "0"; simAvg.innerText = "0.00"; simEvents.innerText = ""; simProgressBar.style.width = "0%";
+    simOverlay.style.display = 'flex';
+    
+    let seasonHeats = 0;
+    let seasonPoints = 0;
+    let seasonBonus = 0;
+    
+    // Mid-season event logic
+    let midSeasonOvrMod = 0;
+
+    for (let m = 1; m <= seasonMatches; m++) {
+        // Opóźnienie dla animacji
+        await new Promise(r => setTimeout(r, 150)); 
+        
+        let isHome = (m % 2 !== 0);
+        simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span>`;
+        simProgressBar.style.width = `${(m / seasonMatches) * 100}%`;
+
+        // Losowy event w trakcie sezonu (7% szans na mecz)
+        if (Math.random() < 0.07 && m > 2 && m < seasonMatches - 2) {
+            let evtRoll = Math.random();
+            if (evtRoll < 0.4) {
+                simEvents.innerText = `⚠️ Defekt motocykla! Słabszy występ.`;
+                simEvents.style.color = "var(--red-neon)";
+                midSeasonOvrMod -= 2;
+            } else if (evtRoll < 0.8) {
+                simEvents.innerText = `🔥 Świetne spasowanie! Znalazłeś prędkość.`;
+                simEvents.style.color = "var(--green-neon)";
+                midSeasonOvrMod += 2;
+            } else {
+                simEvents.innerText = `🚑 Drobny uraz. Opuszczasz kilka biegów.`;
+                simEvents.style.color = "var(--yellow-neon)";
+                midSeasonOvrMod -= 4;
+            }
+            setTimeout(()=> { simEvents.innerText = ""; }, 2000);
+        }
+
+        let matchEffOvr = baseOvr + midSeasonOvrMod + (isHome ? 3 : -4); // Wyjazdy są trudne!
+        if (benched && !isGuaranteed) matchEffOvr -= 10;
+        
+        // Ile biegów w tym meczu?
+        let heatsInMatch = 0;
+        let formRatio = matchEffOvr / lData.diff;
+        
+        if (benched) heatsInMatch = Math.random() < 0.3 ? 1 : 0;
+        else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 3) + 3; // Junior 3-5
+        else if (formRatio > 1.1) heatsInMatch = Math.floor(Math.random() * 2) + 4; // Lider 4-5 (taktyki)
+        else if (formRatio > 0.9) heatsInMatch = Math.floor(Math.random() * 3) + 3; // Druga linia 3-5
+        else heatsInMatch = Math.floor(Math.random() * 3) + 2; // Słabeusz 2-4
+        
+        if (isGuaranteed) heatsInMatch = Math.max(heatsInMatch, 3);
+        
+        // Punkty w biegach
+        let matchPts = 0;
+        let matchBon = 0;
+        let expectedAvgPerHeat = (matchEffOvr / lData.diff) * 1.5; // Przybliżenie
+        if (expectedAvgPerHeat > 2.8) expectedAvgPerHeat = 2.8;
+        
+        for (let h = 0; h < heatsInMatch; h++) {
+            let heatRoll = Math.random() * 3; 
+            if (heatRoll < expectedAvgPerHeat) {
+                if (heatRoll > 2.0) matchPts += 3;
+                else if (heatRoll > 1.0) { matchPts += 2; if(Math.random()<0.3) matchBon+=1; }
+                else { matchPts += 1; if(Math.random()<0.5) matchBon+=1; }
+            }
+        }
+        
+        seasonHeats += heatsInMatch;
+        seasonPoints += matchPts;
+        seasonBonus += matchBon;
+        
+        let currentAvg = seasonHeats > 0 ? ((seasonPoints + seasonBonus) / seasonHeats).toFixed(2) : "0.00";
+        simPts.innerText = seasonPoints;
+        simAvg.innerText = currentAvg;
+        playSound('flip');
+    }
+    
+    await new Promise(r => setTimeout(r, 1000));
+    simOverlay.style.display = 'none';
+
+    // KONIEC SEZONU - Podsumowanie statystyk
+    cState.stats.heats += seasonHeats; 
+    cState.stats.pts += seasonPoints;
+    cState.stats.bon += seasonBonus;
+    
+    let officialAvg = seasonHeats > 0 ? ((seasonPoints + seasonBonus) / seasonHeats) : 0.0;
+    if (officialAvg > 3.00) officialAvg = 3.00;
+
+    // REALISTYCZNY ROZWÓJ OVR
+    let expectedOvrAvg = (baseOvr / lData.diff) * 1.6; 
+    let diffAvg = officialAvg - expectedOvrAvg;
+    let growth = 0;
+
+    if (cState.age <= 21) {
+        growth = diffAvg > 0 ? Math.floor(Math.random() * 4 + 2) : (diffAvg > -0.3 ? 1 : 0);
+    } else if (cState.age <= 26) {
+        growth = diffAvg > 0.2 ? Math.floor(Math.random() * 3 + 1) : (diffAvg < -0.3 ? -1 : 0);
+    } else if (cState.age <= 31) {
+        growth = diffAvg > 0.4 ? 1 : (diffAvg < -0.2 ? Math.floor(Math.random() * -2 - 1) : 0);
+    } else {
+        // Po 32 roku życia ciężko o wzrost, łatwo o spadek
+        growth = diffAvg > 0.5 ? 0 : -Math.floor(Math.random() * 3 + 1);
+    }
+
+    // SOFT CAPS na wysokie OVR (żeby nie siedzieć na 99 całą karierę)
+    if (cState.ovr > 95) growth -= 2;
+    else if (cState.ovr > 88) growth -= 1;
+    
+    if (benched && seasonHeats < 15) growth -= 2;
+
+    cState.ovr += growth;
+    if (cState.ovr > 99) cState.ovr = 99;
+    if (cState.ovr < 30) cState.ovr = 30;
+
+    let gotIMS = false;
+    if (baseOvr >= 90 && Math.random() < ((baseOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
+
+    // TABELE LIGOWE - SYMULUJEMY WSZYSTKIE LIGI!
+    let pgeTable = generateSeasonTable("PGE Ekstraliga", playingClub, seasonPoints, seasonHeats);
+    let m2eTable = generateSeasonTable("Metalkas 2.E", playingClub, seasonPoints, seasonHeats);
+    let klzTable = generateSeasonTable("KLŻ", playingClub, seasonPoints, seasonHeats);
+
+    // Kto awansuje, kto spada? (Niezależnie od gracza)
+    let pgeRelegated = pgeTable[pgeTable.length - 1].name;
+    let m2ePromoted = m2eTable[0].name;
+    let m2eRelegated = m2eTable[m2eTable.length - 1].name;
+    let klzPromoted = klzTable[0].name;
+
+    // Medale Gracza
+    let gotDMP = false;
+    let medalColor = null;
+    let promoted = false;
+    let relegated = false;
+
+    let seasonTableToSave = null;
+
+    if (playingLeague === "PGE Ekstraliga") {
+        seasonTableToSave = pgeTable;
+        let myTeamData = pgeTable.find(t => t.isMe);
+        if (myTeamData) {
+            if (myTeamData.pos === 1) { gotDMP = true; medalColor = "ZŁOTO"; cState.stats.dmpGold++; }
+            else if (myTeamData.pos === 2) { gotDMP = true; medalColor = "SREBRO"; cState.stats.dmpSilver++; }
+            else if (myTeamData.pos === 3) { gotDMP = true; medalColor = "BRĄZ"; cState.stats.dmpBronze++; }
+            else if (myTeamData.pos === pgeTable.length) relegated = true;
+        }
+    } else if (playingLeague === "Metalkas 2.E") {
+        seasonTableToSave = m2eTable;
+        let myTeamData = m2eTable.find(t => t.isMe);
+        if (myTeamData) {
+            if (myTeamData.pos === 1) promoted = true;
+            else if (myTeamData.pos === m2eTable.length) relegated = true;
+        }
+    } else if (playingLeague === "KLŻ") {
+        seasonTableToSave = klzTable;
+        let myTeamData = klzTable.find(t => t.isMe);
+        if (myTeamData && myTeamData.pos === 1) promoted = true;
+    }
+
+    // APLIKOWANIE GLOBALNYCH ZMIAN W LIGACH
+    const removeClub = (leagueArr, clubName) => {
+        let idx = leagueArr.indexOf(clubName);
+        if(idx > -1) leagueArr.splice(idx, 1);
+    };
+
+    removeClub(cState.leagues["PGE Ekstraliga"], pgeRelegated);
+    removeClub(cState.leagues["Metalkas 2.E"], m2ePromoted);
+    removeClub(cState.leagues["Metalkas 2.E"], m2eRelegated);
+    removeClub(cState.leagues["KLŻ"], klzPromoted);
+
+    cState.leagues["PGE Ekstraliga"].push(m2ePromoted);
+    cState.leagues["Metalkas 2.E"].push(pgeRelegated);
+    cState.leagues["Metalkas 2.E"].push(klzPromoted);
+    cState.leagues["KLŻ"].push(m2eRelegated);
+    
+    // Jeśli gracz nie jest na wypożyczeniu, zaktualizuj jego ligę po spadkach
+    if (!activeLoanLeague) {
+        for (let l in cState.leagues) {
+            if (cState.leagues[l].includes(cState.club)) cState.league = l;
+        }
+    }
+
+    let displayClubName = activeLoanLeague ? `${playingClub}` : cState.club;
+
+    cState.history.push({
+        age: cState.age, club: displayClubName, league: playingLeague, ovr: cState.ovr, 
+        mec: seasonMatches, bie: seasonHeats, pkt: seasonPoints, bon: seasonBonus, avg: officialAvg.toFixed(2),
+        loan: activeLoanLeague !== null,
+        dmp: gotDMP ? medalColor : null, ims: gotIMS,
+        table: seasonTableToSave
+    });
+
+    cState.age++;
+    if (!activeLoanLeague) cState.contractYears--;
+
+    activeLoanClub = null; activeLoanLeague = null;
+
+    if (cState.guaranteedSpotNextSeason === true) cState.guaranteedSpotNextSeason = "active"; 
+    else if (cState.guaranteedSpotNextSeason === "active") cState.guaranteedSpotNextSeason = false;
+
+    updateLeftPanelUI();
+    renderTimeline();
+
+    const proceedToNextStage = () => {
+        if (cState.age > cState.maxAge) {
+            showCareerEnd();
+        } else {
+            let nextFormRatio = cState.ovr / CAREER_CONSTANTS[cState.league].diff;
+            if (cState.contractYears > 0 && nextFormRatio < 0.70 && cState.league !== "KLŻ") {
+                showLoanWindow();
+            } else if (cState.contractYears <= 0) {
+                generateTransferWindow();
+            } else {
+                showCareerContinuePrompt();
+            }
+        }
+    };
+
+    if (gotDMP || promoted || relegated) {
+        showTeamAchievement(playingClub, gotDMP, medalColor, promoted, relegated, proceedToNextStage);
+    } else {
+        proceedToNextStage();
+    }
+}
+
+// Reszta okien transferowych zostaje bardzo podobna
 function generateAcademyOffers() {
     const area = document.getElementById('careerActionArea');
     let c1 = cState.leagues["KLŻ"][Math.floor(Math.random() * cState.leagues["KLŻ"].length)];
@@ -6163,118 +6413,6 @@ function showLoanWindow() {
     `;
 }
 
-function showEventWindow() {
-    const area = document.getElementById('careerActionArea');
-    
-    const eventsPool = [
-        { title: "Tytanowe sprzęgło", desc: "Podejrzany tuner oferuje super sprzęgła. Szybkie, ale czy legalne?", img: "⚙️", opt1: { title: "Ryzykuję", bot1: "60%: +3 OVR", bot2: "40%: -3 OVR", fn: "resolveRandomEvent(3, -3, 0.60)" }, opt2: { title: "Gram fair", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Sponsor Strategiczny", desc: "Globalna marka proponuje ci kontrakt za aktywność w TV i mediach.", img: "📸", opt1: { title: "Zgadzam się", bot1: "40%: Zadowolenie", bot2: "60%: -2 OVR", fn: "resolveRandomEvent(0, -2, 0.40)" }, opt2: { title: "Tylko żużel", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
-        { title: "Liga Brytyjska (SGB)", desc: "Klub z Premiership oferuje starty. Dobry objazd, ale męcząca logistyka.", img: "🇬🇧", opt1: { title: "Lecę do UK", bot1: "50%: +4 OVR", bot2: "50%: -2 OVR", fn: "resolveRandomEvent(4, -2, 0.50)" }, opt2: { title: "Tylko Polska", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
-        { title: "Konflikt z Liderem", desc: "Gwiazda zespołu wymusza na mechanikach robienie jego silników poza kolejką.", img: "🤬", opt1: { title: "Robię aferę", bot1: "70%: Wygrywasz (+2)", bot2: "30%: Konflikt (-4)", fn: "resolveRandomEvent(2, -4, 0.70)" }, opt2: { title: "Siedzę cicho", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Zimowy Obóz", desc: "Trener PZM zaprasza cię na morderczy obóz kondycyjny w górach.", img: "🏔️", opt1: { title: "Jadę z kadrą", bot1: "75%: +3 OVR", bot2: "25%: -2 OVR", fn: "resolveRandomEvent(3, -2, 0.75)" }, opt2: { title: "Odpoczywam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Kryzys Formy", desc: "Po upadku zamykasz gaz. Najlepszy psycholog sportowy oferuje pomoc.", img: "🧠", opt1: { title: "Terapia", bot1: "85%: +2 OVR", bot2: "15%: Nic z tego", fn: "resolveRandomEvent(2, 0, 0.85)" }, opt2: { title: "Poradzę sobie", bot1: "20%: +1 OVR", bot2: "80%: -2 OVR", fn: "resolveRandomEvent(1, -2, 0.20)" } },
-        { title: "Bunt Tunera", desc: "Twój mechanik grozi odejściem. Możesz spróbować go przebłagać nowym warsztatem.", img: "🛠️", opt1: { title: "Przekonuję go", bot1: "80%: +1 OVR", bot2: "20%: Odchodzi (-2)", fn: "resolveRandomEvent(1, -2, 0.80)" }, opt2: { title: "Droga wolna", bot1: "Spadek formy (-3 OVR)", bot2: "", fn: "playSeason(-3)" } },
-        { title: "Szwedzka Elitserien", desc: "Wyjazdy do Szwecji kuszą technicznymi, wymagającymi torami.", img: "🇸🇪", opt1: { title: "Podpisuję", bot1: "70%: +2 OVR", bot2: "30%: -2 OVR", fn: "resolveRandomEvent(2, -2, 0.70)" }, opt2: { title: "Odpuszczam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Głośny Wywiad", desc: "Dziennikarz namawia na kontrowersyjny wywiad o władzach ligi.", img: "🎙️", opt1: { title: "Mówię prawdę", bot1: "30%: Szacunek (+2)", bot2: "70%: Kary i stres (-2)", fn: "resolveRandomEvent(2, -2, 0.30)" }, opt2: { title: "Tylko regułki", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Trefny Metanol", desc: "Dostałeś zanieczyszczone paliwo z innej beczki przed derbami.", img: "🛢️", opt1: { title: "Szukam nowego", bot1: "50%: Uda się (+1)", bot2: "50%: Zatarty (-3)", fn: "resolveRandomEvent(1, -3, 0.50)" }, opt2: { title: "Ryzykuję stare", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Trener Od Startów", desc: "Legenda żużla proponuje ci prywatne treningi momentu startowego.", img: "🚦", opt1: { title: "Biorę lekcje", bot1: "85%: +2 OVR", bot2: "15%: Brak różnicy (-1)", fn: "resolveRandomEvent(2, -1, 0.85)" }, opt2: { title: "Sam trenuję", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Afera Oponiarska", desc: "Ktoś podrzucił ci nienacinane, zakazane opony przed weryfikatorem.", img: "🍩", opt1: { title: "Przekonuję sędziego", bot1: "90%: Sprawa cichnie", bot2: "10%: Skandal (-5 OVR)", fn: "resolveRandomEvent(0, -5, 0.90)" }, opt2: { title: "Przyznaję się", bot1: "-2 OVR (Kara)", bot2: "", fn: "playSeason(-2)" } },
-        { title: "Zatrucie na wyjeździe", desc: "Zjadłeś coś nieświeżego przed meczem. Czujesz się fatalnie.", img: "🤢", opt1: { title: "Kroplówka", bot1: "70%: Pomaga (+0)", bot2: "30%: Mdlejesz (-2)", fn: "resolveRandomEvent(0, -2, 0.70)" }, opt2: { title: "Zgłaszam L4", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Kradzież z Busa", desc: "W nocy ukradli ci najlepsze silniki z podjazdu!", img: "🚐", opt1: { title: "Kupuję w ciemno", bot1: "60%: Dobry sprzęt (+1)", bot2: "40%: Szmelc (-3)", fn: "resolveRandomEvent(1, -3, 0.60)" }, opt2: { title: "Jadę na rezerwie", bot1: "-4 OVR", bot2: "", fn: "playSeason(-4)" } },
-        { title: "Eksperci od Aerodynamiki", desc: "Inżynierowie chcą poprawić twoją sylwetkę. To trudne testy.", img: "💨", opt1: { title: "Testuję sylwetkę", bot1: "60%: Sukces (+4 OVR)", bot2: "40%: Brak zmian", fn: "resolveRandomEvent(4, 0, 0.60)" }, opt2: { title: "Szkoda czasu", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Ustawiony tor", desc: "Przeciwnicy ubili tor pod bandą, zlewając go wodą. To pułapka.", img: "🚜", opt1: { title: "Robię nożyce", bot1: "65%: Wygrywasz (+2)", bot2: "35%: Upadek (-2)", fn: "resolveRandomEvent(2, -2, 0.65)" }, opt2: { title: "Asekuracyjnie", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } }
-    ];
-
-    let evData = eventsPool[Math.floor(Math.random() * eventsPool.length)];
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">${evData.title}</h3>
-        <p class="text-xs text-dim mb-15">${evData.desc}</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="${evData.opt1.fn}">
-                <span class="copero-card-club mb-10">${evData.opt1.title}</span>
-                <div class="copero-card-img" style="border-radius:12px;">${evData.img}</div>
-                <span class="text-green font-bold text-xs">${evData.opt1.bot1}</span>
-                <span class="text-red font-bold text-xs">${evData.opt1.bot2}</span>
-            </div>
-            <div class="copero-card stay-card" onclick="${evData.opt2.fn}">
-                <span class="copero-card-club mb-10">${evData.opt2.title}</span>
-                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">❌</div>
-                <span class="text-white font-bold text-xs">${evData.opt2.bot1}</span>
-                <span class="text-dim font-bold text-xs">${evData.opt2.bot2}</span>
-            </div>
-        </div>
-    `;
-}
-
-function resolveRandomEvent(succOVR, failOVR, chance) {
-    const overlay = document.getElementById('careerEventOverlay');
-    const title = document.getElementById('eventAnimTitle');
-    const wheel = document.getElementById('careerWheelInner');
-
-    if (!overlay || !title || !wheel) {
-        const isSuccess = Math.random() < chance;
-        if (isSuccess) playSeason(succOVR);
-        else playSeason(failOVR);
-        return;
-    }
-    
-    title.innerText = "LOSOWANIE...";
-    title.className = "text-white font-black uppercase mb-10";
-    
-    const pct = Math.round(chance * 100);
-    wheel.style.background = `conic-gradient(#00ff66 0% ${pct}%, #ff3333 ${pct}% 100%)`;
-    
-    wheel.style.transition = 'none';
-    wheel.style.transform = `rotate(0deg)`;
-    
-    overlay.style.display = 'flex'; 
-    setTimeout(() => overlay.style.opacity = '1', 10);
-    
-    let isSuccess = Math.random() < chance;
-
-    setTimeout(() => {
-        let targetAngle = 0;
-        
-        if (isSuccess) {
-            let zoneSizeDeg = pct * 3.6;
-            let randomTheta = 5 + Math.random() * (zoneSizeDeg - 10);
-            targetAngle = 360 - randomTheta;
-        } else {
-            let greenZoneSizeDeg = pct * 3.6;
-            let randomTheta = greenZoneSizeDeg + 5 + Math.random() * (360 - greenZoneSizeDeg - 10);
-            targetAngle = 360 - randomTheta;
-        }
-
-        let totalRotation = (5 * 360) + targetAngle;
-
-        wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
-        wheel.style.transform = `rotate(${totalRotation}deg)`;
-        playSound('flip');
-
-    }, 100);
-
-    setTimeout(() => {
-        if(isSuccess) {
-            title.innerText = "SUKCES! 🟩";
-            title.className = "text-green font-black uppercase mb-10 event-success-text";
-            playSound('win');
-        } else {
-            title.innerText = "PORAŻKA! 🟥";
-            title.className = "text-red font-black uppercase mb-10 event-fail-text";
-            playSound('error');
-        }
-        
-        setTimeout(() => {
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-            if(isSuccess) playSeason(succOVR);
-            else playSeason(failOVR);
-        }, 2000);
-        
-    }, 3200); 
-}
-
 function signContract(idx) {
     let o = cState.pendingOffers[idx];
     activeLoanClub = null;
@@ -6291,205 +6429,15 @@ function signContract(idx) {
     }
     
     updateLeftPanelUI();
-    if (Math.random() < 0.30) showEventWindow();
-    else playSeason(0);
+    playSeason(0);
 }
 
 function rejectLoan() {
     activeLoanClub = null;
     activeLoanLeague = null;
     showToast(`Odrzuciłeś ofertę! Walczysz o skład.`, "normal");
-    
     cState.guaranteedSpotNextSeason = true;
-    
-    if (Math.random() < 0.3) showEventWindow();
-    else playSeason(0, true); 
-}
-
-function generateSeasonTable(leagueName, playerClub, playerAvg) {
-    let clubs = [...cState.leagues[leagueName]];
-    let table = [];
-    let matches = CAREER_CONSTANTS[leagueName].baseMatches;
-
-    clubs.forEach(club => {
-        let isPlayer = (club === playerClub);
-        let power = Math.random() * 60 + 40; 
-        
-        if (isPlayer) {
-            if (playerAvg > 2.4) power += 50;
-            else if (playerAvg > 2.0) power += 35;
-            else if (playerAvg > 1.6) power += 15;
-            else if (playerAvg < 1.0) power -= 20;
-        }
-        table.push({ name: club, isMe: isPlayer, power: power });
-    });
-
-    table.sort((a, b) => b.power - a.power);
-
-    let currentPts = matches * 2 + Math.floor(Math.random() * 5); 
-    if (currentPts > matches * 2 + 5) currentPts = matches * 2 + 3;
-
-    table.forEach((t, i) => {
-        t.pos = i + 1;
-        t.matches = matches;
-        t.pts = currentPts;
-        currentPts -= Math.floor(Math.random() * 4) + 1; 
-        if (currentPts < 0) currentPts = 0;
-    });
-
-    return table;
-}
-
-function playSeason(ovrMod = 0, benched = false) {
-    let isGuaranteed = (cState.guaranteedSpotNextSeason === "active");
-    if (isGuaranteed) benched = false; 
-
-    let effOvr = cState.ovr + ovrMod;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-
-    let lData = CAREER_CONSTANTS[playingLeague];
-    let formRatio = effOvr / lData.diff; 
-    let seasonMatches = lData.baseMatches + 4; 
-    
-    let heatsPerMatch = getCareerHeatsPerMatch(cState.age, formRatio, benched);
-    if (isGuaranteed) heatsPerMatch = Math.max(heatsPerMatch, 4);
-
-    let totalHeats = Math.round(seasonMatches * heatsPerMatch);
-    if (totalHeats < 0) totalHeats = 0;
-
-    let rawAvg = getCareerHeatAverage(effOvr, lData.diff, cState.age, totalHeats, benched);
-    
-    let totalPts = Math.round(totalHeats * rawAvg);
-    let totalBonus = Math.round(totalPts * (Math.random() * 0.15 + 0.05));
-    if (totalPts === 0) totalBonus = 0;
-    
-    let officialAvg = totalHeats > 0 ? ((totalPts + totalBonus) / totalHeats) : 0;
-    if (officialAvg > 3.00) officialAvg = 3.00;
-
-    cState.stats.heats += totalHeats; 
-    cState.stats.pts += totalPts;
-    cState.stats.bon += totalBonus;
-    
-    // ZBALANSOWANY, SZYBSZY OVR
-    let ageGrowth = 0;
-    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 4) + 4; // Młodzieżowiec rośnie potężnie (+4 do +7)
-    else if (cState.age <= 24) ageGrowth = Math.floor(Math.random() * 3) + 2; // +2 do +4
-    else if (cState.age <= 29) ageGrowth = Math.floor(Math.random() * 2) + 1; // +1 do +2
-    else if (cState.age <= 33) ageGrowth = Math.floor(Math.random() * 2); // 0 do +1
-    else ageGrowth = -Math.floor(Math.random() * 2) - 1; // Spadki u weteranów (-1 do -2)
-    
-    let perfGrowth = 0;
-    if (officialAvg >= 2.4) perfGrowth = 4;
-    else if (officialAvg >= 2.0) perfGrowth = 3;
-    else if (officialAvg >= 1.6) perfGrowth = 2;
-    else if (officialAvg >= 1.3) perfGrowth = 1;
-    else if (officialAvg < 1.0) perfGrowth = -1;
-
-    if (totalHeats < 15) perfGrowth -= 1; 
-    if (isGuaranteed) perfGrowth += 1; 
-    
-    cState.ovr += (ageGrowth + perfGrowth);
-    if (cState.ovr > 99) cState.ovr = 99;
-    if (cState.ovr < 30) cState.ovr = 30;
-
-    let gotIMS = false;
-    if (effOvr >= 90 && Math.random() < ((effOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
-
-    // TABELA LIGOWA I AWANSY
-    let seasonTable = generateSeasonTable(playingLeague, playingClub, officialAvg);
-    let myTeamData = seasonTable.find(t => t.isMe);
-    let myPos = myTeamData ? myTeamData.pos : 4;
-    
-    let gotDMP = false;
-    let medalColor = null;
-    let promoted = false;
-    let relegated = false;
-
-    if (playingLeague === "PGE Ekstraliga") {
-        if (myPos === 1) { gotDMP = true; medalColor = "ZŁOTO"; cState.stats.dmp++; }
-        else if (myPos === 2) { gotDMP = true; medalColor = "SREBRO"; }
-        else if (myPos === 3) { gotDMP = true; medalColor = "BRĄZ"; }
-        else if (myPos === seasonTable.length) relegated = true;
-    } else if (playingLeague === "Metalkas 2.E") {
-        if (myPos === 1) promoted = true;
-        else if (myPos === seasonTable.length) relegated = true;
-    } else if (playingLeague === "KLŻ") {
-        if (myPos === 1) promoted = true;
-    }
-
-    // BEZPIECZNA LOGIKA ZAMIANY LIGOWEJ
-    if (promoted) {
-        let higherLeague = playingLeague === "KLŻ" ? "Metalkas 2.E" : "PGE Ekstraliga";
-        let clubIndex = cState.leagues[playingLeague].indexOf(playingClub);
-        if (clubIndex > -1) {
-            cState.leagues[playingLeague].splice(clubIndex, 1);
-            let randIdx = Math.floor(Math.random() * cState.leagues[higherLeague].length);
-            let relegatedClub = cState.leagues[higherLeague].splice(randIdx, 1)[0]; 
-            cState.leagues[higherLeague].push(playingClub);
-            cState.leagues[playingLeague].push(relegatedClub);
-        }
-    }
-    else if (relegated) {
-        let lowerLeague = playingLeague === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
-        let clubIndex = cState.leagues[playingLeague].indexOf(playingClub);
-        if (clubIndex > -1) {
-            cState.leagues[playingLeague].splice(clubIndex, 1);
-            let randIdx = Math.floor(Math.random() * cState.leagues[lowerLeague].length);
-            let promotedClub = cState.leagues[lowerLeague].splice(randIdx, 1)[0];
-            cState.leagues[lowerLeague].push(playingClub);
-            cState.leagues[playingLeague].push(promotedClub);
-        }
-    }
-    
-    if (!activeLoanLeague) {
-        for (let l in cState.leagues) {
-            if (cState.leagues[l].includes(cState.club)) cState.league = l;
-        }
-    }
-
-    let displayClubName = activeLoanLeague ? `${playingClub}` : cState.club;
-
-    cState.history.push({
-        age: cState.age, club: displayClubName, league: playingLeague, ovr: cState.ovr, 
-        mec: seasonMatches, bie: totalHeats, pkt: totalPts, bon: totalBonus, avg: officialAvg.toFixed(2),
-        loan: activeLoanLeague !== null,
-        dmp: gotDMP, ims: gotIMS,
-        table: seasonTable
-    });
-
-    cState.age++;
-    if (!activeLoanLeague) cState.contractYears--;
-
-    activeLoanClub = null; activeLoanLeague = null;
-
-    if (cState.guaranteedSpotNextSeason === true) cState.guaranteedSpotNextSeason = "active"; 
-    else if (cState.guaranteedSpotNextSeason === "active") cState.guaranteedSpotNextSeason = false;
-
-    updateLeftPanelUI();
-    renderTimeline();
-
-    const proceedToNextStage = () => {
-        if (cState.age > cState.maxAge) {
-            showCareerEnd();
-        } else {
-            let nextFormRatio = cState.ovr / CAREER_CONSTANTS[cState.league].diff;
-            if (cState.contractYears > 0 && nextFormRatio < 0.70 && cState.league !== "KLŻ") {
-                showLoanWindow();
-            } else if (cState.contractYears <= 0) {
-                generateTransferWindow();
-            } else {
-                if (Math.random() < 0.35) showEventWindow();
-                else showCareerContinuePrompt();
-            }
-        }
-    };
-
-    if (gotDMP || promoted || relegated) {
-        showTeamAchievement(playingClub, gotDMP, medalColor, promoted, relegated, proceedToNextStage);
-    } else {
-        proceedToNextStage();
-    }
+    playSeason(0, true); 
 }
 
 function renderTimeline() {
@@ -6510,17 +6458,18 @@ function renderTimeline() {
     }
 
     let reversed = [...cState.history].reverse();
-
-    // Rocznik 2026 to start dla wieku 16 lat
     let startingYear = 2026; 
 
     reversed.forEach((h, index) => {
         let loanIcon = h.loan ? '↪' : '';
-        let dmpIcon = h.dmp ? '🏆' : '';
+        let dmpIcon = '';
+        if (h.dmp === 'ZŁOTO') dmpIcon = '🥇';
+        else if (h.dmp === 'SREBRO') dmpIcon = '🥈';
+        else if (h.dmp === 'BRĄZ') dmpIcon = '🥉';
+        
         let imsIcon = h.ims ? '🌍' : '';
         
         let clubColor = getCareerClubColor(h.club, h.league);
-        // Obliczamy odpowiedni kolor czcionki dla kafelka
         let contrastColor = getContrastYIQ(clubColor);
         
         let realIndex = cState.history.length - 1 - index;
@@ -6532,7 +6481,7 @@ function renderTimeline() {
                 <div class="t-club" title="${h.club}" style="color: #eaeaea; padding-left: 8px;">
                     <span style="color:var(--text-dim); margin-right:5px;">${loanIcon}</span>
                     ${h.club}
-                    <span style="font-size:10px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
+                    <span style="font-size:12px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
                 </div>
                 <div class="t-ovr">${h.ovr}</div>
                 <div class="t-bie">${h.bie}</div>
@@ -6580,63 +6529,6 @@ function showCareerEnd() {
     }
 }
 
-async function shareCareerResult() {
-    const btn = document.getElementById('btnShareCareer');
-    const originalText = btn.innerText;
-    btn.innerText = "GENEROWANIE KARTY..."; btn.disabled = true;
-
-    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 600; canvas.height = 900;
-
-    const lastClubInfo = getCareerLastClubInfo();
-    const lastClubColor = getCareerClubColor(lastClubInfo.club, lastClubInfo.league);
-    
-    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, lastClubColor); grd.addColorStop(0.5, "#1b1b20"); grd.addColorStop(1, "#050507");
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.strokeStyle = lastClubColor; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
-
-    ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
-
-    ctx.fillStyle = lastClubColor; ctx.fillRect(100, 480, 400, 5);
-
-    let nameParts = cState.name.split(' '); let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
-    ctx.fillStyle = "#fff"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
-
-    ctx.font = "700 24px Montserrat, sans-serif"; ctx.fillStyle = lastClubColor; ctx.fillText(lastClubInfo.club || "Wolny agent", 300, 515);
-
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.textAlign = "center";
-    
-    // Przesunięcie i usunięcie rubryki z pieniędzmi
-    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("IMŚ", 180, 560); ctx.fillText("DMP", 420, 560);
-    ctx.fillStyle = "#fff"; ctx.font = "900 45px Montserrat, sans-serif"; 
-    ctx.fillText(cState.stats.ims, 180, 610); ctx.fillText(cState.stats.dmp, 420, 610);
-
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillText("BIEGI", 180, 680); ctx.fillText("PKT", 420, 680);
-    ctx.fillStyle = "#fff"; ctx.font = "900 35px Montserrat, sans-serif"; 
-    ctx.fillText(cState.stats.heats, 180, 720); ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 420, 720);
-
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("KARIERA AVG", 300, 780);
-    let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
-    ctx.fillStyle = "#fff"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 840);
-
-    try {
-        canvas.toBlob(async (blob) => {
-            if (!blob) { appAlert("Błąd generowania karty.", "Błąd"); resetShareBtn(btn, originalText); return; } 
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
-                try {
-                    const item = new ClipboardItem({ "image/png": blob });
-                    await navigator.clipboard.write([item]);
-                    showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
-                } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            resetShareBtn(btn, originalText);
-        }, "image/png");
-    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
-}
-
-// ====== ANIMACJE KARIERY (AWANS, SPADEK, MEDAL) ======
 let _teamAchCallback = null;
 
 function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, callback) {
@@ -6653,7 +6545,7 @@ function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, call
     icon.style.filter = "drop-shadow(0 0 20px rgba(255,255,255,0.3))";
 
     if (gotDMP && medalColor === "ZŁOTO") {
-        icon.innerText = "🏆"; title.innerText = "MISTRZ POLSKI!"; title.style.color = "#f1c40f";
+        icon.innerText = "🥇"; title.innerText = "MISTRZ POLSKI!"; title.style.color = "#f1c40f";
         desc.innerText = "Twój zespół zdobywa złoty medal DMP! Jesteście najlepsi w kraju!";
         modalBox.style.border = "2px solid #f1c40f"; icon.style.filter = "drop-shadow(0 0 30px #f1c40f)";
         playSound('win'); launchConfetti();
@@ -6689,7 +6581,6 @@ function closeTeamAchievement() {
     }, 300);
 }
 
-// ====== POKAZYWANIE ZAPISANEJ TABELI LIGOWEJ ======
 function showSeasonTable(historyIndex, year) {
     const seasonData = cState.history[historyIndex];
     if (!seasonData || !seasonData.table) return;
@@ -6729,6 +6620,63 @@ function showSeasonTable(historyIndex, year) {
 function closeSeasonTable() {
     const overlay = document.getElementById('careerTableOverlay');
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+async function shareCareerResult() {
+    const btn = document.getElementById('btnShareCareer');
+    const originalText = btn.innerText;
+    btn.innerText = "GENEROWANIE KARTY..."; btn.disabled = true;
+
+    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 600; canvas.height = 900;
+
+    const lastClubInfo = getCareerLastClubInfo();
+    const lastClubColor = getCareerClubColor(lastClubInfo.club, lastClubInfo.league);
+    
+    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, lastClubColor); grd.addColorStop(0.5, "#1b1b20"); grd.addColorStop(1, "#050507");
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.strokeStyle = lastClubColor; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
+
+    ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
+
+    ctx.fillStyle = lastClubColor; ctx.fillRect(100, 480, 400, 5);
+
+    let nameParts = cState.name.split(' '); let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
+    ctx.fillStyle = "#fff"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
+
+    ctx.font = "700 24px Montserrat, sans-serif"; ctx.fillStyle = lastClubColor; ctx.fillText(lastClubInfo.club || "Wolny agent", 300, 515);
+
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.textAlign = "center";
+    
+    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("IMŚ", 180, 560); ctx.fillText("DMP", 420, 560);
+    ctx.fillStyle = "#fff"; ctx.font = "900 45px Montserrat, sans-serif"; 
+    
+    let totalDmp = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze;
+    ctx.fillText(cState.stats.ims, 180, 610); ctx.fillText(totalDmp, 420, 610);
+
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)";
+    ctx.fillText("BIEGI", 180, 680); ctx.fillText("PKT", 420, 680);
+    ctx.fillStyle = "#fff"; ctx.font = "900 35px Montserrat, sans-serif"; 
+    ctx.fillText(cState.stats.heats, 180, 720); ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 420, 720);
+
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("KARIERA AVG", 300, 780);
+    let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
+    ctx.fillStyle = "#fff"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 840);
+
+    try {
+        canvas.toBlob(async (blob) => {
+            if (!blob) { appAlert("Błąd generowania karty.", "Błąd"); resetShareBtn(btn, originalText); return; } 
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
+                try {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    await navigator.clipboard.write([item]);
+                    showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
+                } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
+            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
+            resetShareBtn(btn, originalText);
+        }, "image/png");
+    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
 }
 
 //-----------------------------------------
