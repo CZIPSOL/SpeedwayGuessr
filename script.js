@@ -6235,27 +6235,23 @@ function showLoanWindow() {
 function showEventWindow() {
     const area = document.getElementById('careerActionArea');
     
-const eventsPool = [
-        { title: "Tytanowe sprzęgło", desc: "Podejrzany tuner oferuje super sprzęgła. Bardzo szybkie, ale czy legalne?", img: "⚙️", opt1: { title: "Ryzykuję", bot1: "60%: +3 OVR", bot2: "40%: -3 OVR", fn: "resolveRandomEvent(3, -3, 0.60, 200000)" }, opt2: { title: "Gram fair", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Sponsor Strategiczny", desc: "Globalna marka napojów proponuje ci gigantyczny kontrakt za aktywność w TV.", img: "📸", opt1: { title: "Zgadzam się", bot1: "+400k PLN", bot2: "60%: -2 OVR", fn: "resolveRandomEvent(0, -2, 0.40, -400000)" }, opt2: { title: "Tylko żużel", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
-        { title: "Liga Brytyjska (SGB)", desc: "Klub z Premiership oferuje starty w czwartki. Kasa dobra, ale męcząca logistyka.", img: "🇬🇧", opt1: { title: "Lecę do UK", bot1: "50%: +4 OVR", bot2: "50%: -2 OVR", fn: "resolveRandomEvent(4, -2, 0.50)" }, opt2: { title: "Tylko Polska", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
-        { title: "Konflikt z Kiderem", desc: "Gwiazda zespołu wymusza na mechanikach robienie jego silników w pierwszej kolejności.", img: "🤬", opt1: { title: "Robię aferę", bot1: "70%: Wygrywasz (+2)", bot2: "30%: Jesteś skończony (-4)", fn: "resolveRandomEvent(2, -4, 0.70)" }, opt2: { title: "Siedzę cicho", bot1: "-1 OVR (Mniej mocy)", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Zimowy Obóz", desc: "Trener PZM zaprasza cię na morderczy obóz kondycyjny. Płacisz za siebie.", img: "🏔️", opt1: { title: "Jadę z kadrą", bot1: "75%: +3 OVR", bot2: "25%: -2 OVR (Uraz)", fn: "resolveRandomEvent(3, -2, 0.75, 50000)" }, opt2: { title: "Odpoczywam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Kryzys Psychologiczny", desc: "Po upadku zamykasz gaz. Dobry psycholog chce dużo kasy za terapię.", img: "🧠", opt1: { title: "Płacę", bot1: "85%: +2 OVR", bot2: "Koszt: 150k PLN", fn: "resolveRandomEvent(2, 0, 0.85, 150000)" }, opt2: { title: "Poradzę sobie", bot1: "20%: +1 OVR", bot2: "80%: -2 OVR", fn: "resolveRandomEvent(1, -2, 0.20)" } },
-        { title: "Bunt Tunera", desc: "Twój mechanik grozi odejściem do mistrza świata. Musisz zapłacić by został.", img: "🛠️", opt1: { title: "Płacę", bot1: "80%: Zostaje (+1 OVR)", bot2: "Koszt: 200k PLN", fn: "resolveRandomEvent(1, -2, 0.80, 200000)" }, opt2: { title: "Droga wolna", bot1: "Spadek formy (-3 OVR)", bot2: "", fn: "playSeason(-3)" } },
-        { title: "Szwedzka Elitserien", desc: "Wyjazdy do Szwecji kuszą dobrymi torami i zapłatą za punkty.", img: "🇸🇪", opt1: { title: "Podpisuję", bot1: "70%: +2 OVR, Kasa", bot2: "30%: -2 OVR", fn: "resolveRandomEvent(2, -2, 0.70, -100000)" }, opt2: { title: "Odpuszczam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Głośny Wywiad", desc: "Dziennikarz namawia na kontrowersyjny wywiad o władzach ligi.", img: "🎙️", opt1: { title: "Mówię prawdę", bot1: "30%: Szacunek (+2)", bot2: "70%: Kary (-2)", fn: "resolveRandomEvent(2, -2, 0.30, 80000)" }, opt2: { title: "Regułki", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Trefny Metanol", desc: "Dostałeś zanieczyszczone paliwo. Masz zepsute silniki przed derbami.", img: "🛢️", opt1: { title: "Kupuję nowy", bot1: "50%: Uda się (+1 OVR)", bot2: "50%: Zatarty (-3 OVR)", fn: "resolveRandomEvent(1, -3, 0.50, 50000)" }, opt2: { title: "Ryzykuję stary", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Trener Od Startów", desc: "Legenda żużla proponuje ci prywatne treningi momentu startowego.", img: "🚦", opt1: { title: "Płacę", bot1: "85%: +2 OVR", bot2: "Koszt: 120k", fn: "resolveRandomEvent(2, -1, 0.85, 120000)" }, opt2: { title: "Sam trenuję", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Afera Oponiarska", desc: "Ktoś podrzucił ci nielegalne opony przed sędzią.", img: "🍩", opt1: { title: "Łapówka", bot1: "90%: Sprawa cichnie", bot2: "10%: Skandal (-5 OVR)", fn: "resolveRandomEvent(0, -5, 0.90, 250000)" }, opt2: { title: "Przyznaję się", bot1: "-2 OVR (Kara)", bot2: "", fn: "playSeason(-2)" } },
-        { title: "Zatrucie na wyjeździe", desc: "Zjadłeś kebaba przed meczem wyjazdowym. Czujesz się fatalnie.", img: "🤢", opt1: { title: "Kroplówka (10k)", bot1: "70%: Pomaga (+0)", bot2: "30%: Mdlejesz (-2)", fn: "resolveRandomEvent(0, -2, 0.70, 10000)" }, opt2: { title: "Zgłaszam L4", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Kradzież z Busa", desc: "W nocy ukradli ci dwa najlepsze silniki z busa!", img: "🚐", opt1: { title: "Kupuję nowe (300k)", bot1: "100%: +1 OVR", bot2: "", fn: "resolveRandomEvent(1, 1, 1.0, 300000)" }, opt2: { title: "Jadę na rezerwie", bot1: "-4 OVR", bot2: "", fn: "playSeason(-4)" } },
-        { title: "Gala Ekstraligi", desc: "Zostałeś zaproszony na galę. Wymagany drogi garnitur i czas.", img: "🕴️", opt1: { title: "Idę (50k)", bot1: "80%: Kontakty (+2)", bot2: "20%: Afera (-1)", fn: "resolveRandomEvent(2, -1, 0.80, 50000)" }, opt2: { title: "Zostaję w domu", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Tunel aerodynamiczny", desc: "Inżynierowie z F1 chcą poprawić twoją sylwetkę za 250k PLN.", img: "💨", opt1: { title: "Testuję", bot1: "60%: Aerodynamika (+4)", bot2: "40%: Brak zmian", fn: "resolveRandomEvent(4, 0, 0.60, 250000)" }, opt2: { title: "Szkoda kasy", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
-        { title: "Nowy Tłumik", desc: "PZM wprowadza nowe, zamknięte tłumiki. Silniki się grzeją.", img: "🔇", opt1: { title: "Testuję różne (100k)", bot1: "75%: Opanowane (+2)", bot2: "25%: Spalony silnik (-2)", fn: "resolveRandomEvent(2, -2, 0.75, 100000)" }, opt2: { title: "Jadę w ciemno", bot1: "-3 OVR", bot2: "", fn: "playSeason(-3)" } },
-        { title: "Kibice Gwiżdżą", desc: "Miejscowi fani mają ci za złe ostatni słaby mecz. Wywierają ogromną presję.", img: "📢", opt1: { title: "Pracuję z coachem (50k)", bot1: "80%: Motywacja (+2)", bot2: "20%: Presja zjada (-2)", fn: "resolveRandomEvent(2, -2, 0.80, 50000)" }, opt2: { title: "Mam ich gdzieś", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
-        { title: "Propozycja Bukmachera", desc: "Podejrzany typ z trybun oferuje 500k PLN za 'spóźnienie' startu w 15. biegu.", img: "💸", opt1: { title: "Biorę kasę", bot1: "+500k PLN", bot2: "15%: Złapany! (-10 OVR)", fn: "resolveRandomEvent(0, -10, 0.85, -500000)" }, opt2: { title: "Odmawiam", bot1: "Czyste sumienie", bot2: "+1 OVR", fn: "playSeason(1)" } },
-        { title: "Pomoc Juniorowi", desc: "Młody chłopak ze szkółki prosi cię o użyczenie silnika na zawody.", img: "👦", opt1: { title: "Pożyczam", bot1: "60%: Wdzięczność (+1)", bot2: "40%: Zatarł silnik (-1)", fn: "resolveRandomEvent(1, -1, 0.60)" }, opt2: { title: "Odmawiam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } }
+    const eventsPool = [
+        { title: "Tytanowe sprzęgło", desc: "Podejrzany tuner oferuje super sprzęgła. Szybkie, ale czy legalne?", img: "⚙️", opt1: { title: "Ryzykuję (-200k)", bot1: "60%: +3 OVR", bot2: "40%: -3 OVR", fn: "resolveRandomEvent(3, -3, 0.60, 200000)" }, opt2: { title: "Gram fair", bot1: "Brak kosztów", bot2: "", fn: "playSeason(0)" } },
+        { title: "Sponsor Strategiczny", desc: "Globalna marka oferuje gigantyczny kontrakt za promocję.", img: "📸", opt1: { title: "Zgadzam się (+400k)", bot1: "60%: -2 OVR (Brak czasu)", bot2: "", fn: "resolveRandomEvent(0, -2, 0.40, -400000)" }, opt2: { title: "Tylko żużel", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
+        { title: "Liga Brytyjska (SGB)", desc: "Klub z Premiership oferuje starty w czwartki. Męcząca logistyka.", img: "🇬🇧", opt1: { title: "Lecę do UK", bot1: "50%: +4 OVR", bot2: "50%: -2 OVR", fn: "resolveRandomEvent(4, -2, 0.50)" }, opt2: { title: "Tylko Polska", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
+        { title: "Konflikt z Liderem", desc: "Gwiazda zespołu wymusza robienie jego silników w pierwszej kolejności.", img: "🤬", opt1: { title: "Robię aferę", bot1: "70%: Wygrywasz (+2)", bot2: "30%: Jesteś skończony (-4)", fn: "resolveRandomEvent(2, -4, 0.70)" }, opt2: { title: "Siedzę cicho", bot1: "-1 OVR (Mniej mocy)", bot2: "", fn: "playSeason(-1)" } },
+        { title: "Zimowy Obóz", desc: "PZM zaprasza cię na morderczy obóz kondycyjny. Płacisz za siebie.", img: "🏔️", opt1: { title: "Jadę (-50k)", bot1: "75%: +3 OVR", bot2: "25%: -2 OVR", fn: "resolveRandomEvent(3, -2, 0.75, 50000)" }, opt2: { title: "Odpoczywam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
+        { title: "Kryzys Psychologiczny", desc: "Po upadku zamykasz gaz. Najlepszy psycholog kosztuje.", img: "🧠", opt1: { title: "Terapia (-150k)", bot1: "85%: +2 OVR", bot2: "15%: Nic z tego", fn: "resolveRandomEvent(2, 0, 0.85, 150000)" }, opt2: { title: "Poradzę sobie", bot1: "20%: +1 OVR", bot2: "80%: -2 OVR", fn: "resolveRandomEvent(1, -2, 0.20)" } },
+        { title: "Bunt Tunera", desc: "Twój mechanik grozi odejściem. Przebijesz ofertę rywala?", img: "🛠️", opt1: { title: "Płacę (-200k)", bot1: "80%: +1 OVR", bot2: "20%: I tak odejdzie (-2)", fn: "resolveRandomEvent(1, -2, 0.80, 200000)" }, opt2: { title: "Droga wolna", bot1: "Spadek formy (-3 OVR)", bot2: "", fn: "playSeason(-3)" } },
+        { title: "Głośny Wywiad", desc: "Dziennikarz namawia na kontrowersyjny wywiad o władzach ligi.", img: "🎙️", opt1: { title: "Mówię prawdę", bot1: "30%: Szacunek (+2)", bot2: "70%: Kary (-2 OVR i kasa)", fn: "resolveRandomEvent(2, -2, 0.30, 80000)" }, opt2: { title: "Regułki", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
+        { title: "Trefny Metanol", desc: "Dostałeś zanieczyszczone paliwo przed ważnym meczem.", img: "🛢️", opt1: { title: "Nowe beczki (-50k)", bot1: "50%: Uda się (+1)", bot2: "50%: Zatarty (-3)", fn: "resolveRandomEvent(1, -3, 0.50, 50000)" }, opt2: { title: "Ryzykuję stare", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
+        { title: "Trener Od Startów", desc: "Legenda żużla proponuje ci prywatne treningi momentu startowego.", img: "🚦", opt1: { title: "Kupuję sesje (-120k)", bot1: "85%: +2 OVR", bot2: "15%: Strata kasy (-1)", fn: "resolveRandomEvent(2, -1, 0.85, 120000)" }, opt2: { title: "Sam trenuję", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
+        { title: "Afera Oponiarska", desc: "Ktoś podrzucił ci nielegalne opony przed weryfikatorem.", img: "🍩", opt1: { title: "Łapówka (-250k)", bot1: "90%: Sprawa cichnie", bot2: "10%: Skandal (-5 OVR)", fn: "resolveRandomEvent(0, -5, 0.90, 250000)" }, opt2: { title: "Przyznaję się", bot1: "-2 OVR (Kara)", bot2: "", fn: "playSeason(-2)" } },
+        { title: "Zatrucie Kebabem", desc: "Zjadłeś coś nieświeżego przed meczem wyjazdowym. Czujesz się fatalnie.", img: "🤢", opt1: { title: "Kroplówka (-10k)", bot1: "70%: Pomaga (+0)", bot2: "30%: Mdlejesz (-2)", fn: "resolveRandomEvent(0, -2, 0.70, 10000)" }, opt2: { title: "Zgłaszam L4", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
+        { title: "Kradzież z Busa", desc: "W nocy ukradli ci najlepsze silniki z podjazdu!", img: "🚐", opt1: { title: "Kupuję nowe (-300k)", bot1: "100%: Silniki zastąpione (+1)", bot2: "", fn: "resolveRandomEvent(1, 1, 1.0, 300000)" }, opt2: { title: "Jadę na rezerwie", bot1: "-4 OVR", bot2: "", fn: "playSeason(-4)" } },
+        { title: "Tunel Aerodynamiczny", desc: "Inżynierowie z F1 chcą poprawić twoją sylwetkę. To drogie testy.", img: "💨", opt1: { title: "Wynajmuję (-250k)", bot1: "60%: Sukces (+4 OVR)", bot2: "40%: Brak zmian", fn: "resolveRandomEvent(4, 0, 0.60, 250000)" }, opt2: { title: "Szkoda kasy", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
+        { title: "Ustawiony tor", desc: "Przeciwnicy ubili tor pod bandą, zlewając go wodą. To pułapka.", img: "🚜", opt1: { title: "Robię nożyce", bot1: "65%: Wygrywasz (+2)", bot2: "35%: Upadek (-2)", fn: "resolveRandomEvent(2, -2, 0.65)" }, opt2: { title: "Asekuracyjnie", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" } },
+        { title: "Propozycja Bukmachera", desc: "Typ z trybun oferuje 500k PLN za 'spóźnienie' startu w 15. biegu.", img: "💸", opt1: { title: "Biorę kasę (+500k)", bot1: "85%: Nikt nie wie", bot2: "15%: Złapany! (-10 OVR)", fn: "resolveRandomEvent(0, -10, 0.85, -500000)" }, opt2: { title: "Odmawiam", bot1: "+1 OVR", bot2: "Czyste sumienie", fn: "playSeason(1)" } }
     ];
 
     let evData = eventsPool[Math.floor(Math.random() * eventsPool.length)];
@@ -6440,7 +6436,6 @@ function rejectLoan() {
     else playSeason(0, true); // benched = true w bieżącym sezonie
 }
 
-// --- LOGIKA LIGI (COPERO SIM) ---
 function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     cState.money += moneyBonus;
 
@@ -6478,20 +6473,24 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     cState.stats.pts += totalPts;
     cState.stats.bon += totalBonus;
     
-    // Rozwój OVR
+    // ============================================
+    // BARDZO SZYBKI ROZWÓJ OVR
+    // ============================================
     let ageGrowth = 0;
-    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 3) + 3; 
-    else if (cState.age <= 24) ageGrowth = Math.floor(Math.random() * 3) + 1; 
-    else if (cState.age <= 28) ageGrowth = Math.floor(Math.random() * 2); 
-    else if (cState.age > 33) ageGrowth = -Math.floor(Math.random() * 3) - 1; 
+    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 4) + 5; // Młodzieżowiec rośnie potężnie (+4 do +7)
+    else if (cState.age <= 24) ageGrowth = Math.floor(Math.random() * 3) + 3; // +2 do +4
+    else if (cState.age <= 29) ageGrowth = Math.floor(Math.random() * 2) + 2; // +1 do +2
+    else if (cState.age <= 33) ageGrowth = Math.floor(Math.random() * 2) + 1; // 0 do +1
+    else ageGrowth = -Math.floor(Math.random() * 2) - 1; // Spadki u weteranów (-1 do -2)
     
     let perfGrowth = 0;
-    if (officialAvg >= 2.2) perfGrowth = 3;
-    else if (officialAvg >= 1.8) perfGrowth = 2;
-    else if (officialAvg >= 1.4) perfGrowth = 1;
+    if (officialAvg >= 2.4) perfGrowth = 4;
+    else if (officialAvg >= 2.0) perfGrowth = 3;
+    else if (officialAvg >= 1.6) perfGrowth = 2;
+    else if (officialAvg >= 1.3) perfGrowth = 1;
     else if (officialAvg < 1.0) perfGrowth = -1;
 
-    if (totalHeats < 15) perfGrowth -= 2; 
+    if (totalHeats < 15) perfGrowth -= 1; // Lekka kara za grzanie ławy
     if (isGuaranteed) perfGrowth += 1; 
     
     cState.ovr += (ageGrowth + perfGrowth);
@@ -6502,7 +6501,7 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     if (effOvr >= 90 && Math.random() < ((effOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
 
     // ============================================
-    // SYMULACJA TABELI I WYNIKU ZESPOŁU
+    // SYMULACJA TABELI I NAPRAWIONE AWANSY
     // ============================================
     let seasonTable = generateSeasonTable(playingLeague, playingClub, officialAvg);
     let myTeamData = seasonTable.find(t => t.isMe);
@@ -6525,38 +6524,35 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
         if (myPos === 1) promoted = true;
     }
 
-    // Aplikowanie zmian w strukturze lig (Zamiana miejsc drużyn)
+    // NAPRAWIONE APLIKOWANIE ZMIAN LIGOWYCH
     if (promoted) {
         let higherLeague = playingLeague === "KLŻ" ? "Metalkas 2.E" : "PGE Ekstraliga";
-        
-        // Wywalamy klub gracza ze starej ligi
         cState.leagues[playingLeague] = cState.leagues[playingLeague].filter(c => c !== playingClub);
-        // Bierzemy losowego pechowca z wyższej ligi
-        let randomRelegated = cState.leagues[higherLeague].pop(); 
         
-        // Zamieniamy ich miejscami
+        // Wybieramy LOSOWY zespół do spadku (nie używamy pop()!)
+        let randIdx = Math.floor(Math.random() * cState.leagues[higherLeague].length);
+        let relegatedClub = cState.leagues[higherLeague].splice(randIdx, 1)[0]; 
+        
         cState.leagues[higherLeague].push(playingClub);
-        cState.leagues[playingLeague].push(randomRelegated);
-        
-        // Zmieniamy wskaźnik ligi dla gracza, jeśli nie jest na wypożyczeniu
-        if (!activeLoanLeague) cState.league = higherLeague;
+        cState.leagues[playingLeague].push(relegatedClub);
     }
     else if (relegated) {
         let lowerLeague = playingLeague === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
-        
         cState.leagues[playingLeague] = cState.leagues[playingLeague].filter(c => c !== playingClub);
-        // Awansuje losowa z niższej
-        let randomPromoted = cState.leagues[lowerLeague].pop();
+        
+        // Wybieramy LOSOWY zespół do awansu
+        let randIdx = Math.floor(Math.random() * cState.leagues[lowerLeague].length);
+        let promotedClub = cState.leagues[lowerLeague].splice(randIdx, 1)[0];
         
         cState.leagues[lowerLeague].push(playingClub);
-        cState.leagues[playingLeague].push(randomPromoted);
-        
-        if (!activeLoanLeague) cState.league = lowerLeague;
+        cState.leagues[playingLeague].push(promotedClub);
     }
     
-    // Odświeżenie wskaźnika ligi
-    for (let l in cState.leagues) {
-        if (cState.leagues[l].includes(cState.club)) cState.league = l;
+    // Twarde przypisanie nowej ligi dla gracza po rotacji
+    if (!activeLoanLeague) {
+        for (let l in cState.leagues) {
+            if (cState.leagues[l].includes(cState.club)) cState.league = l;
+        }
     }
 
     let displayClubName = activeLoanLeague ? `${playingClub}` : cState.club;
@@ -6566,7 +6562,7 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
         mec: seasonMatches, bie: totalHeats, pkt: totalPts, bon: totalBonus, avg: officialAvg.toFixed(2),
         loan: activeLoanLeague !== null,
         dmp: gotDMP, ims: gotIMS,
-        table: seasonTable // ZAPISUJEMY WYGENEROWANĄ TABELĘ!
+        table: seasonTable
     });
 
     cState.age++;
@@ -6580,7 +6576,6 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     updateLeftPanelUI();
     renderTimeline();
 
-    // Funkcja kontynuacji (Wywoływana po ewentualnej animacji)
     const proceedToNextStage = () => {
         if (cState.age > cState.maxAge) {
             showCareerEnd();
@@ -6597,7 +6592,6 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
         }
     };
 
-    // Jeśli był sukces lub porażka drużynowa -> pokaż animację, a potem idź dalej
     if (gotDMP || promoted || relegated) {
         showTeamAchievement(playingClub, gotDMP, medalColor, promoted, relegated, proceedToNextStage);
     } else {
@@ -6627,7 +6621,7 @@ function renderTimeline() {
     let reversed = [...cState.history].reverse();
 
     // Do tabeli musimy wiedzieć który to był prawdziwy rok w grze, a że zaczynamy od wieku 16:
-    let startingYear = 2024 - (cState.age - 16); 
+    let startingYear = 2026 - (cState.age - 16); 
 
     reversed.forEach((h, index) => {
         let loanIcon = h.loan ? '↪' : '';
@@ -6791,8 +6785,6 @@ async function shareCareerResult() {
     ctx.strokeStyle = lastClubColor; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
 
     ctx.fillStyle = "#f4f4f4"; ctx.font = "900 120px Montserrat, sans-serif"; ctx.textAlign = "left";
-    ctx.fillText(cState.ovr, 40, 140);
-    ctx.font = "900 35px Montserrat, sans-serif"; ctx.fillText("LEG", 50, 190);
 
     ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
 
