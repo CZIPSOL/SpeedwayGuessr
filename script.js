@@ -6111,12 +6111,19 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats, 
     clubs.forEach(club => {
         let isPlayer = (club === playerClub);
         let basePower = cState.teamOVRs[club] || 50; 
-        let power = basePower + (Math.random() * 10 - 5); // OVR Drużyny + sezonowa dyspozycja
+        let power = basePower + (Math.random() * 8 - 4); // Dyspozycja sezonu (-4 do +4)
         
         if (isPlayer) {
-            let playerImpact = playerPoints / (baseMatches * 15); 
-            power += (playerImpact * 30); // Lider podnosi siłę zespołu
-            if (playerPoints < (baseMatches * 5)) power -= 10; 
+            // Zbalansowany wpływ zawodnika (sport drużynowy)
+            let expectedPts = baseMatches * 7; 
+            let diff = playerPoints - expectedPts; 
+            let impact = diff / 8; 
+            
+            // Jeden zawodnik nie pociągnie zespołu na sam szczyt (+/- 12 max)
+            if (impact > 12) impact = 12;
+            if (impact < -8) impact = -8;
+            
+            power += impact;
         }
         table.push({ name: club, isMe: isPlayer, power: power });
     });
@@ -6223,11 +6230,11 @@ async function playSeason(ovrMod = 0, benched = false) {
         simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
         simProgressBar.style.width = `${(m / seasonMatches) * 100}%`;
 
-        // Mid-Match Events (akcja w trwającym meczu)
+        // Mid-Match Events
         let matchEventOvrMod = 0;
         let matchEventHeatsMod = 0;
             
-        if (Math.random() < 0.15 && m > 2) { // 15% szans na wydarzenie
+        if (Math.random() < 0.15 && m > 2) { 
             const matchEvents = [
                 { text: "⚠️ Wjeżdżasz w taśmę w ważnym biegu!", ovr: -5, heats: -1, color: "var(--red-neon)" },
                 { text: "🔥 Perfekcyjne spasowanie od 1. wyścigu!", ovr: 12, heats: 0, color: "var(--green-neon)" },
@@ -6339,13 +6346,8 @@ async function playSeason(ovrMod = 0, benched = false) {
         let change = Math.floor(Math.random() * 5) - 2; // Stabilna forma (-2 do +2)
         
         let crisisRoll = Math.random();
-        if (crisisRoll < 0.03) { // 3% szans na wielki skok (Bogaty Inwestor)
-            change += 15;
-            console.log(`[BOMBA] Zespół ${club} buduje wielki skład!`);
-        } else if (crisisRoll > 0.97) { // 3% szans na upadek (Brak kasy / ucieczka lidera)
-            change -= 15;
-            console.log(`[KRYZYS] Zespół ${club} traci finansowanie!`);
-        }
+        if (crisisRoll < 0.03) change += 10; // Zbrojenia
+        else if (crisisRoll > 0.97) change -= 10; // Kryzys finansowy
         
         cState.teamOVRs[club] += change;
         if (cState.teamOVRs[club] > 95) cState.teamOVRs[club] = 95;
@@ -6409,6 +6411,12 @@ async function playSeason(ovrMod = 0, benched = false) {
     cState.leagues["Metalkas 2.E"].push(pgeRelegated);
     cState.leagues["Metalkas 2.E"].push(klzPromoted);
     cState.leagues["KLŻ"].push(m2eRelegated);
+    
+    // ZMIANY OVR DLA SPADKOWICZÓW/BENIAMINKÓW (Realizm kasy)
+    cState.teamOVRs[m2ePromoted] = Math.min(95, (cState.teamOVRs[m2ePromoted] || 60) + 8); 
+    cState.teamOVRs[pgeRelegated] = Math.max(35, (cState.teamOVRs[pgeRelegated] || 70) - 8); 
+    cState.teamOVRs[klzPromoted] = Math.min(85, (cState.teamOVRs[klzPromoted] || 50) + 6); 
+    cState.teamOVRs[m2eRelegated] = Math.max(35, (cState.teamOVRs[m2eRelegated] || 50) - 6); 
     
     if (!activeLoanLeague) {
         for (let l in cState.leagues) {
@@ -6676,15 +6684,21 @@ function renderTimeline() {
         let clubColor = getCareerClubColor(h.club);
         let contrastColor = getContrastYIQ(clubColor);
         
+        let leagueBadge = "";
+        if (h.league === "PGE Ekstraliga") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #ffd54f; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">PGE</span>`;
+        else if (h.league === "Metalkas 2.E") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #8ec5ff; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">2.E</span>`;
+        else if (h.league === "KLŻ") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #c49b3d; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">KLŻ</span>`;
+
         let realIndex = cState.history.length - 1 - index;
         let playYear = startingYear + realIndex;
 
         list.innerHTML += `
             <div class="timeline-row cursor-pointer hover-bg" onclick="showSeasonTable(${realIndex}, ${playYear})">
                 <div class="t-age" style="background: ${clubColor}; color: ${contrastColor}; font-weight: 900; border: 1px solid rgba(255,255,255,0.15);">${h.age}</div>
-                <div class="t-club" title="${h.club}" style="color: #eaeaea; padding-left: 8px;">
+                <div class="t-club" title="${h.club}" style="color: #eaeaea; padding-left: 8px; display:flex; align-items:center;">
                     <span style="color:var(--text-dim); margin-right:5px;">${loanIcon}</span>
-                    ${h.club}
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 120px;">${h.club}</span>
+                    ${leagueBadge}
                     <span style="font-size:12px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
                 </div>
                 <div class="t-ovr">${h.ovr}</div>
