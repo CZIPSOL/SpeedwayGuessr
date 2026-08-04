@@ -5807,6 +5807,19 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+//---------------------------
+
+
+
+
+
+
+
+
+
+
+
 // ==============================================
 // ====== KARIERA: COPERO MINIGAMES STYLE =======
 // ==============================================
@@ -5874,8 +5887,8 @@ function showCareerContinuePrompt() {
     const area = document.getElementById('careerActionArea');
     area.innerHTML = `
         <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 290px; margin: 0 auto;" onclick="playSeason(0)">
-            <span class="copero-card-title">KONIEC SEZONU</span>
-            <span class="copero-card-club">PRZEJDŹ DO NASTĘPNEGO ROKU</span>
+            <span class="copero-card-title">GOTOWY DO STARTU</span>
+            <span class="copero-card-club">ROZPOCZNIJ SEZON</span>
             <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">⏭️</div>
         </div>
     `;
@@ -5933,7 +5946,7 @@ function startCareerAcademy() {
     let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase();
     if(nameVal) cState.name = nameVal;
     cState.num = document.getElementById('careerNumInput').value || 99;
-    cState.ovr = Math.floor(Math.random() * 6) + 30; // 30-35 na start, nie za wysoko
+    cState.ovr = Math.floor(Math.random() * 6) + 30; // 30-35 na start
 
     document.getElementById('careerSetup').style.display = 'none';
     document.getElementById('careerMainPanel').style.display = 'flex'; 
@@ -5974,6 +5987,116 @@ function updateLeftPanelUI() {
 }
 
 // ==========================================
+// ====== CUSTOM EVENTS (EVENTY KARIERY) ====
+// ==========================================
+
+function showEventWindow() {
+    const area = document.getElementById('careerActionArea');
+    
+    const eventsPool = [
+        { title: "Tytanowe sprzęgło", desc: "Podejrzany tuner oferuje super sprzęgła. Szybkie, ale czy legalne?", img: "⚙️", opt1: { title: "Ryzykuję", bot1: "60%: +3 OVR", bot2: "40%: -3 OVR", fn: "resolveRandomEvent(3, -3, 0.60)" }, opt2: { title: "Gram fair", bot1: "Brak zmian", bot2: "", fn: "showCareerContinuePrompt()" } },
+        { title: "Sponsor Strategiczny", desc: "Globalna marka proponuje ci kontrakt za aktywność w TV i mediach.", img: "📸", opt1: { title: "Zgadzam się", bot1: "40%: Spokój (+1)", bot2: "60%: Stres (-2)", fn: "resolveRandomEvent(1, -2, 0.40)" }, opt2: { title: "Tylko żużel", bot1: "+1 OVR", bot2: "", fn: "playSeason(1)" } },
+        { title: "Liga Brytyjska (SGB)", desc: "Klub z Premiership oferuje starty. Dobry objazd, ale męcząca logistyka.", img: "🇬🇧", opt1: { title: "Lecę do UK", bot1: "50%: +4 OVR", bot2: "50%: -2 OVR", fn: "resolveRandomEvent(4, -2, 0.50)" }, opt2: { title: "Tylko Polska", bot1: "Brak zmian", bot2: "", fn: "showCareerContinuePrompt()" } },
+        { title: "Konflikt z Liderem", desc: "Gwiazda zespołu wymusza na mechanikach robienie jego silników poza kolejką.", img: "🤬", opt1: { title: "Robię aferę", bot1: "70%: Wygrywasz (+2)", bot2: "30%: Konflikt (-3)", fn: "resolveRandomEvent(2, -3, 0.70)" }, opt2: { title: "Siedzę cicho", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
+        { title: "Zimowy Obóz", desc: "Trener PZM zaprasza cię na morderczy obóz kondycyjny w górach.", img: "🏔️", opt1: { title: "Jadę z kadrą", bot1: "80%: +2 OVR", bot2: "20%: Kontuzja (-2)", fn: "resolveRandomEvent(2, -2, 0.80)" }, opt2: { title: "Odpoczywam", bot1: "Brak zmian", bot2: "", fn: "showCareerContinuePrompt()" } },
+        { title: "Kryzys Formy", desc: "Masz problem z wyjściem spod taśmy. Psycholog sportowy oferuje pomoc.", img: "🧠", opt1: { title: "Terapia", bot1: "85%: +2 OVR", bot2: "15%: Nic z tego", fn: "resolveRandomEvent(2, 0, 0.85)" }, opt2: { title: "Poradzę sobie", bot1: "30%: +1 OVR", bot2: "70%: -1 OVR", fn: "resolveRandomEvent(1, -1, 0.30)" } },
+        { title: "Bunt Tunera", desc: "Twój mechanik grozi odejściem. Możesz spróbować go przebłagać nowym warsztatem.", img: "🛠️", opt1: { title: "Przekonuję go", bot1: "75%: +1 OVR", bot2: "25%: Odchodzi (-2)", fn: "resolveRandomEvent(1, -2, 0.75)" }, opt2: { title: "Droga wolna", bot1: "Spadek formy (-2)", bot2: "", fn: "playSeason(-2)" } },
+        { title: "Szwedzka Elitserien", desc: "Wyjazdy do Szwecji kuszą technicznymi, wymagającymi torami.", img: "🇸🇪", opt1: { title: "Podpisuję", bot1: "70%: +2 OVR", bot2: "30%: Zmęczenie (-1)", fn: "resolveRandomEvent(2, -1, 0.70)" }, opt2: { title: "Odpuszczam", bot1: "Brak zmian", bot2: "", fn: "showCareerContinuePrompt()" } },
+        { title: "Trefny Metanol", desc: "Dostałeś zanieczyszczone paliwo z innej beczki przed meczem.", img: "🛢️", opt1: { title: "Szukam nowego", bot1: "50%: Uda się (+1)", bot2: "50%: Zatarty (-2)", fn: "resolveRandomEvent(1, -2, 0.50)" }, opt2: { title: "Ryzykuję stare", bot1: "-1 OVR", bot2: "", fn: "playSeason(-1)" } },
+        { title: "Trener Od Startów", desc: "Legenda żużla proponuje ci prywatne treningi momentu startowego.", img: "🚦", opt1: { title: "Biorę lekcje", bot1: "85%: +2 OVR", bot2: "15%: Strata czasu (0)", fn: "resolveRandomEvent(2, 0, 0.85)" }, opt2: { title: "Sam trenuję", bot1: "Brak zmian", bot2: "", fn: "showCareerContinuePrompt()" } }
+    ];
+
+    let evData = eventsPool[Math.floor(Math.random() * eventsPool.length)];
+
+    area.innerHTML = `
+        <h3 class="text-white font-black m-0 mb-5 text-xl">${evData.title}</h3>
+        <p class="text-xs text-dim mb-15">${evData.desc}</p>
+        <div class="copero-action-grid">
+            <div class="copero-card" onclick="${evData.opt1.fn}">
+                <span class="copero-card-club mb-10">${evData.opt1.title}</span>
+                <div class="copero-card-img" style="border-radius:12px;">${evData.img}</div>
+                <span class="text-green font-bold text-xs">${evData.opt1.bot1}</span>
+                <span class="text-red font-bold text-xs">${evData.opt1.bot2}</span>
+            </div>
+            <div class="copero-card stay-card" onclick="${evData.opt2.fn}">
+                <span class="copero-card-club mb-10">${evData.opt2.title}</span>
+                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">❌</div>
+                <span class="text-white font-bold text-xs">${evData.opt2.bot1}</span>
+                <span class="text-dim font-bold text-xs">${evData.opt2.bot2}</span>
+            </div>
+        </div>
+    `;
+}
+
+function resolveRandomEvent(succOVR, failOVR, chance) {
+    const overlay = document.getElementById('careerEventOverlay');
+    const title = document.getElementById('eventAnimTitle');
+    const wheel = document.getElementById('careerWheelInner');
+
+    if (!overlay || !title || !wheel) {
+        const isSuccess = Math.random() < chance;
+        if (isSuccess) playSeason(succOVR);
+        else playSeason(failOVR);
+        return;
+    }
+    
+    title.innerText = "LOSOWANIE...";
+    title.className = "text-white font-black uppercase mb-10";
+    
+    const pct = Math.round(chance * 100);
+    wheel.style.background = `conic-gradient(#00ff66 0% ${pct}%, #ff3333 ${pct}% 100%)`;
+    
+    wheel.style.transition = 'none';
+    wheel.style.transform = `rotate(0deg)`;
+    
+    overlay.style.display = 'flex'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+    
+    let isSuccess = Math.random() < chance;
+
+    setTimeout(() => {
+        let targetAngle = 0;
+        
+        if (isSuccess) {
+            let zoneSizeDeg = pct * 3.6;
+            let randomTheta = 5 + Math.random() * (zoneSizeDeg - 10);
+            targetAngle = 360 - randomTheta;
+        } else {
+            let greenZoneSizeDeg = pct * 3.6;
+            let randomTheta = greenZoneSizeDeg + 5 + Math.random() * (360 - greenZoneSizeDeg - 10);
+            targetAngle = 360 - randomTheta;
+        }
+
+        let totalRotation = (5 * 360) + targetAngle;
+
+        wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
+        playSound('flip');
+
+    }, 100);
+
+    setTimeout(() => {
+        if(isSuccess) {
+            title.innerText = "SUKCES! 🟩";
+            title.className = "text-green font-black uppercase mb-10 event-success-text";
+            playSound('win');
+        } else {
+            title.innerText = "PORAŻKA! 🟥";
+            title.className = "text-red font-black uppercase mb-10 event-fail-text";
+            playSound('error');
+        }
+        
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+            // Wywołujemy playSeason z dodanym modyfikatorem OVR
+            playSeason(isSuccess ? succOVR : failOVR);
+        }, 2000);
+        
+    }, 3200); 
+}
+
+// ==========================================
 // ====== LOGIKA SYMULACJI SEZONU ===========
 // ==========================================
 
@@ -5987,10 +6110,9 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) 
         let power = Math.random() * 60 + 40; 
         
         if (isPlayer) {
-            // Wpływ zawodnika na siłę zespołu zależy od ujechanych punktów
             let playerImpact = playerPoints / (matches * 15); // max 1.0
             power += (playerImpact * 60); 
-            if (playerPoints < (matches * 5)) power -= 20; // Słaby lider = słaby zespół
+            if (playerPoints < (matches * 5)) power -= 20; 
         }
         table.push({ name: club, isMe: isPlayer, power: power });
     });
@@ -6011,7 +6133,6 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) 
     return table;
 }
 
-// Funkcja pomocnicza tworząca overlay do symulacji na żywo
 function ensureSimOverlay() {
     if (document.getElementById('simOverlay')) return;
     const simDiv = document.createElement('div');
@@ -6063,19 +6184,17 @@ async function playSeason(ovrMod = 0, benched = false) {
     let seasonPoints = 0;
     let seasonBonus = 0;
     
-    // Mid-season event logic
     let midSeasonOvrMod = 0;
 
     for (let m = 1; m <= seasonMatches; m++) {
-        // Opóźnienie dla animacji
-        await new Promise(r => setTimeout(r, 150)); 
+        await new Promise(r => setTimeout(r, 120)); // Animacja klatka po klatce
         
         let isHome = (m % 2 !== 0);
         simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span>`;
         simProgressBar.style.width = `${(m / seasonMatches) * 100}%`;
 
-        // Losowy event w trakcie sezonu (7% szans na mecz)
-        if (Math.random() < 0.07 && m > 2 && m < seasonMatches - 2) {
+        // Drobne eventy na ekranie ładowania
+        if (Math.random() < 0.05 && m > 2 && m < seasonMatches - 2) {
             let evtRoll = Math.random();
             if (evtRoll < 0.4) {
                 simEvents.innerText = `⚠️ Defekt motocykla! Słabszy występ.`;
@@ -6090,36 +6209,42 @@ async function playSeason(ovrMod = 0, benched = false) {
                 simEvents.style.color = "var(--yellow-neon)";
                 midSeasonOvrMod -= 4;
             }
-            setTimeout(()=> { simEvents.innerText = ""; }, 2000);
+            setTimeout(()=> { simEvents.innerText = ""; }, 1500);
         }
 
-        let matchEffOvr = baseOvr + midSeasonOvrMod + (isHome ? 3 : -4); // Wyjazdy są trudne!
-        if (benched && !isGuaranteed) matchEffOvr -= 10;
+        let matchEffOvr = baseOvr + midSeasonOvrMod + (isHome ? 4 : -4); // Wyjazdy są trudne!
+        if (benched && !isGuaranteed) matchEffOvr -= 15; // Surowa kara za ławkę
         
-        // Ile biegów w tym meczu?
+        // Obliczanie ilości biegów
         let heatsInMatch = 0;
-        let formRatio = matchEffOvr / lData.diff;
+        let ratio = matchEffOvr / lData.diff;
         
         if (benched) heatsInMatch = Math.random() < 0.3 ? 1 : 0;
-        else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 3) + 3; // Junior 3-5
-        else if (formRatio > 1.1) heatsInMatch = Math.floor(Math.random() * 2) + 4; // Lider 4-5 (taktyki)
-        else if (formRatio > 0.9) heatsInMatch = Math.floor(Math.random() * 3) + 3; // Druga linia 3-5
-        else heatsInMatch = Math.floor(Math.random() * 3) + 2; // Słabeusz 2-4
+        else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 3) + 3; // Junior jeździ 3-5 biegów
+        else if (ratio > 1.1) heatsInMatch = Math.floor(Math.random() * 2) + 4; // Lider 4-5
+        else if (ratio > 0.85) heatsInMatch = Math.floor(Math.random() * 3) + 3; // Druga linia 3-5
+        else heatsInMatch = Math.floor(Math.random() * 3) + 2; // Słaby jeździ 2-4
         
         if (isGuaranteed) heatsInMatch = Math.max(heatsInMatch, 3);
         
-        // Punkty w biegach
+        // NOWY SILNIK ZDOBYWANIA PUNKTÓW W BIEGACH
         let matchPts = 0;
         let matchBon = 0;
-        let expectedAvgPerHeat = (matchEffOvr / lData.diff) * 1.5; // Przybliżenie
-        if (expectedAvgPerHeat > 2.8) expectedAvgPerHeat = 2.8;
         
         for (let h = 0; h < heatsInMatch; h++) {
-            let heatRoll = Math.random() * 3; 
-            if (heatRoll < expectedAvgPerHeat) {
-                if (heatRoll > 2.0) matchPts += 3;
-                else if (heatRoll > 1.0) { matchPts += 2; if(Math.random()<0.3) matchBon+=1; }
-                else { matchPts += 1; if(Math.random()<0.5) matchBon+=1; }
+            // "Siła" zawodnika w tym biegu, zależna od różnicy OVR między nim a ligą
+            let strength = ratio * (Math.random() * 2.0 + 0.5); 
+            
+            if (strength >= 2.2) { 
+                matchPts += 3; 
+            } else if (strength >= 1.5) { 
+                matchPts += 2; 
+                if(Math.random() < 0.2) matchBon += 1; 
+            } else if (strength >= 0.8) { 
+                matchPts += 1; 
+                if(Math.random() < 0.3) matchBon += 1; 
+            } else {
+                // 0 punktów (defekt / przyjechał czwarty)
             }
         }
         
@@ -6130,10 +6255,10 @@ async function playSeason(ovrMod = 0, benched = false) {
         let currentAvg = seasonHeats > 0 ? ((seasonPoints + seasonBonus) / seasonHeats).toFixed(2) : "0.00";
         simPts.innerText = seasonPoints;
         simAvg.innerText = currentAvg;
-        playSound('flip');
+        if(heatsInMatch > 0) playSound('flip');
     }
     
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 800));
     simOverlay.style.display = 'none';
 
     // KONIEC SEZONU - Podsumowanie statystyk
@@ -6144,32 +6269,49 @@ async function playSeason(ovrMod = 0, benched = false) {
     let officialAvg = seasonHeats > 0 ? ((seasonPoints + seasonBonus) / seasonHeats) : 0.0;
     if (officialAvg > 3.00) officialAvg = 3.00;
 
-    // REALISTYCZNY ROZWÓJ OVR
-    let expectedOvrAvg = (baseOvr / lData.diff) * 1.6; 
-    let diffAvg = officialAvg - expectedOvrAvg;
-    let growth = 0;
+    // ==========================================
+    // NOWY, LOGICZNY SYSTEM ROZWOJU ZAWODNIKA
+    // ==========================================
+    let ageGrowth = 0;
+    
+    // Gwarantowany rozwój naturalny
+    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 3) + 2; // Juniorzy ZAWSZE dostają +2 do +4
+    else if (cState.age <= 25) ageGrowth = Math.floor(Math.random() * 2) + 1; // +1 do +2
+    else if (cState.age <= 29) ageGrowth = Math.floor(Math.random() * 2); // 0 do +1
+    else if (cState.age <= 33) ageGrowth = 0; // Stagnacja w prime'ie
+    else ageGrowth = -Math.floor(Math.random() * 2) - 1; // Spadek umiejętności weteranów (-1 do -2)
 
-    if (cState.age <= 21) {
-        growth = diffAvg > 0 ? Math.floor(Math.random() * 4 + 2) : (diffAvg > -0.3 ? 1 : 0);
-    } else if (cState.age <= 26) {
-        growth = diffAvg > 0.2 ? Math.floor(Math.random() * 3 + 1) : (diffAvg < -0.3 ? -1 : 0);
-    } else if (cState.age <= 31) {
-        growth = diffAvg > 0.4 ? 1 : (diffAvg < -0.2 ? Math.floor(Math.random() * -2 - 1) : 0);
-    } else {
-        // Po 32 roku życia ciężko o wzrost, łatwo o spadek
-        growth = diffAvg > 0.5 ? 0 : -Math.floor(Math.random() * 3 + 1);
+    // Wpływ jazdy na rozwój (Zależy od średniej biegowej)
+    let perfGrowth = 0;
+    
+    if (officialAvg >= 2.40) perfGrowth = 3;
+    else if (officialAvg >= 2.00) perfGrowth = 2;
+    else if (officialAvg >= 1.60) perfGrowth = 1;
+    else if (officialAvg >= 1.30) perfGrowth = 0;
+    else if (officialAvg < 1.00) perfGrowth = -1;
+    else if (officialAvg < 0.60) perfGrowth = -2;
+
+    // Kara za brak jazdy (grzanie ławy)
+    if (benched && seasonHeats < 15) {
+        perfGrowth -= 1; 
+        ageGrowth = Math.max(0, ageGrowth - 1);
     }
 
-    // SOFT CAPS na wysokie OVR (żeby nie siedzieć na 99 całą karierę)
-    if (cState.ovr > 95) growth -= 2;
-    else if (cState.ovr > 88) growth -= 1;
-    
-    if (benched && seasonHeats < 15) growth -= 2;
+    // Dodanie wszystkiego i zastosowanie SOFT CAPÓW
+    let totalGrowth = ageGrowth + perfGrowth;
 
-    cState.ovr += growth;
+    if (cState.ovr > 95 && totalGrowth > 0) totalGrowth -= 2; // Po 95 strasznie ciężko wbić OVR
+    else if (cState.ovr > 88 && totalGrowth > 0) totalGrowth -= 1;
+    
+    // Zapobiegamy patologicznym spadkom u młodych, jeśli nie jest to wina kontuzji
+    if (cState.age <= 23 && totalGrowth < 0) totalGrowth = 0;
+
+    cState.ovr += totalGrowth;
+    
     if (cState.ovr > 99) cState.ovr = 99;
     if (cState.ovr < 30) cState.ovr = 30;
 
+    // Szansa na mistrzostwo świata, jeśli OVR jest kosmiczne
     let gotIMS = false;
     if (baseOvr >= 90 && Math.random() < ((baseOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
 
@@ -6178,7 +6320,7 @@ async function playSeason(ovrMod = 0, benched = false) {
     let m2eTable = generateSeasonTable("Metalkas 2.E", playingClub, seasonPoints, seasonHeats);
     let klzTable = generateSeasonTable("KLŻ", playingClub, seasonPoints, seasonHeats);
 
-    // Kto awansuje, kto spada? (Niezależnie od gracza)
+    // Kto awansuje, kto spada?
     let pgeRelegated = pgeTable[pgeTable.length - 1].name;
     let m2ePromoted = m2eTable[0].name;
     let m2eRelegated = m2eTable[m2eTable.length - 1].name;
@@ -6214,7 +6356,7 @@ async function playSeason(ovrMod = 0, benched = false) {
         if (myTeamData && myTeamData.pos === 1) promoted = true;
     }
 
-    // APLIKOWANIE GLOBALNYCH ZMIAN W LIGACH
+    // APLIKOWANIE GLOBALNYCH ZMIAN W LIGACH (Spadki / Awanse)
     const removeClub = (leagueArr, clubName) => {
         let idx = leagueArr.indexOf(clubName);
         if(idx > -1) leagueArr.splice(idx, 1);
@@ -6230,7 +6372,6 @@ async function playSeason(ovrMod = 0, benched = false) {
     cState.leagues["Metalkas 2.E"].push(klzPromoted);
     cState.leagues["KLŻ"].push(m2eRelegated);
     
-    // Jeśli gracz nie jest na wypożyczeniu, zaktualizuj jego ligę po spadkach
     if (!activeLoanLeague) {
         for (let l in cState.leagues) {
             if (cState.leagues[l].includes(cState.club)) cState.league = l;
@@ -6258,6 +6399,7 @@ async function playSeason(ovrMod = 0, benched = false) {
     updateLeftPanelUI();
     renderTimeline();
 
+    // Logika postępu po sezonie (Eventy i Okienka Transferowe)
     const proceedToNextStage = () => {
         if (cState.age > cState.maxAge) {
             showCareerEnd();
@@ -6268,7 +6410,8 @@ async function playSeason(ovrMod = 0, benched = false) {
             } else if (cState.contractYears <= 0) {
                 generateTransferWindow();
             } else {
-                showCareerContinuePrompt();
+                if (Math.random() < 0.35) showEventWindow();
+                else showCareerContinuePrompt();
             }
         }
     };
@@ -6280,7 +6423,6 @@ async function playSeason(ovrMod = 0, benched = false) {
     }
 }
 
-// Reszta okien transferowych zostaje bardzo podobna
 function generateAcademyOffers() {
     const area = document.getElementById('careerActionArea');
     let c1 = cState.leagues["KLŻ"][Math.floor(Math.random() * cState.leagues["KLŻ"].length)];
@@ -6429,7 +6571,8 @@ function signContract(idx) {
     }
     
     updateLeftPanelUI();
-    playSeason(0);
+    if (Math.random() < 0.35) showEventWindow();
+    else showCareerContinuePrompt();
 }
 
 function rejectLoan() {
@@ -6437,7 +6580,9 @@ function rejectLoan() {
     activeLoanLeague = null;
     showToast(`Odrzuciłeś ofertę! Walczysz o skład.`, "normal");
     cState.guaranteedSpotNextSeason = true;
-    playSeason(0, true); 
+    
+    if (Math.random() < 0.35) showEventWindow();
+    else showCareerContinuePrompt();
 }
 
 function renderTimeline() {
