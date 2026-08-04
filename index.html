@@ -882,24 +882,13 @@
     
     <div id="careerContainer" class="career-layout" style="display: none;">
         
-        <!-- NAKŁADKA ANIMACJI EVENTÓW -->
-        <div id="careerEventOverlay" class="win-overlay" style="display: none; z-index: 10050; position: absolute; border-radius: 24px;">
-            <div class="stats-modal modal-sm" style="background: rgba(15, 15, 18, 0.95); width: 90%;">
-                <h3 id="eventAnimTitle" class="text-white font-black uppercase mb-15">LOSOWANIE...</h3>
-                <p id="eventAnimDesc" class="text-dim text-xs mb-20">Sprawdzamy efekty twojej decyzji.</p>
-                <div class="ach-progress-bar-bg" style="height: 12px; background: rgba(255,255,255,0.1);">
-                    <div id="eventAnimBar" class="ach-progress-bar-fill" style="width: 0%; background: var(--accent); transition: width 1.5s linear;"></div>
-                </div>
-            </div>
-        </div>
-
         <!-- LEWY PANEL (TOŻSAMOŚĆ I AKCJE) -->
         <div class="career-left-panel">
             <button onclick="exitCareerMode()" class="icon-btn-small text-red" style="position:absolute; top:15px; left:15px; z-index: 10;">✖ Wyjdź</button>
             
             <!-- EKRAN 1: KREATOR -->
             <div id="careerSetup" class="w-100 mt-20">
-                <h2 class="text-white font-black text-left mb-20" style="font-size: 24px;">Define your identity</h2>
+                <h2 class="text-white font-black text-left mb-20" style="font-size: 24px;">Zbuduj tożsamość</h2>
                 
                 <!-- KEVLAR WIZUALIZACJA -->
                 <div class="kevlar-display mx-auto mb-20 mt-15">
@@ -912,17 +901,17 @@
 
                 <div class="flex-row gap-10 mb-15">
                     <div class="form-group-clash flex-1 m-0 text-left">
-                        <label>LAST NAME</label>
+                        <label>NAZWISKO</label>
                         <input type="text" id="careerNameInput" placeholder="Kowalski" maxlength="12" oninput="updateKevlarPreview()" style="background: transparent;">
                     </div>
                     <div class="form-group-clash m-0 text-left" style="width: 100px;">
-                        <label>NUMBER</label>
-                        <input type="number" id="careerNumInput" placeholder="99" max="99" min="1" oninput="updateKevlarPreview()" style="background: transparent;">
+                        <label>NR INDYWIDUALNY</label>
+                        <input type="number" id="careerNumInput" placeholder="99" max="999" min="1" oninput="updateKevlarPreview()" style="background: transparent;">
                     </div>
                 </div>
 
                 <div class="form-group-clash text-left m-0 mb-15">
-                    <label>NATIONALITY</label>
+                    <label>NARODOWOŚĆ</label>
                     <div class="flags-grid" style="grid-template-columns: repeat(3, 1fr); max-height: 150px; overflow-y: auto;">
                         <div class="flag-card active" onclick="selectCareerNat('Polska', 'pl', this)"><img src="https://flagcdn.com/w40/pl.png"><span class="ml-5 text-white font-bold text-xs">Polska</span></div>
                         <div class="flag-card" onclick="selectCareerNat('Dania', 'dk', this)"><img src="https://flagcdn.com/w40/dk.png"><span class="ml-5 text-white font-bold text-xs">Dania</span></div>
@@ -935,11 +924,11 @@
                     </div>
                 </div>
 
-                <button onclick="startCareerAcademy()" class="btn-white-solid w-100 mt-20 p-15">Confirm identity</button>
+                <button onclick="startCareerAcademy()" class="btn-white-solid w-100 mt-20 p-15">Potwierdź tożsamość</button>
             </div>
 
             <!-- EKRAN 2: GŁÓWNY PANEL ZAWODNIKA -->
-            <div id="careerMainPanel" class="w-100" style="display: none; display: flex; flex-direction: column; height: 100%;">
+            <div id="careerMainPanel" class="w-100" style="display: none; flex-direction: column; height: 100%;">
                 
                 <!-- TOP INFO (STYL COPERO) -->
                 <div class="copero-header-box mb-20">
@@ -949,24 +938,25 @@
                             <img id="cFlag" src="https://flagcdn.com/w40/pl.png" style="width: 20px; border-radius:3px;">
                             <span class="text-white font-black text-xs" style="background: var(--red-neon); padding: 2px 5px; border-radius: 4px;">#<span id="cNumLabel">99</span></span>
                         </div>
-                        <div id="cCurrentClub" class="text-white font-black text-xl mt-5">Free agent</div>
+                        <div id="cCurrentClub" class="text-white font-black text-xl mt-5" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Wolny agent</div>
                     </div>
                     <div class="copero-val-age text-right">
-                        <div class="text-dim text-xs font-bold">AGE <span class="text-white text-xl font-black" id="cAge">16</span></div>
-                        <div class="text-dim text-xs font-bold mt-5">VALUE <span class="text-white text-lg font-black" id="cMoney">€0</span></div>
+                        <div class="text-dim text-xs font-bold">WIEK <span class="text-white text-xl font-black" id="cAge">16</span></div>
+                        <div class="text-dim text-xs font-bold mt-5">KONTO <span class="text-white text-lg font-black" id="cMoney">0 PLN</span></div>
+                        <div onclick="forceRetirement()" class="text-red font-bold mt-5 cursor-pointer" style="font-size: 9px; border-bottom: 1px dotted var(--red-neon); display: inline-block;">EMERYTURA</div>
                     </div>
                 </div>
 
                 <!-- STATYSTYKI KARIERY -->
                 <div class="copero-stats-row mb-20">
-                    <div><span class="lbl">HEATS</span><span class="val" id="cHeats">0</span></div>
-                    <div><span class="lbl">POINTS</span><span class="val" id="cPts">0</span></div>
-                    <div><span class="lbl">AVG</span><span class="val" id="cAvg">0.00</span></div>
+                    <div><span class="lbl">BIEGI</span><span class="val" id="cHeats">0</span></div>
+                    <div><span class="lbl">PUNKTY</span><span class="val" id="cPts">0</span></div>
+                    <div><span class="lbl">ŚREDNIA</span><span class="val" id="cAvg">0.00</span></div>
                 </div>
                 
-                <!-- TROFEA (Puste na start) -->
+                <!-- TROFEA -->
                 <div class="copero-trophy-box mb-20">
-                    <span id="cTrophiesDisplay" class="text-dim text-xs font-bold">🏆 EMPTY TROPHY CASE</span>
+                    <span id="cTrophiesDisplay" class="text-dim text-xs font-bold">🏆 BRAK TROFEÓW</span>
                 </div>
 
                 <!-- MIEJSCE NA AKCJE (OFERTY LUB SYMULACJA) -->
@@ -975,38 +965,42 @@
                 </div>
             </div>
             
-            <!-- EKRAN 4: KARTA EMERYTA (Podmienione graficznie) -->
+            <!-- EKRAN 4: KARTA EMERYTA (Podsumowanie) -->
             <div id="careerRetirement" class="w-100 text-center" style="display: none;">
                 <div class="copero-end-box">
-                    <h2 class="text-xl font-black mb-10 text-white">Your career has come to an end</h2>
+                    <h2 class="text-xl font-black mb-10 text-white">To koniec twojej kariery!</h2>
+                    <p class="text-xs text-dim mb-20">Odwieszasz kevlar na kołek. Tak zapiszesz się na kartach historii.</p>
                     <div class="flex-row gap-10 mt-20 justify-center">
-                        <button onclick="shareCareerResult()" id="btnShareCareer" class="btn-white-solid p-12">View summary (Share)</button>
-                        <button onclick="exitCareerMode()" class="btn-outline-white p-12">Play again</button>
+                        <button onclick="shareCareerResult()" id="btnShareCareer" class="btn-white-solid p-12">Pokaż moją kartę (Udostępnij)</button>
                     </div>
+                    <button onclick="exitCareerMode()" class="btn-outline-white w-100 mt-15 p-12">Zakończ i wróć do menu</button>
                 </div>
             </div>
 
         </div>
 
         <!-- PRAWY PANEL (OŚ CZASU / HISTORIA) -->
-        <div class="career-timeline">
+        <div class="career-timeline" id="timelineContainerBox">
             <!-- PUSTY STAN -->
             <div id="timelineEmpty" class="text-center text-dim mt-30 font-bold text-sm">
-                Choosing club...
+                Szukanie klubu...
             </div>
             
             <!-- NAGŁÓWKI TABELI -->
             <div class="timeline-header" id="timelineHeader" style="display: none;">
-                <div style="width: 35px;">AGE</div>
-                <div style="flex:1; text-align: left; padding-left:10px;">CLUB</div>
+                <div style="width: 35px;">WIEK</div>
+                <div style="flex:1; text-align: left; padding-left:10px;">KLUB</div>
                 <div style="width: 35px;">OVR</div>
-                <div style="width: 35px;">HEA</div>
-                <div style="width: 40px;">PTS</div>
+                <div style="width: 35px;">BIE</div>
+                <div style="width: 40px;">PKT</div>
                 <div style="width: 40px;">AVG</div>
             </div>
 
             <!-- LISTA SEZONÓW -->
             <div id="timelineList" class="flex-col gap-5"></div>
+            
+            <!-- PODSUMOWANIE STATYSTYK NA DOLE (Pojawia się na emeryturze) -->
+            <div id="timelineEndStats" style="display:none;"></div>
         </div>
 
     </div>
@@ -1342,7 +1336,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.14"></script>
+    <script src="script.js?v2.15"></script>
 
     
 </body>

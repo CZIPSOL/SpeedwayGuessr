@@ -5863,10 +5863,11 @@ function openCareerMode() {
     document.getElementById('timelineHeader').style.display = 'none';
     document.getElementById('timelineEmpty').style.display = 'block';
     document.getElementById('timelineList').innerHTML = '';
+    document.getElementById('timelineEndStats').style.display = 'none';
 }
 
 function exitCareerMode() {
-    if (confirm("Chcesz wyjść? Postęp zostanie zresetowany.")) window.location.reload();
+    if (confirm("Chcesz wyjść? Twój niezapisany postęp w karierze przepadnie!")) window.location.reload();
 }
 
 function updateKevlarPreview() {
@@ -5885,7 +5886,8 @@ function selectCareerNat(name, code, el) {
 function startCareerAcademy() {
     let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase();
     if(nameVal) cState.name = nameVal;
-    cState.num = document.getElementById('careerNumInput').value || 99;
+    let nrVal = parseInt(document.getElementById('careerNumInput').value);
+    cState.num = (isNaN(nrVal) || nrVal < 1) ? 99 : nrVal;
 
     cState.ovr = Math.floor(Math.random() * 11) + 40; // 40-50 na start
 
@@ -5897,26 +5899,29 @@ function startCareerAcademy() {
     generateAcademyOffers(); 
 }
 
+function formatMoney(amount) {
+    if (amount >= 1000000) return (amount / 1000000).toFixed(2) + "M PLN";
+    if (amount >= 1000) return (amount / 1000).toFixed(0) + "k PLN";
+    return amount + " PLN";
+}
+
 function updateLeftPanelUI() {
     document.getElementById('cOvr').innerText = cState.ovr;
     document.getElementById('cFlag').src = `https://flagcdn.com/w40/${cState.flagCode}.png`;
     document.getElementById('cFullName').innerText = `${cState.name}`;
     document.getElementById('cNumLabel').innerText = cState.num;
-    document.getElementById('cCurrentClub').innerText = cState.club ? cState.club : "Free agent";
+    document.getElementById('cCurrentClub').innerText = cState.club ? cState.club : "Wolny agent";
     document.getElementById('cAge').innerText = cState.age;
-    
-    let cashM = cState.money >= 1000000 ? "€" + (cState.money / 1000000).toFixed(1) + "M" : "€" + (cState.money / 1000).toFixed(0) + "K";
-    document.getElementById('cMoney').innerText = cashM;
+    document.getElementById('cMoney').innerText = formatMoney(cState.money);
 
     document.getElementById('cHeats').innerText = cState.stats.heats;
     document.getElementById('cPts').innerText = `${cState.stats.pts}+${cState.stats.bon}`;
     let avg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
     document.getElementById('cAvg').innerText = avg;
 
-    // Odświeżenie ikonek trofeów
     const tBox = document.getElementById('cTrophiesDisplay');
     if (cState.stats.dmp === 0 && cState.stats.ims === 0) {
-        tBox.innerText = "🏆 EMPTY TROPHY CASE";
+        tBox.innerText = "🏆 BRAK TROFEÓW";
     } else {
         let tHtml = "";
         for(let i=0; i<cState.stats.ims; i++) tHtml += "🌍 ";
@@ -5924,8 +5929,6 @@ function updateLeftPanelUI() {
         tBox.innerHTML = tHtml;
     }
 }
-
-// --- GENERATOR KART (WIDOKI COPERO) ---
 
 function generateAcademyOffers() {
     const area = document.getElementById('careerActionArea');
@@ -5941,30 +5944,30 @@ function generateAcademyOffers() {
     ];
 
     area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Academy offer</h3>
-        <p class="text-xs text-dim mb-15">Three clubs want to add you to their youth project. Choose where your career begins.</p>
+        <h3 class="text-white font-black m-0 mb-5 text-xl">Wychowanek Klubowy</h3>
+        <p class="text-xs text-dim mb-15">Kluby zauważyły twój talent w szkółce. Wybierz zespół, w którym rozpoczniesz karierę.</p>
         <div class="copero-action-grid">
             <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">SIGN FOR</span>
+                <span class="copero-card-title">PODPISZ KONTRAKT</span>
                 <span class="copero-card-club">${c1}</span>
                 <div class="copero-card-img">🥉</div>
                 <span class="copero-card-bot">KLŻ</span>
             </div>
             <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">SIGN FOR</span>
+                <span class="copero-card-title">PODPISZ KONTRAKT</span>
                 <span class="copero-card-club">${c2}</span>
                 <div class="copero-card-img">🥉</div>
                 <span class="copero-card-bot">KLŻ</span>
             </div>
             <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">SIGN FOR</span>
+                <span class="copero-card-title">PODPISZ KONTRAKT</span>
                 <span class="copero-card-club">${c3}</span>
                 <div class="copero-card-img">🥈</div>
                 <span class="copero-card-bot">Metalkas 2.E</span>
             </div>
         </div>
     `;
-    renderTimeline(); // Przygotowuje "Choosing club..."
+    renderTimeline(); // Przygotowuje "Wybór decyzji..."
 }
 
 function generateTransferWindow() {
@@ -5992,23 +5995,23 @@ function generateTransferWindow() {
     let o3 = cState.pendingOffers[2];
 
     area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Transfer window</h3>
-        <p class="text-xs text-dim mb-15">Offers arrived after your latest career stretch. You can accept one or stay at your club.</p>
+        <h3 class="text-white font-black m-0 mb-5 text-xl">Okienko transferowe</h3>
+        <p class="text-xs text-dim mb-15">Twój kontrakt się skończył. Otrzymałeś nowe propozycje, ale możesz również zostać w obecnym zespole.</p>
         <div class="copero-action-grid">
             <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">SIGN FOR</span>
+                <span class="copero-card-title">PODPISZ Z</span>
                 <span class="copero-card-club">${o1.club}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[o1.league].logo}</div>
                 <span class="copero-card-bot">${o1.league}</span>
             </div>
             <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">SIGN FOR</span>
+                <span class="copero-card-title">PODPISZ Z</span>
                 <span class="copero-card-club">${o2.club}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[o2.league].logo}</div>
                 <span class="copero-card-bot">${o2.league}</span>
             </div>
             <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">STAY AT</span>
+                <span class="copero-card-title">ZOSTAŃ W</span>
                 <span class="copero-card-club">${o3.club}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[o3.league].logo}</div>
                 <span class="copero-card-bot">${o3.league}</span>
@@ -6032,26 +6035,26 @@ function showLoanWindow() {
     ];
 
     area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Loan offer</h3>
-        <p class="text-xs text-dim mb-15">Your club wants you to earn minutes elsewhere. Choose where to continue your development.</p>
+        <h3 class="text-white font-black m-0 mb-5 text-xl">Wypożyczenie</h3>
+        <p class="text-xs text-dim mb-15">Twój klub uważa, że powinieneś zdobywać cenne minuty ligę niżej. Wybierz, gdzie chcesz się rozwijać.</p>
         <div class="copero-action-grid">
             <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">GO ON LOAN TO</span>
+                <span class="copero-card-title">IDŹ NA WYPOŻYCZENIE</span>
                 <span class="copero-card-club">${l1}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
                 <span class="copero-card-bot">${lowerLeague}</span>
             </div>
             <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">GO ON LOAN TO</span>
+                <span class="copero-card-title">IDŹ NA WYPOŻYCZENIE</span>
                 <span class="copero-card-club">${l2}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
                 <span class="copero-card-bot">${lowerLeague}</span>
             </div>
             <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">REJECT & STAY AT</span>
+                <span class="copero-card-title">ODRZUĆ I ZOSTAŃ W</span>
                 <span class="copero-card-club">${cState.club}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[cState.league].logo}</div>
-                <span class="copero-card-bot">Risk of bench</span>
+                <span class="text-red font-bold text-xs mt-5">Ryzyko ławki</span>
             </div>
         </div>
     `;
@@ -6065,27 +6068,27 @@ function showEventWindow() {
 
     if (rType < 0.3) {
         evData = {
-            title: "Position change",
-            desc: "The coach needs you to cover another position. Will you take the risk?",
+            title: "Zmiana pozycji taktycznej",
+            desc: "Trener potrzebuje byś osłonił kolegę z zespołu na najtrudniejszym numerze w meczu.",
             img: "📈",
-            opt1: { title: "Accept", bot1: "Starter for the next period", bot2: "Temporary -2 OVR", fn: "playSeason(-2)" },
-            opt2: { title: "Reject", bot1: "", bot2: "Fewer minutes", fn: "playSeason(0, true)" }
+            opt1: { title: "Zgadzam się", bot1: "Gwarancja wszystkich biegów", bot2: "Ryzyko spadku (-2 OVR)", fn: "resolveRandomEvent(0, -2, 0.5)" },
+            opt2: { title: "Odmawiam", bot1: "", bot2: "Ominięte biegi z urzędu (-1 OVR)", fn: "playSeason(-1)" }
         };
     } else if (rType < 0.6) {
         evData = {
-            title: "Sponsorship deal",
-            desc: "A major brand wants to sponsor you, but demands time from your training.",
+            title: "Kontrakt z Sponsorem",
+            desc: "Duża marka oferuje Ci 250,000 PLN w zamian za sesje zdjęciowe w tygodniu.",
             img: "💰",
-            opt1: { title: "Sign Deal", bot1: "Earn +€250K", bot2: "Temporary -1 OVR", fn: "playSeason(-1, false, 250000)" },
-            opt2: { title: "Decline", bot1: "Focus on training", bot2: "+1 OVR", fn: "playSeason(1)" }
+            opt1: { title: "Zgadzam się", bot1: "+250,000 PLN", bot2: "Brak czasu na treningi (-1 OVR)", fn: "playSeason(-1, false, 250000)" },
+            opt2: { title: "Odrzucam", bot1: "Skupienie na jeździe", bot2: "+1 OVR", fn: "playSeason(1)" }
         };
     } else {
         evData = {
-            title: "Black Market Engine",
-            desc: "A mechanic offers an illegal engine part. It's fast, but risky.",
+            title: "Podejrzany Mechanik",
+            desc: "W parkingu ktoś oferuje Ci eksperymentalne zębatki tytanowe.",
             img: "⚙️",
-            opt1: { title: "Use it", bot1: "50% chance for +3 OVR", bot2: "50% chance for DSQ (-3 OVR)", fn: "resolveRandomEvent(3, -3, 0.5)" },
-            opt2: { title: "Play fair", bot1: "Standard performance", bot2: "", fn: "playSeason(0)" }
+            opt1: { title: "Biorę to", bot1: "50% szans na potężny start (+3 OVR)", bot2: "50% na awarię (-3 OVR)", fn: "resolveRandomEvent(3, -3, 0.5)" },
+            opt2: { title: "Gram uczciwie", bot1: "Standardowe osiągi", bot2: "", fn: "playSeason(0)" }
         };
     }
 
@@ -6123,7 +6126,7 @@ function signContract(idx) {
         activeLoanClub = o.club;
         activeLoanLeague = o.league;
     } else if (o.type === "stay") {
-        // Zostaję, nic nie zmieniam.
+        // Zostaję w obecnym klubie, odrzucam ofertę
     } else {
         cState.club = o.club;
         cState.league = o.league;
@@ -6132,7 +6135,7 @@ function signContract(idx) {
     
     updateLeftPanelUI();
     
-    // Zamiast sprzętu, rzucamy od razu Event (lub sezon) jak w Copero
+    // Szansa na losowe zdarzenie
     if (Math.random() < 0.3) showEventWindow();
     else playSeason(0);
 }
@@ -6150,7 +6153,7 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let seasonMatches = lData.baseMatches + 4; 
     
     let heatsPerMatch = 0;
-    if (benched) heatsPerMatch = Math.random(); // Kara za odrzucenie pozycji
+    if (benched) heatsPerMatch = Math.random(); // Odrzucił zmianę pozycji, grzeje ławę
     else if (cState.age <= 16) {
         if (formRatio < 0.60) heatsPerMatch = 1; else heatsPerMatch = 2 + Math.random(); 
     } else {
@@ -6164,19 +6167,19 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     if (totalHeats < 0) totalHeats = 0;
 
     let avg = formRatio * 1.8 + (Math.random() * 0.4 - 0.2);
-    if (avg > 2.7) avg = 2.6 + Math.random() * 0.2; 
+    if (avg > 2.8) avg = 2.7 + Math.random() * 0.3; 
     if (avg < 0.2) avg = 0.1 + Math.random() * 0.2;
     if (totalHeats === 0) avg = 0; 
 
     let totalPts = Math.round(totalHeats * avg);
     
-    // Upraszczamy pieniądze na styl piłkarski (stała pensja zależy od OVR w tym roku)
+    // Upraszczamy pieniądze - pensja bazowa zależna od ligi i OVR + punkty (ale o połowę mniejsze dla wypożyczonych)
     let salary = Math.floor((effOvr * 15000) * (activeLoanLeague ? 0.5 : 1));
     cState.money += salary;
 
     cState.stats.heats += totalHeats; cState.stats.pts += totalPts;
     
-    // ROZWÓJ OVR - Wolniej niż w RPG, bardziej symulacyjnie
+    // ROZWÓJ OVR 
     let ageGrowth = 0;
     if (cState.age <= 21) ageGrowth = 3; 
     else if (cState.age <= 25) ageGrowth = 1; 
@@ -6236,14 +6239,13 @@ function renderTimeline() {
     const list = document.getElementById('timelineList');
     list.innerHTML = '';
     
-    // Aktualny wiersz "Choosing..."
     if (cState.age <= cState.maxAge) {
         list.innerHTML += `
             <div class="timeline-row active-year">
                 <div class="t-age">${cState.age}</div>
-                <div class="t-club text-dim">❓ Career decision...</div>
+                <div class="t-club text-dim">❓ Oczekiwanie na decyzję...</div>
                 <div class="t-ovr">${cState.ovr}</div>
-                <div class="t-mec"></div><div class="t-bie"></div><div class="t-pkt"></div><div class="t-avg"></div>
+                <div class="t-bie"></div><div class="t-pkt"></div><div class="t-avg"></div>
             </div>
         `;
     }
@@ -6265,7 +6267,6 @@ function renderTimeline() {
                     <span style="font-size:10px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
                 </div>
                 <div class="t-ovr">${h.ovr}</div>
-                <div class="t-mec">${h.mec}</div>
                 <div class="t-bie">${h.bie}</div>
                 <div class="t-pkt">${h.pkt}</div>
                 <div class="t-avg">${h.avg}</div>
@@ -6275,19 +6276,25 @@ function renderTimeline() {
 }
 
 function forceRetirement() {
-    if (confirm("Czy na pewno chcesz zakończyć karierę już teraz? Tej decyzji nie da się cofnąć!")) showCareerEnd();
+    if (confirm("Czy na pewno chcesz zakończyć karierę już teraz? Tej decyzji nie da się cofnąć!")) {
+        // Kończymy na obecnym wieku
+        cState.maxAge = cState.age - 1;
+        showCareerEnd();
+    }
 }
 
 function showCareerEnd() {
     document.getElementById('careerMainPanel').style.display = 'none';
     document.getElementById('careerRetirement').style.display = 'block';
     
-    // Pusta Oś (żeby nie psuło zniknięcia)
-    document.getElementById('timelineList').firstElementChild.remove();
+    // Usuń z osi czasu wiersz "Oczekiwanie na decyzję..."
+    const firstRow = document.getElementById('timelineList').firstElementChild;
+    if (firstRow && firstRow.classList.contains('active-year')) {
+        firstRow.remove();
+    }
     
-    // Zliczanie stats na dolny belce pod Osią
     let botStatsHTML = `
-        <div style="display:flex; justify-content:space-between; padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
+        <div id="timelineEndStats" style="display:flex; justify-content:space-between; padding: 15px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 10px;">
             <div class="flex-row gap-5 align-items-center">
                 <img src="https://flagcdn.com/w40/${cState.flagCode}.png" style="width: 20px; border-radius:3px;">
                 <span class="text-white font-black text-sm">${cState.nat}</span>
@@ -6298,13 +6305,70 @@ function showCareerEnd() {
             </div>
         </div>
     `;
-    document.querySelector('.career-timeline').innerHTML += botStatsHTML;
+    // Upewniamy się, że nie dodajemy tego dwa razy
+    if(!document.getElementById('timelineEndStats')) {
+        document.querySelector('.career-timeline').innerHTML += botStatsHTML;
+    }
 }
 
-// Udostępnianie okien
+async function shareCareerResult() {
+    const btn = document.getElementById('btnShareCareer');
+    const originalText = btn.innerText;
+    btn.innerText = "GENEROWANIE KARTY..."; btn.disabled = true;
+
+    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 600; canvas.height = 900;
+    
+    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, "#d4af37"); grd.addColorStop(0.5, "#8e6611"); grd.addColorStop(1, "#f1c40f");
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.strokeStyle = "#ffee88"; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
+
+    ctx.fillStyle = "#111"; ctx.font = "900 120px Montserrat, sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(cState.ovr, 40, 140);
+    ctx.font = "900 35px Montserrat, sans-serif"; ctx.fillText("LEG", 50, 190);
+
+    ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
+
+    ctx.fillStyle = "rgba(17,17,17,0.3)"; ctx.fillRect(100, 480, 400, 5);
+
+    let nameParts = cState.name.split(' '); let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
+    ctx.fillStyle = "#111"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
+
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(17,17,17,0.8)"; ctx.fillText("IMŚ", 80, 560); ctx.fillText("DMP", 350, 560);
+    ctx.fillStyle = "#111"; ctx.font = "900 45px Montserrat, sans-serif"; 
+    ctx.fillText(cState.stats.ims, 160, 560); ctx.fillText(cState.stats.dmp, 450, 560);
+
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)";
+    ctx.fillText("PKT", 80, 660); ctx.fillText("PLN", 350, 660);
+    ctx.fillStyle = "#111"; ctx.font = "900 35px Montserrat, sans-serif"; 
+    ctx.fillText(`${cState.stats.pts}`, 160, 660); let cashM = (cState.money / 1000000).toFixed(1); ctx.fillText(cashM + "M", 450, 660);
+
+    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)"; ctx.textAlign = "center"; ctx.fillText("KARIERA AVG", 300, 750);
+    let careerAvg = cState.stats.heats > 0 ? (cState.stats.pts / cState.stats.heats).toFixed(2) : "0.00";
+    ctx.fillStyle = "#111"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 810);
+
+    ctx.fillStyle = "rgba(17,17,17,0.5)"; ctx.font = "900 20px Montserrat, sans-serif"; ctx.fillText("SPEEDWAYGUESSR.PL", 300, 865);
+
+    try {
+        canvas.toBlob(async (blob) => {
+            if (!blob) { appAlert("Błąd generowania karty.", "Błąd"); resetShareBtn(btn, originalText); return; } 
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
+                try {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    await navigator.clipboard.write([item]);
+                    showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
+                } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
+            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
+            resetShareBtn(btn, originalText);
+        }, "image/png");
+    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
+}
+
 try {
-    window.openCareerMode = openCareerMode; window.exitCareerMode = exitCareerMode; window.selectCareerNat = selectCareerNat; window.startCareerAcademy = startCareerAcademy; window.signContract = signContract; window.playSeason = playSeason; window.updateKevlarPreview = updateKevlarPreview; window.forceRetirement = forceRetirement; window.resolveRandomEvent = resolveRandomEvent;
-} catch (e) {}
+    window.openCareerMode = openCareerMode; window.exitCareerMode = exitCareerMode; window.selectCareerNat = selectCareerNat; window.startCareerAcademy = startCareerAcademy; window.signContract = signContract; window.resolveRandomEvent = resolveRandomEvent; window.playSeason = playSeason; window.updateKevlarPreview = updateKevlarPreview; window.forceRetirement = forceRetirement; window.shareCareerResult = shareCareerResult;
+} catch (e) { console.warn("Global export error", e); }
 
 //-- koniec exportu Career Mode
 
