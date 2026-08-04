@@ -5826,14 +5826,138 @@ let cState = {
     contractYears: 0, contractBase: 0, contractPt: 0, 
     stats: { heats: 0, pts: 0, bon: 0, dmp: 0, ims: 0 }, history: [],
     leagues: {
-        "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
-        "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
-        "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"]
+        "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+        "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+        "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów", "Śląsk Świętochłowice", "Kolejarz Rawicz"]
     }
 };
 
 let activeLoanClub = null;
 let activeLoanLeague = null;
+
+const CAREER_CLUB_COLORS = {
+    "motor lublin": "#ffd400",
+    "sparta wrocław": "#e53935",
+    "apator toruń": "#1e4ed8",
+    "stal gorzów wielkopolski": "#f1c40f",
+    "włókniarz częstochowa": "#2ecc71",
+    "gkm grudziądz": "#f5c518",
+    "falubaz zielona góra": "#1db954",
+    "unia leszno": "#2d7dff",
+    "polonia bydgoszcz": "#e74c3c",
+    "ostrovia ostrów wielkopolski": "#d3d3d3",
+    "wilki krosno": "#353434",
+    "psż poznań": "#a08108",
+    "stal rzeszów": "#4aa3ff",
+    "orzeł łódź": "#e53935",
+    "row rybnik": "#0b5a00",
+    "polonia piła": "#149e01",
+    "kolejarz opole": "#940f06",
+    "landshut devils": "#2f20ff",
+    "lokomotiv daugavpils": "#551918",
+    "speedway kraków": "#363636",
+    "start gniezno": "#3b3b3b",
+    "wybrzeże gdańsk": "#e40505",
+    "unia tarnów": "#1565c0",
+    "śląsk świętochłowice": "#0072dd",
+    "kolejarz rawicz": "#04630c"
+};
+
+function getCareerClubColor(clubName, leagueName = null) {
+    const normalizedClub = normalizeForCheck(clubName || "");
+    if (CAREER_CLUB_COLORS[normalizedClub]) return CAREER_CLUB_COLORS[normalizedClub];
+    if (leagueName === "PGE Ekstraliga") return "#ffd54f";
+    if (leagueName === "Metalkas 2.E") return "#8ec5ff";
+    if (leagueName === "KLŻ") return "#c49b3d";
+    return "#ffffff";
+}
+
+function formatCareerMoney(amount) {
+    const absolute = Math.abs(amount);
+    const sign = amount < 0 ? "-" : "";
+
+    if (absolute >= 1000000) {
+        const millions = absolute / 1000000;
+        return `${sign}${millions >= 10 ? millions.toFixed(0) : millions.toFixed(1)} mln PLN`;
+    }
+
+    if (absolute >= 1000) {
+        return `${sign}${Math.round(absolute / 1000)} tys. PLN`;
+    }
+
+    return `${sign}${absolute} PLN`;
+}
+
+function getCareerHeatsPerMatch(age, formRatio, benched = false) {
+    if (benched) return Math.random() * 1.1;
+
+    const roll = Math.random();
+
+    if (age <= 16) {
+        if (roll < 0.25) return 1;
+        if (roll < 0.75) return 2;
+        return 3;
+    }
+
+    if (age <= 20) {
+        if (formRatio > 1.05 && roll < 0.10) return 5;
+        if (formRatio > 0.95 && roll < 0.28) return 4;
+        if (roll < 0.60) return 3;
+        return 2;
+    }
+
+    if (age <= 29) {
+        if (formRatio > 1.10 && roll < 0.12) return 5;
+        if (roll < 0.42) return 3;
+        if (roll < 0.82) return 4;
+        return 2;
+    }
+
+    if (age <= 34) {
+        if (formRatio > 1.12 && roll < 0.08) return 5;
+        if (roll < 0.48) return 3;
+        if (roll < 0.83) return 4;
+        return 2;
+    }
+
+    if (roll < 0.20) return 2;
+    if (roll < 0.65) return 3;
+    if (roll < 0.92) return 4;
+    return 5;
+}
+
+function getCareerHeatAverage(effOvr, diff, age, totalHeats, benched = false) {
+    const formRatio = effOvr / diff;
+    let baseAvg = 0.45 + (formRatio * 0.72);
+
+    if (age <= 19) baseAvg += 0.10;
+    else if (age <= 29) baseAvg += 0.05;
+    else if (age <= 34) baseAvg -= 0.08;
+    else baseAvg -= 0.18;
+
+    if (formRatio >= 1.15) baseAvg += 0.12;
+    if (formRatio <= 0.75) baseAvg -= 0.18;
+    if (totalHeats < 10) baseAvg -= 0.18;
+    if (totalHeats < 6) baseAvg -= 0.10;
+    if (benched) baseAvg *= 0.55;
+
+    baseAvg += (Math.random() * 0.30) - 0.15;
+    return Math.max(0.10, Math.min(baseAvg, 2.35));
+}
+
+function showCareerContinuePrompt() {
+    const area = document.getElementById('careerActionArea');
+
+    area.innerHTML = `
+        <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 290px; margin: 0 auto;" onclick="playSeason(0)">
+            <span class="copero-card-title">KONIEC SEZONU</span>
+            <span class="copero-card-club">SIMULUJ NASTĘPNY ROK</span>
+            <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">⏭️</div>
+            <span class="text-white font-bold text-xs">Kliknij, aby przejść dalej</span>
+            <span class="text-dim font-bold text-xs">Bez automatycznej pętli sezonów</span>
+        </div>
+    `;
+}
 
 function openCareerMode() {
     if (!window.isAdmin && !window.isTester) {
@@ -5915,8 +6039,7 @@ function updateLeftPanelUI() {
     document.getElementById('cCurrentClub').innerText = cState.club ? cState.club : "Wolny agent";
     document.getElementById('cAge').innerText = cState.age;
     
-    let cashM = cState.money >= 1000000 ? "€" + (cState.money / 1000000).toFixed(1) + "M" : "€" + (cState.money / 1000).toFixed(0) + "K";
-    document.getElementById('cMoney').innerText = cashM;
+    document.getElementById('cMoney').innerText = formatCareerMoney(cState.money);
 
     // Statystyki
     document.getElementById('cHeats').innerText = cState.stats.heats;
@@ -6163,6 +6286,41 @@ function showEventWindow() {
             img: "⚔️",
             opt1: { title: "Akceptuję", bot1: "50%: +3 OVR", bot2: "50%: -2 OVR (Kompromitacja)", fn: "resolveRandomEvent(3, -2, 0.50)" },
             opt2: { title: "Ignoruję", bot1: "Spadek zaufania (-1 OVR)", bot2: "", fn: "playSeason(-1)" }
+        },
+        {
+            title: "Test nowych gaźników",
+            desc: "Fabryczny tuner proponuje pakiet testowy na kilka rund. Może dać przewagę albo rozstroić motocykl.",
+            img: "🧪",
+            opt1: { title: "Biorę test", bot1: "65%: +2 OVR", bot2: "35%: -2 OVR", fn: "resolveRandomEvent(2, -2, 0.65, 75000)" },
+            opt2: { title: "Zostaję przy swoim", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Mecze sparingowe",
+            desc: "Masz możliwość pojechać w kilku sparingach poza ligą. To dobry sposób na rytm, ale grozi zmęczeniem.",
+            img: "🏁",
+            opt1: { title: "Jadę w sparingach", bot1: "70%: +1 OVR", bot2: "30%: -1 OVR", fn: "resolveRandomEvent(1, -1, 0.70)" },
+            opt2: { title: "Oszczędzam siły", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Nowy trener od startów",
+            desc: "Specjalista od pierwszych łuków chce pracować z tobą przed sezonem. Nie jest tani.",
+            img: "📊",
+            opt1: { title: "Kupuję lekcje", bot1: "75%: +2 OVR", bot2: "25%: -1 OVR", fn: "resolveRandomEvent(2, -1, 0.75, 120000)" },
+            opt2: { title: "Bez zmian", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Kontuzja po upadku",
+            desc: "Drobny uraz może kosztować cię kilka kolejek albo tylko jedną gorszą serię biegów.",
+            img: "🩹",
+            opt1: { title: "Dopinam rehabilitację", bot1: "60%: +1 OVR", bot2: "40%: -2 OVR", fn: "resolveRandomEvent(1, -2, 0.60, 50000)" },
+            opt2: { title: "Odpoczynek", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Nowa barwa kevlaru",
+            desc: "Sponsor daje ci bardziej widoczny kevlar i lepsze rozpoznanie w parku maszyn.",
+            img: "🎨",
+            opt1: { title: "Biorę projekt", bot1: "80%: +1 OVR", bot2: "20%: -1 OVR", fn: "resolveRandomEvent(1, -1, 0.80, 30000)" },
+            opt2: { title: "Zostawiam stary", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
         }
     ];
 
@@ -6307,24 +6465,13 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let formRatio = effOvr / lData.diff; 
     let seasonMatches = lData.baseMatches + 4; 
     
-    let heatsPerMatch = 0;
-    if (benched) heatsPerMatch = Math.random() * 1.5; // Bardzo mało jazdy na własne życzenie
-    else if (cState.age <= 16) {
-        if (formRatio < 0.60) heatsPerMatch = 1; else heatsPerMatch = 2 + Math.random(); 
-    } else {
-        if (formRatio < 0.65) heatsPerMatch = Math.random() * 1.5; 
-        else if (formRatio < 0.90) heatsPerMatch = 2 + Math.random() * 2; 
-        else if (formRatio < 1.10) heatsPerMatch = 4 + Math.random() * 1; 
-        else heatsPerMatch = 5 + Math.random() * 1.5; 
-    }
+    let heatsPerMatch = getCareerHeatsPerMatch(cState.age, formRatio, benched);
     
     let totalHeats = Math.round(seasonMatches * heatsPerMatch);
     if (totalHeats < 0) totalHeats = 0;
 
-    let rawAvg = formRatio * 1.8 + (Math.random() * 0.4 - 0.2);
-    if (rawAvg > 2.8) rawAvg = 2.7 + Math.random() * 0.3; 
-    if (rawAvg < 0.1) rawAvg = 0.1 + Math.random() * 0.2;
-    if (totalHeats === 0) rawAvg = 0; 
+    let rawAvg = getCareerHeatAverage(effOvr, lData.diff, cState.age, totalHeats, benched);
+    if (totalHeats === 0) rawAvg = 0;
 
     let totalPts = Math.round(totalHeats * rawAvg);
     let totalBonus = Math.round(totalPts * (Math.random() * 0.15 + 0.05));
@@ -6365,7 +6512,7 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let displayClubName = activeLoanLeague ? `${playingClub}` : cState.club;
 
     cState.history.push({
-        age: cState.age, club: displayClubName, ovr: cState.ovr, 
+        age: cState.age, club: displayClubName, league: playingLeague, ovr: cState.ovr, 
         mec: seasonMatches, bie: totalHeats, pkt: totalPts, bon: totalBonus, avg: officialAvg.toFixed(2),
         loan: activeLoanLeague !== null,
         dmp: gotDMP, ims: gotIMS
@@ -6388,8 +6535,8 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
         } else if (cState.contractYears <= 0) {
             generateTransferWindow();
         } else {
-            if (Math.random() < 0.3) showEventWindow();
-            else playSeason(0);
+            if (Math.random() < 0.35) showEventWindow();
+            else showCareerContinuePrompt();
         }
     }
 }
@@ -6418,13 +6565,13 @@ function renderTimeline() {
         let loanIcon = h.loan ? '↪' : '';
         let dmpIcon = h.dmp ? '🏆' : '';
         let imsIcon = h.ims ? '🌍' : '';
+        let clubColor = getCareerClubColor(h.club, h.league);
 
         list.innerHTML += `
             <div class="timeline-row">
                 <div class="t-age">${h.age}</div>
-                <div class="t-club" title="${h.club}">
+                <div class="t-club" title="${h.club}" style="border-left: 3px solid ${clubColor}; color: ${clubColor}; padding-left: 8px;">
                     <span style="color:var(--text-dim); margin-right:5px;">${loanIcon}</span>
-                    <img src="https://flagcdn.com/w20/${cState.flagCode}.png" style="width:12px; margin-right:5px; border-radius:2px;">
                     ${h.club}
                     <span style="font-size:10px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
                 </div>
@@ -6501,7 +6648,7 @@ async function shareCareerResult() {
     ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)";
     ctx.fillText("PKT", 80, 660); ctx.fillText("PLN", 350, 660);
     ctx.fillStyle = "#111"; ctx.font = "900 35px Montserrat, sans-serif"; 
-    ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 160, 660); let cashM = (cState.money / 1000000).toFixed(1); ctx.fillText(cashM + "M", 450, 660);
+    ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 160, 660); ctx.fillText(formatCareerMoney(cState.money), 450, 660);
 
     ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)"; ctx.textAlign = "center"; ctx.fillText("KARIERA AVG", 300, 750);
     let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
