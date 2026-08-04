@@ -61,24 +61,45 @@
         </div>
     </div>
 
+    <!-- EVENT / KOŁO FORTUNY -->
     <div id="careerEventOverlay" class="win-overlay" style="display: none; z-index: 10025;">
-        <div class="stats-modal text-center" style="max-width: 560px; padding: 30px 25px;">
+        <div class="stats-modal text-center" style="max-width: 560px; padding: 30px 25px; overflow: visible;">
             <h2 id="eventAnimTitle" class="text-white font-black uppercase mb-10">LOSOWANIE...</h2>
-            <div style="display: flex; justify-content: center; align-items: center; margin: 20px 0 25px;">
-                <div style="position: relative; width: 240px; height: 240px; filter: drop-shadow(0 0 24px rgba(0,0,0,0.55));">
-                    <div style="position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.14), rgba(0,0,0,0.15) 48%, rgba(0,0,0,0.35) 72%, rgba(0,0,0,0.72) 100%); border: 1px solid rgba(255,255,255,0.08);"></div>
+            <div style="display: flex; justify-content: center; align-items: center; margin: 40px 0 25px;">
+                <div style="position: relative; width: 220px; height: 220px; border-radius: 50%; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
                     
-                    <!-- Dynamiczne koło, tło ustawiane w JS -->
-                    <div id="careerWheelInner" style="position: absolute; inset: 16px; border-radius: 50%; border: 8px solid rgba(255,255,255,0.12); box-shadow: inset 0 0 30px rgba(0,0,0,0.35), 0 0 40px rgba(0,0,0,0.55);"></div>
+                    <!-- DYNAMICZNE KOŁO (Tło nakładane przez JS) -->
+                    <div id="careerWheelInner" style="position: absolute; inset: 0; border-radius: 50%; overflow: hidden;"></div>
                     
-                    <div style="position: absolute; inset: 43px; border-radius: 50%; background: radial-gradient(circle, rgba(18,18,22,0.95) 0%, rgba(10,10,12,0.98) 100%); border: 2px solid rgba(255,255,255,0.08);"></div>
+                    <!-- CIEMNY ŚRODEK (Zasłania środek koła, dając efekt "oponki") -->
+                    <div style="position: absolute; inset: 30px; border-radius: 50%; background: #151518; box-shadow: inset 0 0 20px rgba(0,0,0,0.9);"></div>
                     
-                    <!-- STRZAŁKA W DÓŁ -->
-                    <div style="position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 18px solid transparent; border-right: 18px solid transparent; border-top: 34px solid #fff5b8; filter: drop-shadow(0 0 8px rgba(255,245,184,0.6)); z-index: 5;"></div>
-                    <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 22px solid #d4af37; z-index: 6;"></div>
+                    <!-- ZŁOTA STRZAŁKA NA GÓRZE WSKAZUJĄCA W DÓŁ -->
+                    <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 28px solid #f1c40f; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); z-index: 10;"></div>
                 </div>
             </div>
-            <p class="text-dim text-xs mb-0">Wynik decyzji zaraz się rozstrzygnie.</p>
+            <p class="text-dim text-xs mb-0">Zaraz poznamy wynik twojej decyzji...</p>
+        </div>
+    </div>
+
+    <!-- NOWOŚĆ: PODGLĄD TABELI LIGOWEJ -->
+    <div id="careerTableOverlay" class="win-overlay" style="display: none; z-index: 10020;">
+        <div class="stats-modal modal-md">
+            <h2 class="text-accent mb-5 font-black uppercase" id="tableOverlayTitle">Tabela Ligowa</h2>
+            <p class="text-dim text-xs mb-20 font-bold" id="tableOverlaySub">Sezon X</p>
+            
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px;">
+                <div style="display: flex; font-size: 10px; color: var(--text-dim); font-weight: 900; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
+                    <div style="width: 30px; text-align: center;">M.</div>
+                    <div style="flex: 1; text-align: left; padding-left: 10px;">KLUB</div>
+                    <div style="width: 40px; text-align: center;">MEC</div>
+                    <div style="width: 40px; text-align: center;">PKT</div>
+                </div>
+                <div id="careerTableList" class="flex-col gap-5">
+                    <!-- Wstrzykiwane przez JS -->
+                </div>
+            </div>
+            <button onclick="closeSeasonTable()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
         </div>
     </div>
 
@@ -1357,7 +1378,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.22"></script>
+    <script src="script.js?v2.23"></script>
 
     
 </body>
