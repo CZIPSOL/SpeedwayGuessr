@@ -6200,6 +6200,13 @@ function resolveRandomEvent(succOVR, failOVR, chance, cost = 0) {
     const overlay = document.getElementById('careerEventOverlay');
     const title = document.getElementById('eventAnimTitle');
     const wheel = document.getElementById('careerWheelInner');
+
+    if (!overlay || !title || !wheel) {
+        const isSuccess = Math.random() < chance;
+        if (isSuccess) playSeason(succOVR);
+        else playSeason(failOVR);
+        return;
+    }
     
     title.innerText = "LOSOWANIE...";
     title.className = "text-white font-black uppercase mb-10";
