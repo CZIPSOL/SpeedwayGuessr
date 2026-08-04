@@ -5978,11 +5978,13 @@ function openCareerMode() {
     if (desktopMenu) desktopMenu.style.display = 'none';
     document.getElementById('careerContainer').style.display = 'grid';
     
+    // Odszukaj ten fragment w script.js (okolice funkcji openCareerMode)
     cState = { 
         active: true, name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
         age: 15, maxAge: 41, ovr: 35, money: 0, 
         club: null, league: null, contractYears: 0, contractBase: 0, contractPt: 0,
         stats: { heats: 0, pts: 0, bon: 0, dmp: 0, ims: 0 }, history: [],
+        guaranteedSpotNextSeason: false, // <--- NOWE POLE
         leagues: JSON.parse(JSON.stringify(CAREER_CONSTANTS))
     };
     cState.leagues = {
@@ -6361,7 +6363,6 @@ function resolveRandomEvent(succOVR, failOVR, chance, cost = 0) {
         return;
     }
     
-    // cost jako ujemny bonus to przychód, np. od sponsora
     cState.money -= cost;
 
     const overlay = document.getElementById('careerEventOverlay');
@@ -6378,6 +6379,10 @@ function resolveRandomEvent(succOVR, failOVR, chance, cost = 0) {
     title.innerText = "LOSOWANIE...";
     title.className = "text-white font-black uppercase mb-10";
     
+    // Dynamiczne budowanie proporcji koła (zielone/czerwone w zależności od zmiennej chance)
+    const pct = chance * 100;
+    wheel.style.background = `conic-gradient(#00ff66 0% ${pct}%, #ff3333 ${pct}% 100%)`;
+    
     wheel.style.transition = 'none';
     wheel.style.transform = `rotate(0deg)`;
     
@@ -6387,18 +6392,22 @@ function resolveRandomEvent(succOVR, failOVR, chance, cost = 0) {
     let isSuccess = Math.random() < chance;
 
     setTimeout(() => {
-        let extraRotations = 5 * 360; 
-        let stopAngle = 0;
+        // Obliczanie precyzyjnego kąta do lądowania pod strzałką na godz. 12
+        let greenZoneSize = chance * 360; 
+        let targetAngle;
 
         if (isSuccess) {
-            let greenAngles = [22.5, 112.5, 202.5, 292.5];
-            stopAngle = 360 - greenAngles[Math.floor(Math.random() * greenAngles.length)];
+            // Lądowanie na zielonym: kąt na kole od 5st do wielkości zielonej strefy - 5st
+            let theta = 5 + Math.random() * (greenZoneSize - 10);
+            targetAngle = 360 - theta;
         } else {
-            let redAngles = [67.5, 157.5, 247.5, 337.5];
-            stopAngle = 360 - redAngles[Math.floor(Math.random() * redAngles.length)];
+            // Lądowanie na czerwonym: kąt na kole od strefy czerwonej do końca
+            let theta = greenZoneSize + 5 + Math.random() * (360 - greenZoneSize - 10);
+            targetAngle = 360 - theta;
         }
 
-        let totalRotation = extraRotations + stopAngle;
+        // Koło kręci się 5 pełnych razy + zatrzymuje się na wylosowanym kącie
+        let totalRotation = (5 * 360) + targetAngle;
 
         wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
         wheel.style.transform = `rotate(${totalRotation}deg)`;
@@ -6456,15 +6465,24 @@ function signContract(idx) {
 function rejectLoan() {
     activeLoanClub = null;
     activeLoanLeague = null;
-    showToast(`Odrzuciłeś ofertę! Zostajesz w klubie.`, "normal");
+    showToast(`Odrzuciłeś ofertę! Walczysz o skład.`, "normal");
+    
+    // Gwarancja startów zaplusuje w NASTĘPNYM sezonie, w obecnym grzejemy ławę
+    cState.guaranteedSpotNextSeason = true;
     
     if (Math.random() < 0.3) showEventWindow();
-    else playSeason(0, true); // benched = true
+    else playSeason(0, true); // benched = true w bieżącym sezonie
 }
 
 // --- LOGIKA LIGI (COPERO SIM) ---
 function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     cState.money += moneyBonus;
+
+    // APLIKOWANIE GWARANCJI Z POPRZEDNIEGO SEZONU
+    let isGuaranteed = (cState.guaranteedSpotNextSeason === "active");
+    if (isGuaranteed) {
+        benched = false; // Mamy gwarantowany skład
+    }
 
     let effOvr = cState.ovr + ovrMod;
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
@@ -6475,7 +6493,8 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let seasonMatches = lData.baseMatches + 4; 
     
     let heatsPerMatch = getCareerHeatsPerMatch(cState.age, formRatio, benched);
-    
+    if (isGuaranteed) heatsPerMatch = Math.max(heatsPerMatch, 4); // Min 4 starty na mecz dzięki wywalczeniu składu!
+
     let totalHeats = Math.round(seasonMatches * heatsPerMatch);
     if (totalHeats < 0) totalHeats = 0;
 
@@ -6492,21 +6511,28 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let activePtPay = cState.contractPt;
     if (activeLoanLeague) activePtPay = Math.floor(activePtPay * 0.5); 
     
-    let ptMoney = totalPts * activePtPay; // Bonusy niepłatne
+    let ptMoney = totalPts * activePtPay;
     cState.money += ptMoney;
 
     cState.stats.heats += totalHeats; 
     cState.stats.pts += totalPts;
     cState.stats.bon += totalBonus;
     
-    // ROZWÓJ OVR 
+    // --- ZNACZNIE SZYBSZY ROZWÓJ OVR ---
     let ageGrowth = 0;
-    if (cState.age <= 21) ageGrowth = 3; 
-    else if (cState.age <= 25) ageGrowth = 1; 
-    else if (cState.age > 33) ageGrowth = -2; 
+    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 3) + 3; // +3 do +5 rocznie dla juniorów
+    else if (cState.age <= 24) ageGrowth = Math.floor(Math.random() * 3) + 1; // +1 do +3
+    else if (cState.age <= 28) ageGrowth = Math.floor(Math.random() * 2); // +0 do +1
+    else if (cState.age > 33) ageGrowth = -Math.floor(Math.random() * 3) - 1; // Spadki weteranów (-1 do -3)
     
-    let perfGrowth = officialAvg >= 2.0 ? 1 : (officialAvg < 1.3 ? -1 : 0);
-    if (totalHeats < 15) perfGrowth -= 2; // Ławka dusi rozwój mocno
+    let perfGrowth = 0;
+    if (officialAvg >= 2.2) perfGrowth = 3;
+    else if (officialAvg >= 1.8) perfGrowth = 2;
+    else if (officialAvg >= 1.4) perfGrowth = 1;
+    else if (officialAvg < 1.0) perfGrowth = -1;
+
+    if (totalHeats < 15) perfGrowth -= 2; // Kara za grzanie ławy
+    if (isGuaranteed) perfGrowth += 1; // Bonus za determinację
     
     let totalGrowth = ageGrowth + perfGrowth;
     cState.ovr += totalGrowth;
@@ -6531,6 +6557,13 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     if (!activeLoanLeague) cState.contractYears--;
 
     activeLoanClub = null; activeLoanLeague = null;
+
+    // MACHINE STATE: Zarządzanie gwarancją
+    if (cState.guaranteedSpotNextSeason === true) {
+        cState.guaranteedSpotNextSeason = "active"; // Właśnie przegrzaliśmy ławę, gwarancja wchodzi w życie za rok
+    } else if (cState.guaranteedSpotNextSeason === "active") {
+        cState.guaranteedSpotNextSeason = false; // Gwarancja została wykorzystana
+    }
 
     updateLeftPanelUI();
     renderTimeline();
@@ -6560,8 +6593,8 @@ function renderTimeline() {
     if (cState.age <= cState.maxAge) {
         list.innerHTML += `
             <div class="timeline-row active-year">
-                <div class="t-age">${cState.age}</div>
-                <div class="t-club text-dim">❓ Career decision...</div>
+                <div class="t-age" style="background: var(--red-neon); color: #fff;">${cState.age}</div>
+                <div class="t-club text-dim" style="padding-left: 8px;">❓ Career decision...</div>
                 <div class="t-ovr">${cState.ovr}</div>
                 <div class="t-bie"></div><div class="t-pkt"></div><div class="t-avg"></div>
             </div>
@@ -6576,10 +6609,11 @@ function renderTimeline() {
         let imsIcon = h.ims ? '🌍' : '';
         let clubColor = getCareerClubColor(h.club, h.league);
 
+        // Karta wieku dostaje kolor klubu i biały tekst z cieniem
         list.innerHTML += `
             <div class="timeline-row">
-                <div class="t-age">${h.age}</div>
-                <div class="t-club" title="${h.club}" style="border-left: 3px solid ${clubColor}; color: ${clubColor}; padding-left: 8px;">
+                <div class="t-age" style="background: ${clubColor}; color: #fff; text-shadow: 0px 1px 2px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.15);">${h.age}</div>
+                <div class="t-club" title="${h.club}" style="color: #eaeaea; padding-left: 8px;">
                     <span style="color:var(--text-dim); margin-right:5px;">${loanIcon}</span>
                     ${h.club}
                     <span style="font-size:10px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
