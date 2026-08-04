@@ -5834,7 +5834,8 @@ let cState = {
     stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, 
     history: [],
     guaranteedSpotNextSeason: false,
-    leagues: {}
+    leagues: {},
+    teamOVRs: {} // Pamięć siły poszczególnych drużyn
 };
 
 let activeLoanClub = null;
@@ -5911,7 +5912,8 @@ function openCareerMode() {
             "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
             "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
             "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów", "Śląsk Świętochłowice", "Kolejarz Rawicz"]
-        }
+        },
+        teamOVRs: {}
     };
     
     document.getElementById('careerSetup').style.display = 'block';
@@ -5945,6 +5947,11 @@ function startCareerAcademy() {
     cState.num = document.getElementById('careerNumInput').value || 99;
     
     cState.ovr = Math.floor(Math.random() * 21) + 40; 
+    
+    // Inicjalizacja siły drużyn w lidze na starcie
+    cState.leagues["PGE Ekstraliga"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 75); // 75-90
+    cState.leagues["Metalkas 2.E"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 60);  // 60-75
+    cState.leagues["KLŻ"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 45);         // 45-60
 
     document.getElementById('careerSetup').style.display = 'none';
     document.getElementById('careerMainPanel').style.display = 'flex'; 
@@ -6099,40 +6106,38 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats, 
     let clubs = [...cState.leagues[leagueName]];
     let table = [];
     
-    // Obliczanie ilości spotkań w zależności od wielkości ligi (mecz i rewanż)
     let baseMatches = (clubs.length % 2 === 0) ? (clubs.length - 1) * 2 : (clubs.length - 1) * 2; 
 
     clubs.forEach(club => {
         let isPlayer = (club === playerClub);
-        let power = Math.random() * 60 + 40; 
+        let basePower = cState.teamOVRs[club] || 50; 
+        let power = basePower + (Math.random() * 10 - 5); // OVR Drużyny + sezonowa dyspozycja
         
         if (isPlayer) {
             let playerImpact = playerPoints / (baseMatches * 15); 
-            power += (playerImpact * 60); 
-            if (playerPoints < (baseMatches * 5)) power -= 20; 
+            power += (playerImpact * 30); // Lider podnosi siłę zespołu
+            if (playerPoints < (baseMatches * 5)) power -= 10; 
         }
         table.push({ name: club, isMe: isPlayer, power: power });
     });
 
     table.sort((a, b) => b.power - a.power);
-
     let currentPts = baseMatches * 2 + 6; 
 
     table.forEach((t, i) => {
         t.pos = i + 1;
         
-        // Rozdzielanie dodatkowych meczów z play-off i play-down
         if (leagueName === "KLŻ") {
-            if (t.pos <= 2) t.matches = baseMatches + 4; // Finaliści
-            else if (t.pos <= 4) t.matches = baseMatches + 2; // Półfinaliści
+            if (t.pos <= 2) t.matches = baseMatches + 4; 
+            else if (t.pos <= 4) t.matches = baseMatches + 2; 
             else t.matches = baseMatches;
         } else {
-            if (t.pos <= 2) t.matches = baseMatches + 4; // Finał / Złoto
-            else if (t.pos <= 4) t.matches = baseMatches + 2; // Półfinał (o brąz)
-            else t.matches = baseMatches + 4; // Grupa spadkowa / Playdown (+4 mecze)
+            if (t.pos <= 2) t.matches = baseMatches + 4; 
+            else if (t.pos <= 4) t.matches = baseMatches + 2; 
+            else t.matches = baseMatches + 4; 
         }
 
-        if (t.isMe) t.matches = playerTotalMatches; // Wymuś zsynchronizowanie meczów z graczem
+        if (t.isMe) t.matches = playerTotalMatches; 
 
         t.pts = currentPts - (i * 2) - Math.floor(Math.random() * 2);
         if (t.pts < 0) t.pts = 0;
@@ -6150,7 +6155,7 @@ function ensureSimOverlay() {
     `;
     simDiv.innerHTML = `
         <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Sezon...</h2>
-        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 20px;">Runda 1</div>
+        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 20px; text-align:center;"></div>
         <div style="display:flex; gap: 20px; margin-bottom: 30px;">
             <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
             <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
@@ -6174,7 +6179,7 @@ async function playSeason(ovrMod = 0, benched = false) {
     let lData = CAREER_CONSTANTS[playingLeague];
     let baseOvr = cState.ovr + ovrMod;
     
-    // Obliczanie ilości meczów dla Zespołu Gracza (żeby symulacja wiedziała ile trwa)
+    // Obliczanie ilości meczów
     let baseMatches = (cState.leagues[playingLeague].length % 2 === 0) ? (cState.leagues[playingLeague].length - 1) * 2 : (cState.leagues[playingLeague].length - 1) * 2;
     let seasonMatches = baseMatches;
     let expectedPower = Math.random() * 60 + 40 + ((baseOvr - lData.diff) * 1.5);
@@ -6188,6 +6193,11 @@ async function playSeason(ovrMod = 0, benched = false) {
         else seasonMatches += 4; 
     }
     
+    // Generowanie kalendarza (lista rywali)
+    let opponents = [...cState.leagues[playingLeague]].filter(c => c !== playingClub).sort(() => 0.5 - Math.random());
+    let schedule = [];
+    while (schedule.length < seasonMatches) schedule.push(...opponents);
+
     // UI setup
     const simOverlay = document.getElementById('simOverlay');
     const simMatchInfo = document.getElementById('simMatchInfo');
@@ -6202,35 +6212,40 @@ async function playSeason(ovrMod = 0, benched = false) {
     let seasonHeats = 0;
     let seasonPoints = 0;
     let seasonBonus = 0;
-    
-    let midSeasonOvrMod = 0;
 
     for (let m = 1; m <= seasonMatches; m++) {
-        await new Promise(r => setTimeout(r, 120)); 
+        await new Promise(r => setTimeout(r, 150)); 
         
         let isHome = (m % 2 !== 0);
-        simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span>`;
+        let opponent = schedule[m-1];
+        let oppColor = getCareerClubColor(opponent);
+
+        simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
         simProgressBar.style.width = `${(m / seasonMatches) * 100}%`;
 
-        if (Math.random() < 0.05 && m > 2 && m < seasonMatches - 2) {
-            let evtRoll = Math.random();
-            if (evtRoll < 0.4) {
-                simEvents.innerText = `⚠️ Defekt motocykla! Słabszy występ.`;
-                simEvents.style.color = "var(--red-neon)";
-                midSeasonOvrMod -= 2;
-            } else if (evtRoll < 0.8) {
-                simEvents.innerText = `🔥 Świetne spasowanie! Znalazłeś prędkość.`;
-                simEvents.style.color = "var(--green-neon)";
-                midSeasonOvrMod += 2;
-            } else {
-                simEvents.innerText = `🚑 Drobny uraz. Opuszczasz kilka biegów.`;
-                simEvents.style.color = "var(--yellow-neon)";
-                midSeasonOvrMod -= 4;
-            }
-            setTimeout(()=> { simEvents.innerText = ""; }, 1500);
+        // Mid-Match Events (akcja w trwającym meczu)
+        let matchEventOvrMod = 0;
+        let matchEventHeatsMod = 0;
+            
+        if (Math.random() < 0.15 && m > 2) { // 15% szans na wydarzenie
+            const matchEvents = [
+                { text: "⚠️ Wjeżdżasz w taśmę w ważnym biegu!", ovr: -5, heats: -1, color: "var(--red-neon)" },
+                { text: "🔥 Perfekcyjne spasowanie od 1. wyścigu!", ovr: 12, heats: 0, color: "var(--green-neon)" },
+                { text: "🚜 Tor pełen dziur. Jazda o przetrwanie.", ovr: -8, heats: 0, color: "var(--red-neon)" },
+                { text: "🚀 Wygrywasz starty o długość motocykla!", ovr: 15, heats: 0, color: "var(--green-neon)" },
+                { text: "❌ Sędzia wyklucza Cię po kontrowersyjnym faulu.", ovr: -5, heats: -1, color: "var(--yellow-neon)" },
+                { text: "🔁 Zastępstwo zawodnika (ZZ)! Dodatkowy bieg.", ovr: 0, heats: 1, color: "var(--accent)" },
+                { text: "🔧 Defekt motocykla na punktowanej pozycji...", ovr: -8, heats: 0, color: "var(--red-neon)" }
+            ];
+            let ev = matchEvents[Math.floor(Math.random() * matchEvents.length)];
+            simEvents.innerText = ev.text;
+            simEvents.style.color = ev.color;
+            matchEventOvrMod = ev.ovr;
+            matchEventHeatsMod = ev.heats;
+            setTimeout(()=> { simEvents.innerText = ""; }, 1400);
         }
 
-        let matchEffOvr = baseOvr + midSeasonOvrMod + (isHome ? 4 : -4); 
+        let matchEffOvr = baseOvr + matchEventOvrMod + (isHome ? 4 : -4); 
         if (benched && !isGuaranteed) matchEffOvr -= 15; 
         
         let heatsInMatch = 0;
@@ -6243,6 +6258,8 @@ async function playSeason(ovrMod = 0, benched = false) {
         else heatsInMatch = Math.floor(Math.random() * 3) + 2; 
         
         if (isGuaranteed) heatsInMatch = Math.max(heatsInMatch, 3);
+        heatsInMatch += matchEventHeatsMod;
+        if (heatsInMatch < 0) heatsInMatch = 0;
         
         let matchPts = 0;
         let matchBon = 0;
@@ -6282,7 +6299,7 @@ async function playSeason(ovrMod = 0, benched = false) {
     if (officialAvg > 3.00) officialAvg = 3.00;
 
     // ==========================================
-    // SYSTEM ROZWOJU (ZBALANSOWANY)
+    // SYSTEM ROZWOJU ZAWODNIKA
     // ==========================================
     let ageGrowth = 0;
     if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 3) + 2; 
@@ -6312,9 +6329,29 @@ async function playSeason(ovrMod = 0, benched = false) {
     if (cState.age <= 23 && totalGrowth < 0) totalGrowth = 0; 
 
     cState.ovr += totalGrowth;
-    
     if (cState.ovr > 99) cState.ovr = 99;
     if (cState.ovr < 30) cState.ovr = 30;
+
+    // ==========================================
+    // FLUKTUACJE OVR DRUŻYN (NAGŁE SPADKI/WZROSTY)
+    // ==========================================
+    for (let club in cState.teamOVRs) {
+        let change = Math.floor(Math.random() * 5) - 2; // Stabilna forma (-2 do +2)
+        
+        let crisisRoll = Math.random();
+        if (crisisRoll < 0.03) { // 3% szans na wielki skok (Bogaty Inwestor)
+            change += 15;
+            console.log(`[BOMBA] Zespół ${club} buduje wielki skład!`);
+        } else if (crisisRoll > 0.97) { // 3% szans na upadek (Brak kasy / ucieczka lidera)
+            change -= 15;
+            console.log(`[KRYZYS] Zespół ${club} traci finansowanie!`);
+        }
+        
+        cState.teamOVRs[club] += change;
+        if (cState.teamOVRs[club] > 95) cState.teamOVRs[club] = 95;
+        if (cState.teamOVRs[club] < 35) cState.teamOVRs[club] = 35;
+    }
+
 
     let gotIMS = false;
     if (baseOvr >= 90 && Math.random() < ((baseOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
@@ -6438,7 +6475,7 @@ function generateAcademyOffers() {
     
     let c3League = Math.random() < 0.5 ? "PGE Ekstraliga" : "Metalkas 2.E";
     let availableC3 = cState.leagues[c3League].filter(c => !usedClubs.includes(c));
-    if (availableC3.length === 0) availableC3 = cState.leagues[c3League]; // Fallback
+    if (availableC3.length === 0) availableC3 = cState.leagues[c3League]; 
     let c3 = availableC3[Math.floor(Math.random() * availableC3.length)];
 
     cState.pendingOffers = [
@@ -6483,12 +6520,12 @@ function generateTransferWindow() {
     else possibleLeagues = ["PGE Ekstraliga", "PGE Ekstraliga"];
 
     cState.pendingOffers = [];
-    let usedClubs = [cState.club]; // Zablokuj obecny klub przed pojawieniem się w normalnych ofertach
+    let usedClubs = [cState.club]; 
 
     possibleLeagues.forEach(lName => {
         if (cState.pendingOffers.length >= 2) return;
         let available = cState.leagues[lName].filter(c => !usedClubs.includes(c));
-        if (available.length === 0) available = cState.leagues[lName]; // Fallback
+        if (available.length === 0) available = cState.leagues[lName]; 
         
         let club = available[Math.floor(Math.random() * available.length)];
         usedClubs.push(club);
@@ -6499,7 +6536,8 @@ function generateTransferWindow() {
         });
     });
 
-    cState.pendingOffers.push({ league: cState.league, club: cState.club, years: 2, type: "extension" });
+    let stayType = "extension"; 
+    cState.pendingOffers.push({ league: cState.league, club: cState.club, years: 2, type: stayType });
 
     let o1 = cState.pendingOffers[0];
     let o2 = cState.pendingOffers[1];
