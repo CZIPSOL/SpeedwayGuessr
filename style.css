@@ -2036,69 +2036,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 
 
-
-/* --- KARIERA SPEEDWAY --- */
-.career-offer-card {
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: 0.2s;
-}
-.career-offer-card:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: var(--accent);
-}
-.career-offer-details {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.border-top {
-    border-top: 1px solid rgba(255,255,255,0.1);
-}
-
-/* --- KARTA FUT (KARIERA) --- */
-.fut-card {
-    width: 240px;
-    height: 340px;
-    background: url('https://www.transparenttextures.com/patterns/cubes.png'), linear-gradient(135deg, #d4af37 0%, #aa8015 50%, #f1c40f 100%);
-    border-radius: 12px;
-    padding: 10px;
-    box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(255, 255, 255, 0.5);
-    position: relative;
-    border: 2px solid #ffee88;
-}
-.fut-card-inner {
-    width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; position: relative;
-}
-.fut-ovr {
-    position: absolute; top: 10px; left: 10px; font-size: 38px; font-weight: 900; color: #111; line-height: 0.9; text-shadow: 0px 1px 1px rgba(255,255,255,0.5);
-}
-.fut-pos {
-    position: absolute; top: 45px; left: 14px; font-size: 14px; font-weight: 900; color: #111;
-}
-.fut-flag {
-    position: absolute; top: 70px; left: 12px; width: 30px; height: 20px; border: 1px solid #111;
-}
-.fut-flag img { width: 100%; height: 100%; object-fit: cover; }
-.fut-photo {
-    font-size: 90px; margin-top: 30px; filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
-}
-.fut-name {
-    font-size: 22px; font-weight: 900; color: #111; text-transform: uppercase; margin-top: 15px; border-bottom: 2px solid rgba(17,17,17,0.3); width: 80%; text-align: center; padding-bottom: 5px;
-}
-.fut-stats {
-    display: grid; grid-template-columns: 1fr 1fr; width: 90%; gap: 10px; margin-top: 15px;
-}
-.fut-stat {
-    display: flex; justify-content: space-between; color: #111; font-weight: 900; font-size: 16px;
-}
-.fut-stat span:first-child { font-weight: 700; opacity: 0.8; font-size: 12px; align-self: flex-end; }
-
 /* ============================================== */
 /* ====== KARIERA: UKŁAD COPERO ================= */
 /* ============================================== */
@@ -2164,6 +2101,15 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 /* EVENT ANIMATION */
 .event-success-text { color: var(--green-neon); text-shadow: 0 0 10px var(--green-neon); }
 .event-fail-text { color: var(--red-neon); text-shadow: 0 0 10px var(--red-neon); }
+
+/* --- UI WYPOŻYCZEŃ --- */
+.loan-choice-box { background: rgba(255, 51, 51, 0.1); border: 1px solid var(--red-neon); border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+.loan-choice-box select { width: 100%; padding: 10px; border-radius: 8px; font-weight: 700; background: #111; color: #fff; border: 1px solid var(--text-dim); margin-top: 10px; }
+
+/* --- KOŁO FORTUNY (EVENTY KARIERY) --- */
+.career-wheel-box { position: relative; width: 200px; height: 200px; margin: 20px auto; border-radius: 50%; border: 5px solid #fff; overflow: hidden; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+.career-wheel { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient( var(--green-neon) 0deg 45deg, var(--red-neon) 45deg 90deg, var(--green-neon) 90deg 135deg, var(--red-neon) 135deg 180deg, var(--green-neon) 180deg 225deg, var(--red-neon) 225deg 270deg, var(--green-neon) 270deg 315deg, var(--red-neon) 315deg 360deg ); transition: transform 3s cubic-bezier(0.2, 0.8, 0.2, 1); transform: rotate(0deg); }
+.career-wheel-pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid #fff; z-index: 10; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5)); }
 
 /* OŚ CZASU (PRAWA STRONA) */
 .timeline-header { display: flex; font-size: 10px; color: var(--text-dim); font-weight: 900; padding: 0 10px 10px 10px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; text-align: center; }

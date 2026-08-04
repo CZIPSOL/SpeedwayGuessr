@@ -882,13 +882,15 @@
     
     <div id="careerContainer" class="career-layout" style="display: none;">
         
-        <!-- NAKŁADKA ANIMACJI EVENTÓW -->
+        <!-- NAKŁADKA ANIMACJI EVENTÓW (KOŁO FORTUNY) -->
         <div id="careerEventOverlay" class="win-overlay" style="display: none; z-index: 10050; position: absolute; border-radius: 24px;">
             <div class="stats-modal modal-sm" style="background: rgba(15, 15, 18, 0.95); width: 90%;">
-                <h3 id="eventAnimTitle" class="text-white font-black uppercase mb-15">LOSOWANIE...</h3>
-                <p id="eventAnimDesc" class="text-dim text-xs mb-20">Sprawdzamy efekty twojej decyzji.</p>
-                <div class="ach-progress-bar-bg" style="height: 12px; background: rgba(255,255,255,0.1);">
-                    <div id="eventAnimBar" class="ach-progress-bar-fill" style="width: 0%; background: var(--accent); transition: width 1.5s linear;"></div>
+                <h3 id="eventAnimTitle" class="text-white font-black uppercase mb-10">RYZYKO...</h3>
+                <p id="eventAnimDesc" class="text-dim text-xs mb-10">Czy to była dobra decyzja?</p>
+                
+                <div class="career-wheel-box">
+                    <div class="career-wheel-pointer"></div>
+                    <div id="careerWheelInner" class="career-wheel"></div>
                 </div>
             </div>
         </div>
@@ -972,7 +974,7 @@
                 </div>
             </div>
             
-            <!-- EKRAN 3: PODSUMOWANIE SEZONU (ZASTĘPUJE ACTION AREA) -->
+            <!-- EKRAN 3: PODSUMOWANIE SEZONU -->
             <div id="careerSeasonSummary" class="w-100 text-center" style="display: none;">
                 <h2 class="text-xl font-black mb-10 text-accent">KONIEC SEZONU</h2>
                 
@@ -1392,7 +1394,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.12"></script>
+    <script src="script.js?v2.13"></script>
 
     
 </body>

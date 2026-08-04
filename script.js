@@ -5947,10 +5947,15 @@ function generateOffers() {
 
     cState.pendingOffers = [];
 
+    // Przedłużenia: Zawsze dla młodych, dla starych jeśli AVG ok
     if (cState.club) {
         let shouldExtend = false;
-        if (cState.age <= 21) shouldExtend = true;
-        else if (cState.history.length > 0 && cState.history[cState.history.length - 1].avg !== "-" && parseFloat(cState.history[cState.history.length - 1].avg) >= 1.50) shouldExtend = true;
+        if (cState.age <= 21) {
+            shouldExtend = true;
+        } else if (cState.history.length > 0) {
+            let lastSeason = cState.history[cState.history.length - 1];
+            if (lastSeason.avg !== "-" && parseFloat(lastSeason.avg) >= 1.20) shouldExtend = true;
+        }
 
         if (shouldExtend) {
             let basePay = Math.floor(cState.contractBase * 1.10); 
@@ -5962,61 +5967,35 @@ function generateOffers() {
         }
     }
 
-    if (cState.contractYears > 0) {
-        let lData = CAREER_CONSTANTS[cState.league];
-        let baseFormRatio = cState.ovr / lData.diff;
+    possibleLeagues.forEach(lName => {
+        if (cState.pendingOffers.length >= 4) return;
+        let clubsInLeague = cState.leagues[lName];
+        let club = clubsInLeague[Math.floor(Math.random() * clubsInLeague.length)];
+        if (cState.pendingOffers.some(o => o.club === club)) return;
 
-        if (baseFormRatio < 0.70 && cState.league !== "KLŻ") {
-            let lowerLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
-            for(let i = 0; i < 2; i++) {
-                let club = cState.leagues[lowerLeague][Math.floor(Math.random() * cState.leagues[lowerLeague].length)];
-                if (!cState.pendingOffers.some(o => o.club === club)) {
-                    cState.pendingOffers.push({ 
-                        league: lowerLeague, club: club, base: 0, ptPay: Math.floor(cState.contractPt * 0.7), years: 1, type: "loan" 
-                    });
-                }
-            }
-            cState.pendingOffers.push({ 
-                league: cState.league, club: cState.club, base: 0, ptPay: cState.contractPt, years: cState.contractYears, type: "stay" 
-            });
-        }
-    } else {
-        possibleLeagues.forEach(lName => {
-            if (cState.pendingOffers.length >= 4) return;
-            let clubsInLeague = cState.leagues[lName];
-            let club = clubsInLeague[Math.floor(Math.random() * clubsInLeague.length)];
-            if (cState.pendingOffers.some(o => o.club === club)) return;
+        let consts = CAREER_CONSTANTS[lName];
+        let ovrFactor = Math.pow(Math.max(cState.ovr - 20, 5), 2) / 3000; 
+        if(ovrFactor > 2.5) ovrFactor = 2.5;
 
-            let consts = CAREER_CONSTANTS[lName];
-            let ovrFactor = Math.pow(Math.max(cState.ovr - 20, 5), 2) / 3000; 
-            if(ovrFactor > 2.5) ovrFactor = 2.5;
-
-            let basePay = Math.floor(consts.basePay.min + (consts.basePay.max - consts.basePay.min) * (ovrFactor / 2));
-            let ptPay = Math.floor(consts.pointPay.min + (consts.pointPay.max - consts.pointPay.min) * (ovrFactor / 2));
-            
-            cState.pendingOffers.push({ 
-                league: lName, club: club, base: Math.round(basePay / 5000) * 5000, ptPay: Math.round(ptPay / 50) * 50, 
-                years: cState.age <= 21 ? 2 : (Math.floor(Math.random() * 2) + 1), type: "normal"
-            });
+        let basePay = Math.floor(consts.basePay.min + (consts.basePay.max - consts.basePay.min) * (ovrFactor / 2));
+        let ptPay = Math.floor(consts.pointPay.min + (consts.pointPay.max - consts.pointPay.min) * (ovrFactor / 2));
+        
+        cState.pendingOffers.push({ 
+            league: lName, club: club, base: Math.round(basePay / 5000) * 5000, ptPay: Math.round(ptPay / 50) * 50, 
+            years: cState.age <= 21 ? 2 : (Math.floor(Math.random() * 2) + 1), type: "normal"
         });
-    }
+    });
 
     const listContainer = document.getElementById('cOffersListContainer');
     cState.pendingOffers.forEach((offer, idx) => {
         let baseK = offer.base > 0 ? (offer.base / 1000).toFixed(0) + "k PLN (Podpis)" : "Brak premii";
+        let topBadge = offer.type === "extension" ? `<span style="background:var(--green-neon); color:#000; padding:2px 6px; border-radius:4px; font-size:9px;">KONT. MACIERZYSTY</span>` : '';
         
-        let topBadge = '';
-        if (offer.type === "extension") topBadge = `<span style="background:var(--green-neon); color:#000; padding:2px 6px; border-radius:4px; font-size:9px;">PRZEDŁUŻENIE</span>`;
-        if (offer.type === "loan") topBadge = `<span style="background:#ffcc00; color:#000; padding:2px 6px; border-radius:4px; font-size:9px;">WYPOŻYCZENIE</span>`;
-        if (offer.type === "stay") topBadge = `<span style="background:#ff3333; color:#fff; padding:2px 6px; border-radius:4px; font-size:9px;">WALKA O SKŁAD</span>`;
-        
-        let titleText = offer.type === "stay" ? "ZOSTAJĘ W KLUBIE" : offer.club;
-
         listContainer.innerHTML += `
             <div class="c-offer-card" onclick="signContract(${idx})">
                 <div class="flex-between align-items-center mb-5">
-                    <span class="text-accent font-black text-sm uppercase">${titleText}</span> 
-                    <span class="text-dim text-xs font-bold">${offer.type === "loan" ? "1 ROK" : offer.years + " LATA"}</span>
+                    <span class="text-accent font-black text-sm uppercase">${offer.club}</span> 
+                    <span class="text-dim text-xs font-bold">${offer.years} LATA</span>
                 </div>
                 <div class="text-xs text-dim mb-5">${topBadge} ${offer.league}</div>
                 <div class="flex-between text-white text-xs font-bold mt-5" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 5px;">
@@ -6038,7 +6017,7 @@ function signContract(idx) {
         activeLoanLeague = o.league;
         cState.contractYears--; 
     } else if (o.type === "stay") {
-        // Nic się nie zmienia
+        // Zostaję, nic nie zmieniam.
     } else {
         cState.club = o.club;
         cState.league = o.league;
@@ -6053,15 +6032,42 @@ function signContract(idx) {
     showSeasonDashboard();
 }
 
+// Odrzucenie i Walka o Skład
+function rejectLoan() {
+    activeLoanClub = null;
+    activeLoanLeague = null;
+    document.querySelector('.loan-choice-box').style.display = 'none';
+    document.getElementById('equipSection').style.display = 'block';
+    showToast(`Odrzuciłeś ofertę! Walczysz o skład.`, "normal");
+}
+
 function showSeasonDashboard() {
     const area = document.getElementById('careerActionArea');
     let lData = CAREER_CONSTANTS[cState.league];
     let baseFormRatio = cState.ovr / lData.diff;
     let needsLoan = (baseFormRatio < 0.70 && cState.league !== "KLŻ" && cState.contractYears > 0);
 
+    let loanHtml = '';
     if (needsLoan && activeLoanClub === null) {
-        generateOffers();
-        return; 
+        let lowerLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
+        let lClubs = cState.leagues[lowerLeague];
+        
+        loanHtml = `
+            <div class="loan-choice-box">
+                <span class="text-red font-black text-xs uppercase block mb-5">⚠️ Zbyt słaby OVR na 1. skład!</span>
+                <span class="text-white text-xs block mb-10">Trener sugeruje wypożyczenie, w przeciwnym razie przesiedzisz sezon na ławce.</span>
+                
+                <select id="careerLoanSelect">
+                    <option value="${lClubs[0]}">Wypożyczenie: ${lClubs[0]} (${lowerLeague})</option>
+                    <option value="${lClubs[1]}">Wypożyczenie: ${lClubs[1]} (${lowerLeague})</option>
+                </select>
+                
+                <div class="flex-col gap-10 mt-10">
+                    <button onclick="acceptLoan()" class="btn-reset p-10 text-xs" style="background: var(--green-neon); color: #000;">IDĘ NA WYPOŻYCZENIE</button>
+                    <button onclick="rejectLoan()" class="btn-reset p-10 text-xs" style="background: transparent; color: var(--text-dim); border: 1px solid var(--text-dim);">ZOSTAJĘ I WALCZĘ O SKŁAD</button>
+                </div>
+            </div>
+        `;
     }
 
     const eqTiers = [
@@ -6077,7 +6083,8 @@ function showSeasonDashboard() {
             <h3 class="text-white text-sm font-black m-0 uppercase">PRZYGOTOWANIE</h3>
             <span class="text-accent font-black text-xs">KONTRAKT: ${cState.contractYears} LATA</span>
         </div>
-        <div id="equipSection">
+        ${loanHtml}
+        <div id="equipSection" style="${loanHtml !== '' ? 'display:none;' : 'display:block;'}">
             <p class="text-xs text-dim mb-15">Wybierz klasę sprzętu na ten sezon.</p>
             <div class="flex-col gap-5 text-left mb-15">
     `;
@@ -6104,41 +6111,74 @@ function showSeasonDashboard() {
     area.innerHTML = html;
 }
 
+function acceptLoan() {
+    let select = document.getElementById('careerLoanSelect');
+    activeLoanClub = select.value;
+    activeLoanLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
+    
+    document.querySelector('.loan-choice-box').style.display = 'none';
+    document.getElementById('equipSection').style.display = 'block';
+    showToast(`Idziesz na wypożyczenie do ${activeLoanClub}!`, "success");
+}
+
+
+// --- ANIMACJA KOŁA FORTUNY ---
 function playEventAnimation(successChance, onSuccess, onFail, eqId) {
     const overlay = document.getElementById('careerEventOverlay');
-    const bar = document.getElementById('eventAnimBar');
     const title = document.getElementById('eventAnimTitle');
+    const wheel = document.getElementById('careerWheelInner');
     
     title.innerText = "LOSOWANIE...";
-    title.className = "text-white font-black uppercase mb-15";
-    bar.style.width = "0%";
-    bar.style.background = "var(--accent)";
+    title.className = "text-white font-black uppercase mb-10";
     
-    overlay.style.display = 'flex'; // Zmieniono z block na flex żeby wyśrodkować
+    wheel.style.transition = 'none';
+    wheel.style.transform = `rotate(0deg)`;
+    
+    overlay.style.display = 'flex'; 
     setTimeout(() => overlay.style.opacity = '1', 10);
-    setTimeout(() => { bar.style.width = "100%"; }, 100);
+    
+    let isSuccess = Math.random() < successChance;
 
     setTimeout(() => {
-        let isSuccess = Math.random() < successChance;
+        let extraRotations = 5 * 360; 
+        let stopAngle = 0;
+
+        if (isSuccess) {
+            let greenAngles = [20, 110, 200, 290];
+            stopAngle = greenAngles[Math.floor(Math.random() * greenAngles.length)];
+        } else {
+            let redAngles = [65, 155, 245, 335];
+            stopAngle = redAngles[Math.floor(Math.random() * redAngles.length)];
+        }
+
+        let totalRotation = extraRotations + stopAngle;
+
+        wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
+        playSound('flip');
+
+    }, 100);
+
+    setTimeout(() => {
         if(isSuccess) {
             title.innerText = "SUKCES! 🟩";
-            title.className = "text-green font-black uppercase mb-15 event-success-text";
-            bar.style.background = "var(--green-neon)";
+            title.className = "text-green font-black uppercase mb-10 event-success-text";
             playSound('win');
             onSuccess();
         } else {
             title.innerText = "PORAŻKA! 🟥";
-            title.className = "text-red font-black uppercase mb-15 event-fail-text";
-            bar.style.background = "var(--red-neon)";
+            title.className = "text-red font-black uppercase mb-10 event-fail-text";
             playSound('error');
             onFail();
         }
+        
         setTimeout(() => {
             overlay.style.opacity = '0';
             setTimeout(() => overlay.style.display = 'none', 300);
-            playSeason(eqId);
-        }, 1500);
-    }, 1600); 
+            playSeason(eqId); 
+        }, 2000);
+        
+    }, 3200); 
 }
 
 async function triggerInteractiveEvent() {
@@ -6176,6 +6216,7 @@ async function triggerInteractiveEvent() {
     playSeason(eqId);
 }
 
+// --- ZMODYFIKOWANA SYMULACJA Z SZYBSZYM ROZWOJEM OVR ---
 function playSeason(eqId) {
     const eqTiers = [ {cost: 0, b: -3}, {cost: cState.ovr*400, b: -1}, {cost: cState.ovr*1500, b: 0}, {cost: cState.ovr*3500, b: 1}, {cost: cState.ovr*8000, b: 3} ];
     let eq = eqTiers[eqId - 1];
@@ -6195,11 +6236,13 @@ function playSeason(eqId) {
     seasonMatches -= injuryMatchesLost; 
     if (seasonMatches < 0) seasonMatches = 0;
     
+    // Obliczanie ilości biegów - poprawione (kara za ławkę)
     let heatsPerMatch = 0;
-    if (cState.age === 16) {
-        if (formRatio < 0.70) heatsPerMatch = 1; else heatsPerMatch = 2 + Math.random(); 
+    if (cState.age <= 16) {
+        if (formRatio < 0.60) heatsPerMatch = 1; else heatsPerMatch = 2 + Math.random(); 
     } else {
-        if (formRatio < 0.70) heatsPerMatch = Math.random() * 1.5; 
+        // Zwiększamy ryzyko grzania ławy
+        if (formRatio < 0.65) heatsPerMatch = Math.random() * 1.5; 
         else if (formRatio < 0.90) heatsPerMatch = 2 + Math.random() * 2; 
         else if (formRatio < 1.10) heatsPerMatch = 4 + Math.random() * 1; 
         else heatsPerMatch = 5 + Math.random() * 1.5; 
@@ -6216,16 +6259,27 @@ function playSeason(eqId) {
     let totalPts = Math.round(totalHeats * avg);
     
     let activePtPay = cState.contractPt;
-    if (activeLoanLeague) activePtPay = Math.floor(activePtPay * 0.5); // Obniżka na wypożyczeniu
+    if (activeLoanLeague) activePtPay = Math.floor(activePtPay * 0.5); 
     
     let ptMoney = totalPts * activePtPay;
     cState.money += ptMoney;
 
     cState.stats.heats += totalHeats; cState.stats.pts += totalPts;
     
-    let ageGrowth = cState.age <= 21 ? 1 : (cState.age > 33 ? -2 : 0);
-    let perfGrowth = avg >= 2.2 ? 2 : (avg >= 1.7 ? 1 : (avg < 1.2 ? -1 : 0));
-    if (totalHeats < 15 && injuryMatchesLost === 0) perfGrowth -= 2; 
+    // ROZWÓJ OVR - NAPRAWIONY (DUŻY BOOST DLA MŁODYCH)
+    let ageGrowth = 0;
+    if (cState.age <= 21) ageGrowth = 3; 
+    else if (cState.age <= 25) ageGrowth = 1; 
+    else if (cState.age > 33) ageGrowth = -2; 
+    else ageGrowth = 0;
+
+    let perfGrowth = avg >= 2.0 ? 2 : (avg >= 1.6 ? 1 : (avg < 1.0 ? -1 : 0));
+    
+    // KARA ZA ŁAWKĘ - jeśli zaryzykowałeś ławkę i nie jeździłeś
+    if (totalHeats < 15 && injuryMatchesLost === 0) {
+        perfGrowth -= 2; 
+        showToast("Sezon na ławce zaszkodził twojej formie!", "error");
+    }
     
     let totalGrowth = ageGrowth + perfGrowth + eq.b + injuryOvrDrop;
     if (cState.ovr >= 85 && totalGrowth > 0) totalGrowth = Math.floor(totalGrowth / 3); 
