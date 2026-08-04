@@ -5812,18 +5812,18 @@ document.addEventListener('keydown', function(e) {
 // ==============================================
 
 const CAREER_CONSTANTS = {
-    "PGE Ekstraliga": { diff: 88, baseMatches: 14, basePay: { min: 250000, max: 900000 }, pointPay: { min: 4000, max: 8000 }, logo: "🏆" },
-    "Metalkas 2.E": { diff: 72, baseMatches: 14, basePay: { min: 100000, max: 350000 }, pointPay: { min: 2000, max: 4000 }, logo: "🥈" },
-    "KLŻ": { diff: 55, baseMatches: 12, basePay: { min: 15000, max: 60000 }, pointPay: { min: 500, max: 1200 }, logo: "🥉" }
+    "PGE Ekstraliga": { diff: 86, baseMatches: 14, basePay: { min: 250000, max: 900000 }, pointPay: { min: 4000, max: 8000 }, logo: "🏆" },
+    "Metalkas 2.E": { diff: 70, baseMatches: 14, basePay: { min: 100000, max: 350000 }, pointPay: { min: 2000, max: 4000 }, logo: "🥈" },
+    "KLŻ": { diff: 50, baseMatches: 12, basePay: { min: 15000, max: 60000 }, pointPay: { min: 500, max: 1200 }, logo: "🥉" }
 };
 
 let cState = {
     active: false,
     name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
-    age: 15, maxAge: 40, 
+    age: 15, maxAge: 41, 
     ovr: 40, money: 0, 
     club: null, league: null, 
-    contractYears: 0, 
+    contractYears: 0, contractBase: 0, contractPt: 0, 
     stats: { heats: 0, pts: 0, bon: 0, dmp: 0, ims: 0 }, history: [],
     leagues: {
         "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
@@ -5847,27 +5847,32 @@ function openCareerMode() {
     
     cState = { 
         active: true, name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
-        age: 15, maxAge: 40, ovr: 40, money: 0, 
-        club: null, league: null, contractYears: 0,
+        age: 15, maxAge: 41, ovr: 35, money: 0, 
+        club: null, league: null, contractYears: 0, contractBase: 0, contractPt: 0,
         stats: { heats: 0, pts: 0, bon: 0, dmp: 0, ims: 0 }, history: [],
-        leagues: {
-            "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
-            "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
-            "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"]
-        }
+        leagues: JSON.parse(JSON.stringify(CAREER_CONSTANTS))
+    };
+    cState.leagues = {
+        "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
+        "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
+        "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów"]
     };
     
+    // Ustaw nagłówek osi czasu na PKT (dla zachowania układu)
+    const timelineHeader = document.getElementById('timelineHeader');
+    if(timelineHeader) timelineHeader.children[5].innerText = "PKT";
+
     document.getElementById('careerSetup').style.display = 'block';
     document.getElementById('careerMainPanel').style.display = 'none';
     document.getElementById('careerRetirement').style.display = 'none';
+    
     document.getElementById('timelineHeader').style.display = 'none';
     document.getElementById('timelineEmpty').style.display = 'block';
     document.getElementById('timelineList').innerHTML = '';
-    document.getElementById('timelineEndStats').style.display = 'none';
 }
 
 function exitCareerMode() {
-    if (confirm("Chcesz wyjść? Twój niezapisany postęp w karierze przepadnie!")) window.location.reload();
+    if (confirm("Chcesz wyjść? Postęp zostanie zresetowany.")) window.location.reload();
 }
 
 function updateKevlarPreview() {
@@ -5886,39 +5891,40 @@ function selectCareerNat(name, code, el) {
 function startCareerAcademy() {
     let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase();
     if(nameVal) cState.name = nameVal;
-    let nrVal = parseInt(document.getElementById('careerNumInput').value);
-    cState.num = (isNaN(nrVal) || nrVal < 1) ? 99 : nrVal;
+    cState.num = document.getElementById('careerNumInput').value || 99;
 
-    cState.ovr = Math.floor(Math.random() * 11) + 40; // 40-50 na start
+    cState.ovr = Math.floor(Math.random() * 11) + 30;
 
     document.getElementById('careerSetup').style.display = 'none';
-    document.getElementById('careerMainPanel').style.display = 'flex';
+    document.getElementById('careerMainPanel').style.display = 'flex'; // Zmienione z block na flex, aby układ działał poprawnie
     
     cState.age = 16;
     updateLeftPanelUI();
     generateAcademyOffers(); 
 }
 
-function formatMoney(amount) {
-    if (amount >= 1000000) return (amount / 1000000).toFixed(2) + "M PLN";
-    if (amount >= 1000) return (amount / 1000).toFixed(0) + "k PLN";
-    return amount + " PLN";
-}
-
 function updateLeftPanelUI() {
     document.getElementById('cOvr').innerText = cState.ovr;
     document.getElementById('cFlag').src = `https://flagcdn.com/w40/${cState.flagCode}.png`;
-    document.getElementById('cFullName').innerText = `${cState.name}`;
-    document.getElementById('cNumLabel').innerText = cState.num;
+    
+    // Obsługa długich nazwisk i ucięcia
+    let lastName = cState.name;
+    if (lastName.length > 12) lastName = lastName.substring(0, 10) + "...";
+    document.getElementById('cNumLabel').innerText = cState.num; // Tylko numer w czerwonym boxie
+    
     document.getElementById('cCurrentClub').innerText = cState.club ? cState.club : "Wolny agent";
     document.getElementById('cAge').innerText = cState.age;
-    document.getElementById('cMoney').innerText = formatMoney(cState.money);
+    
+    let cashM = cState.money >= 1000000 ? "€" + (cState.money / 1000000).toFixed(1) + "M" : "€" + (cState.money / 1000).toFixed(0) + "K";
+    document.getElementById('cMoney').innerText = cashM;
 
+    // Statystyki
     document.getElementById('cHeats').innerText = cState.stats.heats;
-    document.getElementById('cPts').innerText = `${cState.stats.pts}+${cState.stats.bon}`;
+    document.getElementById('cPts').innerText = `${cState.stats.pts}`; // Nie dodajemy tu bonusów w stringu żeby nie rozepchać UI, ew. wpisz punkty
     let avg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
     document.getElementById('cAvg').innerText = avg;
 
+    // Odświeżenie ikonek trofeów
     const tBox = document.getElementById('cTrophiesDisplay');
     if (cState.stats.dmp === 0 && cState.stats.ims === 0) {
         tBox.innerText = "🏆 BRAK TROFEÓW";
@@ -5930,6 +5936,8 @@ function updateLeftPanelUI() {
     }
 }
 
+// --- GENERATOR KART (WIDOKI COPERO) ---
+
 function generateAcademyOffers() {
     const area = document.getElementById('careerActionArea');
     
@@ -5938,36 +5946,36 @@ function generateAcademyOffers() {
     let c3 = cState.leagues["Metalkas 2.E"][Math.floor(Math.random() * cState.leagues["Metalkas 2.E"].length)];
 
     cState.pendingOffers = [
-        { league: "KLŻ", club: c1, years: 3 },
-        { league: "KLŻ", club: c2, years: 3 },
-        { league: "Metalkas 2.E", club: c3, years: 3 }
+        { league: "KLŻ", club: c1, years: 3, base: 15000, ptPay: 500, type: "normal" },
+        { league: "KLŻ", club: c2, years: 3, base: 15000, ptPay: 500, type: "normal" },
+        { league: "Metalkas 2.E", club: c3, years: 3, base: 30000, ptPay: 1500, type: "normal" }
     ];
 
     area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Wychowanek Klubowy</h3>
-        <p class="text-xs text-dim mb-15">Kluby zauważyły twój talent w szkółce. Wybierz zespół, w którym rozpoczniesz karierę.</p>
+        <h3 class="text-white font-black m-0 mb-5 text-xl">Oferta Wychowanka</h3>
+        <p class="text-xs text-dim mb-15">Trzy kluby chcą wcielić cię do swojego projektu młodzieżowego. Wybierz mądrze.</p>
         <div class="copero-action-grid">
             <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">PODPISZ KONTRAKT</span>
+                <span class="copero-card-title">PODPISZ Z</span>
                 <span class="copero-card-club">${c1}</span>
                 <div class="copero-card-img">🥉</div>
                 <span class="copero-card-bot">KLŻ</span>
             </div>
             <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">PODPISZ KONTRAKT</span>
+                <span class="copero-card-title">PODPISZ Z</span>
                 <span class="copero-card-club">${c2}</span>
                 <div class="copero-card-img">🥉</div>
                 <span class="copero-card-bot">KLŻ</span>
             </div>
             <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">PODPISZ KONTRAKT</span>
+                <span class="copero-card-title">PODPISZ Z</span>
                 <span class="copero-card-club">${c3}</span>
                 <div class="copero-card-img">🥈</div>
                 <span class="copero-card-bot">Metalkas 2.E</span>
             </div>
         </div>
     `;
-    renderTimeline(); // Przygotowuje "Wybór decyzji..."
+    renderTimeline(); // Przygotowuje "Choosing club..."
 }
 
 function generateTransferWindow() {
@@ -5984,11 +5992,32 @@ function generateTransferWindow() {
     possibleLeagues.forEach(lName => {
         if (cState.pendingOffers.length >= 2) return;
         let club = cState.leagues[lName][Math.floor(Math.random() * cState.leagues[lName].length)];
-        cState.pendingOffers.push({ league: lName, club: club, years: (cState.age <= 21) ? 2 : 1 });
+        
+        let consts = CAREER_CONSTANTS[lName];
+        let ovrFactor = Math.pow(Math.max(cState.ovr - 20, 5), 2) / 3000; 
+        if(ovrFactor > 2.5) ovrFactor = 2.5;
+
+        let basePay = Math.floor(consts.basePay.min + (consts.basePay.max - consts.basePay.min) * (ovrFactor / 2));
+        let ptPay = Math.floor(consts.pointPay.min + (consts.pointPay.max - consts.pointPay.min) * (ovrFactor / 2));
+        
+        cState.pendingOffers.push({ 
+            league: lName, club: club, base: Math.round(basePay / 5000) * 5000, ptPay: Math.round(ptPay / 50) * 50, 
+            years: cState.age <= 21 ? 2 : (Math.floor(Math.random() * 2) + 1), type: "normal"
+        });
     });
 
-    // Zostanie w klubie
-    cState.pendingOffers.push({ league: cState.league, club: cState.club, years: 2, type: "stay" });
+    // Zostanie w klubie (Przedłużenie lub nowa umowa)
+    let stayType = "stay";
+    let stayBase = cState.contractBase;
+    let stayPt = cState.contractPt;
+
+    if (cState.age <= 21 || (cState.history.length > 0 && parseFloat(cState.history[cState.history.length-1].avg) >= 1.5)) {
+        stayType = "extension";
+        stayBase = Math.floor(cState.contractBase * 1.15);
+        stayPt = Math.floor(cState.contractPt * 1.10);
+    }
+    
+    cState.pendingOffers.push({ league: cState.league, club: cState.club, base: stayBase, ptPay: stayPt, years: 2, type: stayType });
 
     let o1 = cState.pendingOffers[0];
     let o2 = cState.pendingOffers[1];
@@ -5996,7 +6025,7 @@ function generateTransferWindow() {
 
     area.innerHTML = `
         <h3 class="text-white font-black m-0 mb-5 text-xl">Okienko transferowe</h3>
-        <p class="text-xs text-dim mb-15">Twój kontrakt się skończył. Otrzymałeś nowe propozycje, ale możesz również zostać w obecnym zespole.</p>
+        <p class="text-xs text-dim mb-15">Otrzymałeś nowe propozycje. Możesz przyjąć jedną z nich lub zostać w zespole.</p>
         <div class="copero-action-grid">
             <div class="copero-card" onclick="signContract(0)">
                 <span class="copero-card-title">PODPISZ Z</span>
@@ -6011,7 +6040,7 @@ function generateTransferWindow() {
                 <span class="copero-card-bot">${o2.league}</span>
             </div>
             <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">ZOSTAŃ W</span>
+                <span class="copero-card-title">${stayType === 'extension' ? 'PRZEDŁUŻ W' : 'ZOSTAŃ W'}</span>
                 <span class="copero-card-club">${o3.club}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[o3.league].logo}</div>
                 <span class="copero-card-bot">${o3.league}</span>
@@ -6036,61 +6065,108 @@ function showLoanWindow() {
 
     area.innerHTML = `
         <h3 class="text-white font-black m-0 mb-5 text-xl">Wypożyczenie</h3>
-        <p class="text-xs text-dim mb-15">Twój klub uważa, że powinieneś zdobywać cenne minuty ligę niżej. Wybierz, gdzie chcesz się rozwijać.</p>
+        <p class="text-xs text-dim mb-15">Trener sugeruje jazdę o ligę niżej w celu rozwoju. Wybierz, gdzie chcesz się przenieść.</p>
         <div class="copero-action-grid">
             <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">IDŹ NA WYPOŻYCZENIE</span>
+                <span class="copero-card-title">WYPOŻYCZENIE DO</span>
                 <span class="copero-card-club">${l1}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
                 <span class="copero-card-bot">${lowerLeague}</span>
             </div>
             <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">IDŹ NA WYPOŻYCZENIE</span>
+                <span class="copero-card-title">WYPOŻYCZENIE DO</span>
                 <span class="copero-card-club">${l2}</span>
                 <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
                 <span class="copero-card-bot">${lowerLeague}</span>
             </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">ODRZUĆ I ZOSTAŃ W</span>
+            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="rejectLoan()">
+                <span class="copero-card-title">ODRZUĆ I WALCZ O SKŁAD</span>
                 <span class="copero-card-club">${cState.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[cState.league].logo}</div>
-                <span class="text-red font-bold text-xs mt-5">Ryzyko ławki</span>
+                <div class="copero-card-img" style="background:transparent; border: 1px dashed rgba(255,255,255,0.2);">❌</div>
+                <span class="text-red font-bold text-xs mt-5">Ryzyko ławki rezerwowych</span>
             </div>
         </div>
     `;
 }
 
+// BOGATA PULA 15 EVENTÓW
 function showEventWindow() {
     const area = document.getElementById('careerActionArea');
-
-    let rType = Math.random();
-    let evData = {};
-
-    if (rType < 0.3) {
-        evData = {
-            title: "Zmiana pozycji taktycznej",
-            desc: "Trener potrzebuje byś osłonił kolegę z zespołu na najtrudniejszym numerze w meczu.",
-            img: "📈",
-            opt1: { title: "Zgadzam się", bot1: "Gwarancja wszystkich biegów", bot2: "Ryzyko spadku (-2 OVR)", fn: "resolveRandomEvent(0, -2, 0.5)" },
-            opt2: { title: "Odmawiam", bot1: "", bot2: "Ominięte biegi z urzędu (-1 OVR)", fn: "playSeason(-1)" }
-        };
-    } else if (rType < 0.6) {
-        evData = {
-            title: "Kontrakt z Sponsorem",
-            desc: "Duża marka oferuje Ci 250,000 PLN w zamian za sesje zdjęciowe w tygodniu.",
-            img: "💰",
-            opt1: { title: "Zgadzam się", bot1: "+250,000 PLN", bot2: "Brak czasu na treningi (-1 OVR)", fn: "playSeason(-1, false, 250000)" },
-            opt2: { title: "Odrzucam", bot1: "Skupienie na jeździe", bot2: "+1 OVR", fn: "playSeason(1)" }
-        };
-    } else {
-        evData = {
-            title: "Podejrzany Mechanik",
-            desc: "W parkingu ktoś oferuje Ci eksperymentalne zębatki tytanowe.",
+    
+    const eventsPool = [
+        {
+            title: "Tytanowe sprzęgło",
+            desc: "Podejrzany mechanik oferuje tytanowe zębatki za 200,000 PLN. Są szybkie, ale pękają.",
             img: "⚙️",
-            opt1: { title: "Biorę to", bot1: "50% szans na potężny start (+3 OVR)", bot2: "50% na awarię (-3 OVR)", fn: "resolveRandomEvent(3, -3, 0.5)" },
-            opt2: { title: "Gram uczciwie", bot1: "Standardowe osiągi", bot2: "", fn: "playSeason(0)" }
-        };
-    }
+            opt1: { title: "Kupuję to", bot1: "60%: +3 OVR", bot2: "40%: -3 OVR", fn: "resolveRandomEvent(3, -3, 0.60, 200000)" },
+            opt2: { title: "Gram fair", bot1: "Brak zysku", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Kontrakt Sponsorski",
+            desc: "Firma energetyczna oferuje 500,000 PLN w zamian za bycie twarzą marki. Zabierze to mnóstwo czasu.",
+            img: "💰",
+            opt1: { title: "Biorę kasę", bot1: "+500k PLN", bot2: "70%: -2 OVR", fn: "resolveRandomEvent(0, -2, 0.30, -500000)" }, // Minus bo funkcja odejmuje kase
+            opt2: { title: "Skupienie", bot1: "+1 OVR", bot2: "Czas na trening", fn: "playSeason(1)" }
+        },
+        {
+            title: "Propozycja z Anglii",
+            desc: "Brytyjski klub proponuje regularne starty we wtorki i czwartki. Może zabraknąć sił na ligę polską.",
+            img: "🇬🇧",
+            opt1: { title: "Jadę do UK", bot1: "50%: +4 OVR", bot2: "50%: -2 OVR (Zmęczenie)", fn: "resolveRandomEvent(4, -2, 0.50)" },
+            opt2: { title: "Odrzucam", bot1: "+1 OVR", bot2: "Skupienie na lidze PL", fn: "playSeason(1)" }
+        },
+        {
+            title: "Konflikt z prezesem",
+            desc: "Prezes chce obciąć twoją stawkę punktową. Jeśli się postawisz, może odsunąć cię od składu.",
+            img: "🤬",
+            opt1: { title: "Stawiam się", bot1: "80%: Wygrywasz spór", bot2: "20%: -4 OVR (Ławka)", fn: "resolveRandomEvent(1, -4, 0.80)" },
+            opt2: { title: "Odpuszczam", bot1: "Tracisz 100k PLN", bot2: "Święty spokój", fn: "playSeason(0, false, -100000)" }
+        },
+        {
+            title: "Zimowy obóz Kadr",
+            desc: "Trener kadry narodowej zaprasza cię na wycieńczający obóz górski na własny koszt.",
+            img: "🏔️",
+            opt1: { title: "Jadę", bot1: "70%: +3 OVR", bot2: "30%: -1 OVR (Kontuzja)", fn: "resolveRandomEvent(3, -1, 0.70, 50000)" },
+            opt2: { title: "Wakacje", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Nowa konstrukcja ram",
+            desc: "Dostałeś szansę przetestowania nowych, elastycznych ram. Mogą być przełomowe lub beznadziejne.",
+            img: "🏍️",
+            opt1: { title: "Testuję", bot1: "45%: +4 OVR", bot2: "55%: -2 OVR", fn: "resolveRandomEvent(4, -2, 0.45)" },
+            opt2: { title: "Zostaję przy starych", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Turniej indywidualny",
+            desc: "Zostałeś zaproszony na mocno obsadzony turniej towarzyski. To szansa na jazdę z najlepszymi.",
+            img: "🏆",
+            opt1: { title: "Startuję", bot1: "60%: +2 OVR, +50k PLN", bot2: "40%: -1 OVR (Upadek)", fn: "resolveRandomEvent(2, -1, 0.60, -50000)" },
+            opt2: { title: "Odpoczywam", bot1: "Brak zmian", bot2: "", fn: "playSeason(0)" }
+        },
+        {
+            title: "Psycholog sportowy",
+            desc: "Masz blokadę przed pierwszym łukiem. Wybitny psycholog oferuje współpracę za duże pieniądze.",
+            img: "🧠",
+            opt1: { title: "Wchodzę w to", bot1: "80%: +2 OVR", bot2: "Koszt: 150k PLN", fn: "resolveRandomEvent(2, 0, 0.80, 150000)" },
+            opt2: { title: "Poradzę sobie sam", bot1: "30%: +1 OVR", bot2: "70%: -1 OVR", fn: "resolveRandomEvent(1, -1, 0.30)" }
+        },
+        {
+            title: "Zdrada mechanika",
+            desc: "Twój główny mechanik chce odejść do rywala. Możesz spróbować zatrzymać go pieniędzmi.",
+            img: "🛠️",
+            opt1: { title: "Zatrzymaj go", bot1: "Koszt: 200k PLN", bot2: "50%: I tak odejdzie (-2 OVR)", fn: "resolveRandomEvent(1, -2, 0.50, 200000)" },
+            opt2: { title: "Niech idzie", bot1: "Spadek formy (-2 OVR)", bot2: "", fn: "playSeason(-2)" }
+        },
+        {
+            title: "Pojedynek z liderem",
+            desc: "Lider drużyny uważa, że zajmujesz mu miejsce. Rzuca ci wyzwanie na treningu.",
+            img: "⚔️",
+            opt1: { title: "Akceptuję", bot1: "50%: +3 OVR", bot2: "50%: -2 OVR (Kompromitacja)", fn: "resolveRandomEvent(3, -2, 0.50)" },
+            opt2: { title: "Ignoruję", bot1: "Spadek zaufania (-1 OVR)", bot2: "", fn: "playSeason(-1)" }
+        }
+    ];
+
+    let evData = eventsPool[Math.floor(Math.random() * eventsPool.length)];
 
     area.innerHTML = `
         <h3 class="text-white font-black m-0 mb-5 text-xl">${evData.title}</h3>
@@ -6112,9 +6188,69 @@ function showEventWindow() {
     `;
 }
 
-function resolveRandomEvent(succOVR, failOVR, chance) {
-    if (Math.random() < chance) playSeason(succOVR);
-    else playSeason(failOVR);
+function resolveRandomEvent(succOVR, failOVR, chance, cost = 0) {
+    if (cState.money < cost) {
+        appAlert("Nie stać cię na podjęcie tego ryzyka!", "Brak środków");
+        return;
+    }
+    
+    // cost jako ujemny bonus to przychód, np. od sponsora
+    cState.money -= cost;
+
+    const overlay = document.getElementById('careerEventOverlay');
+    const title = document.getElementById('eventAnimTitle');
+    const wheel = document.getElementById('careerWheelInner');
+    
+    title.innerText = "LOSOWANIE...";
+    title.className = "text-white font-black uppercase mb-10";
+    
+    wheel.style.transition = 'none';
+    wheel.style.transform = `rotate(0deg)`;
+    
+    overlay.style.display = 'flex'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+    
+    let isSuccess = Math.random() < chance;
+
+    setTimeout(() => {
+        let extraRotations = 5 * 360; 
+        let stopAngle = 0;
+
+        if (isSuccess) {
+            let greenAngles = [22.5, 112.5, 202.5, 292.5];
+            stopAngle = 360 - greenAngles[Math.floor(Math.random() * greenAngles.length)];
+        } else {
+            let redAngles = [67.5, 157.5, 247.5, 337.5];
+            stopAngle = 360 - redAngles[Math.floor(Math.random() * redAngles.length)];
+        }
+
+        let totalRotation = extraRotations + stopAngle;
+
+        wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
+        playSound('flip');
+
+    }, 100);
+
+    setTimeout(() => {
+        if(isSuccess) {
+            title.innerText = "SUKCES! 🟩";
+            title.className = "text-green font-black uppercase mb-10 event-success-text";
+            playSound('win');
+        } else {
+            title.innerText = "PORAŻKA! 🟥";
+            title.className = "text-red font-black uppercase mb-10 event-fail-text";
+            playSound('error');
+        }
+        
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+            if(isSuccess) playSeason(succOVR);
+            else playSeason(failOVR);
+        }, 2000);
+        
+    }, 3200); 
 }
 
 function signContract(idx) {
@@ -6126,18 +6262,30 @@ function signContract(idx) {
         activeLoanClub = o.club;
         activeLoanLeague = o.league;
     } else if (o.type === "stay") {
-        // Zostaję w obecnym klubie, odrzucam ofertę
+        // Zostaję w obecnym klubie, odrzucam ofertę. Nie przedłużam.
     } else {
         cState.club = o.club;
         cState.league = o.league;
         cState.contractYears = o.years;
+        cState.contractBase = o.base;
+        cState.contractPt = o.ptPay;
+        cState.money += o.base;
     }
     
     updateLeftPanelUI();
     
-    // Szansa na losowe zdarzenie
-    if (Math.random() < 0.3) showEventWindow();
+    // 30% szans na event po oknie transferowym, chyba że idziemy na ławkę, wtedy zawsze event
+    if (Math.random() < 0.30) showEventWindow();
     else playSeason(0);
+}
+
+function rejectLoan() {
+    activeLoanClub = null;
+    activeLoanLeague = null;
+    showToast(`Odrzuciłeś ofertę! Zostajesz w klubie.`, "normal");
+    
+    if (Math.random() < 0.3) showEventWindow();
+    else playSeason(0, true); // benched = true
 }
 
 // --- LOGIKA LIGI (COPERO SIM) ---
@@ -6153,7 +6301,7 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let seasonMatches = lData.baseMatches + 4; 
     
     let heatsPerMatch = 0;
-    if (benched) heatsPerMatch = Math.random(); // Odrzucił zmianę pozycji, grzeje ławę
+    if (benched) heatsPerMatch = Math.random() * 1.5; // Bardzo mało jazdy na własne życzenie
     else if (cState.age <= 16) {
         if (formRatio < 0.60) heatsPerMatch = 1; else heatsPerMatch = 2 + Math.random(); 
     } else {
@@ -6166,18 +6314,27 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     let totalHeats = Math.round(seasonMatches * heatsPerMatch);
     if (totalHeats < 0) totalHeats = 0;
 
-    let avg = formRatio * 1.8 + (Math.random() * 0.4 - 0.2);
-    if (avg > 2.8) avg = 2.7 + Math.random() * 0.3; 
-    if (avg < 0.2) avg = 0.1 + Math.random() * 0.2;
-    if (totalHeats === 0) avg = 0; 
+    let rawAvg = formRatio * 1.8 + (Math.random() * 0.4 - 0.2);
+    if (rawAvg > 2.8) rawAvg = 2.7 + Math.random() * 0.3; 
+    if (rawAvg < 0.1) rawAvg = 0.1 + Math.random() * 0.2;
+    if (totalHeats === 0) rawAvg = 0; 
 
-    let totalPts = Math.round(totalHeats * avg);
+    let totalPts = Math.round(totalHeats * rawAvg);
+    let totalBonus = Math.round(totalPts * (Math.random() * 0.15 + 0.05));
+    if (totalPts === 0) totalBonus = 0;
     
-    // Upraszczamy pieniądze - pensja bazowa zależna od ligi i OVR + punkty (ale o połowę mniejsze dla wypożyczonych)
-    let salary = Math.floor((effOvr * 15000) * (activeLoanLeague ? 0.5 : 1));
-    cState.money += salary;
+    let officialAvg = totalHeats > 0 ? ((totalPts + totalBonus) / totalHeats) : 0;
+    if (officialAvg > 3.00) officialAvg = 3.00;
 
-    cState.stats.heats += totalHeats; cState.stats.pts += totalPts;
+    let activePtPay = cState.contractPt;
+    if (activeLoanLeague) activePtPay = Math.floor(activePtPay * 0.5); 
+    
+    let ptMoney = totalPts * activePtPay; // Bonusy niepłatne
+    cState.money += ptMoney;
+
+    cState.stats.heats += totalHeats; 
+    cState.stats.pts += totalPts;
+    cState.stats.bon += totalBonus;
     
     // ROZWÓJ OVR 
     let ageGrowth = 0;
@@ -6185,8 +6342,8 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     else if (cState.age <= 25) ageGrowth = 1; 
     else if (cState.age > 33) ageGrowth = -2; 
     
-    let perfGrowth = avg >= 2.0 ? 1 : (avg < 1.3 ? -1 : 0);
-    if (totalHeats < 15) perfGrowth -= 1; // Ławka
+    let perfGrowth = officialAvg >= 2.0 ? 1 : (officialAvg < 1.3 ? -1 : 0);
+    if (totalHeats < 15) perfGrowth -= 2; // Ławka dusi rozwój mocno
     
     let totalGrowth = ageGrowth + perfGrowth;
     cState.ovr += totalGrowth;
@@ -6202,7 +6359,7 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
 
     cState.history.push({
         age: cState.age, club: displayClubName, ovr: cState.ovr, 
-        mec: seasonMatches, bie: totalHeats, pkt: totalPts, avg: avg.toFixed(2),
+        mec: seasonMatches, bie: totalHeats, pkt: totalPts, bon: totalBonus, avg: officialAvg.toFixed(2),
         loan: activeLoanLeague !== null,
         dmp: gotDMP, ims: gotIMS
     });
@@ -6218,14 +6375,12 @@ function playSeason(ovrMod = 0, benched = false, moneyBonus = 0) {
     if (cState.age > cState.maxAge) {
         showCareerEnd();
     } else {
-        // Kolejny krok to sprawdzenie ławki
         let nextFormRatio = cState.ovr / CAREER_CONSTANTS[cState.league].diff;
         if (cState.contractYears > 0 && nextFormRatio < 0.70 && cState.league !== "KLŻ") {
             showLoanWindow();
         } else if (cState.contractYears <= 0) {
             generateTransferWindow();
         } else {
-            // Skoro mamy kontrakt i skład, po prostu gramy kolejny rok (lub wpadamy w event)
             if (Math.random() < 0.3) showEventWindow();
             else playSeason(0);
         }
@@ -6243,7 +6398,7 @@ function renderTimeline() {
         list.innerHTML += `
             <div class="timeline-row active-year">
                 <div class="t-age">${cState.age}</div>
-                <div class="t-club text-dim">❓ Oczekiwanie na decyzję...</div>
+                <div class="t-club text-dim">❓ Career decision...</div>
                 <div class="t-ovr">${cState.ovr}</div>
                 <div class="t-bie"></div><div class="t-pkt"></div><div class="t-avg"></div>
             </div>
@@ -6277,7 +6432,6 @@ function renderTimeline() {
 
 function forceRetirement() {
     if (confirm("Czy na pewno chcesz zakończyć karierę już teraz? Tej decyzji nie da się cofnąć!")) {
-        // Kończymy na obecnym wieku
         cState.maxAge = cState.age - 1;
         showCareerEnd();
     }
@@ -6287,7 +6441,6 @@ function showCareerEnd() {
     document.getElementById('careerMainPanel').style.display = 'none';
     document.getElementById('careerRetirement').style.display = 'block';
     
-    // Usuń z osi czasu wiersz "Oczekiwanie na decyzję..."
     const firstRow = document.getElementById('timelineList').firstElementChild;
     if (firstRow && firstRow.classList.contains('active-year')) {
         firstRow.remove();
@@ -6305,7 +6458,6 @@ function showCareerEnd() {
             </div>
         </div>
     `;
-    // Upewniamy się, że nie dodajemy tego dwa razy
     if(!document.getElementById('timelineEndStats')) {
         document.querySelector('.career-timeline').innerHTML += botStatsHTML;
     }
@@ -6342,10 +6494,10 @@ async function shareCareerResult() {
     ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)";
     ctx.fillText("PKT", 80, 660); ctx.fillText("PLN", 350, 660);
     ctx.fillStyle = "#111"; ctx.font = "900 35px Montserrat, sans-serif"; 
-    ctx.fillText(`${cState.stats.pts}`, 160, 660); let cashM = (cState.money / 1000000).toFixed(1); ctx.fillText(cashM + "M", 450, 660);
+    ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 160, 660); let cashM = (cState.money / 1000000).toFixed(1); ctx.fillText(cashM + "M", 450, 660);
 
     ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(17,17,17,0.8)"; ctx.textAlign = "center"; ctx.fillText("KARIERA AVG", 300, 750);
-    let careerAvg = cState.stats.heats > 0 ? (cState.stats.pts / cState.stats.heats).toFixed(2) : "0.00";
+    let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
     ctx.fillStyle = "#111"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 810);
 
     ctx.fillStyle = "rgba(17,17,17,0.5)"; ctx.font = "900 20px Montserrat, sans-serif"; ctx.fillText("SPEEDWAYGUESSR.PL", 300, 865);
@@ -6360,15 +6512,7 @@ async function shareCareerResult() {
                     await navigator.clipboard.write([item]);
                     showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
                 } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            resetShareBtn(btn, originalText);
-        }, "image/png");
-    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
-}
-
-try {
-    window.openCareerMode = openCareerMode; window.exitCareerMode = exitCareerMode; window.selectCareerNat = selectCareerNat; window.startCareerAcademy = startCareerAcademy; window.signContract = signContract; window.resolveRandomEvent = resolveRandomEvent; window.playSeason = playSeason; window.updateKevlarPreview = updateKevlarPreview; window.forceRetirement = forceRetirement; window.shareCareerResult = shareCareerResult;
-} catch (e) { console.warn("Global export error", e); }
+            } e
 
 //-- koniec exportu Career Mode
 
