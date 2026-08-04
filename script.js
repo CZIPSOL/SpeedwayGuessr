@@ -5906,32 +5906,20 @@ function formatMoney(amount) {
 }
 
 function updateLeftPanelUI() {
-    const setText = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) element.innerText = value;
-    };
+    document.getElementById('cOvr').innerText = cState.ovr;
+    document.getElementById('cFlag').src = `https://flagcdn.com/w40/${cState.flagCode}.png`;
+    document.getElementById('cFullName').innerText = `${cState.name}`;
+    document.getElementById('cNumLabel').innerText = cState.num;
+    document.getElementById('cCurrentClub').innerText = cState.club ? cState.club : "Wolny agent";
+    document.getElementById('cAge').innerText = cState.age;
+    document.getElementById('cMoney').innerText = formatMoney(cState.money);
 
-    const setSrc = (id, value) => {
-        const element = document.getElementById(id);
-        if (element) element.src = value;
-    };
-
-    setText('cOvr', cState.ovr);
-    setSrc('cFlag', `https://flagcdn.com/w40/${cState.flagCode}.png`);
-    setText('cFullName', `${cState.name}`);
-    setText('cNumLabel', cState.num);
-    setText('cCurrentClub', cState.club ? cState.club : "Wolny agent");
-    setText('cAge', cState.age);
-    setText('cMoney', formatMoney(cState.money));
-
-    setText('cHeats', cState.stats.heats);
-    setText('cPts', `${cState.stats.pts}+${cState.stats.bon}`);
+    document.getElementById('cHeats').innerText = cState.stats.heats;
+    document.getElementById('cPts').innerText = `${cState.stats.pts}+${cState.stats.bon}`;
     let avg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
-    setText('cAvg', avg);
+    document.getElementById('cAvg').innerText = avg;
 
     const tBox = document.getElementById('cTrophiesDisplay');
-    if (!tBox) return;
-
     if (cState.stats.dmp === 0 && cState.stats.ims === 0) {
         tBox.innerText = "🏆 BRAK TROFEÓW";
     } else {
