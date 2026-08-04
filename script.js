@@ -6405,33 +6405,72 @@ function renderCareerHub() {
 }
 
 // ==========================================
-// ====== MINI GRA: TRENING (QTE) ===========
+// ====== NAKŁADKI (OVERLAYS) DLA KARIERY ===
 // ==========================================
 
-function startTrainingQTE() {
-    if (cState.season.trainedThisWeek) return;
+function showMatchOverlay() {
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+        `;
+        document.body.appendChild(simDiv);
+    }
     
-    ensureSimOverlay();
-    const simOverlay = document.getElementById('simOverlay');
+    // Zawsze wymuszamy poprawną strukturę meczową
+    simDiv.innerHTML = `
+        <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
+        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 20px; text-align:center;"></div>
+        <div style="display:flex; gap: 20px; margin-bottom: 30px;">
+            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
+            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
+        </div>
+        <div id="simEvents" style="max-width: 400px; text-align:center; color: var(--red-neon); font-weight:bold; min-height:50px;"></div>
+        <div id="simProgressContainer" style="width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 20px;">
+            <div id="simProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+        </div>
+    `;
+    simDiv.style.display = 'flex';
+}
+
+function showQteOverlay() {
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+        `;
+        document.body.appendChild(simDiv);
+    }
     
-    simOverlay.innerHTML = `
+    // Zawsze wymuszamy poprawną strukturę treningową
+    simDiv.innerHTML = `
         <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:28px; text-transform:uppercase;">TRENING STARTÓW</h2>
         <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:30px; text-align:center;">Zatrzymaj suwak w zielonym polu, aby zyskać formę.<br>Błąd rozzłości menedżera!</p>
         
         <div style="width:300px; height:40px; background:rgba(255,255,255,0.1); border-radius:20px; position:relative; overflow:hidden; border:2px solid #555;">
-            <!-- Zielona strefa (cel) -->
             <div style="position:absolute; top:0; left:40%; width:20%; height:100%; background:rgba(46, 204, 113, 0.5);"></div>
             <div style="position:absolute; top:0; left:48%; width:4%; height:100%; background:rgba(46, 204, 113, 0.9);"></div>
-            
-            <!-- Suwak -->
             <div id="qteCursor" style="position:absolute; top:-2px; left:0%; width:6px; height:44px; background:#fff; box-shadow:0 0 10px #fff; border-radius:3px;"></div>
         </div>
         
         <button onclick="stopTrainingQTE()" style="margin-top:40px; padding:15px 40px; background:#3498db; color:#fff; font-weight:900; font-size:18px; border:none; border-radius:12px; cursor:pointer;">STOP!</button>
         <div id="qteResult" style="margin-top:20px; font-size:20px; font-weight:900; height:30px;"></div>
     `;
+    simDiv.style.display = 'flex';
+}
+
+// ==========================================
+// ====== MINI GRA: TRENING (QTE) ===========
+// ==========================================
+
+function startTrainingQTE() {
+    if (cState.season.trainedThisWeek) return;
     
-    simOverlay.style.display = 'flex';
+    showQteOverlay();
     
     let pos = 0;
     let speed = 2.5 + (Math.random() * 2); 
@@ -6575,7 +6614,8 @@ function resolveMidSeasonEvent(relM, relT_or_F, ovrChange) {
 // ==========================================
 
 async function playSingleMatch() {
-    ensureSimOverlay();
+    showMatchOverlay();
+    
     const simOverlay = document.getElementById('simOverlay');
     const simMatchInfo = document.getElementById('simMatchInfo');
     const simPts = document.getElementById('simPts');
@@ -6584,7 +6624,6 @@ async function playSingleMatch() {
     const simProgressBar = document.getElementById('simProgressBar');
     
     simPts.innerText = "0"; simAvg.innerText = "-"; simEvents.innerText = ""; simProgressBar.style.width = "0%";
-    simOverlay.style.display = 'flex';
     
     let s = cState.season;
     let m = s.matchIndex + 1;
@@ -6596,7 +6635,6 @@ async function playSingleMatch() {
     
     simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
 
-    // Aplikowanie modyfikatorów z relacji
     let benched = false;
     if (cState.relations.manager < 30 && Math.random() < 0.3) benched = true;
 
@@ -6616,7 +6654,6 @@ async function playSingleMatch() {
     else if (ratio > 0.85) heatsInMatch = Math.floor(Math.random() * 3) + 3; 
     else heatsInMatch = Math.floor(Math.random() * 3) + 2; 
 
-    // Bonus bieg z taktycznej przy dobrych relacjach z menedżerem i wysokiej formie
     if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
     
     let matchPts = 0;
@@ -6626,7 +6663,6 @@ async function playSingleMatch() {
         await new Promise(r => setTimeout(r, 600)); 
         simProgressBar.style.width = `${(h / heatsInMatch) * 100}%`;
 
-        // Match Events
         let heatMod = 0;
         if (Math.random() < 0.10) { 
             const events = [
@@ -6662,14 +6698,12 @@ async function playSingleMatch() {
     await new Promise(r => setTimeout(r, 1000));
     simOverlay.style.display = 'none';
 
-    // Aktualizacja statystyk sezonu
     s.heats += heatsInMatch;
     s.pts += matchPts;
     s.bon += matchBon;
     s.matchIndex += 1;
     s.trainedThisWeek = false; 
     
-    // Prosta symulacja punktów drużyny w tabeli
     let teamMatchPts = Math.floor(Math.random() * 10) + 35; 
     teamMatchPts += matchPts; 
     
@@ -6683,7 +6717,6 @@ async function playSingleMatch() {
     saveCareer();
     renderCareerHub();
 }
-
 // ==========================================
 // ====== ZAKOŃCZENIE SEZONU ================
 // ==========================================
