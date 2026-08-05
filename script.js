@@ -5825,7 +5825,7 @@ document.addEventListener('keydown', function(e) {
 let cState = {
     active: false,
     name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
-    age: 15, maxAge: 47, // Kariera wydłużona do 47 lat!
+    age: 15, maxAge: 47,
     ovr: 40, ovrProgress: 0, 
     club: null, league: null, 
     contractYears: 0, 
@@ -5839,8 +5839,11 @@ let cState = {
         matchIndex: 0,
         regularSeasonLength: 14,
         playoffsGenerated: false,
+        finalsGenerated: false,
+        barazGenerated: false,
+        fullSchedule: [],
         schedule: [],
-        matchResults: [], // Historia wyników do kalendarza
+        matchResults: [],
         table: [],
         heats: 0, pts: 0, bon: 0,
         trainedThisWeek: false,
@@ -5904,7 +5907,6 @@ function loadCareer() {
     let saved = localStorage.getItem('speedwayCareerSave_v4');
     if (saved) {
         cState = JSON.parse(saved);
-        // --- BACKWARD COMPATIBILITY ---
         if (cState.season && cState.season.active && !cState.season.fullSchedule) {
             startNewSeason();
             appAlert("Zaktualizowano system terminarza ligowego. Twój obecny sezon musiał zostać zresetowany do pierwszej kolejki (Twoje statystyki OVR pozostają bez zmian).", "Aktualizacja gry");
@@ -5953,7 +5955,6 @@ function openCareerMode() {
     const setupDiv = document.getElementById('careerSetup');
     let hasSave = localStorage.getItem('speedwayCareerSave_v4') !== null;
     
-    // Wstrzykujemy ekran startowy do okna konfiguracji
     setupDiv.innerHTML = `
         <h2 class="text-white font-black text-center mb-20" style="font-size: 32px; letter-spacing: 2px;">SPEEDWAY LEGEND</h2>
         ${hasSave ? `<button onclick="loadCareer()" class="btn-green w-100 mb-15 p-15" style="border-radius:14px; font-size:16px; font-weight:900;">KONTYNUUJ KARIERĘ</button>` : ''}
@@ -5972,7 +5973,7 @@ function showCareerCreator() {
         club: null, league: null, contractYears: 0,
         stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, history: [],
         relations: { manager: 50, team: 50, fans: 50 },
-        season: { active: false, matchIndex: 0, regularSeasonLength: 14, playoffsGenerated: false, schedule: [], matchResults: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false },
+        season: { active: false, matchIndex: 0, regularSeasonLength: 14, playoffsGenerated: false, finalsGenerated: false, barazGenerated: false, fullSchedule: [], schedule: [], matchResults: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false },
         leagues: {
             "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
             "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
@@ -6000,7 +6001,6 @@ function showCareerCreator() {
 
     const setupDiv = document.getElementById('careerSetup');
     
-    // CAŁKOWITE ZASTĄPIENIE ZAWWARTOŚCI DIVA (przycisk startowy znika)
     setupDiv.innerHTML = `
         <h3 class="text-white font-black text-center mb-10 text-xl" style="font-size: 28px;">Zbuduj tożsamość</h3>
         <div class="kevlar-display mx-auto mb-20 mt-15">
@@ -6458,6 +6458,8 @@ function startNewSeason() {
         matchIndex: 0,
         regularSeasonLength: regularLength,
         playoffsGenerated: false,
+        finalsGenerated: false,
+        barazGenerated: false,
         fullSchedule: fullSchedule,
         schedule: playerSchedule,
         matchResults: [],
@@ -7599,7 +7601,7 @@ async function playSingleMatch() {
         return { me: 1, opp: 5, text: "Podwójna porażka... - 1:5" };
     };
     
-    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m}`;
+    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
 
     let benched = false;
     if (cState.relations.manager < 30 && Math.random() < 0.3) benched = true;
@@ -7689,27 +7691,51 @@ async function playSingleMatch() {
         let hPts = 0;
         let hBon = 0;
 
+        // --- NOWA, REALISTYCZNA LOGIKA PRZYDZIAŁU PUNKTÓW ZAWODNIKA ---
         if (isPlayerRiding) {
             let teamScore = heatOutcome.me;
 
             if (teamScore === 5) {
-                if (Math.random() < 0.5) { hPts = 3; hBon = 0; } 
-                else { hPts = 2; hBon = heatOutcome.is50 ? 0 : 1; }
+                if (Math.random() < 0.5) {
+                    hPts = 3; hBon = 0; // 1. miejsce (bez bonusa)
+                } else {
+                    hPts = 2; // 2. miejsce
+                    hBon = heatOutcome.is50 ? 0 : 1; // Bonus tylko jeśli z tyłu jest rywal
+                }
             } else if (teamScore === 4) {
-                if (Math.random() < 0.5) { hPts = 3; hBon = 0; } 
-                else { hPts = 1; hBon = 0; }
+                if (Math.random() < 0.5) {
+                    hPts = 3; hBon = 0; // 1. miejsce
+                } else {
+                    hPts = 1; hBon = 0; // 3. miejsce (rywal był drugi, brak bonusa)
+                }
             } else if (teamScore === 3) {
                 if (Math.random() < 0.2) {
-                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 0; hBon = 0; }
+                    // Czasami 3:3 to rozkład 1. i 4. miejsce
+                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; }
+                    else { hPts = 0; hBon = 0; }
                 } else {
-                    if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 1; hBon = heatOutcome.is32 ? 0 : 1; }
+                    // Zazwyczaj 3:3 to pozycje 2. i 3.
+                    if (Math.random() < 0.5) {
+                        hPts = 2; hBon = 0; // 2. miejsce, ale pierwszy był rywal
+                    } else {
+                        hPts = 1; // 3. miejsce
+                        hBon = heatOutcome.is32 ? 0 : 1; // Otrzymuje bonus od kolegi jadącego na 2. miejscu
+                    }
                 }
             } else if (teamScore === 2) {
-                if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 0; hBon = 0; }
+                // 2:4 oznacza pozycję 2 i 4
+                if (Math.random() < 0.5) { hPts = 2; hBon = 0; } 
+                else { hPts = 0; hBon = 0; }
             } else if (teamScore === 1) {
-                if (Math.random() < 0.5) { hPts = 1; hBon = 0; } else { hPts = 0; hBon = 0; }
-            } else { hPts = 0; hBon = 0; }
+                // 1:5 oznacza pozycję 3 i 4
+                if (Math.random() < 0.5) { hPts = 1; hBon = 0; } 
+                else { hPts = 0; hBon = 0; }
+            } else {
+                // Defekty/Wykluczenia całej pary
+                hPts = 0; hBon = 0;
+            }
 
+            // Aplikacja zdarzeń wewnątrzbiegowych
             if (simEvents.innerText.includes("Wjeżdżasz w taśmę") || simEvents.innerText.includes("Defekt motocykla")) {
                 hPts = 0; hBon = 0;
             }
@@ -7744,6 +7770,7 @@ async function playSingleMatch() {
 
     simulateBotMatchesForCurrentRound(finalPlayerTeamScore, finalOpponentScore, false);
 
+    // Aktualizacja statystyk sezonu
     s.heats += heatsInMatch;
     s.pts += matchPts;
     s.bon += matchBon;
@@ -7755,410 +7782,6 @@ async function playSingleMatch() {
     updateLeftPanelUI();
     saveCareer();
     renderCareerHub();
-}
-
-
-function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) {
-    let clubs = [...cState.leagues[leagueName]];
-    let table = [];
-    
-    let baseMatches = (clubs.length % 2 === 0) ? (clubs.length - 1) * 2 : (clubs.length - 1) * 2; 
-
-    clubs.forEach(club => {
-        let isPlayer = (club === playerClub);
-        let basePower = cState.teamOVRs[club] || 50; 
-        let power = basePower + (Math.random() * 8 - 4); 
-        
-        if (isPlayer) {
-            let playerImpact = playerPoints / (baseMatches * 15); 
-            power += (playerImpact * 30); 
-            if (playerPoints < (baseMatches * 5)) power -= 10; 
-        }
-        table.push({ name: club, isMe: isPlayer, power: power });
-    });
-
-    table.sort((a, b) => b.power - a.power);
-    let currentPts = baseMatches * 2 + 6; 
-
-    table.forEach((t, i) => {
-        t.pos = i + 1;
-        t.m = 0;
-        t.b = 0;
-        t.w = 0;
-        t.r = 0;
-        t.p = 0;
-        t.diff = 0;
-        t.matches = 0;
-        t.matchesPlayed = 0;
-        t.pts = 0;
-    });
-
-    return table;
-}
-
-// ==========================================
-// ====== OKNA TRANSFEROWE I KONTRAKTY ======
-// ==========================================
-
-function generateTransferWindow() {
-    const area = document.getElementById('careerActionArea');
-    let possibleLeagues = [];
-    
-    if (cState.ovr < 60) possibleLeagues = ["KLŻ", "Metalkas 2.E"];
-    else if (cState.ovr < 75) possibleLeagues = ["Metalkas 2.E", "PGE Ekstraliga"];
-    else possibleLeagues = ["PGE Ekstraliga", "PGE Ekstraliga"];
-
-    cState.pendingOffers = [];
-    let usedClubs = [cState.club]; 
-
-    possibleLeagues.forEach(lName => {
-        if (cState.pendingOffers.length >= 2) return;
-        let available = cState.leagues[lName].filter(c => !usedClubs.includes(c));
-        if (available.length === 0) available = cState.leagues[lName]; 
-        
-        let club = available[Math.floor(Math.random() * available.length)];
-        usedClubs.push(club);
-        
-        cState.pendingOffers.push({ 
-            league: lName, club: club, 
-            years: cState.age <= 22 ? 2 : (Math.floor(Math.random() * 2) + 1), type: "normal"
-        });
-    });
-
-    cState.pendingOffers.push({ league: cState.league, club: cState.club, years: 2, type: "extension" });
-
-    let o1 = cState.pendingOffers[0];
-    let o2 = cState.pendingOffers[1];
-    let o3 = cState.pendingOffers[2];
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Okienko transferowe</h3>
-        <p class="text-xs text-dim mb-15">Koniec kontraktu! Otrzymałeś nowe propozycje. Wybierz pracodawcę.</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${o1.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[o1.league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${o1.league}<br><b style="color:var(--accent)">KONTRAKT: ${o1.years} LAT(A)</b></span>
-            </div>
-            <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${o2.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[o2.league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${o2.league}<br><b style="color:var(--accent)">KONTRAKT: ${o2.years} LAT(A)</b></span>
-            </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">PRZEDŁUŻ KONTRAKT W</span>
-                <span class="copero-card-club">${o3.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[o3.league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${o3.league}<br><b style="color:var(--accent)">KONTRAKT: ${o3.years} LAT(A)</b></span>
-            </div>
-        </div>
-    `;
-    renderTimeline();
-}
-
-function showLoanWindow() {
-    const area = document.getElementById('careerActionArea');
-    let lowerLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
-    let usedClubs = [cState.club];
-
-    let available = cState.leagues[lowerLeague].filter(c => !usedClubs.includes(c));
-    let l1 = available[Math.floor(Math.random() * available.length)];
-    usedClubs.push(l1);
-    
-    let available2 = cState.leagues[lowerLeague].filter(c => !usedClubs.includes(c));
-    let l2 = available2[Math.floor(Math.random() * available2.length)];
-
-    cState.pendingOffers = [
-        { league: lowerLeague, club: l1, years: 1, type: "loan" },
-        { league: lowerLeague, club: l2, years: 1, type: "loan" }
-    ];
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Wypożyczenie</h3>
-        <p class="text-xs text-dim mb-15">Jesteś bez formy, a Twój kontrakt wciąż trwa. Trener sugeruje jazdę o ligę niżej w celu rozwoju.</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">WYPOŻYCZENIE DO</span>
-                <span class="copero-card-club">${l1}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${lowerLeague}<br><b style="color:var(--accent)">KONTRAKT: 1 ROK</b></span>
-            </div>
-            <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">WYPOŻYCZENIE DO</span>
-                <span class="copero-card-club">${l2}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${lowerLeague}<br><b style="color:var(--accent)">KONTRAKT: 1 ROK</b></span>
-            </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="rejectLoan()">
-                <span class="copero-card-title">ODRZUĆ I WALCZ O SKŁAD</span>
-                <span class="copero-card-club">${cState.club}</span>
-                <div class="copero-card-img" style="background:transparent; border: 1px dashed rgba(255,255,255,0.2);">❌</div>
-                <span class="text-red font-bold text-xs mt-5">Ryzyko ławki rezerwowych</span>
-            </div>
-        </div>
-    `;
-}
-
-function signContract(idx) {
-    let o = cState.pendingOffers[idx];
-    activeLoanClub = null;
-    activeLoanLeague = null;
-
-    if (o.type === "loan") {
-        activeLoanClub = o.club;
-        activeLoanLeague = o.league;
-    } else if (o.type === "extension") {
-        cState.contractYears = o.years;
-    } else {
-        cState.club = o.club;
-        cState.league = o.league;
-        cState.contractYears = o.years;
-    }
-    
-    cState.relations = { manager: 50, team: 50, fans: 50 };
-    
-    updateLeftPanelUI();
-    saveCareer();
-    startNewSeason();
-}
-
-function rejectLoan() {
-    activeLoanClub = null;
-    activeLoanLeague = null;
-    showToast(`Odrzuciłeś ofertę! Walczysz o skład.`, "normal");
-    cState.relations.manager = Math.max(0, cState.relations.manager - 20); 
-    saveCareer();
-    startNewSeason();
-}
-
-function renderTimeline() {
-    document.getElementById('timelineEmpty').style.display = 'none';
-    document.getElementById('timelineHeader').style.display = 'flex';
-    const list = document.getElementById('timelineList');
-    list.innerHTML = '';
-    
-    let reversed = [...cState.history].reverse();
-    let startingYear = 2026; 
-
-    reversed.forEach((h, index) => {
-        let loanIcon = h.loan ? '↪' : '';
-        let dmpIcon = '';
-        if (h.dmp === 'ZŁOTO') dmpIcon = '🥇';
-        else if (h.dmp === 'SREBRO') dmpIcon = '🥈';
-        else if (h.dmp === 'BRĄZ') dmpIcon = '🥉';
-        
-        let imsIcon = h.ims ? '🌍' : '';
-        
-        let clubColor = getCareerClubColor(h.club);
-        let contrastColor = getContrastYIQ(clubColor);
-        
-        let leagueBadge = "";
-        if (h.league === "PGE Ekstraliga") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #ffd54f; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">PGE</span>`;
-        else if (h.league === "Metalkas 2.E") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #8ec5ff; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">2.E</span>`;
-        else if (h.league === "KLŻ") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #c49b3d; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">KLŻ</span>`;
-
-        let realIndex = cState.history.length - 1 - index;
-        let playYear = startingYear + realIndex;
-
-        list.innerHTML += `
-            <div class="timeline-row cursor-pointer hover-bg" onclick="showSeasonTable(${realIndex}, ${playYear})">
-                <div class="t-age" style="background: ${clubColor}; color: ${contrastColor}; font-weight: 900; border: 1px solid rgba(255,255,255,0.15);">${h.age}</div>
-                <div class="t-club" title="${h.club}" style="color: #eaeaea; padding-left: 8px; display:flex; align-items:center;">
-                    <span style="color:var(--text-dim); margin-right:5px;">${loanIcon}</span>
-                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 120px;">${h.club}</span>
-                    ${leagueBadge}
-                    <span style="font-size:12px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
-                </div>
-                <div class="t-ovr">${h.ovr}</div>
-                <div class="t-bie">${h.bie}</div>
-                <div class="t-pkt">${h.pkt}</div>
-                <div class="t-avg">${h.avg}</div>
-            </div>
-        `;
-    });
-}
-
-function forceRetirement() {
-    if (confirm("Czy na pewno chcesz zakończyć karierę już teraz? Tej decyzji nie da się cofnąć!")) {
-        cState.maxAge = cState.age - 1;
-        showCareerEnd();
-    }
-}
-
-function showCareerEnd() {
-    document.getElementById('careerMainPanel').style.display = 'none';
-    document.getElementById('careerRetirement').style.display = 'block';
-    
-    localStorage.removeItem('speedwayCareerSave_v4');
-    
-    const lastClubInfo = getCareerLastClubInfo();
-    const lastClubColor = getCareerClubColor(lastClubInfo.club);
-    const cardGlow = `${lastClubColor}22`;
-
-    let botStatsHTML = `
-        <div id="timelineEndStats" style="display:flex; justify-content:space-between; padding: 15px; border-top: 1px solid ${lastClubColor}55; margin-top: 10px; background: linear-gradient(90deg, ${cardGlow}, rgba(0,0,0,0.08)); border-radius: 14px; box-shadow: inset 0 0 0 1px ${lastClubColor}20;">
-            <div class="flex-row gap-5 align-items-center">
-                <span style="display:inline-flex; width: 14px; height: 14px; border-radius: 4px; background: ${lastClubColor}; box-shadow: 0 0 10px ${lastClubColor}88;"></span>
-                <span class="text-white font-black text-sm">${lastClubInfo.club || "Wolny agent"}</span>
-            </div>
-            <div class="flex-row gap-15 text-white font-black">
-                <span><span style="color:var(--text-dim); font-size:10px;">BIE </span> ${cState.stats.heats}</span>
-                <span><span style="color:var(--text-dim); font-size:10px;">PKT </span> ${cState.stats.pts}</span>
-            </div>
-        </div>
-    `;
-    if(!document.getElementById('timelineEndStats')) {
-        const timelineArchive = document.getElementById('timelineContainerBox');
-        if (timelineArchive) timelineArchive.innerHTML += botStatsHTML;
-    }
-}
-
-let _teamAchCallback = null;
-function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, callback) {
-    _teamAchCallback = callback;
-    const overlay = document.getElementById('careerTeamAchOverlay');
-    const icon = document.getElementById('teamAchIcon');
-    const title = document.getElementById('teamAchTitle');
-    const clubEl = document.getElementById('teamAchClub');
-    const desc = document.getElementById('teamAchDesc');
-    const modalBox = overlay.querySelector('.stats-modal');
-
-    clubEl.innerText = club;
-    modalBox.style.border = "2px solid #333";
-    icon.style.filter = "drop-shadow(0 0 20px rgba(255,255,255,0.3))";
-
-    if (gotDMP && medalColor === "ZŁOTO") {
-        icon.innerText = "🥇"; title.innerText = "MISTRZ POLSKI!"; title.style.color = "#f1c40f";
-        desc.innerText = "Twój zespół zdobywa złoty medal DMP! Jesteście najlepsi w kraju!";
-        modalBox.style.border = "2px solid #f1c40f"; icon.style.filter = "drop-shadow(0 0 30px #f1c40f)";
-        playSound('win'); launchConfetti();
-    } else if (gotDMP && medalColor === "SREBRO") {
-        icon.innerText = "🥈"; title.innerText = "WICEMISTRZ POLSKI"; title.style.color = "#d8d8d8";
-        desc.innerText = "Świetny sezon zakończony ze srebrnym medalem na szyi!";
-        modalBox.style.border = "2px solid #d8d8d8"; playSound('win');
-    } else if (gotDMP && medalColor === "BRĄZ") {
-        icon.innerText = "🥉"; title.innerText = "BRĄZOWY MEDAL"; title.style.color = "#cd7f32";
-        desc.innerText = "Wygrywacie mecz o 3. miejsce. Brąz jest wasz!";
-        modalBox.style.border = "2px solid #cd7f32"; playSound('win');
-    } else if (promoted) {
-        icon.innerText = "🚀"; title.innerText = "AWANS!"; title.style.color = "#00ff66";
-        desc.innerText = "Wygrywacie ligę i awansujecie o szczebel wyżej w przyszłym sezonie!";
-        modalBox.style.border = "2px solid #00ff66"; icon.style.filter = "drop-shadow(0 0 30px #00ff66)";
-        playSound('win');
-    } else if (relegated) {
-        icon.innerText = "📉"; title.innerText = "SPADEK Z LIGI"; title.style.color = "#ff3333";
-        desc.innerText = "Niestety, zamykacie tabelę i z hukiem spadacie do niższej klasy rozgrywkowej.";
-        modalBox.style.border = "2px solid #ff3333"; icon.style.filter = "drop-shadow(0 0 30px #ff3333)";
-        playSound('lose');
-    }
-
-    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function closeTeamAchievement() {
-    const overlay = document.getElementById('careerTeamAchOverlay');
-    overlay.style.opacity = '0'; 
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        if (_teamAchCallback) _teamAchCallback();
-    }, 300);
-}
-
-function showSeasonTable(historyIndex, year) {
-    const seasonData = cState.history[historyIndex];
-    if (!seasonData || !seasonData.table) return;
-    const tableData = seasonData.table; 
-    document.getElementById('tableOverlayTitle').innerText = `TABELA ${seasonData.league}`;
-    document.getElementById('tableOverlaySub').innerText = `Sezon ${year} (Wiek: ${seasonData.age})`;
-    const listEl = document.getElementById('careerTableList');
-    listEl.innerHTML = '';
-    
-    tableData.forEach((row, idx) => {
-        if (seasonData.league !== "KLŻ" && idx === 4) {
-            listEl.innerHTML += `
-                <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 6px 0;"></div>
-                <div style="width: 100%; text-align: center; font-size: 9px; color: var(--red-neon); text-transform: uppercase; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px;">Grupa Spadkowa</div>
-            `;
-        }
-        let posColor = "var(--text-dim)";
-        if (idx === 0) posColor = "#f1c40f";
-        else if (idx >= tableData.length - 1) posColor = "#ff3333"; 
-        let highlightClass = row.isMe ? "background: rgba(241, 196, 15, 0.15); border-radius: 8px;" : "";
-        let clubColor = getCareerClubColor(row.name);
-        
-        listEl.innerHTML += `
-            <div style="display: flex; font-size: 13px; font-weight: 700; align-items: center; padding: 8px 0; ${highlightClass}">
-                <div style="width: 30px; text-align: center; color: ${posColor}; font-weight: 900;">${row.pos}.</div>
-                <div style="flex: 1; text-align: left; padding-left: 10px; color: ${row.isMe ? '#fff' : '#ccc'}; border-left: 3px solid ${clubColor};">
-                    ${row.name}
-                </div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.m || row.matches || row.matchesPlayed || 0}</div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.b || 0}</div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.w || 0}</div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.r || 0}</div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.p || 0}</div>
-                <div style="width: 55px; text-align: center; color: ${((row.diff || 0) >= 0) ? 'var(--green-neon)' : 'var(--red-neon)'}; font-weight: 900;">${(row.diff || 0) >= 0 ? '+' : ''}${row.diff || 0}</div>
-                <div style="width: 40px; text-align: center; color: #fff; font-weight: 900;">${row.pts}</div>
-            </div>
-        `;
-    });
-    const overlay = document.getElementById('careerTableOverlay');
-    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function closeSeasonTable() {
-    const overlay = document.getElementById('careerTableOverlay');
-    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
-}
-
-async function shareCareerResult() {
-    const btn = document.getElementById('btnShareCareer');
-    const originalText = btn.innerText;
-    btn.innerText = "GENEROWANIE KARTY..."; btn.disabled = true;
-
-    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 600; canvas.height = 900;
-    const lastClubInfo = getCareerLastClubInfo();
-    const lastClubColor = getCareerClubColor(lastClubInfo.club);
-    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, lastClubColor); grd.addColorStop(0.5, "#1b1b20"); grd.addColorStop(1, "#050507");
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = lastClubColor; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
-    ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
-    ctx.fillStyle = lastClubColor; ctx.fillRect(100, 480, 400, 5);
-
-    let nameParts = cState.name.split(' '); let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
-    ctx.fillStyle = "#fff"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
-    ctx.font = "700 24px Montserrat, sans-serif"; ctx.fillStyle = lastClubColor; ctx.fillText(lastClubInfo.club || "Wolny agent", 300, 515);
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("IMŚ", 180, 560); ctx.fillText("DMP", 420, 560);
-    ctx.fillStyle = "#fff"; ctx.font = "900 45px Montserrat, sans-serif"; 
-    
-    let totalDmp = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze;
-    ctx.fillText(cState.stats.ims, 180, 610); ctx.fillText(totalDmp, 420, 610);
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillText("BIEGI", 180, 680); ctx.fillText("PKT", 420, 680);
-    ctx.fillStyle = "#fff"; ctx.font = "900 35px Montserrat, sans-serif"; 
-    ctx.fillText(cState.stats.heats, 180, 720); ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 420, 720);
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("KARIERA AVG", 300, 780);
-    
-    let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
-    ctx.fillStyle = "#fff"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 840);
-
-    try {
-        canvas.toBlob(async (blob) => {
-            if (!blob) { appAlert("Błąd generowania karty.", "Błąd"); resetShareBtn(btn, originalText); return; } 
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
-                try {
-                    const item = new ClipboardItem({ "image/png": blob });
-                    await navigator.clipboard.write([item]);
-                    showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
-                } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            resetShareBtn(btn, originalText);
-        }, "image/png");
-    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
 }
 
 // ----------------------------------------
