@@ -7562,40 +7562,67 @@ function endTrainingQTE() {
 // ====== GENERATOR PROGRAMU BIEGÓW =========
 // ==========================================
 
-function getPlayerHeats(age, numHeats) {
-    if (numHeats <= 0) return [];
-    let heats = [];
+function getPlayerHeats(age, numHeats, isHome) {
+    if (numHeats <= 0) return { heats: [], number: '-' };
+
+    // Baza biegów z klasycznej tabeli żużlowej (Zestaw 1)
+    const awaySeniors = [ 
+        {n: 1, h: [1, 6, 9, 11]}, 
+        {n: 2, h: [3, 6, 9, 12]}, 
+        {n: 3, h: [1, 5, 8, 13]}, 
+        {n: 4, h: [4, 5, 8, 11]}, 
+        {n: 5, h: [3, 7, 10, 13]} 
+    ];
+    const awayJuniors = [ 
+        {n: 6, h: [2, 4, 10]}, 
+        {n: 7, h: [2, 7, 12]} 
+    ];
     
+    const homeSeniors = [ 
+        {n: 9, h:  [1, 7, 9, 11]}, 
+        {n: 10, h: [4, 7, 9, 13]}, 
+        {n: 11, h: [1, 5, 10, 12]}, 
+        {n: 12, h: [3, 5, 10, 11]}, 
+        {n: 13, h: [3, 6, 8, 13]} 
+    ];
+    const homeJuniors = [ 
+        {n: 14, h: [2, 4, 8]}, 
+        {n: 15, h: [2, 6, 12]} 
+    ];
+
+    let pool = [];
     if (age <= 21) {
-        // Obowiązkowe biegi juniorskie
-        let base = [2, 6, 12];
-        for(let i = 0; i < numHeats; i++) {
-            if (i < base.length) heats.push(base[i]);
-        }
-        // Jeśli dostaje dodatkowe starty (z rezerwy zwykłej lub taktycznej)
-        let available = [4, 8, 10, 14, 15].sort(() => 0.5 - Math.random());
-        while(heats.length < numHeats && available.length > 0) {
-            heats.push(available.pop());
-        }
+        pool = isHome ? homeJuniors : awayJuniors;
     } else {
-        // Standardowe ułożenia seniorskie
-        let sets = [
-            [1, 5, 9, 13],
-            [3, 7, 10, 14],
-            [4, 6, 11, 15],
-            [1, 5, 10, 15]
-        ];
-        let base = sets[Math.floor(Math.random() * sets.length)];
-        for(let i = 0; i < numHeats; i++) {
-            if (i < base.length) heats.push(base[i]);
-        }
-        // Dodatkowe biegi z rezerwy taktycznej/nominowane
-        let available = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].filter(h => !heats.includes(h)).sort(() => 0.5 - Math.random());
+        pool = isHome ? homeSeniors : awaySeniors;
+    }
+
+    // Losujemy zawodnikowi jego numer startowy na ten konkretny mecz
+    let selected = pool[Math.floor(Math.random() * pool.length)];
+    let heats = [...selected.h];
+    let startNumber = selected.n;
+
+    // Jeśli menadżer dał nam mniej biegów niż zakłada program (np. słaby OVR/ławka)
+    if (numHeats < heats.length) {
+        return { heats: heats.slice(0, numHeats), number: startNumber };
+    }
+
+    // Jeśli jedziemy świetnie i dostajemy biegi nominowane (14, 15)
+    let nominated = [14, 15].sort(() => 0.5 - Math.random());
+    while (heats.length < numHeats && nominated.length > 0) {
+        let h = nominated.pop();
+        if (!heats.includes(h)) heats.push(h);
+    }
+
+    // Jeśli wciąż brakuje nam biegów (np. Złota Rezerwa Taktyczna), dobieramy losowy wolny
+    if (heats.length < numHeats) {
+        let available = [1,2,3,4,5,6,7,8,9,10,11,12,13].filter(h => !heats.includes(h)).sort(() => 0.5 - Math.random());
         while(heats.length < numHeats && available.length > 0) {
             heats.push(available.pop());
         }
     }
-    return heats.sort((a,b) => a - b);
+
+    return { heats: heats.sort((a,b) => a - b), number: startNumber };
 }
 
 // ==========================================
@@ -7712,9 +7739,16 @@ async function playSingleMatch() {
     if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
     if (heatsInMatch > 7) heatsInMatch = 7;
 
-    let playerHeats = getPlayerHeats(cState.age, heatsInMatch);
+    // Pobieramy dane na podstawie nowego programu żużlowego
+    let heatData = getPlayerHeats(cState.age, heatsInMatch, isHome);
+    let playerHeats = heatData.heats;
+    let startNumber = heatData.number;
+    
     let matchPts = 0;
     let matchBon = 0;
+
+    // Dodajemy informację o numerze startowym do ekranu symulacji:
+    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div><div style="font-size: 13px; margin-top:5px; color: var(--accent);">Twój nr startowy: ${startNumber}</div>`;
     
     for (let h = 1; h <= totalMatchHeats; h++) {
         await new Promise(r => setTimeout(r, 600)); 
