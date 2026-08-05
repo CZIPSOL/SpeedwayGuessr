@@ -7784,6 +7784,228 @@ async function playSingleMatch() {
     renderCareerHub();
 }
 
+function signContract(offerIndex) {
+    if (!cState.pendingOffers || !cState.pendingOffers[offerIndex]) return;
+    let offer = cState.pendingOffers[offerIndex];
+    
+    cState.club = offer.club;
+    cState.league = offer.league;
+    cState.contractYears = offer.years;
+    
+    // Zapisz okres w akademii jeśli to jest 1. sezon
+    if (cState.age === 16 && cState.history.length === 0) {
+        cState.history.push({
+            age: 15, club: "Akademia Żużlowa", league: "-", ovr: cState.ovr, 
+            mec: 0, bie: 0, pkt: 0, bon: 0, avg: "0.00", loan: false, dmp: null, ims: false, table: []
+        });
+    }
+    
+    cState.pendingOffers = [];
+    saveCareer();
+    updateLeftPanelUI();
+    startNewSeason();
+}
+
+function renderTimeline() {
+    const list = document.getElementById('timelineList');
+    const header = document.getElementById('timelineHeader');
+    const empty = document.getElementById('timelineEmpty');
+    
+    if (!list || !header || !empty) return;
+
+    if (!cState.history || cState.history.length === 0) {
+        list.innerHTML = '';
+        header.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    header.style.display = 'flex';
+    empty.style.display = 'none';
+    list.innerHTML = '';
+
+    cState.history.forEach(h => {
+        let badges = "";
+        if (h.dmp === "ZŁOTO") badges += "🥇";
+        else if (h.dmp === "SREBRO") badges += "🥈";
+        else if (h.dmp === "BRĄZ") badges += "🥉";
+        if (h.ims) badges += "🌍";
+
+        let loanTag = h.loan ? `<span style="font-size:9px; color:var(--text-dim);">(W)</span>` : "";
+
+        list.innerHTML += `
+            <div class="timeline-row">
+                <div class="t-age">${h.age}</div>
+                <div class="t-club">${h.club} ${loanTag} <span style="font-size:10px;">${badges}</span></div>
+                <div class="t-ovr">${h.ovr}</div>
+                <div class="t-mec">${h.mec || 0}</div>
+                <div class="t-bie">${h.bie || 0}</div>
+                <div class="t-pkt">${h.pkt || 0}</div>
+                <div class="t-avg">${h.avg || "0.00"}</div>
+            </div>
+        `;
+    });
+
+    // Automatyczny scroll w dół po dodaniu sezonu
+    const containerBox = document.getElementById('timelineContainerBox');
+    if (containerBox) {
+        containerBox.scrollTop = containerBox.scrollHeight;
+    }
+}
+
+function forceRetirement() {
+    if (confirm("Czy na pewno chcesz zakończyć karierę w tym momencie? Ta decyzja jest nieodwracalna!")) {
+        showCareerEnd();
+    }
+}
+
+function showCareerEnd() {
+    cState.active = false;
+    cState.club = "Koniec kariery";
+    cState.contractYears = 0;
+    saveCareer();
+    
+    document.getElementById('careerMainPanel').style.display = 'none';
+    document.getElementById('careerRetirement').style.display = 'block';
+    updateLeftPanelUI();
+}
+
+function generateTransferWindow() {
+    const area = document.getElementById('careerActionArea');
+    if (!area) return;
+
+    let offers = [];
+    let possibleLeagues = [];
+    
+    // Logika ofert transferowych oparta na OVR
+    if (cState.ovr >= 78) possibleLeagues.push("PGE Ekstraliga", "PGE Ekstraliga", "Metalkas 2.E");
+    else if (cState.ovr >= 65) possibleLeagues.push("PGE Ekstraliga", "Metalkas 2.E", "Metalkas 2.E", "KLŻ");
+    else possibleLeagues.push("Metalkas 2.E", "KLŻ", "KLŻ");
+    
+    for (let i = 0; i < 3; i++) {
+        let l = possibleLeagues[Math.floor(Math.random() * possibleLeagues.length)];
+        let c = cState.leagues[l][Math.floor(Math.random() * cState.leagues[l].length)];
+        
+        // Zabezpieczenie przed dublowaniem się klubów w ofertach
+        if(offers.some(o => o.club === c)) { i--; continue; } 
+        offers.push({ league: l, club: c, years: Math.floor(Math.random() * 2) + 1 });
+    }
+
+    cState.pendingOffers = offers;
+
+    let html = `
+        <h3 class="text-white font-black m-0 mb-5 text-xl">Okno Transferowe</h3>
+        <p class="text-xs text-dim mb-15">Twój kontrakt wygasł. Wybierz nowego pracodawcę na kolejne lata.</p>
+        <div class="copero-action-grid" style="${offers.length > 2 ? 'grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));' : ''}">
+    `;
+    
+    offers.forEach((o, i) => {
+        html += `
+            <div class="copero-card" onclick="signContract(${i})">
+                <span class="copero-card-title">${o.years} ${o.years === 1 ? 'ROK' : 'LATA'}</span>
+                <span class="copero-card-club" style="font-size:12px;">${o.club}</span>
+                <div class="copero-card-img" style="margin-bottom:5px;">${CAREER_CONSTANTS[o.league].logo}</div>
+                <span class="copero-card-bot">${o.league}</span>
+            </div>
+        `;
+    });
+    
+    html += `</div>`;
+    area.innerHTML = html;
+}
+
+function showLoanWindow() {
+    const area = document.getElementById('careerActionArea');
+    if (!area) return;
+
+    let targetLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
+    let loanClub = cState.leagues[targetLeague][Math.floor(Math.random() * cState.leagues[targetLeague].length)];
+
+    area.innerHTML = `
+        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wypożyczenie!</h3>
+        <p class="text-xs text-dim mb-15">Twój klub macierzysty uznał, że masz za niski OVR. Zostałeś zaoferowany na rok do: <b>${loanClub}</b> (${targetLeague}).</p>
+        <div class="copero-action-grid">
+            <div class="copero-card" onclick="acceptLoan('${loanClub}', '${targetLeague}')">
+                <span class="copero-card-club mb-10">AKCEPTUJĘ</span>
+                <div class="copero-card-img text-green" style="background:transparent; border:none;">✅</div>
+                <span class="text-xs text-dim">Dostaniesz szansę na jazdę</span>
+            </div>
+            <div class="copero-card stay-card" onclick="rejectLoan()">
+                <span class="copero-card-club mb-10">ZOSTAJĘ</span>
+                <div class="copero-card-img text-red" style="background:transparent; border:none;">❌</div>
+                <span class="text-xs text-dim">Ryzykujesz grzanie ławki</span>
+            </div>
+        </div>
+    `;
+}
+
+function acceptLoan(club, league) {
+    activeLoanClub = club;
+    activeLoanLeague = league;
+    showToast("Udałeś się na wypożyczenie!", "success");
+    startNewSeason();
+}
+
+function rejectLoan() {
+    cState.relations.manager = Math.max(0, cState.relations.manager - 15);
+    showToast("Odrzuciłeś ofertę wypożyczenia. Menedżer jest wściekły.", "error");
+    startNewSeason();
+}
+
+function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proceedCallback) {
+    const overlay = document.getElementById('careerTeamAchOverlay');
+    const title = document.getElementById('teamAchTitle');
+    const clubEl = document.getElementById('teamAchClub');
+    const desc = document.getElementById('teamAchDesc');
+    const icon = document.getElementById('teamAchIcon');
+
+    if (!overlay) { proceedCallback(); return; }
+
+    clubEl.innerText = club;
+    
+    if (gotDMP) {
+        icon.innerText = "🏆";
+        title.innerText = "MAMY MEDAL!";
+        title.style.color = "var(--accent)";
+        desc.innerText = `Zdobywasz ${medalColor.toLowerCase()} medal Drużynowych Mistrzostw Polski!`;
+    } else if (promoted) {
+        icon.innerText = "📈";
+        title.innerText = "AWANS!";
+        title.style.color = "var(--green-neon)";
+        desc.innerText = "Twoja drużyna awansowała do wyższej ligi!";
+    } else if (relegated) {
+        icon.innerText = "📉";
+        title.innerText = "SPADEK!";
+        title.style.color = "var(--red-neon)";
+        desc.innerText = "Niestety, twoja drużyna spada do niższej ligi...";
+    }
+
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+
+    window.closeTeamAchievement = function() {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            proceedCallback();
+        }, 300);
+    };
+}
+
+function shareCareerResult() {
+    let text = `🏁 SPEEDWAY GUESSR: KARIERA\n👤 ${cState.name} #${cState.num}\n📊 OVR: ${cState.ovr} | OŚ: ${cState.history.length} sez.\n🏆 Złoto: ${cState.stats.dmpGold} | Srebro: ${cState.stats.dmpSilver} | Brąz: ${cState.stats.dmpBronze}\n🌍 IMS: ${cState.stats.ims}\n📈 Punkty w karierze: ${cState.stats.pts}\n👉 Zagraj: speedwayguessr.pl`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Skopiowano podsumowanie do schowka!", "success");
+        }).catch(() => {
+            appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
+        });
+    } else {
+        appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
+    }
+}
+
 // ----------------------------------------
 // GLOBALNE FUNKCJE DLA HTML-A (ZABEZPIECZENIE)
 // ----------------------------------------
@@ -7878,6 +8100,7 @@ try {
     window.closeTeamAchievement = closeTeamAchievement;
     window.shareCareerResult = shareCareerResult;
     window.showCareerCalendar = showCareerCalendar;
+    
     
 } catch (e) {
     console.error("Global export error:", e);
