@@ -6423,7 +6423,7 @@ function renderCareerHub() {
     if (!s.active) { startNewSeason(); return; }
 
     renderCareerSeasonTable();
-    renderCareerClubList();
+    renderTimeline();
 
     let totalMatches = s.schedule.length;
     let currentRound = s.matchIndex + 1;
@@ -6520,41 +6520,8 @@ function renderCareerSeasonTable() {
             <div class="career-season-row ${isPlayer ? 'active' : ''}">
                 <div class="career-season-col-pos" style="color:${row.pos === 1 ? '#f1c40f' : row.pos >= s.table.length - 1 ? '#ff3333' : '#fff'};">${row.pos}</div>
                 <div class="career-season-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayer ? '#fff' : '#d8d8d8'};">${row.name}</div>
-                <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matches}</div>
+                <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matchesPlayed || 0}</div>
                 <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.pts}</div>
-            </div>
-        `;
-    });
-}
-
-function renderCareerClubList() {
-    const clubList = document.getElementById('careerClubList');
-    const meta = document.getElementById('careerClubListMeta');
-    if (!clubList || !meta) return;
-
-    const playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    const clubs = cState.leagues[playingLeague] || [];
-    const orderedClubs = [...clubs];
-
-    if (cState.season && cState.season.active && cState.season.table && cState.season.table.length) {
-        orderedClubs.sort((a, b) => {
-            const aRow = cState.season.table.find(row => row.name === a);
-            const bRow = cState.season.table.find(row => row.name === b);
-            return (aRow ? aRow.pos : 99) - (bRow ? bRow.pos : 99);
-        });
-    }
-
-    meta.innerText = `${playingLeague} | ${clubs.length} zespołów`;
-
-    clubList.innerHTML = '';
-    orderedClubs.forEach((club) => {
-        const teamOvr = cState.teamOVRs[club] || 50;
-        const isPlayerClub = club === (activeLoanClub || cState.club);
-        const clubColor = getCareerClubColor(club);
-        clubList.innerHTML += `
-            <div class="career-club-row ${isPlayerClub ? 'active' : ''}">
-                <div class="career-club-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayerClub ? '#fff' : '#d8d8d8'};">${club}</div>
-                <div class="career-club-col-ovr">${teamOvr}</div>
             </div>
         `;
     });
@@ -6929,6 +6896,7 @@ async function playSingleMatch() {
             if (isHome) teamBias += 0.04;
             if (!isHome) teamBias -= 0.04;
             t.pts += Math.random() < teamBias ? 2 : 0; 
+            t.matchesPlayed = (t.matchesPlayed || 0) + 1;
         });
         s.table.sort((a,b) => b.pts - a.pts).forEach((t, i) => t.pos = i + 1);
     }
@@ -7115,7 +7083,8 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) 
 
     table.forEach((t, i) => {
         t.pos = i + 1;
-        t.matches = baseMatches;
+        t.matches = 0;
+        t.matchesPlayed = 0;
         t.pts = currentPts - (i * 2) - Math.floor(Math.random() * 2);
         if (t.pts < 0) t.pts = 0;
     });

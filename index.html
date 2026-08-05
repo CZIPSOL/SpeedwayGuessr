@@ -999,7 +999,7 @@
 
         </div>
 
-        <!-- ŚRODKOWY PANEL (AKTUALNA TABELA + HISTORIA) -->
+        <!-- ŚRODKOWY PANEL (AKTUALNA TABELA SEZONU) -->
         <div class="career-season-panel">
             <div class="career-panel-card mb-20">
                 <div class="career-panel-title-row">
@@ -1009,48 +1009,35 @@
                 <div id="careerSeasonMeta" class="career-panel-subtitle text-dim text-xs font-bold uppercase tracking-wide">Trwa symulacja...</div>
                 <div id="careerSeasonTableBody" class="career-table-list mt-15"></div>
             </div>
-
-            <div class="career-panel-card career-history-card">
-                <div class="career-panel-title-row mb-10">
-                    <h3 class="m-0 text-white font-black text-sm uppercase tracking-wide">Historia kariery</h3>
-                    <span class="text-dim text-xs font-bold uppercase">Oś czasu</span>
-                </div>
-
-                <div id="timelineContainerBox" class="career-timeline-archive">
-                    <!-- PUSTY STAN -->
-                    <div id="timelineEmpty" class="text-center text-dim mt-30 font-bold text-sm">
-                        Szukanie klubu...
-                    </div>
-                    
-                    <!-- NAGŁÓWKI TABELI -->
-                    <div class="timeline-header" id="timelineHeader" style="display: none;">
-                        <div style="width: 35px;">WIEK</div>
-                        <div style="flex:1; text-align: left; padding-left:10px;">KLUB</div>
-                        <div style="width: 35px;">OVR</div>
-                        <div style="width: 35px;">BIE</div>
-                        <div style="width: 40px;">PKT</div>
-                        <div style="width: 40px;">AVG</div>
-                    </div>
-
-                    <!-- LISTA SEZONÓW -->
-                    <div id="timelineList" class="flex-col gap-5"></div>
-                    
-                    <!-- PODSUMOWANIE STATYSTYK NA DOLE (Pojawia się na emeryturze) -->
-                    <div id="timelineEndStats" style="display:none;"></div>
-                </div>
-            </div>
         </div>
 
-        <!-- PRAWY PANEL (LISTA KLUBÓW) -->
-        <div class="career-clubs-panel">
-            <div class="career-panel-card h-100">
-                <div class="career-panel-title-row mb-10">
-                    <h3 class="m-0 text-white font-black text-sm uppercase tracking-wide">Kluby ligi</h3>
-                    <span class="text-dim text-xs font-bold uppercase">Zestawienie</span>
-                </div>
-                <div id="careerClubListMeta" class="career-panel-subtitle text-dim text-xs font-bold uppercase tracking-wide">---</div>
-                <div id="careerClubList" class="career-table-list mt-15"></div>
+        <!-- PRAWY PANEL (HISTORIA KARIERY) -->
+        <div class="career-timeline" id="timelineContainerBox">
+            <div class="career-panel-title-row mb-10">
+                <h3 class="m-0 text-white font-black text-sm uppercase tracking-wide">Historia kariery</h3>
+                <span class="text-dim text-xs font-bold uppercase">Oś czasu</span>
             </div>
+
+            <!-- PUSTY STAN -->
+            <div id="timelineEmpty" class="text-center text-dim mt-30 font-bold text-sm">
+                Szukanie klubu...
+            </div>
+            
+            <!-- NAGŁÓWKI TABELI -->
+            <div class="timeline-header" id="timelineHeader" style="display: none;">
+                <div style="width: 35px;">WIEK</div>
+                <div style="flex:1; text-align: left; padding-left:10px;">KLUB</div>
+                <div style="width: 35px;">OVR</div>
+                <div style="width: 35px;">BIE</div>
+                <div style="width: 40px;">PKT</div>
+                <div style="width: 40px;">AVG</div>
+            </div>
+
+            <!-- LISTA SEZONÓW -->
+            <div id="timelineList" class="flex-col gap-5"></div>
+            
+            <!-- PODSUMOWANIE STATYSTYK NA DOLE (Pojawia się na emeryturze) -->
+            <div id="timelineEndStats" style="display:none;"></div>
         </div>
 
     </div>
@@ -1386,7 +1373,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
     <script src="db.js"></script>
-    <script src="script.js?v2.42"></script>
+    <script src="script.js?v2.43"></script>
 
     
 </body>
