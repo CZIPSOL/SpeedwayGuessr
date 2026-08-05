@@ -6807,6 +6807,29 @@ async function playSingleMatch() {
     let stageLabel = isHome ? "DOM" : "WYJAZD";
     let playerMatchScore = 0;
     let opponentMatchScore = 0;
+    const totalMatchHeats = 15;
+    const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const rollTeamHeatScore = (strengthBias) => {
+        const exclusionRoll = Math.random();
+        if (exclusionRoll < 0.04) {
+            return strengthBias >= 0
+                ? { me: 5, opp: 0, text: "Wykluczenie rywala - 5:0" }
+                : { me: 0, opp: 5, text: "Wykluczenie naszego zawodnika - 0:5" };
+        }
+        if (exclusionRoll < 0.08) {
+            return strengthBias >= 0
+                ? { me: 3, opp: 2, text: "Przerwany bieg - 3:2" }
+                : { me: 2, opp: 3, text: "Przerwany bieg - 2:3" };
+        }
+
+        const swing = strengthBias + (Math.random() * 0.9 - 0.45);
+        if (swing >= 0.85) return { me: 5, opp: 1, text: "Bieg dla nas - 5:1" };
+        if (swing >= 0.30) return { me: 4, opp: 2, text: "Mocny bieg - 4:2" };
+        if (swing > -0.30) return { me: 3, opp: 3, text: "Remis biegu - 3:3" };
+        if (swing > -0.85) return { me: 2, opp: 4, text: "Przegrany bieg - 2:4" };
+        return { me: 1, opp: 5, text: "Bieg dla rywali - 1:5" };
+    };
     
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
     simMatchState.innerText = `TOR: ${stageLabel} | Forma toru: ${trackComfort > 0 ? '+' : ''}${trackComfort}`;
@@ -6839,11 +6862,11 @@ async function playSingleMatch() {
     let matchPts = 0;
     let matchBon = 0;
     
-    for (let h = 1; h <= heatsInMatch; h++) {
+    for (let h = 1; h <= totalMatchHeats; h++) {
         await new Promise(r => setTimeout(r, 600)); 
-        simProgressBar.style.width = `${(h / heatsInMatch) * 100}%`;
+        simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
         simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
-        simMatchState.innerText = `BIEG ${h}/${heatsInMatch} | Wynik zawodnika: ${matchPts}+${matchBon}`;
+        simMatchState.innerText = `BIEG ${h}/${totalMatchHeats} | Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
 
         let heatMod = 0;
         if (Math.random() < 0.10) { 
@@ -6864,24 +6887,35 @@ async function playSingleMatch() {
             simEvents.style.color = "#fff";
         }
 
-        let strength = ratio * (Math.random() * 2.0 + 0.5) + heatMod; 
-        let hPts = 0; let hBon = 0;
+        const strengthBias = clampMatchValue((ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08), -1.2, 1.2);
+        const heatOutcome = rollTeamHeatScore(strengthBias);
+        playerMatchScore += heatOutcome.me;
+        opponentMatchScore += heatOutcome.opp;
 
-        if (strength >= 2.35) { hPts = 3; } 
-        else if (strength >= 1.60) { hPts = 2; if(Math.random() < 0.22) hBon = 1; } 
-        else if (strength >= 0.85) { hPts = 1; if(Math.random() < 0.30) hBon = 1; }
+        let hPts = 0;
+        let hBon = 0;
+
+        if (h <= heatsInMatch) {
+            if (heatOutcome.me >= 4) hPts = 3;
+            else if (heatOutcome.me === 3) hPts = 2;
+            else if (heatOutcome.me === 2) hPts = 1;
+            else hPts = 0;
+
+            if (hPts > 0 && Math.random() < 0.2) hBon = 1;
+            if (heatOutcome.text.includes("Wykluczenie") && hPts > 0) hPts = Math.max(0, hPts - 1);
+        }
 
         matchPts += hPts;
         matchBon += hBon;
 
-        let teamHeatScore = hPts + hBon;
-        let opponentHeatScore = Math.max(0, Math.min(5, Math.round((2 + Math.random() * 2.5) - (ratio - 1) * 1.3)));
-        playerMatchScore += teamHeatScore;
-        opponentMatchScore += opponentHeatScore;
-
         simPts.innerText = `${matchPts} (+${matchBon})`;
+        simAvg.innerText = h > 0 ? ((matchPts + matchBon) / Math.max(1, Math.min(h, heatsInMatch))).toFixed(2) : "0.00";
         simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
-        simMatchState.innerText = `BIEG ${h}/${heatsInMatch} | Wynik zawodnika: ${matchPts}+${matchBon}`;
+        simMatchState.innerText = `BIEG ${h}/${totalMatchHeats} | Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
+        if (heatOutcome.text) {
+            simEvents.innerText = `Bieg ${h}: ${heatOutcome.text}`;
+            simEvents.style.color = heatOutcome.text.includes("nas") ? "var(--green-neon)" : (heatOutcome.text.includes("rywali") ? "var(--red-neon)" : "#fff");
+        }
         playSound('flip');
     }
     
@@ -6892,33 +6926,63 @@ async function playSingleMatch() {
     s.heats += heatsInMatch;
     s.pts += matchPts;
     s.bon += matchBon;
-    s.matchResults.push(`${matchPts}+${matchBon}`); // Do kalendarza
+    s.matchResults.push(`${playerMatchScore}:${opponentMatchScore}`);
+    s.currentMatchScore = { me: playerMatchScore, opp: opponentMatchScore };
     s.matchIndex += 1;
     s.trainedThisWeek = false; 
     
-    // Prosta symulacja punktów drużyny w tabeli (Tylko runda zasadnicza)
+    // Symulacja punktów drużyn w tabeli (Tylko runda zasadnicza)
     if (s.matchIndex <= s.regularSeasonLength) {
+        const playerRow = s.table.find(t => t.isMe);
+        if (playerRow) {
+            const playerDiff = playerMatchScore - opponentMatchScore;
+            playerRow.m = (playerRow.m || 0) + 1;
+            playerRow.matchesPlayed = (playerRow.matchesPlayed || 0) + 1;
+            playerRow.diff = (playerRow.diff || 0) + playerDiff;
+
+            if (playerMatchScore > opponentMatchScore) {
+                playerRow.w = (playerRow.w || 0) + 1;
+                playerRow.pts = (playerRow.pts || 0) + 2;
+                if (playerDiff <= 6) playerRow.b = (playerRow.b || 0) + 1;
+            } else if (playerMatchScore === opponentMatchScore) {
+                playerRow.r = (playerRow.r || 0) + 1;
+                playerRow.pts = (playerRow.pts || 0) + 1;
+            } else {
+                playerRow.p = (playerRow.p || 0) + 1;
+            }
+        }
+
         s.table.forEach(t => {
-            let teamBias = (cState.teamOVRs[t.name] || 50) / 100;
-            if (t.isMe) teamBias += isHome ? 0.06 : -0.03;
-            let roll = Math.random() + (teamBias - 0.5) * 0.5;
+            if (t.isMe) return;
+
+            const teamPower = cState.teamOVRs[t.name] || 50;
+            const oppositionPower = clampMatchValue(teamPower + (Math.random() * 24 - 12), 35, 95);
+            const advantage = clampMatchValue((teamPower - oppositionPower) / 30 + (Math.random() * 0.35 - 0.175), -1.1, 1.1);
+            const baseTeamScore = clampMatchValue(Math.round(45 + advantage * 14), 0, 90);
+            let teamScore = baseTeamScore;
+            let oppScore = 90 - baseTeamScore;
+
+            if (Math.random() < 0.06) {
+                const cut = Math.random() < 0.5 ? 5 : 1;
+                if (teamScore >= oppScore) teamScore = Math.max(0, teamScore - cut);
+                else oppScore = Math.max(0, oppScore - cut);
+            }
+
+            const scoreDiff = teamScore - oppScore;
 
             t.m = (t.m || 0) + 1;
             t.matchesPlayed = (t.matchesPlayed || 0) + 1;
-            t.diff = t.diff || 0;
+            t.diff = (t.diff || 0) + scoreDiff;
 
-            if (roll > 0.84) {
+            if (teamScore > oppScore) {
                 t.w = (t.w || 0) + 1;
                 t.pts = (t.pts || 0) + 2;
-                t.diff += Math.floor(3 + Math.random() * 7);
-                if (s.matchIndex >= 8 && Math.random() < 0.5) t.b = (t.b || 0) + 1;
-            } else if (roll > 0.56) {
+                if (scoreDiff <= 6) t.b = (t.b || 0) + 1;
+            } else if (teamScore === oppScore) {
                 t.r = (t.r || 0) + 1;
                 t.pts = (t.pts || 0) + 1;
-                t.diff += Math.floor(Math.random() * 3) - 1;
             } else {
                 t.p = (t.p || 0) + 1;
-                t.diff -= Math.floor(2 + Math.random() * 7);
             }
         });
         s.table.sort((a,b) => {
@@ -7118,8 +7182,7 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) 
         t.diff = 0;
         t.matches = 0;
         t.matchesPlayed = 0;
-        t.pts = currentPts - (i * 2) - Math.floor(Math.random() * 2);
-        if (t.pts < 0) t.pts = 0;
+        t.pts = 0;
     });
 
     return table;
