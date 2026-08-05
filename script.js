@@ -6677,42 +6677,6 @@ function renderCareerHub() {
     `;
 }
 
-    let nextMatch = s.schedule[s.matchIndex];
-    let isHome = (currentRound % 2 !== 0);
-    let oppColor = getCareerClubColor(nextMatch.opp);
-    
-    let trainBtnOpacity = s.trainedThisWeek ? "0.3" : "1";
-    let trainBtnCursor = s.trainedThisWeek ? "not-allowed" : "pointer";
-    let trainBtnClick = s.trainedThisWeek ? "" : "startTrainingQTE()";
-
-    area.innerHTML = `
-        <div style="display:flex; gap:15px; margin-bottom:15px;">
-            <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
-                <div style="font-size:10px; color:var(--text-dim); font-weight:900; margin-bottom:10px;">RELACJE</div>
-                ${drawRelationBar("Menedżer", cState.relations.manager, "#3498db")}
-                ${drawRelationBar("Drużyna", cState.relations.team, "#2ecc71")}
-                ${drawRelationBar("Kibice", cState.relations.fans, "#e74c3c")}
-            </div>
-            <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05); text-align:center; display:flex; flex-direction:column; justify-content:center;">
-                <div style="font-size:10px; color:var(--text-dim); font-weight:900;">TWOJA FORMA (SEZON)</div>
-                <div style="font-size:32px; font-weight:900; color:var(--accent); margin: 5px 0;">${avg}</div>
-                <div style="font-size:11px; font-weight:bold; color:#fff;">Pkt: ${s.pts}+${s.bon} | Biegi: ${s.heats}</div>
-            </div>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
-            <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
-            <div style="font-size:10px; font-weight:900; color:var(--accent); text-transform:uppercase; margin-bottom:5px;">Faza: ${nextMatch.type}</div>
-            <div style="font-size:12px; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin-bottom:5px;">Mecz ${currentRound} z ${totalMatches}</div>
-            <div style="font-size:20px; font-weight:900; margin-bottom:15px;">vs <span style="color:${oppColor};">${nextMatch.opp}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
-            
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button onclick="${trainBtnClick}" class="hub-action-btn" style="opacity:${trainBtnOpacity}; cursor:${trainBtnCursor}; flex:1; padding:12px; border-radius:10px; background:rgba(52, 152, 219, 0.2); color:#3498db; font-weight:900; border:1px solid #3498db; text-transform:uppercase; font-size:12px;">🏋️ Trening</button>
-                <button onclick="triggerMatchOrEvent()" class="hub-action-btn" style="flex:2; padding:12px; border-radius:10px; background:var(--accent); color:#000; font-weight:900; border:none; text-transform:uppercase; font-size:12px; box-shadow: 0 5px 15px rgba(241,196,15,0.3);">🏁 Jedź Mecz</button>
-            </div>
-        </div>
-    `;
-
 function renderCareerSeasonTable() {
     const tableBody = document.getElementById('careerSeasonTableBody');
     const meta = document.getElementById('careerSeasonMeta');
