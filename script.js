@@ -7952,6 +7952,86 @@ function rejectLoan() {
     startNewSeason();
 }
 
+// ==========================================
+// ====== BRAKUJĄCE FUNKCJE TABELI LIGOWEJ ==
+// ==========================================
+
+function generateSeasonTable(leagueName, myClubName, startPts = 0, startDiff = 0) {
+    if (!cState.leagues || !cState.leagues[leagueName]) return [];
+    let teams = cState.leagues[leagueName];
+    let table = [];
+    
+    teams.forEach((club, index) => {
+        table.push({
+            name: club,
+            isMe: club === myClubName,
+            pos: index + 1,
+            matchesPlayed: 0, m: 0, w: 0, r: 0, p: 0, b: 0, pts: startPts, diff: startDiff
+        });
+    });
+    return table;
+}
+
+function showSeasonTable() {
+    const overlay = document.getElementById('careerTableOverlay');
+    const list = document.getElementById('careerTableList');
+    const sub = document.getElementById('tableOverlaySub');
+    
+    if (!overlay || !list) return;
+
+    let s = cState.season;
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    
+    if (sub) {
+        sub.innerText = `Sezon ${2026 + (cState.history ? cState.history.length : 0)} | ${playingLeague}`;
+    }
+    
+    if (!s || !s.table || s.table.length === 0) {
+        list.innerHTML = '<div class="text-dim text-xs font-bold text-center" style="padding: 20px;">Tabela będzie dostępna po rozpoczęciu sezonu.</div>';
+    } else {
+        list.innerHTML = '';
+        s.table.forEach(row => {
+            const clubColor = getCareerClubColor(row.name);
+            const isPlayer = row.isMe;
+            list.innerHTML += `
+                <div class="career-season-row ${isPlayer ? 'active' : ''}">
+                    <div class="career-season-col-pos" style="color:${row.pos === 1 ? '#f1c40f' : row.pos >= s.table.length - 1 ? '#ff3333' : '#fff'};">${row.pos}</div>
+                    <div class="career-season-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayer ? '#fff' : '#d8d8d8'};">${row.name}</div>
+                    <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matchesPlayed || 0}</div>
+                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.b || 0}</div>
+                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.w || 0}</div>
+                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.r || 0}</div>
+                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.p || 0}</div>
+                    <div class="career-season-col-points" style="color: ${((row.diff || 0) >= 0) ? 'var(--green-neon)' : 'var(--red-neon)'}; font-weight: 900;">${(row.diff || 0) >= 0 ? '+' : ''}${row.diff || 0}</div>
+                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.pts}</div>
+                </div>
+            `;
+        });
+    }
+    
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeSeasonTable() {
+    const overlay = document.getElementById('careerTableOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+}
+
+// Zabezpieczenia dla innych funkcji przypisanych do window w trakcie gry, 
+// które rzuciłyby kolejnym błędem "ReferenceError" na starcie skryptu:
+var closeTeamAchievement = window.closeTeamAchievement || function() {
+    const overlay = document.getElementById('careerTeamAchOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+};
+var showCareerCalendar = window.showCareerCalendar || function() {};
+
 function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proceedCallback) {
     const overlay = document.getElementById('careerTeamAchOverlay');
     const title = document.getElementById('teamAchTitle');
