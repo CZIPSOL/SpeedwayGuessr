@@ -5827,21 +5827,22 @@ document.addEventListener('keydown', function(e) {
 let cState = {
     active: false,
     name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
-    age: 15, maxAge: 47, // Kariera do 47 lat!
-    ovr: 40, ovrProgress: 0, // Pasek postępu treningu do OVR (0-100)
+    age: 15, maxAge: 47, // Kariera wydłużona do 47 lat!
+    ovr: 40, ovrProgress: 0, 
     club: null, league: null, 
     contractYears: 0, 
     stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, 
     history: [],
     leagues: {},
     teamOVRs: {},
-    
-    // NOWY SYSTEM: RELACJE I SEZON
     relations: { manager: 50, team: 50, fans: 50 },
     season: {
         active: false,
         matchIndex: 0,
+        regularSeasonLength: 14,
+        playoffsGenerated: false,
         schedule: [],
+        matchResults: [], // Historia wyników do kalendarza
         table: [],
         heats: 0, pts: 0, bon: 0,
         trainedThisWeek: false
@@ -5850,7 +5851,6 @@ let cState = {
 
 let activeLoanClub = null;
 let activeLoanLeague = null;
-let qteAnimFrame = null;
 
 const CAREER_CONSTANTS = {
     "PGE Ekstraliga": { diff: 82, logo: "🏆" },
@@ -5897,11 +5897,11 @@ function getCareerLastClubInfo() {
 // ==========================================
 
 function saveCareer() {
-    localStorage.setItem('speedwayCareerSave_v3', JSON.stringify(cState));
+    localStorage.setItem('speedwayCareerSave_v4', JSON.stringify(cState));
 }
 
 function loadCareer() {
-    let saved = localStorage.getItem('speedwayCareerSave_v3');
+    let saved = localStorage.getItem('speedwayCareerSave_v4');
     if (saved) {
         cState = JSON.parse(saved);
         document.getElementById('careerSetup').style.display = 'none';
@@ -5945,7 +5945,7 @@ function openCareerMode() {
     document.getElementById('timelineList').innerHTML = '';
 
     const setupDiv = document.getElementById('careerSetup');
-    let hasSave = localStorage.getItem('speedwayCareerSave_v3') !== null;
+    let hasSave = localStorage.getItem('speedwayCareerSave_v4') !== null;
     
     setupDiv.innerHTML = `
         <h2 class="text-white font-black text-center mb-20" style="font-size: 32px; letter-spacing: 2px;">SPEEDWAY LEGEND</h2>
@@ -5956,7 +5956,7 @@ function openCareerMode() {
 }
 
 function showCareerCreator() {
-    if(localStorage.getItem('speedwayCareerSave_v3') !== null) {
+    if(localStorage.getItem('speedwayCareerSave_v4') !== null) {
         if(!confirm("Rozpoczęcie nowej gry nadpisze twój obecny zapis. Czy na pewno?")) return;
     }
 
@@ -5966,7 +5966,7 @@ function showCareerCreator() {
         club: null, league: null, contractYears: 0,
         stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, history: [],
         relations: { manager: 50, team: 50, fans: 50 },
-        season: { active: false, matchIndex: 0, schedule: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false },
+        season: { active: false, matchIndex: 0, regularSeasonLength: 14, playoffsGenerated: false, schedule: [], matchResults: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false },
         leagues: {
             "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
             "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
@@ -6047,7 +6047,6 @@ function startCareerAcademy() {
     cState.num = document.getElementById('careerNumInput').value || 99;
     cState.ovr = Math.floor(Math.random() * 21) + 40; 
     
-    // Inicjalizacja siły drużyn
     cState.leagues["PGE Ekstraliga"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 75); 
     cState.leagues["Metalkas 2.E"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 60);  
     cState.leagues["KLŻ"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 45);         
@@ -6080,9 +6079,14 @@ function updateLeftPanelUI() {
     
     document.getElementById('cAge').innerText = cState.age;
 
-    document.getElementById('cHeats').innerText = cState.stats.heats;
-    document.getElementById('cPts').innerText = `${cState.stats.pts}`; 
-    let avg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
+    // Aktualizujemy na żywo dodając statystyki z trwającego sezonu
+    let totalHeats = cState.stats.heats + (cState.season.active ? cState.season.heats : 0);
+    let totalPts = cState.stats.pts + (cState.season.active ? cState.season.pts : 0);
+    let totalBon = cState.stats.bon + (cState.season.active ? cState.season.bon : 0);
+
+    document.getElementById('cHeats').innerText = totalHeats;
+    document.getElementById('cPts').innerText = `${totalPts}`; 
+    let avg = totalHeats > 0 ? ((totalPts + totalBon) / totalHeats).toFixed(2) : "0.00";
     document.getElementById('cAvg').innerText = avg;
 
     const tBox = document.getElementById('cTrophiesDisplay');
@@ -6114,223 +6118,193 @@ function drawRelationBar(name, value, color) {
 }
 
 // ==========================================
-// ====== OFERTY I OKIENKA TRANSFEROWE ======
+// ====== KOŁO FORTUNY (EVENTY) =============
 // ==========================================
 
-function generateAcademyOffers() {
-    const area = document.getElementById('careerActionArea');
-    let usedClubs = [];
+function resolveRandomEvent(succOVR, failOVR, chance, isMidSeason = false) {
+    const overlay = document.getElementById('careerEventOverlay');
+    const title = document.getElementById('eventAnimTitle');
+    const wheel = document.getElementById('careerWheelInner');
 
-    let availableKlz = cState.leagues["KLŻ"].filter(c => !usedClubs.includes(c));
-    let c1 = availableKlz[Math.floor(Math.random() * availableKlz.length)];
-    usedClubs.push(c1);
-
-    let availableM2e = cState.leagues["Metalkas 2.E"].filter(c => !usedClubs.includes(c));
-    let c2 = availableM2e[Math.floor(Math.random() * availableM2e.length)];
-    usedClubs.push(c2);
-    
-    let c3League = Math.random() < 0.5 ? "PGE Ekstraliga" : "Metalkas 2.E";
-    let availableC3 = cState.leagues[c3League].filter(c => !usedClubs.includes(c));
-    if (availableC3.length === 0) availableC3 = cState.leagues[c3League]; 
-    let c3 = availableC3[Math.floor(Math.random() * availableC3.length)];
-
-    cState.pendingOffers = [
-        { league: "KLŻ", club: c1, years: 2, type: "normal" },
-        { league: "Metalkas 2.E", club: c2, years: 3, type: "normal" },
-        { league: c3League, club: c3, years: 3, type: "normal" }
-    ];
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Oferta Wychowanka</h3>
-        <p class="text-xs text-dim mb-15">Trzy kluby chcą wcielić cię do swojego projektu młodzieżowego. Wybierz mądrze.</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${c1}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS["KLŻ"].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">KLŻ<br><b style="color:var(--accent)">KONTRAKT: 2 LATA</b></span>
-            </div>
-            <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${c2}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS["Metalkas 2.E"].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">Metalkas 2.E<br><b style="color:var(--accent)">KONTRAKT: 3 LATA</b></span>
-            </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${c3}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[c3League].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${c3League}<br><b style="color:var(--accent)">KONTRAKT: 3 LATA</b></span>
-            </div>
-        </div>
-    `;
-    renderTimeline();
-}
-
-function generateTransferWindow() {
-    const area = document.getElementById('careerActionArea');
-    let possibleLeagues = [];
-    
-    if (cState.ovr < 60) possibleLeagues = ["KLŻ", "Metalkas 2.E"];
-    else if (cState.ovr < 75) possibleLeagues = ["Metalkas 2.E", "PGE Ekstraliga"];
-    else possibleLeagues = ["PGE Ekstraliga", "PGE Ekstraliga"];
-
-    cState.pendingOffers = [];
-    let usedClubs = [cState.club]; 
-
-    possibleLeagues.forEach(lName => {
-        if (cState.pendingOffers.length >= 2) return;
-        let available = cState.leagues[lName].filter(c => !usedClubs.includes(c));
-        if (available.length === 0) available = cState.leagues[lName]; 
-        
-        let club = available[Math.floor(Math.random() * available.length)];
-        usedClubs.push(club);
-        
-        cState.pendingOffers.push({ 
-            league: lName, club: club, 
-            years: cState.age <= 22 ? 2 : (Math.floor(Math.random() * 2) + 1), type: "normal"
-        });
-    });
-
-    cState.pendingOffers.push({ league: cState.league, club: cState.club, years: 2, type: "extension" });
-
-    let o1 = cState.pendingOffers[0];
-    let o2 = cState.pendingOffers[1];
-    let o3 = cState.pendingOffers[2];
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Okienko transferowe</h3>
-        <p class="text-xs text-dim mb-15">Koniec kontraktu! Otrzymałeś nowe propozycje. Wybierz pracodawcę.</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${o1.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[o1.league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${o1.league}<br><b style="color:var(--accent)">KONTRAKT: ${o1.years} LAT(A)</b></span>
-            </div>
-            <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">PODPISZ Z</span>
-                <span class="copero-card-club">${o2.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[o2.league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${o2.league}<br><b style="color:var(--accent)">KONTRAKT: ${o2.years} LAT(A)</b></span>
-            </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">PRZEDŁUŻ KONTRAKT W</span>
-                <span class="copero-card-club">${o3.club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[o3.league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${o3.league}<br><b style="color:var(--accent)">KONTRAKT: ${o3.years} LAT(A)</b></span>
-            </div>
-        </div>
-    `;
-    renderTimeline();
-}
-
-function showLoanWindow() {
-    const area = document.getElementById('careerActionArea');
-    let lowerLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
-    let usedClubs = [cState.club];
-
-    let available = cState.leagues[lowerLeague].filter(c => !usedClubs.includes(c));
-    let l1 = available[Math.floor(Math.random() * available.length)];
-    usedClubs.push(l1);
-    
-    let available2 = cState.leagues[lowerLeague].filter(c => !usedClubs.includes(c));
-    let l2 = available2[Math.floor(Math.random() * available2.length)];
-
-    cState.pendingOffers = [
-        { league: lowerLeague, club: l1, years: 1, type: "loan" },
-        { league: lowerLeague, club: l2, years: 1, type: "loan" }
-    ];
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Wypożyczenie</h3>
-        <p class="text-xs text-dim mb-15">Jesteś bez formy, a Twój kontrakt wciąż trwa. Trener sugeruje jazdę o ligę niżej w celu rozwoju.</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">WYPOŻYCZENIE DO</span>
-                <span class="copero-card-club">${l1}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${lowerLeague}<br><b style="color:var(--accent)">KONTRAKT: 1 ROK</b></span>
-            </div>
-            <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">WYPOŻYCZENIE DO</span>
-                <span class="copero-card-club">${l2}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[lowerLeague].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${lowerLeague}<br><b style="color:var(--accent)">KONTRAKT: 1 ROK</b></span>
-            </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="rejectLoan()">
-                <span class="copero-card-title">ODRZUĆ I WALCZ O SKŁAD</span>
-                <span class="copero-card-club">${cState.club}</span>
-                <div class="copero-card-img" style="background:transparent; border: 1px dashed rgba(255,255,255,0.2);">❌</div>
-                <span class="text-red font-bold text-xs mt-5">Ryzyko ławki rezerwowych</span>
-            </div>
-        </div>
-    `;
-}
-
-function signContract(idx) {
-    let o = cState.pendingOffers[idx];
-    activeLoanClub = null;
-    activeLoanLeague = null;
-
-    if (o.type === "loan") {
-        activeLoanClub = o.club;
-        activeLoanLeague = o.league;
-    } else if (o.type === "extension") {
-        cState.contractYears = o.years;
-    } else {
-        cState.club = o.club;
-        cState.league = o.league;
-        cState.contractYears = o.years;
+    if (!overlay || !title || !wheel) {
+        let isSuccess = Math.random() < chance;
+        if(isMidSeason) {
+            cState.ovr = Math.max(30, Math.min(99, cState.ovr + (isSuccess ? succOVR : failOVR)));
+            saveCareer(); updateLeftPanelUI(); renderCareerHub();
+        } else {
+            cState.ovr = Math.max(30, Math.min(99, cState.ovr + (isSuccess ? succOVR : failOVR)));
+            startNewSeason();
+        }
+        return;
     }
     
-    // Reset relacji po zmianie klubu/przedłużeniu
-    cState.relations = { manager: 50, team: 50, fans: 50 };
+    title.innerText = "LOSOWANIE...";
+    title.className = "text-white font-black uppercase mb-10";
     
-    updateLeftPanelUI();
-    saveCareer();
-    startNewSeason();
+    const pct = Math.round(chance * 100);
+    wheel.style.background = `conic-gradient(#00ff66 0% ${pct}%, #ff3333 ${pct}% 100%)`;
+    wheel.style.transition = 'none';
+    wheel.style.transform = `rotate(0deg)`;
+    
+    overlay.style.display = 'flex'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+    
+    let isSuccess = Math.random() < chance;
+
+    setTimeout(() => {
+        let targetAngle = 0;
+        if (isSuccess) {
+            let zoneSizeDeg = pct * 3.6;
+            let randomTheta = 5 + Math.random() * (zoneSizeDeg - 10);
+            targetAngle = 360 - randomTheta;
+        } else {
+            let greenZoneSizeDeg = pct * 3.6;
+            let randomTheta = greenZoneSizeDeg + 5 + Math.random() * (360 - greenZoneSizeDeg - 10);
+            targetAngle = 360 - randomTheta;
+        }
+        let totalRotation = (5 * 360) + targetAngle;
+
+        wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
+        wheel.style.transform = `rotate(${totalRotation}deg)`;
+        playSound('flip');
+    }, 100);
+
+    setTimeout(() => {
+        if(isSuccess) {
+            title.innerText = "SUKCES! 🟩";
+            title.className = "text-green font-black uppercase mb-10 event-success-text";
+            playSound('win');
+        } else {
+            title.innerText = "PORAŻKA! 🟥";
+            title.className = "text-red font-black uppercase mb-10 event-fail-text";
+            playSound('error');
+        }
+        
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+            
+            let finalOvrChange = isSuccess ? succOVR : failOVR;
+            cState.ovr = Math.max(30, Math.min(99, cState.ovr + finalOvrChange));
+            saveCareer();
+            updateLeftPanelUI();
+            
+            if(isMidSeason) {
+                showToast(`Wydarzenie zakończone. Zmiana OVR: ${finalOvrChange}`, "normal");
+                renderCareerHub();
+            } else {
+                startNewSeason();
+            }
+        }, 2000);
+        
+    }, 3200); 
 }
 
-function rejectLoan() {
-    activeLoanClub = null;
-    activeLoanLeague = null;
-    showToast(`Odrzuciłeś ofertę! Walczysz o skład.`, "normal");
+function showMidSeasonEventWindow() {
+    const area = document.getElementById('careerActionArea');
     
-    cState.relations.manager = Math.max(0, cState.relations.manager - 20); 
+    const events = [
+        { 
+            title: "Wywiad dla TV", desc: "Dziennikarz pyta o słabą atmosferę w klubie.", img: "🎙️", 
+            opt1: { title: "Bronisz ekipy", relTeam: 15, bot1: "70%: +1 OVR", bot2: "30%: -2 OVR", fn: "resolveMidSeasonEventWithWheel(1, -2, 0.70, 15, -5)" },
+            opt2: { title: "Mówisz prawdę", relTeam: -20, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(-20, 10)" } 
+        },
+        { 
+            title: "Nowinki Technologiczne", desc: "Tuner oferuje eksperymentalny silnik przed ważnym meczem.", img: "⚙️", 
+            opt1: { title: "Biorę to!", relManager: -5, bot1: "50%: +3 OVR", bot2: "50%: -3 OVR", fn: "resolveMidSeasonEventWithWheel(3, -3, 0.50, -5, 0)" },
+            opt2: { title: "Jadę na swoim", relManager: 5, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(5, 0)" } 
+        },
+        { 
+            title: "Impreza integracyjna", desc: "Koledzy z drużyny organizują grilla dzień przed treningiem.", img: "🍻", 
+            opt1: { title: "Idę z nimi", relTeam: 20, bot1: "60%: +1 OVR", bot2: "40%: Zmęczenie (-2 OVR)", fn: "resolveMidSeasonEventWithWheel(1, -2, 0.60, 20, -10)" },
+            opt2: { title: "Zostaję w domu", relTeam: -15, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(-15, 5)" } 
+        }
+    ];
     
-    saveCareer();
-    startNewSeason();
+    let ev = events[Math.floor(Math.random() * events.length)];
+
+    area.innerHTML = `
+        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wydarzenie!</h3>
+        <h4 class="text-white font-black m-0 mb-5">${ev.title}</h4>
+        <p class="text-xs text-dim mb-15">${ev.desc}</p>
+        <div class="copero-action-grid">
+            <div class="copero-card" onclick="${ev.opt1.fn}">
+                <span class="copero-card-club mb-10">${ev.opt1.title}</span>
+                <div class="copero-card-img" style="border-radius:12px;">${ev.img}</div>
+                <span class="text-green font-bold text-xs">${ev.opt1.bot1}</span>
+                <span class="text-red font-bold text-xs">${ev.opt1.bot2}</span>
+            </div>
+            <div class="copero-card stay-card" onclick="${ev.opt2.fn}">
+                <span class="copero-card-club mb-10">${ev.opt2.title}</span>
+                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">🤔</div>
+                <span class="text-white font-bold text-xs">${ev.opt2.bot1}</span>
+                <span class="text-dim font-bold text-xs">Bez wpływu na OVR</span>
+            </div>
+        </div>
+    `;
 }
+
+function resolveMidSeasonEventWithWheel(succOVR, failOVR, chance, relT, relM) {
+    cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
+    cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
+    resolveRandomEvent(succOVR, failOVR, chance, true);
+}
+
+function safeMidSeasonEvent(relT, relM) {
+    cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
+    cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
+    saveCareer();
+    updateLeftPanelUI();
+    showToast("Uniknąłeś ryzyka. Zmiana relacji w zespole.", "normal");
+    renderCareerHub();
+}
+
 
 // ==========================================
 // ====== BAZA (HUB) MIĘDZY MECZAMI =========
 // ==========================================
 
+function getMatchDateString(round, leagueName) {
+    // Symulacja kalendarza od Kwietnia 2026
+    let baseDate = new Date(2026, 3, 5); // 5 Kwietnia (Niedziela)
+    let daysToAdd = (round - 1) * 7; 
+    
+    if (leagueName === "PGE Ekstraliga") {
+        if (round % 2 !== 0) daysToAdd -= 2; // Piątki
+    } else if (leagueName === "Metalkas 2.E") {
+        if (round % 2 !== 0) daysToAdd -= 1; // Soboty
+    } // KLŻ zawsze w Niedziele
+    
+    let d = new Date(baseDate.getTime() + daysToAdd * 86400000);
+    let dayName = d.getDay()===5 ? ' (Pt)' : d.getDay()===6 ? ' (Sb)' : ' (Nd)';
+    return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + dayName;
+}
+
 function startNewSeason() {
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
     let playingClub = activeLoanClub ? activeLoanClub : cState.club;
 
-    let baseMatches = (cState.leagues[playingLeague].length % 2 === 0) ? (cState.leagues[playingLeague].length - 1) * 2 : (cState.leagues[playingLeague].length - 1) * 2;
-    let seasonMatches = baseMatches;
+    // RUNDA ZASADNICZA (Dokładna ilość meczów)
+    let regularLength = (cState.leagues[playingLeague].length - 1) * 2;
     
-    let lData = CAREER_CONSTANTS[playingLeague];
-    let expectedPower = Math.random() * 60 + 40 + ((cState.ovr - lData.diff) * 1.5);
-    if (playingLeague === "KLŻ") {
-        if (expectedPower > 80) seasonMatches += 4; else if (expectedPower > 65) seasonMatches += 2; 
-    } else {
-        if (expectedPower > 80) seasonMatches += 4; else if (expectedPower > 65) seasonMatches += 2; else seasonMatches += 4; 
-    }
-
     let opponents = [...cState.leagues[playingLeague]].filter(c => c !== playingClub).sort(() => 0.5 - Math.random());
     let schedule = [];
-    while (schedule.length < seasonMatches) schedule.push(...opponents);
+    
+    // Tworzymy kalendarz każdy z każdym (Mecz i Rewanż)
+    while (schedule.length < regularLength) {
+        opponents.forEach(opp => {
+            if(schedule.length < regularLength) schedule.push({ opp: opp, type: "Zasadnicza" });
+        });
+    }
 
     cState.season = {
         active: true,
         matchIndex: 0,
+        regularSeasonLength: regularLength,
+        playoffsGenerated: false,
         schedule: schedule,
-        table: generateSeasonTable(playingLeague, playingClub, 0, 0, schedule.length),
+        matchResults: [],
+        table: generateSeasonTable(playingLeague, playingClub, 0, 0),
         heats: 0, pts: 0, bon: 0,
         trainedThisWeek: false
     };
@@ -6344,20 +6318,21 @@ function startNewSeason() {
 
 function renderCareerHub() {
     const area = document.getElementById('careerActionArea');
-    
     let s = cState.season;
-    if (!s.active) {
-        startNewSeason();
-        return;
-    }
+    if (!s.active) { startNewSeason(); return; }
 
     let totalMatches = s.schedule.length;
     let currentRound = s.matchIndex + 1;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    
     let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
 
-    if (s.matchIndex >= totalMatches) {
+    // GENEROWANIE PLAY-OFFÓW / PLAY-DOWNÓW po rundzie zasadniczej
+    if (s.matchIndex === s.regularSeasonLength && !s.playoffsGenerated) {
+        generatePlayoffs();
+        return; // generatePlayoffs samo wywoła renderCareerHub po zaktualizowaniu harmonogramu
+    }
+
+    // KONIEC SEZONU
+    if (s.matchIndex >= totalMatches && s.playoffsGenerated) {
         area.innerHTML = `
             <div class="copero-card stay-card" style="grid-column: 1 / -1; width: 100%; margin: 0 auto; background: rgba(241,196,15,0.1); border-color: var(--accent);" onclick="endOfSeason()">
                 <span class="copero-card-title text-accent">SEZON ZAKOŃCZONY</span>
@@ -6368,9 +6343,9 @@ function renderCareerHub() {
         return;
     }
 
-    let nextOpponent = s.schedule[s.matchIndex];
+    let nextMatch = s.schedule[s.matchIndex];
     let isHome = (currentRound % 2 !== 0);
-    let oppColor = getCareerClubColor(nextOpponent);
+    let oppColor = getCareerClubColor(nextMatch.opp);
     
     let trainBtnOpacity = s.trainedThisWeek ? "0.3" : "1";
     let trainBtnCursor = s.trainedThisWeek ? "not-allowed" : "pointer";
@@ -6391,9 +6366,11 @@ function renderCareerHub() {
             </div>
         </div>
 
-        <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center;">
-            <div style="font-size:12px; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin-bottom:5px;">Runda ${currentRound} z ${totalMatches}</div>
-            <div style="font-size:20px; font-weight:900; margin-bottom:15px;">vs <span style="color:${oppColor};">${nextOpponent}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
+        <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
+            <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
+            <div style="font-size:10px; font-weight:900; color:var(--accent); text-transform:uppercase; margin-bottom:5px;">Faza: ${nextMatch.type}</div>
+            <div style="font-size:12px; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin-bottom:5px;">Mecz ${currentRound} z ${totalMatches}</div>
+            <div style="font-size:20px; font-weight:900; margin-bottom:15px;">vs <span style="color:${oppColor};">${nextMatch.opp}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
             
             <div style="display:flex; gap:10px; justify-content:center;">
                 <button onclick="${trainBtnClick}" class="hub-action-btn" style="opacity:${trainBtnOpacity}; cursor:${trainBtnCursor}; flex:1; padding:12px; border-radius:10px; background:rgba(52, 152, 219, 0.2); color:#3498db; font-weight:900; border:1px solid #3498db; text-transform:uppercase; font-size:12px;">🏋️ Trening</button>
@@ -6401,25 +6378,262 @@ function renderCareerHub() {
             </div>
         </div>
     `;
-    saveCareer();
 }
 
+function generatePlayoffs() {
+    let s = cState.season;
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
+    
+    // Przeliczamy rzeczywistą tabelę po rundzie zasadniczej
+    let table = generateSeasonTable(playingLeague, playingClub, s.pts, s.heats);
+    let myTeamData = table.find(t => t.isMe);
+    let pos = myTeamData ? myTeamData.pos : 4;
+    
+    if (playingLeague === "KLŻ") {
+        if (pos <= 4) {
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał" });
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)" });
+            // Symulujemy wygraną w półfinale na 50% lub na podst. OVR, u nas dla uproszczenia gracz wchodzi do finału jeśli gra
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (o Awans)" });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)" });
+        }
+    } else {
+        // PGE Ekstraliga i Metalkas 2.E (Top 4 gra o medale/awans)
+        if (pos <= 4) {
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał" });
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)" });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał" });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)" });
+        } else {
+            // Grupa Spadkowa (Miejsca 5-8)
+            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Mecz 1)" });
+            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Rewanż)" });
+            // Dodajemy baraż dla przegranych / najsłabszych dla efektu dramatyzmu
+            if (pos >= 7) {
+                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż o utrzymanie" });
+                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż (Rewanż)" });
+            }
+        }
+    }
+    
+    s.playoffsGenerated = true;
+    saveCareer();
+    renderCareerHub();
+    appAlert("Runda zasadnicza zakończona! Sprawdź w kalendarzu z kim pojedziesz w fazie pucharowej.", "Finałowa Faza");
+}
+
+function showCareerCalendar() {
+    let s = cState.season;
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    
+    const overlay = document.getElementById('careerTableOverlay');
+    document.getElementById('tableOverlayTitle').innerText = `KALENDARZ MECZÓW`;
+    document.getElementById('tableOverlaySub').innerText = `Sezon ${2026 + cState.history.length}`;
+    
+    const listEl = document.getElementById('careerTableList');
+    listEl.innerHTML = `
+        <div style="display: flex; font-size: 10px; color: var(--text-dim); font-weight: 900; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
+            <div style="width: 30px; text-align: center;">M.</div>
+            <div style="width: 60px; text-align: center;">DATA</div>
+            <div style="flex: 1; text-align: left; padding-left: 10px;">PRZECIWNIK</div>
+            <div style="width: 50px; text-align: center;">WYNIK</div>
+        </div>
+    `;
+    
+    s.schedule.forEach((match, idx) => {
+        let isPast = idx < s.matchIndex;
+        let isCurrent = idx === s.matchIndex;
+        let color = isPast ? "rgba(255,255,255,0.3)" : (isCurrent ? "var(--accent)" : "#fff");
+        let bgClass = isCurrent ? "background: rgba(241, 196, 15, 0.15); border-radius: 8px;" : "";
+        let resultStr = isPast ? (s.matchResults[idx] || "Odjechany") : "-";
+        
+        let dateStr = getMatchDateString(idx + 1, playingLeague);
+        
+        listEl.innerHTML += `
+            <div style="display: flex; font-size: 11px; font-weight: 700; align-items: center; padding: 8px 0; ${bgClass}; color: ${color};">
+                <div style="width: 30px; text-align: center; font-weight: 900;">${idx+1}.</div>
+                <div style="width: 60px; text-align: center;">${dateStr}</div>
+                <div style="flex: 1; text-align: left; padding-left: 10px;">
+                    <span style="font-size: 8px; color:var(--text-dim); display:block;">${match.type}</span>
+                    ${match.opp}
+                </div>
+                <div style="width: 50px; text-align: center; font-weight: 900;">${resultStr}</div>
+            </div>
+        `;
+    });
+    
+    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+
 // ==========================================
-// ====== NAKŁADKI (OVERLAYS) DLA KARIERY ===
+// ====== MINI GRA: TRENING (QTE) ===========
 // ==========================================
 
-function showMatchOverlay() {
+let qteActive = false;
+let qteRounds = 0;
+let qteSuccesses = 0;
+let qteCurrentKey = '';
+let qteTimer = null;
+
+function startTrainingQTE() {
+    if (cState.season.trainedThisWeek) return;
+    
     let simDiv = document.getElementById('simOverlay');
     if (!simDiv) {
         simDiv = document.createElement('div');
         simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);
-        `;
+        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
         document.body.appendChild(simDiv);
     }
     
-    // Zawsze wymuszamy poprawną strukturę meczową
+    simDiv.innerHTML = `
+        <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:28px; text-transform:uppercase;">TRENING NA TORZE</h2>
+        <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:30px; text-align:center;">Wciskaj podane litery na klawiaturze jak najszybciej!<br>Masz mało czasu na reakcję.</p>
+        
+        <div id="qteKeyDisplay" style="font-size: 80px; font-weight: 900; color: #fff; background: rgba(255,255,255,0.1); width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; border-radius: 20px; border: 4px solid var(--accent); box-shadow: 0 0 30px rgba(241, 196, 15, 0.4); margin-bottom: 20px;">?</div>
+        
+        <div style="width:300px; height:10px; background:rgba(255,255,255,0.1); border-radius:5px; overflow:hidden;">
+            <div id="qteTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
+        </div>
+        
+        <div id="qteProgress" style="margin-top: 20px; font-size: 16px; color: var(--text-dim); font-weight: 900;">Runda 1/5</div>
+    `;
+    
+    simDiv.style.display = 'flex';
+    document.addEventListener('keydown', handleQteKey);
+    
+    qteRounds = 0;
+    qteSuccesses = 0;
+    qteActive = true;
+    
+    setTimeout(nextQteRound, 1000); // 1 sekunda przygotowania
+}
+
+function nextQteRound() {
+    if (!qteActive) return;
+    qteRounds++;
+    
+    if (qteRounds > 5) {
+        endTrainingQTE();
+        return;
+    }
+    
+    document.getElementById('qteProgress').innerText = `Runda ${qteRounds}/5`;
+    
+    const keys = ['Q', 'W', 'E', 'A', 'S', 'D'];
+    qteCurrentKey = keys[Math.floor(Math.random() * keys.length)];
+    
+    const display = document.getElementById('qteKeyDisplay');
+    display.innerText = qteCurrentKey;
+    display.style.borderColor = "var(--accent)";
+    display.style.color = "#fff";
+    
+    const timeBar = document.getElementById('qteTimeBar');
+    timeBar.style.transition = 'none';
+    timeBar.style.width = '100%';
+    
+    // Ustalanie czasu na reakcję w zależności od OVR zawodnika (wyższy OVR = mniej czasu)
+    let reactionTime = 1200 - (cState.ovr * 5); 
+    if (reactionTime < 600) reactionTime = 600; // Minimum 0.6 sekundy
+    
+    setTimeout(() => {
+        timeBar.style.transition = `width ${reactionTime}ms linear`;
+        timeBar.style.width = '0%';
+    }, 50);
+    
+    qteTimer = setTimeout(() => {
+        if (qteActive) {
+            playSound('error');
+            display.innerText = "❌";
+            display.style.borderColor = "var(--red-neon)";
+            qteCurrentKey = ''; // Blokujemy kliknięcie
+            setTimeout(nextQteRound, 1000);
+        }
+    }, reactionTime);
+}
+
+function handleQteKey(e) {
+    if (!qteActive || !qteCurrentKey) return;
+    
+    const pressedKey = e.key.toUpperCase();
+    if (['Q', 'W', 'E', 'A', 'S', 'D'].includes(pressedKey)) {
+        clearTimeout(qteTimer);
+        const display = document.getElementById('qteKeyDisplay');
+        
+        if (pressedKey === qteCurrentKey) {
+            playSound('guess');
+            qteSuccesses++;
+            display.innerText = "✅";
+            display.style.borderColor = "var(--green-neon)";
+            display.style.color = "var(--green-neon)";
+        } else {
+            playSound('error');
+            display.innerText = "❌";
+            display.style.borderColor = "var(--red-neon)";
+            display.style.color = "var(--red-neon)";
+        }
+        
+        qteCurrentKey = ''; // Blokada spamowania
+        setTimeout(nextQteRound, 1000);
+    }
+}
+
+function endTrainingQTE() {
+    qteActive = false;
+    document.removeEventListener('keydown', handleQteKey);
+    
+    const simDiv = document.getElementById('simOverlay');
+    cState.season.trainedThisWeek = true;
+    
+    let resultHTML = "";
+    if (qteSuccesses === 5) {
+        resultHTML = "<div style='color:#00ff66; font-size:24px; font-weight:900; margin-bottom:20px;'>PERFEKT! 🔥 +25% OVR</div>";
+        cState.ovrProgress += 25;
+        cState.relations.manager = Math.min(100, cState.relations.manager + 5);
+    } else if (qteSuccesses >= 3) {
+        resultHTML = "<div style='color:#2ecc71; font-size:24px; font-weight:900; margin-bottom:20px;'>DOBRZE! 🟢 +10% OVR</div>";
+        cState.ovrProgress += 10;
+    } else {
+        resultHTML = "<div style='color:#e74c3c; font-size:24px; font-weight:900; margin-bottom:20px;'>SŁABO! 🔴 Zmarnowany sprzęt...</div>";
+        cState.relations.manager = Math.max(0, cState.relations.manager - 10);
+    }
+    
+    simDiv.innerHTML = `
+        <h2 style="color:#3498db; font-weight:900; margin-bottom:20px; font-size:28px;">KONIEC TRENINGU</h2>
+        ${resultHTML}
+        <div style="font-size:16px; color:var(--text-dim); margin-bottom:40px;">Udało się: ${qteSuccesses} / 5</div>
+    `;
+    
+    if (cState.ovrProgress >= 100) {
+        cState.ovrProgress -= 100;
+        cState.ovr = Math.min(99, cState.ovr + 1);
+        setTimeout(() => appAlert("Level UP! OVR rośnie o +1 dzięki treningom!", "Awans"), 1000);
+    }
+    
+    updateLeftPanelUI();
+    saveCareer();
+    
+    setTimeout(() => {
+        simDiv.style.display = 'none';
+        renderCareerHub();
+    }, 2500);
+}
+
+// ==========================================
+// ====== SYMULACJA POJEDYNCZEGO MECZU ======
+// ==========================================
+
+async function playSingleMatch() {
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
+        document.body.appendChild(simDiv);
+    }
+    
     simDiv.innerHTML = `
         <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
         <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 20px; text-align:center;"></div>
@@ -6433,208 +6647,25 @@ function showMatchOverlay() {
         </div>
     `;
     simDiv.style.display = 'flex';
-}
 
-function showQteOverlay() {
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);
-        `;
-        document.body.appendChild(simDiv);
-    }
-    
-    // Zawsze wymuszamy poprawną strukturę treningową
-    simDiv.innerHTML = `
-        <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:28px; text-transform:uppercase;">TRENING STARTÓW</h2>
-        <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:30px; text-align:center;">Zatrzymaj suwak w zielonym polu, aby zyskać formę.<br>Błąd rozzłości menedżera!</p>
-        
-        <div style="width:300px; height:40px; background:rgba(255,255,255,0.1); border-radius:20px; position:relative; overflow:hidden; border:2px solid #555;">
-            <div style="position:absolute; top:0; left:40%; width:20%; height:100%; background:rgba(46, 204, 113, 0.5);"></div>
-            <div style="position:absolute; top:0; left:48%; width:4%; height:100%; background:rgba(46, 204, 113, 0.9);"></div>
-            <div id="qteCursor" style="position:absolute; top:-2px; left:0%; width:6px; height:44px; background:#fff; box-shadow:0 0 10px #fff; border-radius:3px;"></div>
-        </div>
-        
-        <button onclick="stopTrainingQTE()" style="margin-top:40px; padding:15px 40px; background:#3498db; color:#fff; font-weight:900; font-size:18px; border:none; border-radius:12px; cursor:pointer;">STOP!</button>
-        <div id="qteResult" style="margin-top:20px; font-size:20px; font-weight:900; height:30px;"></div>
-    `;
-    simDiv.style.display = 'flex';
-}
-
-// ==========================================
-// ====== MINI GRA: TRENING (QTE) ===========
-// ==========================================
-
-function startTrainingQTE() {
-    if (cState.season.trainedThisWeek) return;
-    
-    showQteOverlay();
-    
-    let pos = 0;
-    let speed = 2.5 + (Math.random() * 2); 
-    let dir = 1;
-    const cursor = document.getElementById('qteCursor');
-    
-    function animateQTE() {
-        pos += speed * dir;
-        if (pos >= 98 || pos <= 0) dir *= -1;
-        if (cursor) cursor.style.left = pos + '%';
-        qteAnimFrame = requestAnimationFrame(animateQTE);
-    }
-    
-    animateQTE();
-}
-
-function stopTrainingQTE() {
-    cancelAnimationFrame(qteAnimFrame);
-    
-    const cursor = document.getElementById('qteCursor');
-    const pos = parseFloat(cursor.style.left);
-    const resultBox = document.getElementById('qteResult');
-    
-    let success = false;
-    let perfect = false;
-    
-    if (pos >= 48 && pos <= 52) { perfect = true; success = true; }
-    else if (pos >= 40 && pos <= 60) { success = true; }
-    
-    cState.season.trainedThisWeek = true;
-    
-    if (perfect) {
-        resultBox.innerText = "IDEALNIE! 🔥 +40% do postępu OVR";
-        resultBox.style.color = "#00ff66";
-        cState.ovrProgress += 40;
-        cState.relations.manager = Math.min(100, cState.relations.manager + 5);
-    } else if (success) {
-        resultBox.innerText = "DOBRZE! 🟢 +15% do postępu OVR";
-        resultBox.style.color = "#2ecc71";
-        cState.ovrProgress += 15;
-    } else {
-        resultBox.innerText = "PUDŁO! 🔴 Zmarnowany sprzęt...";
-        resultBox.style.color = "#e74c3c";
-        cState.relations.manager = Math.max(0, cState.relations.manager - 10);
-    }
-    
-    if (cState.ovrProgress >= 100) {
-        cState.ovrProgress -= 100;
-        cState.ovr = Math.min(99, cState.ovr + 1);
-        setTimeout(() => appAlert("Level UP! OVR rośnie o +1 dzięki treningom!", "Awans"), 1000);
-    }
-    
-    updateLeftPanelUI();
-    saveCareer();
-    
-    setTimeout(() => {
-        document.getElementById('simOverlay').style.display = 'none';
-        renderCareerHub();
-    }, 2000);
-}
-
-// ==========================================
-// ====== EVENTY POMIĘDZY MECZAMI ===========
-// ==========================================
-
-function triggerMatchOrEvent() {
-    if (cState.season.matchIndex > 1 && Math.random() < 0.25) {
-        showMidSeasonEventWindow();
-    } else {
-        playSingleMatch();
-    }
-}
-
-function showMidSeasonEventWindow() {
-    const area = document.getElementById('careerActionArea');
-    
-    const events = [
-        { 
-            title: "Wywiad dla TV", desc: "Dziennikarz pyta o słabą atmosferę w klubie.", img: "🎙️", 
-            opt1: { title: "Bronisz ekipy", relTeam: 15, relFans: -5, ovr: 0, fn: "resolveMidSeasonEvent(15, -5, 0)" },
-            opt2: { title: "Mówisz prawdę", relTeam: -20, relFans: 10, ovr: 0, fn: "resolveMidSeasonEvent(-20, 10, 0)" } 
-        },
-        { 
-            title: "Spotkanie ze Sponsorem", desc: "Prezes zaprasza na kolację z głównym sponsorem. Wypada iść.", img: "👔", 
-            opt1: { title: "Idę uśmiechać się", relManager: 15, relFans: 0, ovr: -1, fn: "resolveMidSeasonEvent(15, 0, -1)" },
-            opt2: { title: "Wymiguję się", relManager: -20, relFans: 0, ovr: 1, fn: "resolveMidSeasonEvent(-20, 0, 1)" } 
-        },
-        { 
-            title: "Kłótnia w Parku Maszyn", desc: "Twój mechanik krzyczy na zawodnika z pary.", img: "🤬", 
-            opt1: { title: "Uspokajasz go", relTeam: 10, relManager: 5, ovr: 0, fn: "resolveMidSeasonEvent(10, 5, 0)" },
-            opt2: { title: "Dolewasz oliwy", relTeam: -15, relManager: -10, ovr: 0, fn: "resolveMidSeasonEvent(-15, -10, 0)" } 
-        },
-        { 
-            title: "Nowinki Technologiczne", desc: "Tuner oferuje testowy silnik na najbliższy mecz. Może być super, albo wybuchnąć.", img: "⚙️", 
-            opt1: { title: "Biorę to!", relManager: -5, relFans: 0, ovr: Math.random() > 0.5 ? 3 : -3, fn: `resolveMidSeasonEvent(-5, 0, ${Math.random() > 0.5 ? 3 : -3})` },
-            opt2: { title: "Jadę na swoim", relManager: 5, relFans: 0, ovr: 0, fn: "resolveMidSeasonEvent(5, 0, 0)" } 
-        }
-    ];
-    
-    let ev = events[Math.floor(Math.random() * events.length)];
-
-    area.innerHTML = `
-        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wydarzenie!</h3>
-        <h4 class="text-white font-black m-0 mb-5">${ev.title}</h4>
-        <p class="text-xs text-dim mb-15">${ev.desc}</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="${ev.opt1.fn}">
-                <span class="copero-card-club mb-10">${ev.opt1.title}</span>
-                <div class="copero-card-img" style="border-radius:12px;">${ev.img}</div>
-                <span class="text-dim font-bold text-xs mt-5">Wybierz</span>
-            </div>
-            <div class="copero-card stay-card" onclick="${ev.opt2.fn}">
-                <span class="copero-card-club mb-10">${ev.opt2.title}</span>
-                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">🤔</div>
-                <span class="text-dim font-bold text-xs mt-5">Wybierz</span>
-            </div>
-        </div>
-    `;
-}
-
-function resolveMidSeasonEvent(relM, relT_or_F, ovrChange) {
-    cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
-    cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT_or_F));
-    cState.ovr = Math.max(30, Math.min(99, cState.ovr + ovrChange));
-    
-    updateLeftPanelUI();
-    saveCareer();
-    
-    let info = "";
-    if (ovrChange > 0) info = `OVR rośnie o ${ovrChange}!`;
-    else if (ovrChange < 0) info = `OVR spada o ${Math.abs(ovrChange)}...`;
-    else info = `Zmiana relacji w zespole.`;
-    
-    showToast(`Decyzja podjęta. ${info}`, "normal");
-    
-    setTimeout(() => { playSingleMatch(); }, 1000);
-}
-
-// ==========================================
-// ====== SYMULACJA POJEDYNCZEGO MECZU ======
-// ==========================================
-
-async function playSingleMatch() {
-    showMatchOverlay();
-    
-    const simOverlay = document.getElementById('simOverlay');
     const simMatchInfo = document.getElementById('simMatchInfo');
     const simPts = document.getElementById('simPts');
     const simAvg = document.getElementById('simAvg');
     const simEvents = document.getElementById('simEvents');
     const simProgressBar = document.getElementById('simProgressBar');
     
-    simPts.innerText = "0"; simAvg.innerText = "-"; simEvents.innerText = ""; simProgressBar.style.width = "0%";
-    
     let s = cState.season;
     let m = s.matchIndex + 1;
-    let opponent = s.schedule[s.matchIndex];
+    let matchObj = s.schedule[s.matchIndex];
+    let opponent = matchObj.opp;
     let isHome = (m % 2 !== 0);
     let oppColor = getCareerClubColor(opponent);
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
     let lData = CAREER_CONSTANTS[playingLeague];
     
-    simMatchInfo.innerHTML = `Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
+    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
 
+    // Aplikowanie modyfikatorów z relacji
     let benched = false;
     if (cState.relations.manager < 30 && Math.random() < 0.3) benched = true;
 
@@ -6654,6 +6685,7 @@ async function playSingleMatch() {
     else if (ratio > 0.85) heatsInMatch = Math.floor(Math.random() * 3) + 3; 
     else heatsInMatch = Math.floor(Math.random() * 3) + 2; 
 
+    // Bonus bieg z taktycznej
     if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
     
     let matchPts = 0;
@@ -6696,27 +6728,30 @@ async function playSingleMatch() {
     }
     
     await new Promise(r => setTimeout(r, 1000));
-    simOverlay.style.display = 'none';
+    simDiv.style.display = 'none';
 
+    // Aktualizacja statystyk sezonu
     s.heats += heatsInMatch;
     s.pts += matchPts;
     s.bon += matchBon;
+    s.matchResults.push(`${matchPts}+${matchBon}`); // Do kalendarza
     s.matchIndex += 1;
     s.trainedThisWeek = false; 
     
-    let teamMatchPts = Math.floor(Math.random() * 10) + 35; 
-    teamMatchPts += matchPts; 
-    
-    s.table.forEach(t => {
-        if(t.isMe) t.pts += Math.random() > 0.5 ? 2 : 0; 
-        else t.pts += Math.random() > 0.5 ? 2 : 0;
-    });
-    s.table.sort((a,b) => b.pts - a.pts).forEach((t, i) => t.pos = i + 1);
+    // Prosta symulacja punktów drużyny w tabeli (Tylko runda zasadnicza)
+    if (s.matchIndex <= s.regularSeasonLength) {
+        s.table.forEach(t => {
+            if(t.isMe) t.pts += Math.random() > 0.5 ? 2 : 0; 
+            else t.pts += Math.random() > 0.5 ? 2 : 0;
+        });
+        s.table.sort((a,b) => b.pts - a.pts).forEach((t, i) => t.pos = i + 1);
+    }
 
     updateLeftPanelUI();
     saveCareer();
     renderCareerHub();
 }
+
 // ==========================================
 // ====== ZAKOŃCZENIE SEZONU ================
 // ==========================================
@@ -6770,7 +6805,7 @@ function endOfSeason() {
     let baseOvr = cState.ovr;
     if (baseOvr >= 90 && Math.random() < ((baseOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
 
-    let finalTable = generateSeasonTable(playingLeague, playingClub, s.pts, s.heats, s.schedule.length);
+    let finalTable = s.table; // Bierzemy wygenerowaną i przetasowaną tabelę
     let relegatedTeam = finalTable[finalTable.length - 1].name;
     
     let promotedTeam = "Kolejarz Opole"; // Fallback
@@ -6859,10 +6894,11 @@ function endOfSeason() {
     }
 }
 
-function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats, playerTotalMatches) {
+function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) {
     let clubs = [...cState.leagues[leagueName]];
     let table = [];
     
+    // Obliczanie ilości spotkań (w uproszczeniu każda runda dodaje punkty tabelaryczne)
     let baseMatches = (clubs.length % 2 === 0) ? (clubs.length - 1) * 2 : (clubs.length - 1) * 2; 
 
     clubs.forEach(club => {
@@ -6883,19 +6919,7 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats, 
 
     table.forEach((t, i) => {
         t.pos = i + 1;
-        
-        if (leagueName === "KLŻ") {
-            if (t.pos <= 2) t.matches = baseMatches + 4; 
-            else if (t.pos <= 4) t.matches = baseMatches + 2; 
-            else t.matches = baseMatches;
-        } else {
-            if (t.pos <= 2) t.matches = baseMatches + 4; 
-            else if (t.pos <= 4) t.matches = baseMatches + 2; 
-            else t.matches = baseMatches + 4; 
-        }
-
-        if (t.isMe) t.matches = playerTotalMatches; 
-
+        t.matches = baseMatches;
         t.pts = currentPts - (i * 2) - Math.floor(Math.random() * 2);
         if (t.pts < 0) t.pts = 0;
     });
@@ -7040,228 +7064,6 @@ function rejectLoan() {
     startNewSeason();
 }
 
-function renderTimeline() {
-    document.getElementById('timelineEmpty').style.display = 'none';
-    document.getElementById('timelineHeader').style.display = 'flex';
-    const list = document.getElementById('timelineList');
-    list.innerHTML = '';
-    
-    let reversed = [...cState.history].reverse();
-    let startingYear = 2026; 
-
-    reversed.forEach((h, index) => {
-        let loanIcon = h.loan ? '↪' : '';
-        let dmpIcon = '';
-        if (h.dmp === 'ZŁOTO') dmpIcon = '🥇';
-        else if (h.dmp === 'SREBRO') dmpIcon = '🥈';
-        else if (h.dmp === 'BRĄZ') dmpIcon = '🥉';
-        
-        let imsIcon = h.ims ? '🌍' : '';
-        
-        let clubColor = getCareerClubColor(h.club);
-        let contrastColor = getContrastYIQ(clubColor);
-        
-        let leagueBadge = "";
-        if (h.league === "PGE Ekstraliga") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #ffd54f; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">PGE</span>`;
-        else if (h.league === "Metalkas 2.E") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #8ec5ff; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">2.E</span>`;
-        else if (h.league === "KLŻ") leagueBadge = `<span style="font-size: 8px; font-weight:900; background: #c49b3d; color: #111; padding: 2px 4px; border-radius: 4px; margin-left: 5px;">KLŻ</span>`;
-
-        let realIndex = cState.history.length - 1 - index;
-        let playYear = startingYear + realIndex;
-
-        list.innerHTML += `
-            <div class="timeline-row cursor-pointer hover-bg" onclick="showSeasonTable(${realIndex}, ${playYear})">
-                <div class="t-age" style="background: ${clubColor}; color: ${contrastColor}; font-weight: 900; border: 1px solid rgba(255,255,255,0.15);">${h.age}</div>
-                <div class="t-club" title="${h.club}" style="color: #eaeaea; padding-left: 8px; display:flex; align-items:center;">
-                    <span style="color:var(--text-dim); margin-right:5px;">${loanIcon}</span>
-                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width: 120px;">${h.club}</span>
-                    ${leagueBadge}
-                    <span style="font-size:12px; margin-left:5px;">${dmpIcon} ${imsIcon}</span>
-                </div>
-                <div class="t-ovr">${h.ovr}</div>
-                <div class="t-bie">${h.bie}</div>
-                <div class="t-pkt">${h.pkt}</div>
-                <div class="t-avg">${h.avg}</div>
-            </div>
-        `;
-    });
-}
-
-function forceRetirement() {
-    if (confirm("Czy na pewno chcesz zakończyć karierę już teraz? Tej decyzji nie da się cofnąć!")) {
-        cState.maxAge = cState.age - 1;
-        showCareerEnd();
-    }
-}
-
-function showCareerEnd() {
-    document.getElementById('careerMainPanel').style.display = 'none';
-    document.getElementById('careerRetirement').style.display = 'block';
-    
-    localStorage.removeItem('speedwayCareerSave_v3');
-    
-    const lastClubInfo = getCareerLastClubInfo();
-    const lastClubColor = getCareerClubColor(lastClubInfo.club);
-    const cardGlow = `${lastClubColor}22`;
-
-    let botStatsHTML = `
-        <div id="timelineEndStats" style="display:flex; justify-content:space-between; padding: 15px; border-top: 1px solid ${lastClubColor}55; margin-top: 10px; background: linear-gradient(90deg, ${cardGlow}, rgba(0,0,0,0.08)); border-radius: 14px; box-shadow: inset 0 0 0 1px ${lastClubColor}20;">
-            <div class="flex-row gap-5 align-items-center">
-                <span style="display:inline-flex; width: 14px; height: 14px; border-radius: 4px; background: ${lastClubColor}; box-shadow: 0 0 10px ${lastClubColor}88;"></span>
-                <span class="text-white font-black text-sm">${lastClubInfo.club || "Wolny agent"}</span>
-            </div>
-            <div class="flex-row gap-15 text-white font-black">
-                <span><span style="color:var(--text-dim); font-size:10px;">BIE </span> ${cState.stats.heats}</span>
-                <span><span style="color:var(--text-dim); font-size:10px;">PKT </span> ${cState.stats.pts}</span>
-            </div>
-        </div>
-    `;
-    if(!document.getElementById('timelineEndStats')) {
-        document.querySelector('.career-timeline').innerHTML += botStatsHTML;
-    }
-}
-
-let _teamAchCallback = null;
-function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, callback) {
-    _teamAchCallback = callback;
-    const overlay = document.getElementById('careerTeamAchOverlay');
-    const icon = document.getElementById('teamAchIcon');
-    const title = document.getElementById('teamAchTitle');
-    const clubEl = document.getElementById('teamAchClub');
-    const desc = document.getElementById('teamAchDesc');
-    const modalBox = overlay.querySelector('.stats-modal');
-
-    clubEl.innerText = club;
-    modalBox.style.border = "2px solid #333";
-    icon.style.filter = "drop-shadow(0 0 20px rgba(255,255,255,0.3))";
-
-    if (gotDMP && medalColor === "ZŁOTO") {
-        icon.innerText = "🥇"; title.innerText = "MISTRZ POLSKI!"; title.style.color = "#f1c40f";
-        desc.innerText = "Twój zespół zdobywa złoty medal DMP! Jesteście najlepsi w kraju!";
-        modalBox.style.border = "2px solid #f1c40f"; icon.style.filter = "drop-shadow(0 0 30px #f1c40f)";
-        playSound('win'); launchConfetti();
-    } else if (gotDMP && medalColor === "SREBRO") {
-        icon.innerText = "🥈"; title.innerText = "WICEMISTRZ POLSKI"; title.style.color = "#d8d8d8";
-        desc.innerText = "Świetny sezon zakończony ze srebrnym medalem na szyi!";
-        modalBox.style.border = "2px solid #d8d8d8"; playSound('win');
-    } else if (gotDMP && medalColor === "BRĄZ") {
-        icon.innerText = "🥉"; title.innerText = "BRĄZOWY MEDAL"; title.style.color = "#cd7f32";
-        desc.innerText = "Wygrywacie mecz o 3. miejsce. Brąz jest wasz!";
-        modalBox.style.border = "2px solid #cd7f32"; playSound('win');
-    } else if (promoted) {
-        icon.innerText = "🚀"; title.innerText = "AWANS!"; title.style.color = "#00ff66";
-        desc.innerText = "Wygrywacie ligę i awansujecie o szczebel wyżej w przyszłym sezonie!";
-        modalBox.style.border = "2px solid #00ff66"; icon.style.filter = "drop-shadow(0 0 30px #00ff66)";
-        playSound('win');
-    } else if (relegated) {
-        icon.innerText = "📉"; title.innerText = "SPADEK Z LIGI"; title.style.color = "#ff3333";
-        desc.innerText = "Niestety, zamykacie tabelę i z hukiem spadacie do niższej klasy rozgrywkowej.";
-        modalBox.style.border = "2px solid #ff3333"; icon.style.filter = "drop-shadow(0 0 30px #ff3333)";
-        playSound('lose');
-    }
-
-    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function closeTeamAchievement() {
-    const overlay = document.getElementById('careerTeamAchOverlay');
-    overlay.style.opacity = '0'; 
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        if (_teamAchCallback) _teamAchCallback();
-    }, 300);
-}
-
-function showSeasonTable(historyIndex, year) {
-    const seasonData = cState.history[historyIndex];
-    if (!seasonData || !seasonData.table) return;
-    const tableData = seasonData.table; 
-    document.getElementById('tableOverlayTitle').innerText = `TABELA ${seasonData.league}`;
-    document.getElementById('tableOverlaySub').innerText = `Sezon ${year} (Wiek: ${seasonData.age})`;
-    const listEl = document.getElementById('careerTableList');
-    listEl.innerHTML = '';
-    
-    tableData.forEach((row, idx) => {
-        if (seasonData.league !== "KLŻ" && idx === 4) {
-            listEl.innerHTML += `
-                <div style="width: 100%; height: 1px; background: rgba(255,255,255,0.1); margin: 6px 0;"></div>
-                <div style="width: 100%; text-align: center; font-size: 9px; color: var(--red-neon); text-transform: uppercase; font-weight: 900; letter-spacing: 2px; margin-bottom: 6px;">Grupa Spadkowa</div>
-            `;
-        }
-        let posColor = "var(--text-dim)";
-        if (idx === 0) posColor = "#f1c40f";
-        else if (idx >= tableData.length - 1) posColor = "#ff3333"; 
-        let highlightClass = row.isMe ? "background: rgba(241, 196, 15, 0.15); border-radius: 8px;" : "";
-        let clubColor = getCareerClubColor(row.name);
-        
-        listEl.innerHTML += `
-            <div style="display: flex; font-size: 13px; font-weight: 700; align-items: center; padding: 8px 0; ${highlightClass}">
-                <div style="width: 30px; text-align: center; color: ${posColor}; font-weight: 900;">${row.pos}.</div>
-                <div style="flex: 1; text-align: left; padding-left: 10px; color: ${row.isMe ? '#fff' : '#ccc'}; border-left: 3px solid ${clubColor};">
-                    ${row.name}
-                </div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.matches}</div>
-                <div style="width: 40px; text-align: center; color: #fff; font-weight: 900;">${row.pts}</div>
-            </div>
-        `;
-    });
-    const overlay = document.getElementById('careerTableOverlay');
-    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function closeSeasonTable() {
-    const overlay = document.getElementById('careerTableOverlay');
-    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
-}
-
-async function shareCareerResult() {
-    const btn = document.getElementById('btnShareCareer');
-    const originalText = btn.innerText;
-    btn.innerText = "GENEROWANIE KARTY..."; btn.disabled = true;
-
-    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = 600; canvas.height = 900;
-    const lastClubInfo = getCareerLastClubInfo();
-    const lastClubColor = getCareerClubColor(lastClubInfo.club);
-    const grd = ctx.createLinearGradient(0, 0, 600, 900); grd.addColorStop(0, lastClubColor); grd.addColorStop(0.5, "#1b1b20"); grd.addColorStop(1, "#050507");
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = lastClubColor; ctx.lineWidth = 10; ctx.strokeRect(15, 15, 570, 870);
-    ctx.font = "200px Arial"; ctx.textAlign = "center"; ctx.fillText("🏍️", 300, 380);
-    ctx.fillStyle = lastClubColor; ctx.fillRect(100, 480, 400, 5);
-
-    let nameParts = cState.name.split(' '); let lastName = nameParts[nameParts.length - 1].substring(0, 10).toUpperCase();
-    ctx.fillStyle = "#fff"; ctx.font = "900 65px Montserrat, sans-serif"; ctx.fillText(lastName, 300, 460);
-    ctx.font = "700 24px Montserrat, sans-serif"; ctx.fillStyle = lastClubColor; ctx.fillText(lastClubInfo.club || "Wolny agent", 300, 515);
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("IMŚ", 180, 560); ctx.fillText("DMP", 420, 560);
-    ctx.fillStyle = "#fff"; ctx.font = "900 45px Montserrat, sans-serif"; 
-    
-    let totalDmp = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze;
-    ctx.fillText(cState.stats.ims, 180, 610); ctx.fillText(totalDmp, 420, 610);
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)";
-    ctx.fillText("BIEGI", 180, 680); ctx.fillText("PKT", 420, 680);
-    ctx.fillStyle = "#fff"; ctx.font = "900 35px Montserrat, sans-serif"; 
-    ctx.fillText(cState.stats.heats, 180, 720); ctx.fillText(`${cState.stats.pts}+${cState.stats.bon}`, 420, 720);
-    ctx.font = "700 30px Montserrat, sans-serif"; ctx.fillStyle = "rgba(255,255,255,0.7)"; ctx.fillText("KARIERA AVG", 300, 780);
-    
-    let careerAvg = cState.stats.heats > 0 ? ((cState.stats.pts + cState.stats.bon) / cState.stats.heats).toFixed(2) : "0.00";
-    ctx.fillStyle = "#fff"; ctx.font = "900 60px Montserrat, sans-serif"; ctx.fillText(careerAvg, 300, 840);
-
-    try {
-        canvas.toBlob(async (blob) => {
-            if (!blob) { appAlert("Błąd generowania karty.", "Błąd"); resetShareBtn(btn, originalText); return; } 
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (!isMobile && navigator.clipboard && navigator.clipboard.write) {
-                try {
-                    const item = new ClipboardItem({ "image/png": blob });
-                    await navigator.clipboard.write([item]);
-                    showToast("Karta skopiowana do schowka! (Ctrl+V)", "success");
-                } catch (e) { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            } else { shareViaNativeAPI(blob, "speedway-legend-card.png"); }
-            resetShareBtn(btn, originalText);
-        }, "image/png");
-    } catch (error) { appAlert("Wystąpił błąd.", "Błąd"); resetShareBtn(btn, originalText); }
-}
-
 // ----------------------------------------
 // GLOBALNE FUNKCJE DLA HTML-A (ZABEZPIECZENIE)
 // ----------------------------------------
@@ -7355,6 +7157,7 @@ try {
     window.closeSeasonTable = closeSeasonTable;
     window.closeTeamAchievement = closeTeamAchievement;
     window.shareCareerResult = shareCareerResult;
+    window.showCareerCalendar = showCareerCalendar;
     
 } catch (e) {
     console.error("Global export error:", e);
