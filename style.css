@@ -327,6 +327,7 @@ body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); 
 .rank-item.legend:hover { box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4); }
 .text-legend { 
     background: linear-gradient(90deg, #9b59b6, #e74c3c, #f1c40f); 
+    background-clip: text;
     -webkit-background-clip: text; 
     -webkit-text-fill-color: transparent; 
 }
@@ -2041,10 +2042,10 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 /* ============================================== */
 .career-layout {
     display: grid;
-    grid-template-columns: 500px 1fr; /* Szerszy lewy panel jak w oryginale */
+    grid-template-columns: 500px minmax(0, 1.15fr) minmax(300px, 0.85fr);
     gap: 30px;
     width: 100%;
-    max-width: 1250px;
+    max-width: 1600px;
     min-height: 85vh;
     margin: 20px auto;
     background: transparent;
@@ -2072,6 +2073,101 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 }
 .career-timeline::-webkit-scrollbar { width: 6px; }
 .career-timeline::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.career-season-panel,
+.career-clubs-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+.career-panel-card {
+    background: #101014;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+}
+
+.career-panel-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.career-panel-subtitle {
+    margin-top: 4px;
+}
+
+.career-table-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.career-timeline-archive {
+    max-height: 34vh;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.career-timeline-archive::-webkit-scrollbar { width: 6px; }
+.career-timeline-archive::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.career-season-row,
+.career-club-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.career-season-row.active,
+.career-club-row.active {
+    background: rgba(241,196,15,0.12);
+    border-color: rgba(241,196,15,0.4);
+}
+
+.career-season-col-pos {
+    width: 34px;
+    text-align: center;
+    font-weight: 900;
+}
+
+.career-season-col-name {
+    flex: 1;
+    padding-left: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.career-season-col-points,
+.career-season-col-matches,
+.career-season-col-ovr {
+    width: 48px;
+    text-align: center;
+}
+
+.career-club-col-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.career-club-col-ovr {
+    width: 56px;
+    text-align: center;
+    font-weight: 900;
+    color: var(--accent);
+}
 
 /* KEVLAR WIZUALIZACJA */
 .kevlar-display { width: 140px; height: 160px; position: relative; }
@@ -2165,6 +2261,32 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .career-left-panel { padding: 20px; }
     .t-club { padding-left: 5px; font-size: 12px; }
     .t-age { width: 30px; font-size: 11px; }
+}
+
+@media (max-width: 1400px) {
+    .career-layout {
+        grid-template-columns: 420px minmax(0, 1fr);
+    }
+
+    .career-clubs-panel {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 1100px) {
+    .career-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .career-left-panel,
+    .career-season-panel,
+    .career-clubs-panel {
+        width: 100%;
+    }
+
+    .career-timeline-archive {
+        max-height: 280px;
+    }
 }
 
 /* ============================================== */

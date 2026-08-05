@@ -6422,6 +6422,9 @@ function renderCareerHub() {
     let s = cState.season;
     if (!s.active) { startNewSeason(); return; }
 
+    renderCareerSeasonTable();
+    renderCareerClubList();
+
     let totalMatches = s.schedule.length;
     let currentRound = s.matchIndex + 1;
     let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
@@ -6479,6 +6482,82 @@ function renderCareerHub() {
             </div>
         </div>
     `;
+}
+
+function renderCareerSeasonTable() {
+    const tableBody = document.getElementById('careerSeasonTableBody');
+    const meta = document.getElementById('careerSeasonMeta');
+    if (!tableBody || !meta) return;
+
+    const s = cState.season;
+    const playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+
+    if (!s || !s.active || !s.table || s.table.length === 0) {
+        meta.innerText = 'Brak aktywnego sezonu';
+        tableBody.innerHTML = '<div class="text-dim text-xs font-bold">Tabela pojawi się po rozpoczęciu sezonu.</div>';
+        return;
+    }
+
+    const totalMatches = s.schedule.length;
+    const currentRound = Math.min(s.matchIndex + 1, totalMatches);
+    const myRow = s.table.find(t => t.isMe);
+    const myPos = myRow ? myRow.pos : '-';
+    meta.innerText = `Runda ${currentRound}/${totalMatches} | Twoja pozycja: ${myPos}`;
+
+    tableBody.innerHTML = `
+        <div class="career-season-row" style="font-size:10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; background: transparent; border: none; padding: 0 12px 4px 12px;">
+            <div class="career-season-col-pos">#</div>
+            <div class="career-season-col-name">Zespół</div>
+            <div class="career-season-col-matches">M</div>
+            <div class="career-season-col-points">Pkt</div>
+        </div>
+    `;
+
+    s.table.forEach((row) => {
+        const clubColor = getCareerClubColor(row.name);
+        const isPlayer = row.isMe;
+        tableBody.innerHTML += `
+            <div class="career-season-row ${isPlayer ? 'active' : ''}">
+                <div class="career-season-col-pos" style="color:${row.pos === 1 ? '#f1c40f' : row.pos >= s.table.length - 1 ? '#ff3333' : '#fff'};">${row.pos}</div>
+                <div class="career-season-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayer ? '#fff' : '#d8d8d8'};">${row.name}</div>
+                <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matches}</div>
+                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.pts}</div>
+            </div>
+        `;
+    });
+}
+
+function renderCareerClubList() {
+    const clubList = document.getElementById('careerClubList');
+    const meta = document.getElementById('careerClubListMeta');
+    if (!clubList || !meta) return;
+
+    const playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    const clubs = cState.leagues[playingLeague] || [];
+    const orderedClubs = [...clubs];
+
+    if (cState.season && cState.season.active && cState.season.table && cState.season.table.length) {
+        orderedClubs.sort((a, b) => {
+            const aRow = cState.season.table.find(row => row.name === a);
+            const bRow = cState.season.table.find(row => row.name === b);
+            return (aRow ? aRow.pos : 99) - (bRow ? bRow.pos : 99);
+        });
+    }
+
+    meta.innerText = `${playingLeague} | ${clubs.length} zespołów`;
+
+    clubList.innerHTML = '';
+    orderedClubs.forEach((club) => {
+        const teamOvr = cState.teamOVRs[club] || 50;
+        const isPlayerClub = club === (activeLoanClub || cState.club);
+        const clubColor = getCareerClubColor(club);
+        clubList.innerHTML += `
+            <div class="career-club-row ${isPlayerClub ? 'active' : ''}">
+                <div class="career-club-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayerClub ? '#fff' : '#d8d8d8'};">${club}</div>
+                <div class="career-club-col-ovr">${teamOvr}</div>
+            </div>
+        `;
+    });
 }
 
 function generatePlayoffs() {
@@ -7258,7 +7337,8 @@ function showCareerEnd() {
         </div>
     `;
     if(!document.getElementById('timelineEndStats')) {
-        document.querySelector('.career-timeline').innerHTML += botStatsHTML;
+        const timelineArchive = document.getElementById('timelineContainerBox');
+        if (timelineArchive) timelineArchive.innerHTML += botStatsHTML;
     }
 }
 
