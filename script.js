@@ -6712,7 +6712,6 @@ function renderCareerHub() {
             </div>
         </div>
     `;
-}
 
 function renderCareerSeasonTable() {
     const tableBody = document.getElementById('careerSeasonTableBody');
