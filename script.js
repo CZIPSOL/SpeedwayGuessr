@@ -175,8 +175,6 @@ let customClashSettings = {
     filterMode: 'leagues', // 'leagues' lub 'clubs'
     leagues: { ext: true, m2e: true, klz: true, other: true },
     excludedClubs: [], // Lista klubów odznaczonych ręcznie
-        requiredCountries: 0, // ile kolumn musi mieć ograniczenie narodowosci
-        excludeInactivePlayers: false
 };
 let clashCustomSettingsReadOnly = false;
 
@@ -6268,39 +6266,18 @@ function resolveRandomEvent(succOVR, failOVR, chance, isMidSeason = false) {
 
 function showMidSeasonEventWindow() {
     const area = document.getElementById('careerActionArea');
-    
-    const events = [
-        { 
-            title: "Wywiad dla TV", desc: "Dziennikarz pyta o słabą atmosferę w klubie.", img: "🎙️", 
-            opt1: { title: "Bronisz ekipy", relTeam: 15, bot1: "70%: +1 OVR", bot2: "30%: -2 OVR", fn: "resolveMidSeasonEventWithWheel(1, -2, 0.70, 15, -5)" },
-            opt2: { title: "Mówisz prawdę", relTeam: -20, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(-20, 10)" } 
-        },
-        { 
-            title: "Nowinki Technologiczne", desc: "Tuner oferuje eksperymentalny silnik przed ważnym meczem.", img: "⚙️", 
-            opt1: { title: "Biorę to!", relManager: -5, bot1: "50%: +3 OVR", bot2: "50%: -3 OVR", fn: "resolveMidSeasonEventWithWheel(3, -3, 0.50, -5, 0)" },
-            opt2: { title: "Jadę na swoim", relManager: 5, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(5, 0)" } 
-        },
-        { 
-            title: "Impreza integracyjna", desc: "Koledzy z drużyny organizują grilla dzień przed treningiem.", img: "🍻", 
-            opt1: { title: "Idę z nimi", relTeam: 20, bot1: "60%: +1 OVR", bot2: "40%: Zmęczenie (-2 OVR)", fn: "resolveMidSeasonEventWithWheel(1, -2, 0.60, 20, -10)" },
-            opt2: { title: "Zostaję w domu", relTeam: -15, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(-15, 5)" } 
-        },
-        {
-            title: "Niespodziewany test sprzętu", desc: "Kibice i mechanik chcą sprawdzić nowe ustawienia przed trudnym wyjazdem.", img: "🧪",
-            opt1: { title: "Ryzykuję zmianę", relManager: -8, bot1: "55%: +2 OVR", bot2: "45%: -2 OVR", fn: "resolveMidSeasonEventWithWheel(2, -2, 0.55, 0, -8)" },
-            opt2: { title: "Zostawiam setup", relManager: 4, bot1: "Bez zmian", bot2: "Mniejsze ryzyko w kolejnym meczu", fn: "safeMidSeasonEvent(0, 4)" }
-        },
-        {
-            title: "Napięta końcówka sezonu", desc: "W klubie rośnie presja. Jeden wywiad może zmienić atmosferę w całym zespole.", img: "📣",
-            opt1: { title: "Biorę odpowiedzialność", relTeam: 10, bot1: "65%: +1 OVR", bot2: "35%: -1 OVR", fn: "resolveMidSeasonEventWithWheel(1, -1, 0.65, 10, 0)" },
-            opt2: { title: "Unikam tematu", relTeam: -10, bot1: "Brak ryzyka", bot2: "Spadek relacji z szatnią", fn: "safeMidSeasonEvent(-10, 0)" }
-        }
-    ];
-    
+
+    const events = window.CAREER_CUSTOM_EVENTS || [];
+    if (!events.length) {
+        area.innerHTML = `<div class="text-center text-dim font-bold p-15">Brak eventów do wyświetlenia.</div>`;
+        return;
+    }
+
     let ev = events[Math.floor(Math.random() * events.length)];
 
     area.innerHTML = `
         <h3 class="text-accent font-black m-0 mb-5 text-xl">Wydarzenie!</h3>
+        ${ev.dilemma ? `<div class="text-xs font-black uppercase tracking-wide text-red mb-10">Dylemat</div>` : ''}
         <h4 class="text-white font-black m-0 mb-5">${ev.title}</h4>
         <p class="text-xs text-dim mb-15">${ev.desc}</p>
         <div class="copero-action-grid">
@@ -6320,15 +6297,23 @@ function showMidSeasonEventWindow() {
     `;
 }
 
-function resolveMidSeasonEventWithWheel(succOVR, failOVR, chance, relT, relM) {
+function resolveMidSeasonEventWithWheel(succOVR, failOVR, chance, relT, relM, relF = 0) {
+    relT = relT < 0 ? Math.max(relT, -5) : relT;
+    relM = relM < 0 ? Math.max(relM, -5) : relM;
+    relF = relF < 0 ? Math.max(relF, -5) : relF;
     cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
     cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
+    cState.relations.fans = Math.max(0, Math.min(100, cState.relations.fans + relF));
     resolveRandomEvent(succOVR, failOVR, chance, true);
 }
 
-function safeMidSeasonEvent(relT, relM) {
+function safeMidSeasonEvent(relT, relM, relF = 0) {
+    relT = relT < 0 ? Math.max(relT, -5) : relT;
+    relM = relM < 0 ? Math.max(relM, -5) : relM;
+    relF = relF < 0 ? Math.max(relF, -5) : relF;
     cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
     cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
+    cState.relations.fans = Math.max(0, Math.min(100, cState.relations.fans + relF));
     saveCareer();
     updateLeftPanelUI();
     showToast("Uniknąłeś ryzyka. Zmiana relacji w zespole.", "normal");
@@ -6390,12 +6375,11 @@ function startNewSeason() {
     
     let opponents = [...cState.leagues[playingLeague]].filter(c => c !== playingClub).sort(() => 0.5 - Math.random());
     let schedule = [];
-    
-    while (schedule.length < regularLength) {
-        opponents.forEach(opp => {
-            if(schedule.length < regularLength) schedule.push({ opp: opp, type: "Zasadnicza" });
-        });
-    }
+
+    opponents.forEach((opp, index) => {
+        schedule.push({ opp: opp, type: "Zasadnicza", leg: 1, pairKey: `${index}-${opp}` });
+        schedule.push({ opp: opp, type: "Zasadnicza", leg: 2, pairKey: `${index}-${opp}` });
+    });
 
     cState.season = {
         active: true,
@@ -6407,7 +6391,8 @@ function startNewSeason() {
         table: generateSeasonTable(playingLeague, playingClub, 0, 0),
         heats: 0, pts: 0, bon: 0,
         trainedThisWeek: false,
-        eventRoundTriggered: 0
+        eventRoundTriggered: 0,
+        currentMatchScore: { me: 0, opp: 0 }
     };
     
     cState.relations.manager = Math.max(10, cState.relations.manager - 10);
@@ -6509,7 +6494,12 @@ function renderCareerSeasonTable() {
             <div class="career-season-col-pos">#</div>
             <div class="career-season-col-name">Zespół</div>
             <div class="career-season-col-matches">M</div>
-            <div class="career-season-col-points">Pkt</div>
+            <div class="career-season-col-points">B</div>
+            <div class="career-season-col-points">W</div>
+            <div class="career-season-col-points">R</div>
+            <div class="career-season-col-points">P</div>
+            <div class="career-season-col-points">+/-</div>
+            <div class="career-season-col-points">PKT</div>
         </div>
     `;
 
@@ -6521,6 +6511,11 @@ function renderCareerSeasonTable() {
                 <div class="career-season-col-pos" style="color:${row.pos === 1 ? '#f1c40f' : row.pos >= s.table.length - 1 ? '#ff3333' : '#fff'};">${row.pos}</div>
                 <div class="career-season-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayer ? '#fff' : '#d8d8d8'};">${row.name}</div>
                 <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matchesPlayed || 0}</div>
+                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.b || 0}</div>
+                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.w || 0}</div>
+                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.r || 0}</div>
+                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.p || 0}</div>
+                <div class="career-season-col-points" style="color: ${((row.diff || 0) >= 0) ? 'var(--green-neon)' : 'var(--red-neon)'}; font-weight: 900;">${(row.diff || 0) >= 0 ? '+' : ''}${row.diff || 0}</div>
                 <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.pts}</div>
             </div>
         `;
@@ -6677,8 +6672,8 @@ function nextQteRound() {
     timeBar.style.width = '100%';
     
     // Ustalanie czasu na reakcję w zależności od OVR zawodnika (wyższy OVR = mniej czasu)
-    let reactionTime = 1200 - (cState.ovr * 5); 
-    if (reactionTime < 600) reactionTime = 600; // Minimum 0.6 sekundy
+    let reactionTime = Math.floor((1200 - (cState.ovr * 5)) * 0.65);
+    if (reactionTime < 420) reactionTime = 420; // Minimum 0.42 sekundy
     
     setTimeout(() => {
         timeBar.style.transition = `width ${reactionTime}ms linear`;
@@ -6780,6 +6775,7 @@ async function playSingleMatch() {
         <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
         <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
         <div id="simMatchState" style="font-size:13px; font-weight:900; color:var(--text-dim); margin-bottom: 18px; text-align:center; text-transform:uppercase; letter-spacing:1px;"></div>
+        <div id="simMatchScore" style="font-size:18px; font-weight:900; color:var(--accent); margin-bottom: 18px; text-align:center; text-transform:uppercase; letter-spacing:1px;">Wynik meczu 0:0</div>
         <div style="display:flex; gap: 20px; margin-bottom: 30px;">
             <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
             <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
@@ -6793,6 +6789,7 @@ async function playSingleMatch() {
 
     const simMatchInfo = document.getElementById('simMatchInfo');
     const simMatchState = document.getElementById('simMatchState');
+    const simMatchScore = document.getElementById('simMatchScore');
     const simPts = document.getElementById('simPts');
     const simAvg = document.getElementById('simAvg');
     const simEvents = document.getElementById('simEvents');
@@ -6808,9 +6805,12 @@ async function playSingleMatch() {
     let lData = CAREER_CONSTANTS[playingLeague];
     let trackComfort = isHome ? 8 : -10;
     let stageLabel = isHome ? "DOM" : "WYJAZD";
+    let playerMatchScore = 0;
+    let opponentMatchScore = 0;
     
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
     simMatchState.innerText = `TOR: ${stageLabel} | Forma toru: ${trackComfort > 0 ? '+' : ''}${trackComfort}`;
+    simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
 
     // Aplikowanie modyfikatorów z relacji
     let benched = false;
@@ -6842,6 +6842,7 @@ async function playSingleMatch() {
     for (let h = 1; h <= heatsInMatch; h++) {
         await new Promise(r => setTimeout(r, 600)); 
         simProgressBar.style.width = `${(h / heatsInMatch) * 100}%`;
+        simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
         simMatchState.innerText = `BIEG ${h}/${heatsInMatch} | Wynik zawodnika: ${matchPts}+${matchBon}`;
 
         let heatMod = 0;
@@ -6873,7 +6874,13 @@ async function playSingleMatch() {
         matchPts += hPts;
         matchBon += hBon;
 
+        let teamHeatScore = hPts + hBon;
+        let opponentHeatScore = Math.max(0, Math.min(5, Math.round((2 + Math.random() * 2.5) - (ratio - 1) * 1.3)));
+        playerMatchScore += teamHeatScore;
+        opponentMatchScore += opponentHeatScore;
+
         simPts.innerText = `${matchPts} (+${matchBon})`;
+        simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
         simMatchState.innerText = `BIEG ${h}/${heatsInMatch} | Wynik zawodnika: ${matchPts}+${matchBon}`;
         playSound('flip');
     }
@@ -6892,13 +6899,33 @@ async function playSingleMatch() {
     // Prosta symulacja punktów drużyny w tabeli (Tylko runda zasadnicza)
     if (s.matchIndex <= s.regularSeasonLength) {
         s.table.forEach(t => {
-            let teamBias = t.isMe ? 0.56 : 0.50;
-            if (isHome) teamBias += 0.04;
-            if (!isHome) teamBias -= 0.04;
-            t.pts += Math.random() < teamBias ? 2 : 0; 
+            let teamBias = (cState.teamOVRs[t.name] || 50) / 100;
+            if (t.isMe) teamBias += isHome ? 0.06 : -0.03;
+            let roll = Math.random() + (teamBias - 0.5) * 0.5;
+
+            t.m = (t.m || 0) + 1;
             t.matchesPlayed = (t.matchesPlayed || 0) + 1;
+            t.diff = t.diff || 0;
+
+            if (roll > 0.84) {
+                t.w = (t.w || 0) + 1;
+                t.pts = (t.pts || 0) + 2;
+                t.diff += Math.floor(3 + Math.random() * 7);
+                if (s.matchIndex >= 8 && Math.random() < 0.5) t.b = (t.b || 0) + 1;
+            } else if (roll > 0.56) {
+                t.r = (t.r || 0) + 1;
+                t.pts = (t.pts || 0) + 1;
+                t.diff += Math.floor(Math.random() * 3) - 1;
+            } else {
+                t.p = (t.p || 0) + 1;
+                t.diff -= Math.floor(2 + Math.random() * 7);
+            }
         });
-        s.table.sort((a,b) => b.pts - a.pts).forEach((t, i) => t.pos = i + 1);
+        s.table.sort((a,b) => {
+            if ((b.pts || 0) !== (a.pts || 0)) return (b.pts || 0) - (a.pts || 0);
+            if ((b.b || 0) !== (a.b || 0)) return (b.b || 0) - (a.b || 0);
+            return (b.diff || 0) - (a.diff || 0);
+        }).forEach((t, i) => t.pos = i + 1);
     }
 
     updateLeftPanelUI();
@@ -7083,6 +7110,12 @@ function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) 
 
     table.forEach((t, i) => {
         t.pos = i + 1;
+        t.m = 0;
+        t.b = 0;
+        t.w = 0;
+        t.r = 0;
+        t.p = 0;
+        t.diff = 0;
         t.matches = 0;
         t.matchesPlayed = 0;
         t.pts = currentPts - (i * 2) - Math.floor(Math.random() * 2);
@@ -7390,7 +7423,12 @@ function showSeasonTable(historyIndex, year) {
                 <div style="flex: 1; text-align: left; padding-left: 10px; color: ${row.isMe ? '#fff' : '#ccc'}; border-left: 3px solid ${clubColor};">
                     ${row.name}
                 </div>
-                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.matches}</div>
+                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.m || row.matches || row.matchesPlayed || 0}</div>
+                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.b || 0}</div>
+                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.w || 0}</div>
+                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.r || 0}</div>
+                <div style="width: 40px; text-align: center; color: var(--text-dim);">${row.p || 0}</div>
+                <div style="width: 55px; text-align: center; color: ${((row.diff || 0) >= 0) ? 'var(--green-neon)' : 'var(--red-neon)'}; font-weight: 900;">${(row.diff || 0) >= 0 ? '+' : ''}${row.diff || 0}</div>
                 <div style="width: 40px; text-align: center; color: #fff; font-weight: 900;">${row.pts}</div>
             </div>
         `;
