@@ -6767,9 +6767,34 @@ function generatePlayoffs() {
     appAlert("Runda zasadnicza zakończona! Sprawdź w kalendarzu z kim pojedziesz w fazie pucharowej.", "Finałowa Faza");
 }
 
+// ==========================================
+// ====== OBSŁUGA KALENDARZA LIGOWEGO =======
+// ==========================================
+
 window.showCareerCalendar = function() {
     let s = cState.season;
-    const overlay = document.getElementById('careerCalendarOverlay');
+    let overlay = document.getElementById('careerCalendarOverlay');
+    
+    // ZABEZPIECZENIE: Jeżeli w HTML nie ma kalendarza, tworzymy go na żywo!
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'careerCalendarOverlay';
+        overlay.className = 'win-overlay';
+        overlay.style.cssText = 'display: none; z-index: 10020;';
+        overlay.innerHTML = `
+            <div class="stats-modal modal-lg" style="max-width: 700px; padding: 25px;">
+                <h2 class="text-accent mb-5 font-black uppercase" id="calendarOverlayTitle">KALENDARZ MECZÓW</h2>
+                <p class="text-dim text-xs mb-20 font-bold" id="calendarOverlaySub">Sezon X</p>
+                <div style="display: flex; gap: 15px; height: 350px;">
+                    <div style="width: 35%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow-y: auto; padding: 5px;" id="calendarRoundsList"></div>
+                    <div style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; overflow-y: auto;" id="calendarMatchesList"></div>
+                </div>
+                <button onclick="closeCalendarOverlay()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    
     document.getElementById('calendarOverlaySub').innerText = `Sezon ${2026 + cState.history.length}`;
     
     renderCalendarRoundsList(s.matchIndex);
@@ -6885,9 +6910,11 @@ window.renderCalendarMatchesList = function(roundIdx) {
 
 window.closeCalendarOverlay = function() {
     const overlay = document.getElementById('careerCalendarOverlay');
-    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+    if(overlay) {
+        overlay.style.opacity = '0'; 
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
 }
-
 
 // ==========================================
 // ====== MINI GRA: TRENING (QTE) ===========
@@ -7044,6 +7071,46 @@ function endTrainingQTE() {
 }
 
 // ==========================================
+// ====== GENERATOR PROGRAMU BIEGÓW =========
+// ==========================================
+
+function getPlayerHeats(age, numHeats) {
+    if (numHeats <= 0) return [];
+    let heats = [];
+    
+    if (age <= 21) {
+        // Obowiązkowe biegi juniorskie
+        let base = [2, 6, 12];
+        for(let i = 0; i < numHeats; i++) {
+            if (i < base.length) heats.push(base[i]);
+        }
+        // Jeśli dostaje dodatkowe starty (z rezerwy zwykłej lub taktycznej)
+        let available = [4, 8, 10, 14, 15].sort(() => 0.5 - Math.random());
+        while(heats.length < numHeats && available.length > 0) {
+            heats.push(available.pop());
+        }
+    } else {
+        // Standardowe ułożenia seniorskie
+        let sets = [
+            [1, 5, 9, 13],
+            [3, 7, 10, 14],
+            [4, 6, 11, 15],
+            [1, 5, 10, 15]
+        ];
+        let base = sets[Math.floor(Math.random() * sets.length)];
+        for(let i = 0; i < numHeats; i++) {
+            if (i < base.length) heats.push(base[i]);
+        }
+        // Dodatkowe biegi z rezerwy taktycznej/nominowane
+        let available = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].filter(h => !heats.includes(h)).sort(() => 0.5 - Math.random());
+        while(heats.length < numHeats && available.length > 0) {
+            heats.push(available.pop());
+        }
+    }
+    return heats.sort((a,b) => a - b);
+}
+
+// ==========================================
 // ====== SYMULACJA POJEDYNCZEGO MECZU ======
 // ==========================================
 
@@ -7084,7 +7151,7 @@ async function playSingleMatch() {
     let m = s.matchIndex + 1;
     let matchObj = s.schedule[s.matchIndex];
     let opponent = matchObj.opp;
-    let isHome = (m % 2 !== 0);
+    let isHome = matchObj.isHome;
     let oppColor = getCareerClubColor(opponent);
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
     let lData = CAREER_CONSTANTS[playingLeague];
@@ -7100,7 +7167,7 @@ async function playSingleMatch() {
         if (exclusionRoll < 0.04) {
             return strengthBias >= 0
                 ? { me: 5, opp: 1, text: "Wykluczenie rywala - bieg zakończony 5:1" }
-                : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - bieg zakończony 1:5" };
+                : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - 1:5" };
         }
         if (exclusionRoll < 0.08) {
             return strengthBias >= 0
@@ -7117,10 +7184,7 @@ async function playSingleMatch() {
     };
     
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
-    simMatchState.innerText = `TOR: ${stageLabel} | Forma toru: ${trackComfort > 0 ? '+' : ''}${trackComfort}`;
-    simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
 
-    // Aplikowanie modyfikatorów z relacji
     let benched = false;
     if (cState.relations.manager < 30 && Math.random() < 0.3) benched = true;
 
@@ -7141,8 +7205,11 @@ async function playSingleMatch() {
     else if (ratio > 0.80) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
     else heatsInMatch = Math.floor(Math.random() * 2) + 2; 
 
-    // Bonus bieg z taktycznej
     if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
+    if (heatsInMatch > 7) heatsInMatch = 7;
+
+    // GENEROWANIE PROGRAMU ZAWODÓW
+    let playerHeats = getPlayerHeats(cState.age, heatsInMatch);
     
     let matchPts = 0;
     let matchBon = 0;
@@ -7150,8 +7217,12 @@ async function playSingleMatch() {
     for (let h = 1; h <= totalMatchHeats; h++) {
         await new Promise(r => setTimeout(r, 600)); 
         simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
+        
+        let isPlayerRiding = playerHeats.includes(h);
+        let rideStatus = isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA";
+        
         simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
-        simMatchState.innerText = `BIEG ${h}/${totalMatchHeats} | Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
+        simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':'var(--text-dim)'};">${rideStatus}</span>`;
 
         let heatMod = 0;
         if (Math.random() < 0.10) { 
@@ -7179,22 +7250,23 @@ async function playSingleMatch() {
         let hPts = 0;
         let hBon = 0;
 
-        if (h <= heatsInMatch) {
+        if (isPlayerRiding) {
             if (heatOutcome.me >= 4) hPts = 3;
             else if (heatOutcome.me === 3) hPts = 2;
             else if (heatOutcome.me === 2) hPts = 1;
             else hPts = 0;
 
             if (hPts > 0 && Math.random() < 0.2) hBon = 1;
+            
+            matchPts += hPts;
+            matchBon += hBon;
         }
 
-        matchPts += hPts;
-        matchBon += hBon;
-
         simPts.innerText = `${matchPts} (+${matchBon})`;
-        simAvg.innerText = h > 0 ? ((matchPts + matchBon) / Math.max(1, Math.min(h, heatsInMatch))).toFixed(2) : "0.00";
+        let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
+        simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
         simMatchScore.innerText = `Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
-        simMatchState.innerText = `BIEG ${h}/${totalMatchHeats} | Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
+        
         if (heatOutcome.text) {
             simEvents.innerText = `Bieg ${h}: ${heatOutcome.text}`;
             simEvents.style.color = heatOutcome.text.includes("naszego") ? "var(--red-neon)" : (heatOutcome.text.includes("rywala") ? "var(--green-neon)" : "#fff");
@@ -7202,10 +7274,9 @@ async function playSingleMatch() {
         playSound('flip');
     }
     
-await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1000));
     simDiv.style.display = 'none';
 
-    // NOWE WYWOŁANIE (Aktualizuje tabele bazując na logice wszystkich meczów)
     simulateBotMatchesForCurrentRound(playerMatchScore, opponentMatchScore, false);
 
     // Aktualizacja statystyk sezonu
@@ -7215,75 +7286,13 @@ await new Promise(r => setTimeout(r, 1000));
     s.matchResults.push(`${playerMatchScore}:${opponentMatchScore}`);
     s.currentMatchScore = { me: playerMatchScore, opp: opponentMatchScore };
     s.matchIndex += 1;
-    s.trainedThisWeek = false;
-
-    
-    // Symulacja punktów drużyn w tabeli (Tylko runda zasadnicza)
-    if (s.matchIndex <= s.regularSeasonLength) {
-        const playerRow = s.table.find(t => t.isMe);
-        if (playerRow) {
-            const playerDiff = playerMatchScore - opponentMatchScore;
-            playerRow.m = (playerRow.m || 0) + 1;
-            playerRow.matchesPlayed = (playerRow.matchesPlayed || 0) + 1;
-            playerRow.diff = (playerRow.diff || 0) + playerDiff;
-
-            if (playerMatchScore > opponentMatchScore) {
-                playerRow.w = (playerRow.w || 0) + 1;
-                playerRow.pts = (playerRow.pts || 0) + 2;
-                if (playerDiff <= 6) playerRow.b = (playerRow.b || 0) + 1;
-            } else if (playerMatchScore === opponentMatchScore) {
-                playerRow.r = (playerRow.r || 0) + 1;
-                playerRow.pts = (playerRow.pts || 0) + 1;
-            } else {
-                playerRow.p = (playerRow.p || 0) + 1;
-            }
-        }
-
-        s.table.forEach(t => {
-            if (t.isMe) return;
-
-            const teamPower = cState.teamOVRs[t.name] || 50;
-            const oppositionPower = clampMatchValue(teamPower + (Math.random() * 24 - 12), 35, 95);
-            const advantage = clampMatchValue((teamPower - oppositionPower) / 30 + (Math.random() * 0.35 - 0.175), -1.1, 1.1);
-            const baseTeamScore = clampMatchValue(Math.round(45 + advantage * 14), 0, 90);
-            let teamScore = baseTeamScore;
-            let oppScore = 90 - baseTeamScore;
-
-            if (Math.random() < 0.06) {
-                const cut = Math.random() < 0.5 ? 5 : 1;
-                if (teamScore >= oppScore) teamScore = Math.max(0, teamScore - cut);
-                else oppScore = Math.max(0, oppScore - cut);
-            }
-
-            const scoreDiff = teamScore - oppScore;
-
-            t.m = (t.m || 0) + 1;
-            t.matchesPlayed = (t.matchesPlayed || 0) + 1;
-            t.diff = (t.diff || 0) + scoreDiff;
-
-            if (teamScore > oppScore) {
-                t.w = (t.w || 0) + 1;
-                t.pts = (t.pts || 0) + 2;
-                if (scoreDiff <= 6) t.b = (t.b || 0) + 1;
-            } else if (teamScore === oppScore) {
-                t.r = (t.r || 0) + 1;
-                t.pts = (t.pts || 0) + 1;
-            } else {
-                t.p = (t.p || 0) + 1;
-            }
-        });
-        s.table.sort((a,b) => {
-            if ((b.pts || 0) !== (a.pts || 0)) return (b.pts || 0) - (a.pts || 0);
-            if ((b.b || 0) !== (a.b || 0)) return (b.b || 0) - (a.b || 0);
-            return (b.diff || 0) - (a.diff || 0);
-        }).forEach((t, i) => t.pos = i + 1);
-    }
-
+    s.trainedThisWeek = false; 
 
     updateLeftPanelUI();
     saveCareer();
     renderCareerHub();
 }
+
 
 // ==========================================
 // ====== ZAKOŃCZENIE SEZONU ================
