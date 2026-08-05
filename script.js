@@ -5904,6 +5904,12 @@ function loadCareer() {
     let saved = localStorage.getItem('speedwayCareerSave_v4');
     if (saved) {
         cState = JSON.parse(saved);
+        // --- BACKWARD COMPATIBILITY ---
+        if (cState.season && cState.season.active && !cState.season.fullSchedule) {
+            startNewSeason();
+            appAlert("Zaktualizowano system terminarza ligowego. Twój obecny sezon musiał zostać zresetowany do pierwszej kolejki (Twoje statystyki OVR pozostają bez zmian).", "Aktualizacja gry");
+            return;
+        }
         document.getElementById('careerSetup').style.display = 'none';
         document.getElementById('careerMainPanel').style.display = 'flex'; 
         updateLeftPanelUI();
@@ -6367,18 +6373,84 @@ function getMatchDateString(round, leagueName) {
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + dayName;
 }
 
+// ==========================================
+// ====== SYSTEM LIGOWY I KALENDARZ =========
+// ==========================================
+
+function generateFullSchedule(teams) {
+    let n = teams.length;
+    let t = [...teams];
+    let hasPause = false;
+    
+    // Jeśli nieparzysta liczba drużyn - dodajemy PAUZĘ
+    if (n % 2 !== 0) {
+        t.push("PAUZA");
+        n++;
+        hasPause = true;
+    }
+
+    let roundRobin = [];
+    // Pierwsza runda (każdy z każdym)
+    for (let round = 0; round < n - 1; round++) {
+        let roundMatches = [];
+        for (let i = 0; i < n / 2; i++) {
+            let home = t[i];
+            let away = t[n - 1 - i];
+            
+            // Zamiana gospodarz/gość co kolejkę
+            if (i === 0 && round % 2 !== 0) {
+                home = t[n - 1 - i];
+                away = t[i];
+            }
+            
+            if (home !== "PAUZA" && away !== "PAUZA") {
+                roundMatches.push({ home, away });
+            }
+        }
+        roundRobin.push(roundMatches);
+        // Przesunięcie do Round-Robin
+        t.splice(1, 0, t.pop());
+    }
+
+    // Druga runda (Rewanże z zamienionymi stronami toru)
+    let secondHalf = [];
+    for (let round = 0; round < n - 1; round++) {
+        let roundMatches = roundRobin[round].map(m => ({
+            home: m.away,
+            away: m.home
+        }));
+        secondHalf.push(roundMatches);
+    }
+
+    return roundRobin.concat(secondHalf);
+}
+
 function startNewSeason() {
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
     let playingClub = activeLoanClub ? activeLoanClub : cState.club;
 
-    let regularLength = (cState.leagues[playingLeague].length - 1) * 2;
+    let fullSchedule = generateFullSchedule(cState.leagues[playingLeague]);
+    let regularLength = fullSchedule.length;
     
-    let opponents = [...cState.leagues[playingLeague]].filter(c => c !== playingClub).sort(() => 0.5 - Math.random());
-    let schedule = [];
-
-    opponents.forEach((opp, index) => {
-        schedule.push({ opp: opp, type: "Zasadnicza", leg: 1, pairKey: `${index}-${opp}` });
-        schedule.push({ opp: opp, type: "Zasadnicza", leg: 2, pairKey: `${index}-${opp}` });
+    let playerSchedule = [];
+    fullSchedule.forEach((roundMatches, rIdx) => {
+        let myMatch = roundMatches.find(m => m.home === playingClub || m.away === playingClub);
+        if (myMatch) {
+            let isHome = myMatch.home === playingClub;
+            playerSchedule.push({
+                opp: isHome ? myMatch.away : myMatch.home,
+                isHome: isHome,
+                type: "Zasadnicza",
+                leg: rIdx < (fullSchedule.length / 2) ? 1 : 2
+            });
+        } else {
+            playerSchedule.push({
+                opp: "PAUZA",
+                isHome: true,
+                type: "Zasadnicza",
+                leg: rIdx < (fullSchedule.length / 2) ? 1 : 2
+            });
+        }
     });
 
     cState.season = {
@@ -6386,7 +6458,8 @@ function startNewSeason() {
         matchIndex: 0,
         regularSeasonLength: regularLength,
         playoffsGenerated: false,
-        schedule: schedule,
+        fullSchedule: fullSchedule,
+        schedule: playerSchedule,
         matchResults: [],
         table: generateSeasonTable(playingLeague, playingClub, 0, 0),
         heats: 0, pts: 0, bon: 0,
@@ -6397,6 +6470,130 @@ function startNewSeason() {
     
     cState.relations.manager = Math.max(10, cState.relations.manager - 10);
     cState.relations.team = Math.max(10, cState.relations.team - 5);
+    
+    saveCareer();
+    renderCareerHub();
+}
+
+function simulateBotMatchesForCurrentRound(playerMatchScore, opponentMatchScore, isPlayerPauza) {
+    let s = cState.season;
+    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
+
+    if (s.matchIndex < s.regularSeasonLength) {
+        let roundIdx = s.matchIndex;
+        let roundMatches = s.fullSchedule[roundIdx];
+        
+        if (roundMatches) {
+            roundMatches.forEach(match => {
+                let homeClub = match.home;
+                let awayClub = match.away;
+                
+                if (homeClub === playingClub || awayClub === playingClub) {
+                    if (!isPlayerPauza) {
+                        let homeScore = homeClub === playingClub ? playerMatchScore : opponentMatchScore;
+                        let awayScore = awayClub === playingClub ? playerMatchScore : opponentMatchScore;
+                        
+                        match.homeScore = homeScore;
+                        match.awayScore = awayScore;
+                        
+                        updateTableWithMatch(s.table, homeClub, awayClub, homeScore, awayScore, s.fullSchedule, roundIdx);
+                    }
+                } else {
+                    let homePower = cState.teamOVRs[homeClub] || 50;
+                    let awayPower = cState.teamOVRs[awayClub] || 50;
+                    
+                    homePower += 8; // Atut własnego toru
+                    
+                    let advantage = (homePower - awayPower) / 30 + (Math.random() * 0.35 - 0.175);
+                    advantage = Math.max(-1.1, Math.min(1.1, advantage));
+                    
+                    let homeScore = Math.round(45 + advantage * 14);
+                    homeScore = Math.max(0, Math.min(90, homeScore));
+                    let awayScore = 90 - homeScore;
+                    
+                    if (Math.random() < 0.06) {
+                        let cut = Math.random() < 0.5 ? 5 : 1;
+                        if (homeScore >= awayScore) homeScore = Math.max(0, homeScore - cut);
+                        else awayScore = Math.max(0, awayScore - cut);
+                    }
+                    
+                    match.homeScore = homeScore;
+                    match.awayScore = awayScore;
+                    
+                    updateTableWithMatch(s.table, homeClub, awayClub, homeScore, awayScore, s.fullSchedule, roundIdx);
+                }
+            });
+            
+            s.table.sort((a,b) => {
+                if ((b.pts || 0) !== (a.pts || 0)) return (b.pts || 0) - (a.pts || 0);
+                if ((b.b || 0) !== (a.b || 0)) return (b.b || 0) - (a.b || 0);
+                return (b.diff || 0) - (a.diff || 0);
+            }).forEach((t, i) => t.pos = i + 1);
+        }
+    }
+}
+
+function updateTableWithMatch(table, homeClub, awayClub, homeScore, awayScore, fullSchedule, currentRoundIdx) {
+    let hRow = table.find(t => t.name === homeClub);
+    let aRow = table.find(t => t.name === awayClub);
+    
+    if(!hRow || !aRow) return;
+
+    hRow.m = (hRow.m || 0) + 1;
+    hRow.matchesPlayed = (hRow.matchesPlayed || 0) + 1;
+    aRow.m = (aRow.m || 0) + 1;
+    aRow.matchesPlayed = (aRow.matchesPlayed || 0) + 1;
+    
+    let hDiff = homeScore - awayScore;
+    hRow.diff = (hRow.diff || 0) + hDiff;
+    aRow.diff = (aRow.diff || 0) - hDiff;
+    
+    if (homeScore > awayScore) {
+        hRow.w = (hRow.w || 0) + 1;
+        hRow.pts = (hRow.pts || 0) + 2;
+        aRow.p = (aRow.p || 0) + 1;
+    } else if (homeScore < awayScore) {
+        aRow.w = (aRow.w || 0) + 1;
+        aRow.pts = (aRow.pts || 0) + 2;
+        hRow.p = (hRow.p || 0) + 1;
+    } else {
+        hRow.r = (hRow.r || 0) + 1;
+        hRow.pts = (hRow.pts || 0) + 1;
+        aRow.r = (aRow.r || 0) + 1;
+        aRow.pts = (aRow.pts || 0) + 1;
+    }
+    
+    let halfSeason = fullSchedule.length / 2;
+    
+    if (currentRoundIdx >= halfSeason) {
+        let firstLegRoundIdx = currentRoundIdx - halfSeason;
+        if (fullSchedule[firstLegRoundIdx]) {
+            let firstLegMatch = fullSchedule[firstLegRoundIdx].find(m => m.home === awayClub && m.away === homeClub);
+            if (firstLegMatch && firstLegMatch.homeScore !== undefined) {
+                let aggHome = homeScore + firstLegMatch.awayScore;
+                let aggAway = awayScore + firstLegMatch.homeScore;
+                
+                if (aggHome > aggAway) {
+                    hRow.b = (hRow.b || 0) + 1;
+                    hRow.pts = (hRow.pts || 0) + 1;
+                } else if (aggAway > aggHome) {
+                    aRow.b = (aRow.b || 0) + 1;
+                    aRow.pts = (aRow.pts || 0) + 1;
+                }
+            }
+        }
+    }
+}
+
+window.skipPauseRound = function() {
+    let s = cState.season;
+    
+    simulateBotMatchesForCurrentRound(0, 0, true);
+    
+    s.matchResults.push("-");
+    s.currentMatchScore = { me: 0, opp: 0 };
+    s.matchIndex += 1;
+    s.trainedThisWeek = false;
     
     saveCareer();
     renderCareerHub();
@@ -6414,13 +6611,11 @@ function renderCareerHub() {
     let currentRound = s.matchIndex + 1;
     let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
 
-    // GENEROWANIE PLAY-OFFÓW / PLAY-DOWNÓW po rundzie zasadniczej
     if (s.matchIndex === s.regularSeasonLength && !s.playoffsGenerated) {
         generatePlayoffs();
         return; 
     }
 
-    // KONIEC SEZONU
     if (s.matchIndex >= totalMatches && s.playoffsGenerated) {
         area.innerHTML = `
             <div class="copero-card stay-card" style="grid-column: 1 / -1; width: 100%; margin: 0 auto; background: rgba(241,196,15,0.1); border-color: var(--accent);" onclick="endOfSeason()">
@@ -6431,6 +6626,56 @@ function renderCareerHub() {
         `;
         return;
     }
+
+    let nextMatch = s.schedule[s.matchIndex];
+    
+    if (nextMatch.opp === "PAUZA") {
+        area.innerHTML = `
+            <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
+                <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
+                <div style="font-size:20px; font-weight:900; margin-bottom:15px; color: var(--accent);">PAUZA W TEJ KOLEJCE</div>
+                <p style="font-size:12px; color:var(--text-dim); margin-bottom:15px;">Twoja drużyna odpoczywa, ale rywale jadą swoje mecze.</p>
+                <button onclick="skipPauseRound()" class="hub-action-btn" style="padding:12px 30px; border-radius:10px; background:var(--accent); color:#000; font-weight:900; border:none; text-transform:uppercase; font-size:12px;">Pomiń Kolejkę</button>
+            </div>
+        `;
+        return;
+    }
+    
+    let isHome = nextMatch.isHome;
+    let oppColor = getCareerClubColor(nextMatch.opp);
+    
+    let trainBtnOpacity = s.trainedThisWeek ? "0.3" : "1";
+    let trainBtnCursor = s.trainedThisWeek ? "not-allowed" : "pointer";
+    let trainBtnClick = s.trainedThisWeek ? "" : "startTrainingQTE()";
+
+    area.innerHTML = `
+        <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:10px; color:var(--text-dim); font-weight:900; margin-bottom:10px;">RELACJE</div>
+                ${drawRelationBar("Menedżer", cState.relations.manager, "#3498db")}
+                ${drawRelationBar("Drużyna", cState.relations.team, "#2ecc71")}
+                ${drawRelationBar("Kibice", cState.relations.fans, "#e74c3c")}
+            </div>
+            <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05); text-align:center; display:flex; flex-direction:column; justify-content:center;">
+                <div style="font-size:10px; color:var(--text-dim); font-weight:900;">TWOJA FORMA (SEZON)</div>
+                <div style="font-size:32px; font-weight:900; color:var(--accent); margin: 5px 0;">${avg}</div>
+                <div style="font-size:11px; font-weight:bold; color:#fff;">Pkt: ${s.pts}+${s.bon} | Biegi: ${s.heats}</div>
+            </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
+            <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
+            <div style="font-size:10px; font-weight:900; color:var(--accent); text-transform:uppercase; margin-bottom:5px;">Faza: ${nextMatch.type}</div>
+            <div style="font-size:12px; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin-bottom:5px;">Mecz ${currentRound} z ${totalMatches}</div>
+            <div style="font-size:20px; font-weight:900; margin-bottom:15px;">vs <span style="color:${oppColor};">${nextMatch.opp}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
+            
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <button onclick="${trainBtnClick}" class="hub-action-btn" style="opacity:${trainBtnOpacity}; cursor:${trainBtnCursor}; flex:1; padding:12px; border-radius:10px; background:rgba(52, 152, 219, 0.2); color:#3498db; font-weight:900; border:1px solid #3498db; text-transform:uppercase; font-size:12px;">🏋️ Trening</button>
+                <button onclick="triggerMatchOrEvent()" class="hub-action-btn" style="flex:2; padding:12px; border-radius:10px; background:var(--accent); color:#000; font-weight:900; border:none; text-transform:uppercase; font-size:12px; box-shadow: 0 5px 15px rgba(241,196,15,0.3);">🏁 Jedź Mecz</button>
+            </div>
+        </div>
+    `;
+}
 
     let nextMatch = s.schedule[s.matchIndex];
     let isHome = (currentRound % 2 !== 0);
@@ -6525,31 +6770,30 @@ function renderCareerSeasonTable() {
 function generatePlayoffs() {
     let s = cState.season;
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
     
-    let table = generateSeasonTable(playingLeague, playingClub, s.pts, s.heats);
+    let table = s.table; 
     let myTeamData = table.find(t => t.isMe);
     let pos = myTeamData ? myTeamData.pos : 4;
     
     if (playingLeague === "KLŻ") {
         if (pos <= 4) {
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał" });
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)" });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (o Awans)" });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)" });
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał", isHome: false });
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)", isHome: true });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (o Awans)", isHome: false });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)", isHome: true });
         }
     } else {
         if (pos <= 4) {
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał" });
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)" });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał" });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)" });
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał", isHome: false });
+            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)", isHome: true });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał", isHome: false });
+            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)", isHome: true });
         } else {
-            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Mecz 1)" });
-            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Rewanż)" });
+            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Mecz 1)", isHome: false });
+            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Rewanż)", isHome: true });
             if (pos >= 7) {
-                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż o utrzymanie" });
-                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż (Rewanż)" });
+                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż o utrzymanie", isHome: false });
+                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż (Rewanż)", isHome: true });
             }
         }
     }
@@ -6560,47 +6804,125 @@ function generatePlayoffs() {
     appAlert("Runda zasadnicza zakończona! Sprawdź w kalendarzu z kim pojedziesz w fazie pucharowej.", "Finałowa Faza");
 }
 
-function showCareerCalendar() {
+window.showCareerCalendar = function() {
+    let s = cState.season;
+    const overlay = document.getElementById('careerCalendarOverlay');
+    document.getElementById('calendarOverlaySub').innerText = `Sezon ${2026 + cState.history.length}`;
+    
+    renderCalendarRoundsList(s.matchIndex);
+    
+    overlay.style.display = 'block'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+window.renderCalendarRoundsList = function(selectedRoundIdx) {
     let s = cState.season;
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    
-    const overlay = document.getElementById('careerTableOverlay');
-    document.getElementById('tableOverlayTitle').innerText = `KALENDARZ MECZÓW`;
-    document.getElementById('tableOverlaySub').innerText = `Sezon ${2026 + cState.history.length}`;
-    
-    const listEl = document.getElementById('careerTableList');
-    listEl.innerHTML = `
-        <div style="display: flex; font-size: 10px; color: var(--text-dim); font-weight: 900; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
-            <div style="width: 30px; text-align: center;">M.</div>
-            <div style="width: 60px; text-align: center;">DATA</div>
-            <div style="flex: 1; text-align: left; padding-left: 10px;">PRZECIWNIK</div>
-            <div style="width: 50px; text-align: center;">WYNIK</div>
-        </div>
-    `;
+    const roundsList = document.getElementById('calendarRoundsList');
+    roundsList.innerHTML = '';
     
     s.schedule.forEach((match, idx) => {
         let isPast = idx < s.matchIndex;
         let isCurrent = idx === s.matchIndex;
-        let color = isPast ? "rgba(255,255,255,0.3)" : (isCurrent ? "var(--accent)" : "#fff");
-        let bgClass = isCurrent ? "background: rgba(241, 196, 15, 0.15); border-radius: 8px;" : "";
-        let resultStr = isPast ? (s.matchResults[idx] || "Odjechany") : "-";
+        let isSelected = idx === selectedRoundIdx;
+        
+        let bgClass = isSelected ? "background: rgba(241, 196, 15, 0.2);" : (isCurrent ? "background: rgba(255,255,255,0.1);" : "");
+        let color = isSelected ? "var(--accent)" : (isPast ? "rgba(255,255,255,0.5)" : "#fff");
         
         let dateStr = getMatchDateString(idx + 1, playingLeague);
         
-        listEl.innerHTML += `
-            <div style="display: flex; font-size: 11px; font-weight: 700; align-items: center; padding: 8px 0; ${bgClass}; color: ${color};">
-                <div style="width: 30px; text-align: center; font-weight: 900;">${idx+1}.</div>
-                <div style="width: 60px; text-align: center;">${dateStr}</div>
-                <div style="flex: 1; text-align: left; padding-left: 10px;">
-                    <span style="font-size: 8px; color:var(--text-dim); display:block;">${match.type}</span>
-                    ${match.opp}
-                </div>
-                <div style="width: 50px; text-align: center; font-weight: 900;">${resultStr}</div>
+        roundsList.innerHTML += `
+            <div onclick="renderCalendarMatchesList(${idx})" style="cursor: pointer; padding: 10px; margin-bottom: 5px; border-radius: 8px; ${bgClass} color: ${color}; font-size: 11px; font-weight: 700; border: 1px solid ${isSelected ? 'var(--accent)' : 'transparent'};">
+                <div style="font-weight: 900; font-size: 12px;">Runda ${idx + 1}</div>
+                <div style="font-size: 9px; opacity: 0.8;">${dateStr}</div>
+                <div style="font-size: 10px; margin-top: 3px;">${match.type}</div>
             </div>
         `;
     });
     
-    overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+    renderCalendarMatchesList(selectedRoundIdx);
+}
+
+window.renderCalendarMatchesList = function(roundIdx) {
+    const roundsListDivs = document.getElementById('calendarRoundsList').children;
+    for (let i = 0; i < roundsListDivs.length; i++) {
+        let isSelected = i === roundIdx;
+        roundsListDivs[i].style.background = isSelected ? "rgba(241, 196, 15, 0.2)" : (i === cState.season.matchIndex ? "rgba(255,255,255,0.1)" : "");
+        roundsListDivs[i].style.color = isSelected ? "var(--accent)" : (i < cState.season.matchIndex ? "rgba(255,255,255,0.5)" : "#fff");
+        roundsListDivs[i].style.border = isSelected ? "1px solid var(--accent)" : "1px solid transparent";
+    }
+
+    let s = cState.season;
+    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
+    const matchesList = document.getElementById('calendarMatchesList');
+    matchesList.innerHTML = `<h3 style="margin-top: 0; color: var(--accent); font-size: 14px; text-transform: uppercase;">Mecze Rundy ${roundIdx + 1}</h3>`;
+    
+    if (s.fullSchedule && s.fullSchedule[roundIdx]) {
+        let roundMatches = s.fullSchedule[roundIdx];
+        roundMatches.forEach(m => {
+            let isMyMatch = m.home === playingClub || m.away === playingClub;
+            let homeScore = m.homeScore !== undefined ? m.homeScore : "-";
+            let awayScore = m.awayScore !== undefined ? m.awayScore : "-";
+            
+            if (isMyMatch && roundIdx < s.matchIndex) {
+                let res = s.matchResults[roundIdx];
+                if (res && res !== "-") {
+                    let pts = res.split(":");
+                    homeScore = m.home === playingClub ? pts[0] : pts[1];
+                    awayScore = m.home === playingClub ? pts[1] : pts[0];
+                } else if (res === "-") {
+                    homeScore = "-"; awayScore = "-";
+                }
+            }
+            
+            let matchBg = isMyMatch ? "background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);" : "background: rgba(0,0,0,0.2);";
+            let homeColor = m.home === playingClub ? 'var(--accent)' : '#fff';
+            let awayColor = m.away === playingClub ? 'var(--accent)' : '#fff';
+            
+            matchesList.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; ${matchBg}">
+                    <div style="flex: 1; text-align: right; font-weight: ${m.home===playingClub?'900':'600'}; color: ${homeColor}; font-size: 12px;">${m.home}</div>
+                    <div style="width: 50px; text-align: center; font-weight: 900; font-size: 14px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 6px; margin: 0 10px;">
+                        ${homeScore}:${awayScore}
+                    </div>
+                    <div style="flex: 1; text-align: left; font-weight: ${m.away===playingClub?'900':'600'}; color: ${awayColor}; font-size: 12px;">${m.away}</div>
+                </div>
+            `;
+        });
+    } else {
+        let myMatch = s.schedule[roundIdx];
+        if (myMatch) {
+            let isHome = myMatch.isHome;
+            let homeTeam = isHome ? playingClub : myMatch.opp;
+            let awayTeam = isHome ? myMatch.opp : playingClub;
+            
+            let homeScore = "-";
+            let awayScore = "-";
+            if (roundIdx < s.matchIndex) {
+                let res = s.matchResults[roundIdx];
+                if (res && res !== "-") {
+                    let pts = res.split(":");
+                    homeScore = isHome ? pts[0] : pts[1];
+                    awayScore = isHome ? pts[1] : pts[0];
+                }
+            }
+            
+            matchesList.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);">
+                    <div style="flex: 1; text-align: right; font-weight: ${isHome?'900':'600'}; color: ${isHome?'var(--accent)':'#fff'}; font-size: 12px;">${homeTeam}</div>
+                    <div style="width: 50px; text-align: center; font-weight: 900; font-size: 14px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 6px; margin: 0 10px;">
+                        ${homeScore}:${awayScore}
+                    </div>
+                    <div style="flex: 1; text-align: left; font-weight: ${!isHome?'900':'600'}; color: ${!isHome?'var(--accent)':'#fff'}; font-size: 12px;">${awayTeam}</div>
+                </div>
+            `;
+        }
+    }
+}
+
+window.closeCalendarOverlay = function() {
+    const overlay = document.getElementById('careerCalendarOverlay');
+    overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
 }
 
 
@@ -6814,13 +7136,13 @@ async function playSingleMatch() {
         const exclusionRoll = Math.random();
         if (exclusionRoll < 0.04) {
             return strengthBias >= 0
-                ? { me: 5, opp: 0, text: "Wykluczenie rywala - 5:0" }
-                : { me: 0, opp: 5, text: "Wykluczenie naszego zawodnika - 0:5" };
+                ? { me: 5, opp: 1, text: "Wykluczenie rywala - bieg zakończony 5:1" }
+                : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - bieg zakończony 1:5" };
         }
         if (exclusionRoll < 0.08) {
             return strengthBias >= 0
-                ? { me: 3, opp: 2, text: "Przerwany bieg - 3:2" }
-                : { me: 2, opp: 3, text: "Przerwany bieg - 2:3" };
+                ? { me: 4, opp: 2, text: "Przerwany bieg - 4:2" }
+                : { me: 2, opp: 4, text: "Przerwany bieg - 2:4" };
         }
 
         const swing = strengthBias + (Math.random() * 0.9 - 0.45);
@@ -6880,8 +7202,7 @@ async function playSingleMatch() {
             let ev = events[Math.floor(Math.random() * events.length)];
             simEvents.innerText = `Bieg ${h}: ${ev.text}`;
             simEvents.style.color = ev.color;
-            if (ev.p !== undefined) continue; 
-            else heatMod = ev.mod;
+            if (ev.p === undefined) heatMod = ev.mod;
         } else {
             simEvents.innerText = `Bieg ${h}: Na torze...`;
             simEvents.style.color = "#fff";
@@ -6902,7 +7223,6 @@ async function playSingleMatch() {
             else hPts = 0;
 
             if (hPts > 0 && Math.random() < 0.2) hBon = 1;
-            if (heatOutcome.text.includes("Wykluczenie") && hPts > 0) hPts = Math.max(0, hPts - 1);
         }
 
         matchPts += hPts;
@@ -6914,13 +7234,16 @@ async function playSingleMatch() {
         simMatchState.innerText = `BIEG ${h}/${totalMatchHeats} | Wynik meczu ${playerMatchScore}:${opponentMatchScore}`;
         if (heatOutcome.text) {
             simEvents.innerText = `Bieg ${h}: ${heatOutcome.text}`;
-            simEvents.style.color = heatOutcome.text.includes("nas") ? "var(--green-neon)" : (heatOutcome.text.includes("rywali") ? "var(--red-neon)" : "#fff");
+            simEvents.style.color = heatOutcome.text.includes("naszego") ? "var(--red-neon)" : (heatOutcome.text.includes("rywala") ? "var(--green-neon)" : "#fff");
         }
         playSound('flip');
     }
     
-    await new Promise(r => setTimeout(r, 1000));
+await new Promise(r => setTimeout(r, 1000));
     simDiv.style.display = 'none';
+
+    // NOWE WYWOŁANIE (Aktualizuje tabele bazując na logice wszystkich meczów)
+    simulateBotMatchesForCurrentRound(playerMatchScore, opponentMatchScore, false);
 
     // Aktualizacja statystyk sezonu
     s.heats += heatsInMatch;
@@ -6929,7 +7252,8 @@ async function playSingleMatch() {
     s.matchResults.push(`${playerMatchScore}:${opponentMatchScore}`);
     s.currentMatchScore = { me: playerMatchScore, opp: opponentMatchScore };
     s.matchIndex += 1;
-    s.trainedThisWeek = false; 
+    s.trainedThisWeek = false;
+
     
     // Symulacja punktów drużyn w tabeli (Tylko runda zasadnicza)
     if (s.matchIndex <= s.regularSeasonLength) {
@@ -6991,6 +7315,7 @@ async function playSingleMatch() {
             return (b.diff || 0) - (a.diff || 0);
         }).forEach((t, i) => t.pos = i + 1);
     }
+
 
     updateLeftPanelUI();
     saveCareer();
