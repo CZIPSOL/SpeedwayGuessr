@@ -5845,7 +5845,8 @@ let cState = {
         matchResults: [], // Historia wyników do kalendarza
         table: [],
         heats: 0, pts: 0, bon: 0,
-        trainedThisWeek: false
+        trainedThisWeek: false,
+        eventRoundTriggered: 0
     }
 };
 
@@ -6347,9 +6348,12 @@ function triggerMatchOrEvent() {
 
     const round = s.matchIndex + 1;
     const customEventRound = round === 3 || round === 7 || round === 11;
+    const eventAlreadyShown = s.eventRoundTriggered === round;
     const randomEvent = Math.random() < 0.22;
 
-    if (customEventRound || randomEvent) {
+    if (!eventAlreadyShown && (customEventRound || randomEvent)) {
+        s.eventRoundTriggered = round;
+        saveCareer();
         showMidSeasonEventWindow();
         showToast("W trakcie sezonu pojawiło się dodatkowe wydarzenie.", "normal");
         return;
@@ -6402,7 +6406,8 @@ function startNewSeason() {
         matchResults: [],
         table: generateSeasonTable(playingLeague, playingClub, 0, 0),
         heats: 0, pts: 0, bon: 0,
-        trainedThisWeek: false
+        trainedThisWeek: false,
+        eventRoundTriggered: 0
     };
     
     cState.relations.manager = Math.max(10, cState.relations.manager - 10);
