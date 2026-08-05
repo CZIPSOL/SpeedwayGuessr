@@ -6221,6 +6221,16 @@ function showMidSeasonEventWindow() {
             title: "Impreza integracyjna", desc: "Koledzy z drużyny organizują grilla dzień przed treningiem.", img: "🍻", 
             opt1: { title: "Idę z nimi", relTeam: 20, bot1: "60%: +1 OVR", bot2: "40%: Zmęczenie (-2 OVR)", fn: "resolveMidSeasonEventWithWheel(1, -2, 0.60, 20, -10)" },
             opt2: { title: "Zostaję w domu", relTeam: -15, bot1: "Brak ryzyka", bot2: "", fn: "safeMidSeasonEvent(-15, 5)" } 
+        },
+        {
+            title: "Niespodziewany test sprzętu", desc: "Kibice i mechanik chcą sprawdzić nowe ustawienia przed trudnym wyjazdem.", img: "🧪",
+            opt1: { title: "Ryzykuję zmianę", relManager: -8, bot1: "55%: +2 OVR", bot2: "45%: -2 OVR", fn: "resolveMidSeasonEventWithWheel(2, -2, 0.55, 0, -8)" },
+            opt2: { title: "Zostawiam setup", relManager: 4, bot1: "Bez zmian", bot2: "Mniejsze ryzyko w kolejnym meczu", fn: "safeMidSeasonEvent(0, 4)" }
+        },
+        {
+            title: "Napięta końcówka sezonu", desc: "W klubie rośnie presja. Jeden wywiad może zmienić atmosferę w całym zespole.", img: "📣",
+            opt1: { title: "Biorę odpowiedzialność", relTeam: 10, bot1: "65%: +1 OVR", bot2: "35%: -1 OVR", fn: "resolveMidSeasonEventWithWheel(1, -1, 0.65, 10, 0)" },
+            opt2: { title: "Unikam tematu", relTeam: -10, bot1: "Brak ryzyka", bot2: "Spadek relacji z szatnią", fn: "safeMidSeasonEvent(-10, 0)" }
         }
     ];
     
@@ -6260,6 +6270,30 @@ function safeMidSeasonEvent(relT, relM) {
     updateLeftPanelUI();
     showToast("Uniknąłeś ryzyka. Zmiana relacji w zespole.", "normal");
     renderCareerHub();
+}
+
+function resolveMidSeasonEvent() {
+    showMidSeasonEventWindow();
+}
+
+function triggerMatchOrEvent() {
+    const s = cState.season;
+    if (!s || !s.active) {
+        renderCareerHub();
+        return;
+    }
+
+    const round = s.matchIndex + 1;
+    const customEventRound = round === 3 || round === 7 || round === 11;
+    const randomEvent = Math.random() < 0.22;
+
+    if (customEventRound || randomEvent) {
+        showMidSeasonEventWindow();
+        showToast("W trakcie sezonu pojawiło się dodatkowe wydarzenie.", "normal");
+        return;
+    }
+
+    playSingleMatch();
 }
 
 
@@ -6631,7 +6665,8 @@ async function playSingleMatch() {
     
     simDiv.innerHTML = `
         <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
-        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 20px; text-align:center;"></div>
+        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
+        <div id="simMatchState" style="font-size:13px; font-weight:900; color:var(--text-dim); margin-bottom: 18px; text-align:center; text-transform:uppercase; letter-spacing:1px;"></div>
         <div style="display:flex; gap: 20px; margin-bottom: 30px;">
             <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
             <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
@@ -6644,6 +6679,7 @@ async function playSingleMatch() {
     simDiv.style.display = 'flex';
 
     const simMatchInfo = document.getElementById('simMatchInfo');
+    const simMatchState = document.getElementById('simMatchState');
     const simPts = document.getElementById('simPts');
     const simAvg = document.getElementById('simAvg');
     const simEvents = document.getElementById('simEvents');
@@ -6657,8 +6693,11 @@ async function playSingleMatch() {
     let oppColor = getCareerClubColor(opponent);
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
     let lData = CAREER_CONSTANTS[playingLeague];
+    let trackComfort = isHome ? 8 : -10;
+    let stageLabel = isHome ? "DOM" : "WYJAZD";
     
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
+    simMatchState.innerText = `TOR: ${stageLabel} | Forma toru: ${trackComfort > 0 ? '+' : ''}${trackComfort}`;
 
     // Aplikowanie modyfikatorów z relacji
     let benched = false;
@@ -6668,17 +6707,18 @@ async function playSingleMatch() {
     if (cState.relations.team > 80) moraleMod = 3;
     if (cState.relations.team < 30) moraleMod = -3;
 
-    let matchEffOvr = cState.ovr + moraleMod + (isHome ? 4 : -4); 
+    let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
     if (benched) matchEffOvr -= 15; 
     
     let heatsInMatch = 0;
     let ratio = matchEffOvr / lData.diff;
     
     if (benched) heatsInMatch = Math.random() < 0.3 ? 1 : 0;
-    else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 3) + 3; 
-    else if (ratio > 1.1) heatsInMatch = Math.floor(Math.random() * 2) + 4; 
-    else if (ratio > 0.85) heatsInMatch = Math.floor(Math.random() * 3) + 3; 
-    else heatsInMatch = Math.floor(Math.random() * 3) + 2; 
+    else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
+    else if (ratio > 1.15) heatsInMatch = Math.floor(Math.random() * 2) + 5; 
+    else if (ratio > 0.95) heatsInMatch = Math.floor(Math.random() * 2) + 4; 
+    else if (ratio > 0.80) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
+    else heatsInMatch = Math.floor(Math.random() * 2) + 2; 
 
     // Bonus bieg z taktycznej
     if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
@@ -6689,14 +6729,16 @@ async function playSingleMatch() {
     for (let h = 1; h <= heatsInMatch; h++) {
         await new Promise(r => setTimeout(r, 600)); 
         simProgressBar.style.width = `${(h / heatsInMatch) * 100}%`;
+        simMatchState.innerText = `BIEG ${h}/${heatsInMatch} | Wynik zawodnika: ${matchPts}+${matchBon}`;
 
         let heatMod = 0;
         if (Math.random() < 0.10) { 
             const events = [
                 { text: "⚠️ Wjeżdżasz w taśmę!", p: 0, b: 0, color: "var(--red-neon)" },
-                { text: "🔥 Atomowy start!", mod: 2.0, color: "var(--green-neon)" },
-                { text: "🚜 Dziura w torze...", mod: -1.5, color: "var(--yellow-neon)" },
-                { text: "🔧 Defekt motocykla na trasie...", p: 0, b: 0, color: "var(--red-neon)" }
+                { text: "🔥 Atomowy start i obrona 1. miejsca!", mod: 2.0, color: "var(--green-neon)" },
+                { text: "🚜 Dziura w torze, tracisz rytm...", mod: -1.5, color: "var(--yellow-neon)" },
+                { text: "🔧 Defekt motocykla na trasie...", p: 0, b: 0, color: "var(--red-neon)" },
+                { text: "🌧️ Zmiana warunków - trzeba się dostosować", mod: -0.8, color: "#9bd3ff" }
             ];
             let ev = events[Math.floor(Math.random() * events.length)];
             simEvents.innerText = `Bieg ${h}: ${ev.text}`;
@@ -6711,14 +6753,15 @@ async function playSingleMatch() {
         let strength = ratio * (Math.random() * 2.0 + 0.5) + heatMod; 
         let hPts = 0; let hBon = 0;
 
-        if (strength >= 2.2) { hPts = 3; } 
-        else if (strength >= 1.5) { hPts = 2; if(Math.random() < 0.2) hBon = 1; } 
-        else if (strength >= 0.8) { hPts = 1; if(Math.random() < 0.3) hBon = 1; }
+        if (strength >= 2.35) { hPts = 3; } 
+        else if (strength >= 1.60) { hPts = 2; if(Math.random() < 0.22) hBon = 1; } 
+        else if (strength >= 0.85) { hPts = 1; if(Math.random() < 0.30) hBon = 1; }
 
         matchPts += hPts;
         matchBon += hBon;
 
         simPts.innerText = `${matchPts} (+${matchBon})`;
+        simMatchState.innerText = `BIEG ${h}/${heatsInMatch} | Wynik zawodnika: ${matchPts}+${matchBon}`;
         playSound('flip');
     }
     
@@ -6736,8 +6779,10 @@ async function playSingleMatch() {
     // Prosta symulacja punktów drużyny w tabeli (Tylko runda zasadnicza)
     if (s.matchIndex <= s.regularSeasonLength) {
         s.table.forEach(t => {
-            if(t.isMe) t.pts += Math.random() > 0.5 ? 2 : 0; 
-            else t.pts += Math.random() > 0.5 ? 2 : 0;
+            let teamBias = t.isMe ? 0.56 : 0.50;
+            if (isHome) teamBias += 0.04;
+            if (!isHome) teamBias -= 0.04;
+            t.pts += Math.random() < teamBias ? 2 : 0; 
         });
         s.table.sort((a,b) => b.pts - a.pts).forEach((t, i) => t.pos = i + 1);
     }
@@ -6765,24 +6810,30 @@ function endOfSeason() {
 
     // ROZWÓJ OVR na koniec sezonu
     let ageGrowth = 0;
-    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 3) + 2; 
-    else if (cState.age <= 24) ageGrowth = Math.floor(Math.random() * 2) + 1; 
-    else if (cState.age <= 28) ageGrowth = Math.random() < 0.7 ? 1 : 0; 
-    else if (cState.age <= 33) ageGrowth = 0; 
+    if (cState.age <= 20) ageGrowth = Math.floor(Math.random() * 2) + 1;
+    else if (cState.age <= 23) ageGrowth = Math.random() < 0.7 ? 1 : 0;
+    else if (cState.age <= 27) ageGrowth = Math.random() < 0.25 ? 1 : 0;
+    else if (cState.age <= 31) ageGrowth = Math.random() < 0.18 ? 1 : 0;
+    else if (cState.age <= 35) ageGrowth = 0;
     else ageGrowth = -Math.floor(Math.random() * 2) - 1;
 
     let perfGrowth = 0;
-    if (officialAvg >= 2.40) perfGrowth = 3;
-    else if (officialAvg >= 2.00) perfGrowth = 2;
-    else if (officialAvg >= 1.60) perfGrowth = 1;
-    else if (officialAvg >= 1.30) perfGrowth = 0;
-    else if (officialAvg < 1.30) perfGrowth = -1;
-    else if (officialAvg < 0.80) perfGrowth = -2;
+    if (officialAvg >= 2.35) perfGrowth = cState.age <= 22 ? 2 : 1;
+    else if (officialAvg >= 2.00) perfGrowth = 1;
+    else if (officialAvg >= 1.60) perfGrowth = 0;
+    else if (officialAvg >= 1.20) perfGrowth = -1;
+    else perfGrowth = -2;
+
+    if (cState.ovr >= 90 && perfGrowth > 0) perfGrowth -= 1;
+    if (cState.ovr >= 95 && perfGrowth > 0) perfGrowth -= 1;
+    if (cState.age >= 28 && perfGrowth > 0) perfGrowth = 0;
 
     let totalGrowth = ageGrowth + perfGrowth;
     if (cState.ovr > 95 && totalGrowth > 0) totalGrowth -= 2; 
     else if (cState.ovr > 90 && totalGrowth > 0) totalGrowth -= 1;
-    if (cState.age <= 23 && totalGrowth < 0) totalGrowth = 0; 
+    if (cState.age <= 22 && totalGrowth < 0) totalGrowth = 0; 
+    if (totalGrowth > 2) totalGrowth = 2;
+    if (totalGrowth < -3) totalGrowth = -3;
 
     cState.ovr += totalGrowth;
     if (cState.ovr > 99) cState.ovr = 99;
@@ -6790,9 +6841,9 @@ function endOfSeason() {
 
     // FLUKTUACJE OVR DRUŻYN
     for (let club in cState.teamOVRs) {
-        let change = Math.floor(Math.random() * 5) - 2; 
-        if (Math.random() < 0.03) change += 10; 
-        else if (Math.random() > 0.97) change -= 10; 
+        let change = Math.floor(Math.random() * 3) - 1;
+        if (Math.random() < 0.02) change += 4;
+        else if (Math.random() > 0.98) change -= 4;
         cState.teamOVRs[club] = Math.max(35, Math.min(95, cState.teamOVRs[club] + change));
     }
 
@@ -6827,19 +6878,24 @@ function endOfSeason() {
         }
     }
 
-    // APLIKOWANIE ZMIAN W LIGACH
-    if (playingLeague === "PGE Ekstraliga" && relegated) {
-        cState.leagues["PGE Ekstraliga"].splice(cState.leagues["PGE Ekstraliga"].indexOf(playingClub), 1);
-        cState.leagues["PGE Ekstraliga"].push(promotedTeam);
-        cState.leagues["Metalkas 2.E"].push(playingClub);
-        cState.leagues["Metalkas 2.E"].splice(cState.leagues["Metalkas 2.E"].indexOf(promotedTeam), 1);
-    } else if (playingLeague === "Metalkas 2.E" && promoted) {
-        let pgeRelegated = cState.leagues["PGE Ekstraliga"][cState.leagues["PGE Ekstraliga"].length-1];
-        cState.leagues["Metalkas 2.E"].splice(cState.leagues["Metalkas 2.E"].indexOf(playingClub), 1);
-        cState.leagues["Metalkas 2.E"].push(pgeRelegated);
-        cState.leagues["PGE Ekstraliga"].push(playingClub);
-        cState.leagues["PGE Ekstraliga"].splice(cState.leagues["PGE Ekstraliga"].indexOf(pgeRelegated), 1);
+    function moveClubBetweenLeagues(club, fromLeague, toLeague, ovrDelta) {
+        const fromList = cState.leagues[fromLeague];
+        const toList = cState.leagues[toLeague];
+        const fromIndex = fromList.indexOf(club);
+        if (fromIndex === -1 || toList.includes(club)) return;
+        fromList.splice(fromIndex, 1);
+        toList.push(club);
+        cState.teamOVRs[club] = Math.max(35, Math.min(95, (cState.teamOVRs[club] || 50) + ovrDelta));
     }
+
+    const pgeTable = generateSeasonTable("PGE Ekstraliga", null, 0, 0);
+    const e2Table = generateSeasonTable("Metalkas 2.E", null, 0, 0);
+    const klzTable = generateSeasonTable("KLŻ", null, 0, 0);
+
+    moveClubBetweenLeagues(pgeTable[pgeTable.length - 1].name, "PGE Ekstraliga", "Metalkas 2.E", -2);
+    moveClubBetweenLeagues(e2Table[0].name, "Metalkas 2.E", "PGE Ekstraliga", 3);
+    moveClubBetweenLeagues(e2Table[e2Table.length - 1].name, "Metalkas 2.E", "KLŻ", -2);
+    moveClubBetweenLeagues(klzTable[0].name, "KLŻ", "Metalkas 2.E", 3);
 
     if (!activeLoanLeague) {
         for (let l in cState.leagues) {
