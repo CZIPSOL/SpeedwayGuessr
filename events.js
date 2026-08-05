@@ -13,336 +13,56 @@
 
     function buildChoice(title, bot1, bot2, succOvr, failOvr, chance, relTeam, relManager, relFans) {
         return {
-            title,
-            bot1,
-            bot2,
+            title, bot1, bot2,
+            chance: Math.round(chance * 100), // <-- Zapisujemy szansę do wyświetlenia
             fn: makeFn(succOvr, failOvr, chance, relTeam, relManager, relFans)
         };
     }
 
     function buildSafeChoice(title, bot1, bot2, relTeam, relManager, relFans) {
         return {
-            title,
-            bot1,
-            bot2,
+            title, bot1, bot2,
             fn: makeSafeFn(relTeam, relManager, relFans)
         };
     }
 
     const labels = [
         "Szybka odprawa", "Nerwowy poranek", "Późny serwis", "Zmiana przełożeń", "Kontrola toru",
-        "Ostatni spacer po torze", "Wideo z poprzedniego meczu", "Test przy bandzie", "Mokra nawierzchnia", "Ostatnia decyzja"
+        "Ostatni spacer", "Wideo przed meczem", "Test sprzętu", "Trudna nawierzchnia", "Ostatnia decyzja"
     ];
 
+    // Znacznie rozbudowana baza eventów
     const themes = [
-        {
-            key: "warsztat",
-            icon: "⚙️",
-            title: "Warsztat",
-            desc: "Mechanicy naciskają na korektę ustawień. To decyzja między ostrożnością a pełnym ryzykiem.",
-            opt1: {
-                title: "Ryzykuję nowy set",
-                bot1: "+2 OVR | +6 rel. do menadżera",
-                bot2: "-2 OVR | -8 rel. z drużyną",
-                relTeam: -8,
-                relManager: 6,
-                relFans: 0,
-                succOvr: 2,
-                failOvr: -2,
-                chance: 0.56
-            },
-            opt2: {
-                title: "Zostawiam sprawdzony zestaw",
-                bot1: "+1 OVR | +5 rel. z drużyną",
-                bot2: "-1 OVR | -4 rel. do menadżera",
-                relTeam: 5,
-                relManager: -4,
-                relFans: 0,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.62
-            }
-        },
-        {
-            key: "szatnia",
-            icon: "🏁",
-            title: "Szatnia",
-            desc: "Po meczu atmosfera w zespole jest napięta. Jedna odpowiedź może uspokoić albo podzielić ekipę.",
-            opt1: {
-                title: "Bronię kolegów",
-                bot1: "+1 OVR | +8 rel. z drużyną",
-                bot2: "-1 OVR | -6 rel. z kibicami",
-                relTeam: 8,
-                relManager: 0,
-                relFans: -6,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.64
-            },
-            opt2: {
-                title: "Mówię prawdę w szatni",
-                bot1: "+2 OVR | +7 rel. do menadżera",
-                bot2: "-2 OVR | -5 rel. z drużyną",
-                relTeam: -5,
-                relManager: 7,
-                relFans: 0,
-                succOvr: 2,
-                failOvr: -2,
-                chance: 0.54
-            }
-        },
-        {
-            key: "media",
-            icon: "🎙️",
-            title: "Media",
-            desc: "Dziennikarze chcą prostego nagłówka. Ty musisz wybrać, komu dać rację po meczu.",
-            opt1: {
-                title: "Staję po stronie klubu",
-                bot1: "+2 OVR | +6 rel. do menadżera",
-                bot2: "-1 OVR | -8 rel. z kibicami",
-                relTeam: 0,
-                relManager: 6,
-                relFans: -8,
-                succOvr: 2,
-                failOvr: -1,
-                chance: 0.58
-            },
-            opt2: {
-                title: "Mówię, co myślą kibice",
-                bot1: "+1 OVR | +9 rel. z kibicami",
-                bot2: "-2 OVR | -5 rel. do menadżera",
-                relTeam: 0,
-                relManager: -5,
-                relFans: 9,
-                succOvr: 1,
-                failOvr: -2,
-                chance: 0.60
-            }
-        },
-        {
-            key: "kibice",
-            icon: "🔥",
-            title: "Kibice",
-            desc: "Trybuna oczekuje reakcji po trudnym biegu. To klasyczny dylemat między sercem a rozsądkiem.",
-            opt1: {
-                title: "Idę w ogień z trybuną",
-                bot1: "+1 OVR | +10 rel. z kibicami",
-                bot2: "-1 OVR | -7 rel. z drużyną",
-                relTeam: -7,
-                relManager: 0,
-                relFans: 10,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.68
-            },
-            opt2: {
-                title: "Trzymam stronę zespołu",
-                bot1: "+2 OVR | +7 rel. z drużyną",
-                bot2: "-1 OVR | -8 rel. z kibicami",
-                relTeam: 7,
-                relManager: 0,
-                relFans: -8,
-                succOvr: 2,
-                failOvr: -1,
-                chance: 0.55
-            }
-        },
-        {
-            key: "sponsor",
-            icon: "💰",
-            title: "Sponsor",
-            desc: "Sponsor naciska na wyniki i obecność medialną. Klub chce spokoju, a zespół chce jechać swoje.",
-            opt1: {
-                title: "Grasz pod sponsora",
-                bot1: "+2 OVR | +7 rel. do menadżera",
-                bot2: "-1 OVR | -6 rel. z drużyną",
-                relTeam: -6,
-                relManager: 7,
-                relFans: 0,
-                succOvr: 2,
-                failOvr: -1,
-                chance: 0.57
-            },
-            opt2: {
-                title: "Bronisz szatni",
-                bot1: "+1 OVR | +8 rel. z drużyną",
-                bot2: "-2 OVR | -8 rel. do menadżera",
-                relTeam: 8,
-                relManager: -8,
-                relFans: 0,
-                succOvr: 1,
-                failOvr: -2,
-                chance: 0.52
-            }
-        },
-        {
-            key: "wyjazd",
-            icon: "🚌",
-            title: "Wyjazd",
-            desc: "Długa podróż i obcy tor. Tu każdy wybór kosztuje więcej niż zwykle.",
-            opt1: {
-                title: "Dostaję większą wolność",
-                bot1: "+2 OVR | +6 rel. do menadżera",
-                bot2: "-2 OVR | -4 rel. z drużyną",
-                relTeam: -4,
-                relManager: 6,
-                relFans: 0,
-                succOvr: 2,
-                failOvr: -2,
-                chance: 0.50
-            },
-            opt2: {
-                title: "Pomagam mechanikom i ekipie",
-                bot1: "+1 OVR | +9 rel. z drużyną",
-                bot2: "-1 OVR | -5 rel. z kibicami za zachowawczość",
-                relTeam: 9,
-                relManager: 0,
-                relFans: -5,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.66
-            }
-        },
-        {
-            key: "trening",
-            icon: "🏋️",
-            title: "Trening",
-            desc: "Trener chce mocniejszego treningu, ale zespół prosi o odpoczynek przed ważnym meczem.",
-            opt1: {
-                title: "Dokręcam tempo",
-                bot1: "+2 OVR | +6 rel. do menadżera",
-                bot2: "-2 OVR | -7 rel. z drużyną",
-                relTeam: -7,
-                relManager: 6,
-                relFans: 0,
-                succOvr: 2,
-                failOvr: -2,
-                chance: 0.53
-            },
-            opt2: {
-                title: "Stawiam na regenerację",
-                bot1: "+1 OVR | +8 rel. z drużyną",
-                bot2: "-1 OVR | -5 rel. do menadżera",
-                relTeam: 8,
-                relManager: -5,
-                relFans: 0,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.64
-            }
-        },
-        {
-            key: "rywale",
-            icon: "🥊",
-            title: "Rywale",
-            desc: "Rywal z toru próbuje Cię wytrącić z równowagi. Odpowiedź może podobać się albo ekipie, albo trybunom.",
-            opt1: {
-                title: "Odpowiadam ostro",
-                bot1: "+2 OVR | +7 rel. z kibicami",
-                bot2: "-1 OVR | -6 rel. z drużyną",
-                relTeam: -6,
-                relManager: 0,
-                relFans: 7,
-                succOvr: 2,
-                failOvr: -1,
-                chance: 0.51
-            },
-            opt2: {
-                title: "Gaszę konflikt",
-                bot1: "+1 OVR | +8 rel. z drużyną",
-                bot2: "-1 OVR | -5 rel. z kibicami",
-                relTeam: 8,
-                relManager: 0,
-                relFans: -5,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.67
-            }
-        },
-        {
-            key: "koncowka",
-            icon: "🏁",
-            title: "Końcówka sezonu",
-            desc: "Sezon wchodzi w decydującą fazę. Klub chce awansu, a kibice chcą widowiska za wszelką cenę.",
-            opt1: {
-                title: "Gram bezpiecznie",
-                bot1: "+1 OVR | +8 rel. z drużyną",
-                bot2: "-1 OVR | -6 rel. z kibicami",
-                relTeam: 8,
-                relManager: 0,
-                relFans: -6,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.63
-            },
-            opt2: {
-                title: "Idę na pełne ryzyko",
-                bot1: "+2 OVR | +8 rel. z kibicami",
-                bot2: "-2 OVR | -7 rel. do menadżera",
-                relTeam: 0,
-                relManager: -7,
-                relFans: 8,
-                succOvr: 2,
-                failOvr: -2,
-                chance: 0.49
-            }
-        },
-        {
-            key: "pogoda",
-            icon: "🌧️",
-            title: "Pogoda",
-            desc: "Tor robi się kapryśny. Jedna decyzja może poprawić formę, ale zepsuć układ w szatni.",
-            opt1: {
-                title: "Przestawiam sprzęt na deszcz",
-                bot1: "+2 OVR | +6 rel. do menadżera",
-                bot2: "-1 OVR | -6 rel. z drużyną",
-                relTeam: -6,
-                relManager: 6,
-                relFans: 0,
-                succOvr: 2,
-                failOvr: -1,
-                chance: 0.55
-            },
-            opt2: {
-                title: "Zostaję przy torowym setupie",
-                bot1: "+1 OVR | +8 rel. z drużyną",
-                bot2: "-2 OVR | -4 rel. do menadżera",
-                relTeam: 8,
-                relManager: -4,
-                relFans: 0,
-                succOvr: 1,
-                failOvr: -2,
-                chance: 0.58
-            }
-        },
-        {
-            key: "presja",
-            icon: "📣",
-            title: "Presja",
-            desc: "Przed tobą ważny mecz i cały klub patrzy na każdy ruch.",
-            opt1: {
-                title: "Biorę odpowiedzialność",
-                bot1: "+2 OVR | +7 rel. do menadżera",
-                bot2: "-1 OVR | -5 rel. z kibicami",
-                relTeam: 0,
-                relManager: 7,
-                relFans: -5,
-                succOvr: 2,
-                failOvr: -1,
-                chance: 0.61
-            },
-            opt2: {
-                title: "Otwieram się przed kibicami",
-                bot1: "+1 OVR | +9 rel. z kibicami",
-                bot2: "-1 OVR | -6 rel. do menadżera",
-                relTeam: 0,
-                relManager: -6,
-                relFans: 9,
-                succOvr: 1,
-                failOvr: -1,
-                chance: 0.67
-            }
-        }
+        { key: "warsztat", icon: "⚙️", title: "Warsztat", desc: "Mechanicy naciskają na korektę ustawień.", 
+          opt1: { title: "Ryzykuję nowy set", bot1: "+2 OVR | +6 rel. menadżer", bot2: "-2 OVR | -8 rel. drużyna", relTeam: -8, relManager: 6, relFans: 0, succOvr: 2, failOvr: -2, chance: 0.56 }, 
+          opt2: { title: "Zostawiam sprawdzony", bot1: "+1 OVR | +5 rel. drużyna", bot2: "-1 OVR | -4 rel. menadżer", relTeam: 5, relManager: -4, relFans: 0, succOvr: 1, failOvr: -1, chance: 0.62 } },
+        { key: "szatnia", icon: "🏁", title: "Napięcie w szatni", desc: "Atmosfera w zespole siada po gorszym biegu.", 
+          opt1: { title: "Motywuję kolegów", bot1: "+1 OVR | +8 rel. drużyna", bot2: "-1 OVR | -6 rel. kibice", relTeam: 8, relManager: 0, relFans: -6, succOvr: 1, failOvr: -1, chance: 0.64 }, 
+          opt2: { title: "Mówię prawdę prosto w twarz", bot1: "+2 OVR | +7 rel. menadżer", bot2: "-2 OVR | -5 rel. drużyna", relTeam: -5, relManager: 7, relFans: 0, succOvr: 2, failOvr: -2, chance: 0.54 } },
+        { key: "media", icon: "🎙️", title: "Wywiad na żywo", desc: "Dziennikarze prowokują po meczu.", 
+          opt1: { title: "Gryzę się w język (Strona klubu)", bot1: "+2 OVR | +6 rel. menadżer", bot2: "-1 OVR | -8 rel. kibice", relTeam: 0, relManager: 6, relFans: -8, succOvr: 2, failOvr: -1, chance: 0.58 }, 
+          opt2: { title: "Wygłaszam mocną opinię", bot1: "+1 OVR | +9 rel. kibice", bot2: "-2 OVR | -5 rel. menadżer", relTeam: 0, relManager: -5, relFans: 9, succOvr: 1, failOvr: -2, chance: 0.60 } },
+        { key: "kibice", icon: "🔥", title: "Sektorówka", desc: "Trybuny domagają się ostrej reakcji wobec rywala.", 
+          opt1: { title: "Podpalam trybuny (Ogień)", bot1: "+1 OVR | +10 rel. kibice", bot2: "-1 OVR | -7 rel. drużyna", relTeam: -7, relManager: 0, relFans: 10, succOvr: 1, failOvr: -1, chance: 0.68 }, 
+          opt2: { title: "Uspokajam emocje", bot1: "+2 OVR | +7 rel. drużyna", bot2: "-1 OVR | -8 rel. kibice", relTeam: 7, relManager: 0, relFans: -8, succOvr: 2, failOvr: -1, chance: 0.55 } },
+        { key: "sponsor", icon: "💰", title: "Impreza Sponsora", desc: "Główny sponsor chce cię u siebie przed meczem.", 
+          opt1: { title: "Zarywam noc dla sponsora", bot1: "+2 OVR | +7 rel. menadżer", bot2: "-1 OVR | -6 rel. drużyna", relTeam: -6, relManager: 7, relFans: 0, succOvr: 2, failOvr: -1, chance: 0.57 }, 
+          opt2: { title: "Wybieram sen i regenerację", bot1: "+1 OVR | +8 rel. drużyna", bot2: "-2 OVR | -8 rel. menadżer", relTeam: 8, relManager: -8, relFans: 0, succOvr: 1, failOvr: -2, chance: 0.52 } },
+        { key: "silnik", icon: "🏍️", title: "Nowy Silnik", desc: "Tuner przysłał nowy, niesprawdzony sprzęt.", 
+          opt1: { title: "Testuję w meczu", bot1: "+3 OVR | +5 rel. kibice", bot2: "-3 OVR | -10 rel. menadżer", relTeam: 0, relManager: -10, relFans: 5, succOvr: 3, failOvr: -3, chance: 0.45 }, 
+          opt2: { title: "Zostawiam na treningi", bot1: "+1 OVR | +5 rel. menadżer", bot2: "-1 OVR | -2 rel. kibice", relTeam: 0, relManager: 5, relFans: -2, succOvr: 1, failOvr: -1, chance: 0.70 } },
+        { key: "trener", icon: "📋", title: "Konflikt z Trenerem", desc: "Masz inną koncepcję na swój start niż trener.", 
+          opt1: { title: "Stawiam na swoim", bot1: "+2 OVR | +5 rel. kibice", bot2: "-2 OVR | -10 rel. menadżer", relTeam: -2, relManager: -10, relFans: 5, succOvr: 2, failOvr: -2, chance: 0.52 }, 
+          opt2: { title: "Zgadzam się z trenerem", bot1: "+1 OVR | +8 rel. menadżer", bot2: "-1 OVR | -5 rel. drużyna", relTeam: -5, relManager: 8, relFans: 0, succOvr: 1, failOvr: -1, chance: 0.75 } },
+        { key: "kolega", icon: "🤝", title: "Słabszy kolega z pary", desc: "Zostałeś doparowany z juniorem. Gubi punkty.", 
+          opt1: { title: "Jadę na własne konto", bot1: "+2 OVR | -8 rel. drużyna", bot2: "-1 OVR | -5 rel. kibice", relTeam: -8, relManager: 2, relFans: -5, succOvr: 2, failOvr: -1, chance: 0.65 }, 
+          opt2: { title: "Osłaniam i holuję", bot1: "+1 OVR | +12 rel. drużyna", bot2: "-2 OVR | -5 rel. menadżer", relTeam: 12, relManager: -5, relFans: 2, succOvr: 1, failOvr: -2, chance: 0.50 } },
+        { key: "tor", icon: "🚜", title: "Kopny tor", desc: "Gospodarze przygotowali wyjątkowo przyczepny tor.", 
+          opt1: { title: "Atakuję po zewnętrznej", bot1: "+3 OVR | +10 rel. kibice", bot2: "-2 OVR | -5 rel. menadżer", relTeam: 0, relManager: -5, relFans: 10, succOvr: 3, failOvr: -2, chance: 0.40 }, 
+          opt2: { title: "Jadę przy krawężniku", bot1: "+1 OVR | +5 rel. menadżer", bot2: "-1 OVR | -2 rel. kibice", relTeam: 2, relManager: 5, relFans: -2, succOvr: 1, failOvr: -1, chance: 0.80 } },
+        { key: "kontuzja", icon: "🤕", title: "Lekki uraz", desc: "Odczuwasz ból w nadgarstku po ostatnim upadku.", 
+          opt1: { title: "Biorę blokadę i jadę", bot1: "+2 OVR | +15 rel. menadżer", bot2: "-3 OVR | -5 rel. drużyna", relTeam: -5, relManager: 15, relFans: 5, succOvr: 2, failOvr: -3, chance: 0.48 }, 
+          opt2: { title: "Zgłaszam niedyspozycję", bot1: "+1 OVR | +5 rel. drużyna", bot2: "-2 OVR | -15 rel. menadżer", relTeam: 5, relManager: -15, relFans: -5, succOvr: 1, failOvr: -2, chance: 0.85 } }
     ];
 
     const eventList = [];
@@ -350,17 +70,12 @@
     themes.forEach((theme, themeIndex) => {
         labels.forEach((label, labelIndex) => {
             const pressure = 1 + Math.floor((themeIndex + labelIndex) / 4);
-            const swing = clamp(0.48 + ((themeIndex + labelIndex) % 4) * 0.05, 0.42, 0.72);
-            const opt1Chance = clamp(theme.opt1.chance - (labelIndex % 3) * 0.02 + themeIndex * 0.005, 0.40, 0.80);
-            const opt2Chance = clamp(theme.opt2.chance - (labelIndex % 2) * 0.02 + themeIndex * 0.005, 0.40, 0.80);
-
+            const opt1Chance = clamp(theme.opt1.chance - (labelIndex % 3) * 0.02 + themeIndex * 0.005, 0.35, 0.85);
             const opt1Succ = theme.opt1.succOvr + (pressure > 2 ? 1 : 0);
             const opt1Fail = theme.opt1.failOvr - (pressure > 3 ? 1 : 0);
-            const opt2Succ = theme.opt2.succOvr + (pressure > 2 ? 1 : 0);
-            const opt2Fail = theme.opt2.failOvr - (pressure > 3 ? 1 : 0);
 
             const mainTitle = `${theme.title}: ${label}`;
-            const mainDesc = `${theme.desc} To wydarzenie dotyczy momentu: ${label.toLowerCase()}.`;
+            const mainDesc = `${theme.desc} Momenty pełne wahania. Czas na decyzję.`;
 
             eventList.push({
                 id: `${theme.key}-${labelIndex + 1}`,
@@ -368,32 +83,11 @@
                 desc: mainDesc,
                 img: theme.icon,
                 dilemma: true,
-                opt1: buildChoice(
-                    theme.opt1.title,
-                    theme.opt1.bot1,
-                    theme.opt1.bot2,
-                    opt1Succ,
-                    opt1Fail,
-                    opt1Chance,
-                    theme.opt1.relTeam,
-                    theme.opt1.relManager,
-                    theme.opt1.relFans
-                ),
-                opt2: buildSafeChoice(
-                    theme.opt2.title,
-                    theme.opt2.bot1,
-                    theme.opt2.bot2,
-                    theme.opt2.relTeam,
-                    theme.opt2.relManager,
-                    theme.opt2.relFans
-                )
+                opt1: buildChoice(theme.opt1.title, theme.opt1.bot1, theme.opt1.bot2, opt1Succ, opt1Fail, opt1Chance, theme.opt1.relTeam, theme.opt1.relManager, theme.opt1.relFans),
+                opt2: buildSafeChoice(theme.opt2.title, theme.opt2.bot1, theme.opt2.bot2, theme.opt2.relTeam, theme.opt2.relManager, theme.opt2.relFans)
             });
         });
     });
 
     window.CAREER_CUSTOM_EVENTS = eventList;
-    window.getCareerCustomEvent = function () {
-        if (!window.CAREER_CUSTOM_EVENTS || window.CAREER_CUSTOM_EVENTS.length === 0) return null;
-        return window.CAREER_CUSTOM_EVENTS[Math.floor(Math.random() * window.CAREER_CUSTOM_EVENTS.length)];
-    };
 })();

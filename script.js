@@ -6359,17 +6359,21 @@ function triggerMatchOrEvent() {
 // ==========================================
 
 function getMatchDateString(round, leagueName) {
-    let baseDate = new Date(2026, 3, 5); 
-    let daysToAdd = (round - 1) * 7; 
+    let baseDate = new Date(2026, 3, 3); // 3 Kwietnia 2026 (Piątek)
+    let weeksToAdd = round - 1;
+    let dayOffset = 0; 
     
+    // Pseudolosowość na podstawie numeru kolejki (50/50 na dzień 1 lub dzień 2)
+    let isDay1 = (round * 7 + 3) % 2 === 0;
+
     if (leagueName === "PGE Ekstraliga") {
-        if (round % 2 !== 0) daysToAdd -= 2; 
-    } else if (leagueName === "Metalkas 2.E") {
-        if (round % 2 !== 0) daysToAdd -= 1; 
+        dayOffset = isDay1 ? 0 : 2; // Pt lub Nd
+    } else {
+        dayOffset = isDay1 ? 1 : 2; // Sb lub Nd (dla M2E i KLŻ)
     } 
     
-    let d = new Date(baseDate.getTime() + daysToAdd * 86400000);
-    let dayName = d.getDay()===5 ? ' (Pt)' : d.getDay()===6 ? ' (Sb)' : ' (Nd)';
+    let d = new Date(baseDate.getTime() + (weeksToAdd * 7 + dayOffset) * 86400000);
+    let dayName = d.getDay() === 5 ? ' (Pt)' : d.getDay() === 6 ? ' (Sb)' : ' (Nd)';
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + dayName;
 }
 
@@ -6377,52 +6381,52 @@ function getMatchDateString(round, leagueName) {
 // ====== SYSTEM LIGOWY I KALENDARZ =========
 // ==========================================
 
-function generateFullSchedule(teams) {
+function generateFullSchedule(teamsArray) {
+    let teams = [...teamsArray];
     let n = teams.length;
-    let t = [...teams];
-    let hasPause = false;
     
-    // Jeśli nieparzysta liczba drużyn - dodajemy PAUZĘ
     if (n % 2 !== 0) {
-        t.push("PAUZA");
+        teams.push("PAUZA");
         n++;
-        hasPause = true;
     }
 
-    let roundRobin = [];
-    // Pierwsza runda (każdy z każdym)
+    let schedule = [];
+    
+    // Metoda wielokąta (Berger tables) - optymalne rozłożenie Dom/Wyjazd
     for (let round = 0; round < n - 1; round++) {
         let roundMatches = [];
         for (let i = 0; i < n / 2; i++) {
-            let home = t[i];
-            let away = t[n - 1 - i];
-            
-            // Zamiana gospodarz/gość co kolejkę
-            if (i === 0 && round % 2 !== 0) {
-                home = t[n - 1 - i];
-                away = t[i];
+            let home = teams[i];
+            let away = teams[n - 1 - i];
+
+            // Drużyna indeks 0 musi zamieniać strony toru, reszta rotuje
+            if (i === 0) {
+                if (round % 2 !== 0) { let t = home; home = away; away = t; }
+            } else {
+                if (round % 2 === 0) { let t = home; home = away; away = t; }
             }
-            
+
             if (home !== "PAUZA" && away !== "PAUZA") {
-                roundMatches.push({ home, away });
+                roundMatches.push({ home, away, type: "Zasadnicza" });
             }
         }
-        roundRobin.push(roundMatches);
-        // Przesunięcie do Round-Robin
-        t.splice(1, 0, t.pop());
+        schedule.push(roundMatches);
+        // Rotacja: drugi element na koniec
+        teams.splice(1, 0, teams.pop());
     }
 
-    // Druga runda (Rewanże z zamienionymi stronami toru)
+    // Runda rewanżowa (druga połowa sezonu)
     let secondHalf = [];
     for (let round = 0; round < n - 1; round++) {
-        let roundMatches = roundRobin[round].map(m => ({
+        let roundMatches = schedule[round].map(m => ({
             home: m.away,
-            away: m.home
+            away: m.home,
+            type: "Zasadnicza (Rewanż)"
         }));
         secondHalf.push(roundMatches);
     }
 
-    return roundRobin.concat(secondHalf);
+    return schedule.concat(secondHalf);
 }
 
 function startNewSeason() {
@@ -6538,7 +6542,6 @@ function simulateBotMatchesForCurrentRound(playerMatchScore, opponentMatchScore,
 function updateTableWithMatch(table, homeClub, awayClub, homeScore, awayScore, fullSchedule, currentRoundIdx) {
     let hRow = table.find(t => t.name === homeClub);
     let aRow = table.find(t => t.name === awayClub);
-    
     if(!hRow || !aRow) return;
 
     hRow.m = (hRow.m || 0) + 1;
@@ -6551,38 +6554,32 @@ function updateTableWithMatch(table, homeClub, awayClub, homeScore, awayScore, f
     aRow.diff = (aRow.diff || 0) - hDiff;
     
     if (homeScore > awayScore) {
-        hRow.w = (hRow.w || 0) + 1;
-        hRow.pts = (hRow.pts || 0) + 2;
-        aRow.p = (aRow.p || 0) + 1;
+        hRow.w = (hRow.w || 0) + 1; hRow.pts = (hRow.pts || 0) + 2; aRow.p = (aRow.p || 0) + 1;
     } else if (homeScore < awayScore) {
-        aRow.w = (aRow.w || 0) + 1;
-        aRow.pts = (aRow.pts || 0) + 2;
-        hRow.p = (hRow.p || 0) + 1;
+        aRow.w = (aRow.w || 0) + 1; aRow.pts = (aRow.pts || 0) + 2; hRow.p = (hRow.p || 0) + 1;
     } else {
-        hRow.r = (hRow.r || 0) + 1;
-        hRow.pts = (hRow.pts || 0) + 1;
-        aRow.r = (aRow.r || 0) + 1;
-        aRow.pts = (aRow.pts || 0) + 1;
+        hRow.r = (hRow.r || 0) + 1; hRow.pts = (hRow.pts || 0) + 1;
+        aRow.r = (aRow.r || 0) + 1; aRow.pts = (aRow.pts || 0) + 1;
     }
     
-    let halfSeason = fullSchedule.length / 2;
-    
-    if (currentRoundIdx >= halfSeason) {
-        let firstLegRoundIdx = currentRoundIdx - halfSeason;
-        if (fullSchedule[firstLegRoundIdx]) {
-            let firstLegMatch = fullSchedule[firstLegRoundIdx].find(m => m.home === awayClub && m.away === homeClub);
-            if (firstLegMatch && firstLegMatch.homeScore !== undefined) {
-                let aggHome = homeScore + firstLegMatch.awayScore;
-                let aggAway = awayScore + firstLegMatch.homeScore;
-                
-                if (aggHome > aggAway) {
-                    hRow.b = (hRow.b || 0) + 1;
-                    hRow.pts = (hRow.pts || 0) + 1;
-                } else if (aggAway > aggHome) {
-                    aRow.b = (aRow.b || 0) + 1;
-                    aRow.pts = (aRow.pts || 0) + 1;
-                }
-            }
+    // Szukanie pierwszego meczu żeby przydzielić bonus
+    let firstLegMatch = null;
+    for (let i = 0; i < currentRoundIdx; i++) {
+        let prevRound = fullSchedule[i];
+        if (!prevRound) continue;
+        let match = prevRound.find(m => m.home === awayClub && m.away === homeClub);
+        if (match && match.homeScore !== undefined) {
+            firstLegMatch = match; break;
+        }
+    }
+
+    if (firstLegMatch) {
+        let aggHome = homeScore + firstLegMatch.awayScore;
+        let aggAway = awayScore + firstLegMatch.homeScore;
+        if (aggHome > aggAway) {
+            hRow.b = (hRow.b || 0) + 1; hRow.pts = (hRow.pts || 0) + 1;
+        } else if (aggAway > aggHome) {
+            aRow.b = (aRow.b || 0) + 1; aRow.pts = (aRow.pts || 0) + 1;
         }
     }
 }
@@ -6855,10 +6852,14 @@ function generateFinals() {
     round1.push({home: f_lowSeed, away: f_highSeed, type: matchType1});
     round2.push({home: f_highSeed, away: f_lowSeed, type: matchType1 + " (Rewanż)"});
 
-    let t_highSeed = table.find(t => t.name === sf1_loser).pos < table.find(t => t.name === sf2_loser).pos ? sf1_loser : sf2_loser;
-    let t_lowSeed = t_highSeed === sf1_loser ? sf2_loser : sf1_loser;
-    round1.push({home: t_lowSeed, away: t_highSeed, type: "Mecz o 3. miejsce"});
-    round2.push({home: t_highSeed, away: t_lowSeed, type: "Mecz o 3. msc (Rewanż)"});
+    s.semiLosers = [sf1_loser, sf2_loser]; // Zapisujemy żeby przydzielić pozycje w niższych ligach
+
+    if (playingLeague === "PGE Ekstraliga") {
+        let t_highSeed = table.find(t => t.name === sf1_loser).pos < table.find(t => t.name === sf2_loser).pos ? sf1_loser : sf2_loser;
+        let t_lowSeed = t_highSeed === sf1_loser ? sf2_loser : sf1_loser;
+        round1.push({home: t_lowSeed, away: t_highSeed, type: "Mecz o 3. miejsce"});
+        round2.push({home: t_highSeed, away: t_lowSeed, type: "Mecz o 3. msc (Rewanż)"});
+    }
 
     // BOTTOM 4 Finały Otrzymania
     if (playingLeague !== "KLŻ") {
@@ -6874,10 +6875,14 @@ function generateFinals() {
         let u2_winner = getAggWinner(u2_leg1, u2_leg2, t6, t7);
         let u2_loser = u2_winner === t6 ? t7 : t6;
 
-        let f5_highSeed = table.find(t => t.name === u1_winner).pos < table.find(t => t.name === u2_winner).pos ? u1_winner : u2_winner;
-        let f5_lowSeed = f5_highSeed === u1_winner ? u2_winner : u1_winner;
-        round1.push({home: f5_lowSeed, away: f5_highSeed, type: "Mecz o 5. miejsce"});
-        round2.push({home: f5_highSeed, away: f5_lowSeed, type: "Mecz o 5. msc (Rewanż)"});
+        s.playdownWinners = [u1_winner, u2_winner]; // Dla przypisania miejsc w M2E
+
+        if (playingLeague === "PGE Ekstraliga") {
+            let f5_highSeed = table.find(t => t.name === u1_winner).pos < table.find(t => t.name === u2_winner).pos ? u1_winner : u2_winner;
+            let f5_lowSeed = f5_highSeed === u1_winner ? u2_winner : u1_winner;
+            round1.push({home: f5_lowSeed, away: f5_highSeed, type: "Mecz o 5. miejsce"});
+            round2.push({home: f5_highSeed, away: f5_lowSeed, type: "Mecz o 5. msc (Rewanż)"});
+        }
 
         let f7_highSeed = table.find(t => t.name === u1_loser).pos < table.find(t => t.name === u2_loser).pos ? u1_loser : u2_loser;
         let f7_lowSeed = f7_highSeed === u1_loser ? u2_loser : u1_loser;
@@ -6901,6 +6906,53 @@ function generateFinals() {
 
     saveCareer();
     renderCareerHub();
+}
+
+function assignFinalPositions() {
+    let s = cState.season;
+    let table = s.table;
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    let r1 = s.fullSchedule[s.regularSeasonLength + 2];
+    let r2 = s.fullSchedule[s.regularSeasonLength + 3];
+
+    if (r1 && r2) {
+        r1.forEach(m1 => {
+            let m2 = r2.find(m => m.home === m1.away && m.away === m1.home);
+            if (!m2) return;
+            let winner = getAggWinner(m1, m2, m1.away, m1.home);
+            let loser = winner === m1.away ? m1.home : m1.away;
+            
+            let wRow = table.find(t => t.name === winner);
+            let lRow = table.find(t => t.name === loser);
+            if (!wRow || !lRow) return;
+
+            if (m1.type.includes("Finał")) { wRow.pos = 1; lRow.pos = 2; }
+            else if (m1.type.includes("3. miejsce")) { wRow.pos = 3; lRow.pos = 4; }
+            else if (m1.type.includes("5. miejsce")) { wRow.pos = 5; lRow.pos = 6; }
+            else if (m1.type.includes("utrzymanie")) { wRow.pos = 7; lRow.pos = 8; }
+        });
+    }
+
+    // Automatyczne przydzielenie miejsc 3-4 i 5-6 dla niższych lig
+    if (s.semiLosers && playingLeague !== "PGE Ekstraliga") {
+        let loser1 = table.find(t => t.name === s.semiLosers[0]);
+        let loser2 = table.find(t => t.name === s.semiLosers[1]);
+        if (loser1 && loser2) {
+            if (loser1.pos < loser2.pos) { loser1.pos = 3; loser2.pos = 4; }
+            else { loser1.pos = 4; loser2.pos = 3; }
+        }
+    }
+
+    if (s.playdownWinners && playingLeague !== "PGE Ekstraliga") {
+        let w1 = table.find(t => t.name === s.playdownWinners[0]);
+        let w2 = table.find(t => t.name === s.playdownWinners[1]);
+        if (w1 && w2) {
+            if (w1.pos < w2.pos) { w1.pos = 5; w2.pos = 6; }
+            else { w1.pos = 6; w2.pos = 5; }
+        }
+    }
+
+    table.sort((a,b) => a.pos - b.pos);
 }
 
 function generateBaraz() {
@@ -6954,6 +7006,40 @@ function generateBaraz() {
     s.barazGenerated = true;
     saveCareer();
     renderCareerHub();
+}
+
+function showMidSeasonEventWindow() {
+    const area = document.getElementById('careerActionArea');
+    const events = window.CAREER_CUSTOM_EVENTS || [];
+    
+    if (!events.length) {
+        area.innerHTML = `<div class="text-center text-dim font-bold p-15">Brak eventów do wyświetlenia.</div>`;
+        return;
+    }
+
+    let ev = events[Math.floor(Math.random() * events.length)];
+    let chanceInfo = ev.opt1.chance ? ` <span style="color:var(--accent); font-size:10px;"><br>(${ev.opt1.chance}% szansy na +OVR)</span>` : '';
+
+    area.innerHTML = `
+        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wydarzenie!</h3>
+        ${ev.dilemma ? `<div class="text-xs font-black uppercase tracking-wide text-red mb-10">Dylemat</div>` : ''}
+        <h4 class="text-white font-black m-0 mb-5">${ev.title}</h4>
+        <p class="text-xs text-dim mb-15">${ev.desc}</p>
+        <div class="copero-action-grid">
+            <div class="copero-card" onclick="${ev.opt1.fn}">
+                <span class="copero-card-club mb-5" style="line-height:1.2;">${ev.opt1.title}${chanceInfo}</span>
+                <div class="copero-card-img" style="border-radius:12px;">${ev.img}</div>
+                <span class="text-green font-bold text-xs">${ev.opt1.bot1}</span>
+                <span class="text-red font-bold text-xs">${ev.opt1.bot2}</span>
+            </div>
+            <div class="copero-card stay-card" onclick="${ev.opt2.fn}">
+                <span class="copero-card-club mb-10">${ev.opt2.title}</span>
+                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">🤔</div>
+                <span class="text-white font-bold text-xs">${ev.opt2.bot1}</span>
+                <span class="text-dim font-bold text-xs">Brak ryzyka OVR</span>
+            </div>
+        </div>
+    `;
 }
 
 function assignFinalPositions() {
@@ -7639,20 +7725,33 @@ async function playSingleMatch() {
         
         // AGREGAT DWUMECZU
         let aggHomeText = "";
-        if ((s.matchIndex >= s.regularSeasonLength/2 && s.matchIndex < s.regularSeasonLength) || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
-            let leg1Idx = s.matchIndex - 1; 
-            if (s.matchIndex < s.regularSeasonLength) {
-                leg1Idx = s.matchIndex - (s.regularSeasonLength / 2);
+        let firstLegScoreMe = 0;
+        let firstLegScoreOpp = 0;
+        let hasFirstLeg = false;
+
+        if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
+            for (let i = 0; i < s.matchIndex; i++) {
+                let pastMatch = s.schedule[i];
+                if (pastMatch.opp === opponent && pastMatch.leg === 1) {
+                    let res = s.matchResults[i];
+                    if (res && res !== "-") {
+                        let p = res.split(':').map(Number);
+                        firstLegScoreMe = isHome ? p[1] : p[0];
+                        firstLegScoreOpp = isHome ? p[0] : p[1];
+                        hasFirstLeg = true;
+                    }
+                    break;
+                }
             }
-            let leg1Str = s.matchResults[leg1Idx];
-            if (leg1Str && leg1Str !== "-") {
-                let p = leg1Str.split(':').map(Number);
-                let leg1HomeScore = !isHome ? p[0] : p[1]; 
-                let leg1AwayScore = !isHome ? p[1] : p[0];
-                let currentAggHome = leg1HomeScore + homeMatchScore;
-                let currentAggAway = leg1AwayScore + awayMatchScore;
-                aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">Dwumecz: ${currentAggHome}:${currentAggAway}</div>`;
-            }
+        }
+
+        if (hasFirstLeg) {
+            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
+            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
+            // Dopasowujemy wyświetlanie do ekranu (Gospodarze : Goście)
+            let aggH = isHome ? currentAggMe : currentAggOpp;
+            let aggA = isHome ? currentAggOpp : currentAggMe;
+            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">Dwumecz: ${aggH}:${aggA}</div>`;
         }
 
         simMatchScore.innerHTML = `
