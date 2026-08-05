@@ -6611,12 +6611,21 @@ function renderCareerHub() {
     let currentRound = s.matchIndex + 1;
     let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
 
+    // KONTROLA FAZ PUCHAROWYCH
     if (s.matchIndex === s.regularSeasonLength && !s.playoffsGenerated) {
         generatePlayoffs();
         return; 
     }
+    if (s.matchIndex === s.regularSeasonLength + 2 && !s.finalsGenerated) {
+        generateFinals();
+        return; 
+    }
+    if (s.matchIndex === s.regularSeasonLength + 4 && !s.barazGenerated) {
+        generateBaraz();
+        return; 
+    }
 
-    if (s.matchIndex >= totalMatches && s.playoffsGenerated) {
+    if (s.matchIndex >= totalMatches && s.playoffsGenerated && s.finalsGenerated && s.barazGenerated) {
         area.innerHTML = `
             <div class="copero-card stay-card" style="grid-column: 1 / -1; width: 100%; margin: 0 auto; background: rgba(241,196,15,0.1); border-color: var(--accent);" onclick="endOfSeason()">
                 <span class="copero-card-title text-accent">SEZON ZAKOŃCZONY</span>
@@ -6733,39 +6742,160 @@ function renderCareerSeasonTable() {
 function generatePlayoffs() {
     let s = cState.season;
     let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    
     let table = s.table; 
     let myTeamData = table.find(t => t.isMe);
     let pos = myTeamData ? myTeamData.pos : 4;
     
     if (playingLeague === "KLŻ") {
         if (pos <= 4) {
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał", isHome: false });
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)", isHome: true });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (o Awans)", isHome: false });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)", isHome: true });
+            let oppName = pos === 1 ? table[3].name : (pos === 4 ? table[0].name : (pos === 2 ? table[2].name : table[1].name));
+            s.schedule.push({ opp: oppName, type: "Półfinał", isHome: false });
+            s.schedule.push({ opp: oppName, type: "Półfinał (Rewanż)", isHome: true });
+        } else {
+            // KLŻ od 5 miejsca kończy sezon szybciej
+            s.finalsGenerated = true;
+            s.barazGenerated = true;
         }
     } else {
         if (pos <= 4) {
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał", isHome: false });
-            s.schedule.push({ opp: table[pos === 1 || pos === 4 ? 3 : 2].name, type: "Półfinał (Rewanż)", isHome: true });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał", isHome: false });
-            s.schedule.push({ opp: table[pos === 1 ? 1 : 0].name, type: "Finał (Rewanż)", isHome: true });
+            let oppName = pos === 1 ? table[3].name : (pos === 4 ? table[0].name : (pos === 2 ? table[2].name : table[1].name));
+            s.schedule.push({ opp: oppName, type: "Półfinał", isHome: false });
+            s.schedule.push({ opp: oppName, type: "Półfinał (Rewanż)", isHome: true });
         } else {
-            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Mecz 1)", isHome: false });
-            s.schedule.push({ opp: table[pos === 5 || pos === 8 ? 7 : 6].name, type: "O utrzymanie (Rewanż)", isHome: true });
-            if (pos >= 7) {
-                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż o utrzymanie", isHome: false });
-                s.schedule.push({ opp: "Wicelider 2. Ligi", type: "Baraż (Rewanż)", isHome: true });
-            }
+            // System: 5 z 8, oraz 6 z 7
+            let oppName;
+            if (pos === 5) oppName = table[7].name;
+            else if (pos === 6) oppName = table[6].name;
+            else if (pos === 7) oppName = table[5].name;
+            else if (pos === 8) oppName = table[4].name;
+
+            s.schedule.push({ opp: oppName, type: "O utrzymanie (Mecz 1)", isHome: false });
+            s.schedule.push({ opp: oppName, type: "O utrzymanie (Rewanż)", isHome: true });
         }
     }
     
     s.playoffsGenerated = true;
+    s.finalsGenerated = s.finalsGenerated || false;
+    s.barazGenerated = s.barazGenerated || false;
     saveCareer();
     renderCareerHub();
-    appAlert("Runda zasadnicza zakończona! Sprawdź w kalendarzu z kim pojedziesz w fazie pucharowej.", "Finałowa Faza");
+    appAlert("Runda zasadnicza zakończona! Zaczynamy decydującą fazę pucharową.", "Faza Finałowa");
 }
+function generateFinals() {
+    let s = cState.season;
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    let table = s.table; 
+    let myTeamData = table.find(t => t.isMe);
+    let pos = myTeamData ? myTeamData.pos : 4;
+    
+    let m1Res = s.matchResults[s.regularSeasonLength];
+    let m2Res = s.matchResults[s.regularSeasonLength + 1];
+    let agg = { won: false };
+    
+    if (m1Res && m2Res && m1Res !== "-" && m2Res !== "-") {
+        let m1 = m1Res.split(':').map(Number);
+        let m2 = m2Res.split(':').map(Number);
+        let myAgg = m1[0] + m2[0];
+        let oppAgg = m1[1] + m2[1];
+        if (myAgg > oppAgg) agg.won = true;
+        else if (myAgg === oppAgg) {
+            let myMatch = s.schedule[s.regularSeasonLength];
+            let oppData = table.find(t => t.name === myMatch.opp);
+            if (oppData && myTeamData.pos < oppData.pos) agg.won = true; // W speedwayu wyższe miejsce wygrywa remis
+        }
+    }
+
+    let nextOppName = "Nieznany Rywal";
+    let matchType1 = "";
+    let matchType2 = "";
+
+    if (pos <= 4) {
+        if (agg.won) {
+            matchType1 = playingLeague === "KLŻ" ? "Finał (o Awans)" : "Finał"; 
+            matchType2 = "Finał (Rewanż)";
+            nextOppName = (pos === 1 || pos === 4) ? table[1].name : table[0].name; // Fikcyjny symulator rywala
+        } else {
+            matchType1 = "Mecz o 3. miejsce"; 
+            matchType2 = "Mecz o 3. msc (Rewanż)";
+            nextOppName = (pos === 1 || pos === 4) ? table[2].name : table[3].name;
+        }
+    } else {
+        if (agg.won) {
+            matchType1 = "Mecz o 5. miejsce"; 
+            matchType2 = "Mecz o 5. msc (Rewanż)";
+            nextOppName = (pos === 5 || pos === 8) ? table[5].name : table[4].name;
+        } else {
+            matchType1 = "Baraż o utrzymanie"; 
+            matchType2 = "Baraż o utrzymanie (Rew.)";
+            nextOppName = (pos === 5 || pos === 8) ? table[6].name : table[7].name;
+        }
+    }
+
+    s.schedule.push({ opp: nextOppName, type: matchType1, isHome: false });
+    s.schedule.push({ opp: nextOppName, type: matchType2, isHome: true });
+    
+    s.finalsGenerated = true;
+    s.barazGenerated = false;
+    saveCareer();
+    renderCareerHub();
+}
+function generateBaraz() {
+    let s = cState.season;
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    let table = s.table; 
+    let myTeamData = table.find(t => t.isMe);
+    let pos = myTeamData ? myTeamData.pos : 4;
+    
+    let m1Res = s.matchResults[s.regularSeasonLength + 2];
+    let m2Res = s.matchResults[s.regularSeasonLength + 3];
+    let agg = { won: false };
+    
+    if (m1Res && m2Res && m1Res !== "-" && m2Res !== "-") {
+        let m1 = m1Res.split(':').map(Number);
+        let m2 = m2Res.split(':').map(Number);
+        let myAgg = m1[0] + m2[0];
+        let oppAgg = m1[1] + m2[1];
+        if (myAgg > oppAgg) agg.won = true;
+        else if (myAgg === oppAgg) {
+            let myMatch = s.schedule[s.regularSeasonLength + 2];
+            let oppData = table.find(t => t.name === myMatch.opp);
+            if (oppData && myTeamData.pos < oppData.pos) agg.won = true;
+        }
+    }
+
+    let needsBaraz = false;
+    let oppName = "Nieznany Rywal";
+    let prevMatch = s.schedule[s.regularSeasonLength + 2];
+
+    if (pos > 4) { 
+        // Dolna drabinka - czy jechaliśmy mecz o życie?
+        if (prevMatch && prevMatch.type.includes("Baraż o utrzymanie")) {
+            if (agg.won && playingLeague === "PGE Ekstraliga") {
+                needsBaraz = true;
+                oppName = cState.leagues["Metalkas 2.E"][1]; // 2. miejsce z 2.Ligi
+            }
+        }
+    } else if (playingLeague === "Metalkas 2.E" && pos <= 4) {
+        // Górna drabinka 2. ligi - czy jechaliśmy finał i przegraliśmy?
+        if (prevMatch && prevMatch.type.includes("Finał")) {
+            if (!agg.won) {
+                needsBaraz = true;
+                oppName = "7. drużyna PGE Ekstraligi";
+            }
+        }
+    }
+
+    if (needsBaraz) {
+        s.schedule.push({ opp: oppName, type: "Baraż o Ekstraligę", isHome: false });
+        s.schedule.push({ opp: oppName, type: "Baraż o Ekstraligę (Rew.)", isHome: true });
+        appAlert("Twój zespół walczy w Wielkim Barażu o prawo jazdy w PGE Ekstralidze!", "Baraże");
+    }
+    
+    s.barazGenerated = true;
+    saveCareer();
+    renderCareerHub();
+}
+
 
 // ==========================================
 // ====== OBSŁUGA KALENDARZA LIGOWEGO =======
@@ -7162,25 +7292,34 @@ async function playSingleMatch() {
     const totalMatchHeats = 15;
     const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
 
+    // --- NOWA, REALISTYCZNA LOGIKA ZDOBYCZY DRUŻYNOWEJ ---
     const rollTeamHeatScore = (strengthBias) => {
         const exclusionRoll = Math.random();
-        if (exclusionRoll < 0.04) {
+        
+        // Rzadkie sytuacje (wykluczenia podwójne)
+        if (exclusionRoll < 0.02) {
+            return strengthBias >= 0
+                ? { me: 5, opp: 0, is50: true, text: "Podwójne wykluczenie rywali! - 5:0" }
+                : { me: 0, opp: 5, is05: true, text: "Obaj nasi zawodnicy wykluczeni! - 0:5" };
+        }
+        if (exclusionRoll < 0.05) {
             return strengthBias >= 0
                 ? { me: 5, opp: 1, text: "Wykluczenie rywala - bieg zakończony 5:1" }
                 : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - 1:5" };
         }
         if (exclusionRoll < 0.08) {
             return strengthBias >= 0
-                ? { me: 4, opp: 2, text: "Przerwany bieg - 4:2" }
-                : { me: 2, opp: 4, text: "Przerwany bieg - 2:4" };
+                ? { me: 3, opp: 2, is32: true, text: "Wykluczenie rywala i remisowy układ - 3:2" }
+                : { me: 2, opp: 3, is23: true, text: "Wykluczenie naszego i remisowy układ - 2:3" };
         }
 
+        // Standardowe wyniki biegów
         const swing = strengthBias + (Math.random() * 0.9 - 0.45);
-        if (swing >= 0.85) return { me: 5, opp: 1, text: "Bieg dla nas - 5:1" };
-        if (swing >= 0.30) return { me: 4, opp: 2, text: "Mocny bieg - 4:2" };
-        if (swing > -0.30) return { me: 3, opp: 3, text: "Remis biegu - 3:3" };
-        if (swing > -0.85) return { me: 2, opp: 4, text: "Przegrany bieg - 2:4" };
-        return { me: 1, opp: 5, text: "Bieg dla rywali - 1:5" };
+        if (swing >= 0.85) return { me: 5, opp: 1, text: "Podwójne zwycięstwo dla nas! - 5:1" };
+        if (swing >= 0.30) return { me: 4, opp: 2, text: "Wygrywamy bieg - 4:2" };
+        if (swing > -0.30) return { me: 3, opp: 3, text: "Remis w biegu - 3:3" };
+        if (swing > -0.85) return { me: 2, opp: 4, text: "Przegrywamy bieg - 2:4" };
+        return { me: 1, opp: 5, text: "Podwójna porażka... - 1:5" };
     };
     
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>`;
@@ -7208,7 +7347,6 @@ async function playSingleMatch() {
     if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
     if (heatsInMatch > 7) heatsInMatch = 7;
 
-    // GENEROWANIE PROGRAMU ZAWODÓW
     let playerHeats = getPlayerHeats(cState.age, heatsInMatch);
     
     let matchPts = 0;
@@ -7250,14 +7388,55 @@ async function playSingleMatch() {
         let hPts = 0;
         let hBon = 0;
 
+        // --- NOWA, REALISTYCZNA LOGIKA PRZYDZIAŁU PUNKTÓW ZAWODNIKA ---
         if (isPlayerRiding) {
-            if (heatOutcome.me >= 4) hPts = 3;
-            else if (heatOutcome.me === 3) hPts = 2;
-            else if (heatOutcome.me === 2) hPts = 1;
-            else hPts = 0;
+            let teamScore = heatOutcome.me;
 
-            if (hPts > 0 && Math.random() < 0.2) hBon = 1;
-            
+            if (teamScore === 5) {
+                if (Math.random() < 0.5) {
+                    hPts = 3; hBon = 0; // 1. miejsce (bez bonusa)
+                } else {
+                    hPts = 2; // 2. miejsce
+                    hBon = heatOutcome.is50 ? 0 : 1; // Bonus tylko jeśli z tyłu jest rywal
+                }
+            } else if (teamScore === 4) {
+                if (Math.random() < 0.5) {
+                    hPts = 3; hBon = 0; // 1. miejsce
+                } else {
+                    hPts = 1; hBon = 0; // 3. miejsce (rywal był drugi, brak bonusa)
+                }
+            } else if (teamScore === 3) {
+                if (Math.random() < 0.2) {
+                    // Czasami 3:3 to rozkład 1. i 4. miejsce
+                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; }
+                    else { hPts = 0; hBon = 0; }
+                } else {
+                    // Zazwyczaj 3:3 to pozycje 2. i 3.
+                    if (Math.random() < 0.5) {
+                        hPts = 2; hBon = 0; // 2. miejsce, ale pierwszy był rywal
+                    } else {
+                        hPts = 1; // 3. miejsce
+                        hBon = heatOutcome.is32 ? 0 : 1; // Otrzymuje bonus od kolegi jadącego na 2. miejscu
+                    }
+                }
+            } else if (teamScore === 2) {
+                // 2:4 oznacza pozycję 2 i 4
+                if (Math.random() < 0.5) { hPts = 2; hBon = 0; } 
+                else { hPts = 0; hBon = 0; }
+            } else if (teamScore === 1) {
+                // 1:5 oznacza pozycję 3 i 4
+                if (Math.random() < 0.5) { hPts = 1; hBon = 0; } 
+                else { hPts = 0; hBon = 0; }
+            } else {
+                // Defekty/Wykluczenia całej pary
+                hPts = 0; hBon = 0;
+            }
+
+            // Aplikacja zdarzeń wewnątrzbiegowych
+            if (simEvents.innerText.includes("Wjeżdżasz w taśmę") || simEvents.innerText.includes("Defekt motocykla")) {
+                hPts = 0; hBon = 0;
+            }
+
             matchPts += hPts;
             matchBon += hBon;
         }
@@ -7269,7 +7448,7 @@ async function playSingleMatch() {
         
         if (heatOutcome.text) {
             simEvents.innerText = `Bieg ${h}: ${heatOutcome.text}`;
-            simEvents.style.color = heatOutcome.text.includes("naszego") ? "var(--red-neon)" : (heatOutcome.text.includes("rywala") ? "var(--green-neon)" : "#fff");
+            simEvents.style.color = heatOutcome.text.includes("naszego") ? "var(--red-neon)" : (heatOutcome.text.includes("rywali") || heatOutcome.text.includes("rywala") ? "var(--green-neon)" : "#fff");
         }
         playSound('flip');
     }
@@ -7310,6 +7489,46 @@ function endOfSeason() {
     let officialAvg = s.heats > 0 ? ((s.pts + s.bon) / s.heats) : 0.0;
     if (officialAvg > 3.00) officialAvg = 3.00;
 
+    // Ustalanie OSTATECZNEJ pozycji na podstawie fazy pucharowej
+    let finalPos = 4;
+    let lastMatch = s.schedule[s.schedule.length - 1]; 
+    let m1Res = s.matchResults[s.schedule.length - 2];
+    let m2Res = s.matchResults[s.schedule.length - 1];
+    let aggWon = false;
+    
+    if (m1Res && m2Res && m1Res !== "-" && m2Res !== "-") {
+        let m1 = m1Res.split(':').map(Number);
+        let m2 = m2Res.split(':').map(Number);
+        let myAgg = m1[0] + m2[0];
+        let oppAgg = m1[1] + m2[1];
+        if (myAgg > oppAgg) aggWon = true;
+        else if (myAgg === oppAgg) {
+            let myTeamData = s.table.find(t => t.isMe);
+            let oppData = s.table.find(t => t.name === lastMatch.opp);
+            if (oppData && myTeamData && myTeamData.pos < oppData.pos) aggWon = true;
+        }
+    }
+
+    let wonBarazOEkstralige = false;
+    let playedBarazOEkstralige = false;
+
+    if (lastMatch.type.includes("Baraż o Ekstraligę")) {
+        playedBarazOEkstralige = true;
+        wonBarazOEkstralige = aggWon;
+        let prevMatch = s.schedule[s.schedule.length - 3];
+        if (prevMatch.type.includes("Baraż o utrzymanie")) finalPos = 7; 
+        else if (prevMatch.type.includes("Finał")) finalPos = 2; 
+    } else {
+        if (lastMatch.type.includes("Finał")) finalPos = aggWon ? 1 : 2;
+        else if (lastMatch.type.includes("o 3. miejsce")) finalPos = aggWon ? 3 : 4;
+        else if (lastMatch.type.includes("o 5. miejsce")) finalPos = aggWon ? 5 : 6;
+        else if (lastMatch.type.includes("utrzymanie")) finalPos = aggWon ? 7 : 8; 
+    }
+
+    let myTeamData = s.table.find(t => t.isMe);
+    if (myTeamData) myTeamData.pos = finalPos; 
+    s.table.sort((a,b) => a.pos - b.pos);
+
     // ROZWÓJ OVR na koniec sezonu
     let ageGrowth = 0;
     if (cState.age <= 20) ageGrowth = Math.floor(Math.random() * 2) + 1;
@@ -7326,22 +7545,13 @@ function endOfSeason() {
     else if (officialAvg >= 1.20) perfGrowth = -1;
     else perfGrowth = -2;
 
-    if (cState.ovr >= 90 && perfGrowth > 0) perfGrowth -= 1;
-    if (cState.ovr >= 95 && perfGrowth > 0) perfGrowth -= 1;
-    if (cState.age >= 28 && perfGrowth > 0) perfGrowth = 0;
-
     let totalGrowth = ageGrowth + perfGrowth;
     if (cState.ovr > 95 && totalGrowth > 0) totalGrowth -= 2; 
     else if (cState.ovr > 90 && totalGrowth > 0) totalGrowth -= 1;
     if (cState.age <= 22 && totalGrowth < 0) totalGrowth = 0; 
-    if (totalGrowth > 2) totalGrowth = 2;
-    if (totalGrowth < -3) totalGrowth = -3;
+    
+    cState.ovr = Math.max(30, Math.min(99, cState.ovr + totalGrowth));
 
-    cState.ovr += totalGrowth;
-    if (cState.ovr > 99) cState.ovr = 99;
-    if (cState.ovr < 30) cState.ovr = 30;
-
-    // FLUKTUACJE OVR DRUŻYN
     for (let club in cState.teamOVRs) {
         let change = Math.floor(Math.random() * 3) - 1;
         if (Math.random() < 0.02) change += 4;
@@ -7350,37 +7560,29 @@ function endOfSeason() {
     }
 
     let gotIMS = false;
-    let baseOvr = cState.ovr;
-    if (baseOvr >= 90 && Math.random() < ((baseOvr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
-
-    let finalTable = s.table; 
-    let relegatedTeam = finalTable[finalTable.length - 1].name;
-    
-    let promotedTeam = "Kolejarz Opole"; 
-    if (playingLeague === "PGE Ekstraliga") promotedTeam = cState.leagues["Metalkas 2.E"][0]; 
-    if (playingLeague === "Metalkas 2.E") promotedTeam = cState.leagues["KLŻ"][0]; 
+    if (cState.ovr >= 90 && Math.random() < ((cState.ovr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
 
     let gotDMP = false;
     let medalColor = null;
     let promoted = false;
     let relegated = false;
 
-    let myTeamData = finalTable.find(t => t.isMe);
-    if (myTeamData) {
-        if (playingLeague === "PGE Ekstraliga") {
-            if (myTeamData.pos === 1) { gotDMP = true; medalColor = "ZŁOTO"; cState.stats.dmpGold++; }
-            else if (myTeamData.pos === 2) { gotDMP = true; medalColor = "SREBRO"; cState.stats.dmpSilver++; }
-            else if (myTeamData.pos === 3) { gotDMP = true; medalColor = "BRĄZ"; cState.stats.dmpBronze++; }
-            else if (myTeamData.pos === finalTable.length) relegated = true;
-        } else if (playingLeague === "Metalkas 2.E") {
-            if (myTeamData.pos === 1) promoted = true;
-            else if (myTeamData.pos === finalTable.length) relegated = true;
-        } else if (playingLeague === "KLŻ") {
-            if (myTeamData.pos === 1) promoted = true;
-        }
+    if (playingLeague === "PGE Ekstraliga") {
+        if (finalPos === 1) { gotDMP = true; medalColor = "ZŁOTO"; cState.stats.dmpGold++; }
+        else if (finalPos === 2) { gotDMP = true; medalColor = "SREBRO"; cState.stats.dmpSilver++; }
+        else if (finalPos === 3) { gotDMP = true; medalColor = "BRĄZ"; cState.stats.dmpBronze++; }
+        else if (finalPos === 8) relegated = true;
+        if (playedBarazOEkstralige && !wonBarazOEkstralige) relegated = true; 
+    } 
+    else if (playingLeague === "Metalkas 2.E") {
+        if (finalPos === 1) promoted = true;
+        else if (finalPos === 8) relegated = true;
+        if (playedBarazOEkstralige && wonBarazOEkstralige) promoted = true;
+    } 
+    else if (playingLeague === "KLŻ") {
+        if (finalPos === 1) promoted = true;
     }
-
-    function moveClubBetweenLeagues(club, fromLeague, toLeague, ovrDelta) {
+function moveClubBetweenLeagues(club, fromLeague, toLeague, ovrDelta) {
         const fromList = cState.leagues[fromLeague];
         const toList = cState.leagues[toLeague];
         const fromIndex = fromList.indexOf(club);
@@ -7394,10 +7596,15 @@ function endOfSeason() {
     const e2Table = generateSeasonTable("Metalkas 2.E", null, 0, 0);
     const klzTable = generateSeasonTable("KLŻ", null, 0, 0);
 
-    moveClubBetweenLeagues(pgeTable[pgeTable.length - 1].name, "PGE Ekstraliga", "Metalkas 2.E", -2);
-    moveClubBetweenLeagues(e2Table[0].name, "Metalkas 2.E", "PGE Ekstraliga", 3);
-    moveClubBetweenLeagues(e2Table[e2Table.length - 1].name, "Metalkas 2.E", "KLŻ", -2);
-    moveClubBetweenLeagues(klzTable[0].name, "KLŻ", "Metalkas 2.E", 3);
+    let pgeDrop = relegated && playingLeague === "PGE Ekstraliga" ? playingClub : pgeTable[pgeTable.length - 1].name;
+    let e2Promote = promoted && playingLeague === "Metalkas 2.E" ? playingClub : e2Table[0].name;
+    let e2Drop = relegated && playingLeague === "Metalkas 2.E" ? playingClub : e2Table[e2Table.length - 1].name;
+    let klzPromote = promoted && playingLeague === "KLŻ" ? playingClub : klzTable[0].name;
+
+    moveClubBetweenLeagues(pgeDrop, "PGE Ekstraliga", "Metalkas 2.E", -2);
+    moveClubBetweenLeagues(e2Promote, "Metalkas 2.E", "PGE Ekstraliga", 3);
+    moveClubBetweenLeagues(e2Drop, "Metalkas 2.E", "KLŻ", -2);
+    moveClubBetweenLeagues(klzPromote, "KLŻ", "Metalkas 2.E", 3);
 
     if (!activeLoanLeague) {
         for (let l in cState.leagues) {
@@ -7412,7 +7619,7 @@ function endOfSeason() {
         mec: s.schedule.length, bie: s.heats, pkt: s.pts, bon: s.bon, avg: officialAvg.toFixed(2),
         loan: activeLoanLeague !== null,
         dmp: gotDMP ? medalColor : null, ims: gotIMS,
-        table: finalTable
+        table: s.table
     });
 
     cState.age++;
@@ -7446,7 +7653,6 @@ function endOfSeason() {
         proceedToNextStage();
     }
 }
-
 function generateSeasonTable(leagueName, playerClub, playerPoints, playerHeats) {
     let clubs = [...cState.leagues[leagueName]];
     let table = [];
