@@ -6062,6 +6062,68 @@ function startCareerAcademy() {
     generateAcademyOffers(); 
 }
 
+function generateAcademyOffers() {
+    const area = document.getElementById('careerActionArea');
+    if (!area) return;
+
+    const academyPools = [
+        {
+            league: "KLŻ",
+            club: cState.leagues["KLŻ"][Math.floor(Math.random() * cState.leagues["KLŻ"].length)],
+            years: 2,
+            type: "academy",
+            label: "Start od podstaw",
+            bonus: "Więcej jazdy w słabszej lidze",
+            risk: "Niższa presja, wolniejszy start"
+        },
+        {
+            league: "Metalkas 2.E",
+            club: cState.leagues["Metalkas 2.E"][Math.floor(Math.random() * cState.leagues["Metalkas 2.E"].length)],
+            years: 2,
+            type: "academy",
+            label: "Rozsądny rozwój",
+            bonus: "Dobry balans między szansami a presją",
+            risk: "Mniej pewnych biegów niż w KLŻ"
+        },
+        {
+            league: "PGE Ekstraliga",
+            club: cState.leagues["PGE Ekstraliga"][Math.floor(Math.random() * cState.leagues["PGE Ekstraliga"].length)],
+            years: 1,
+            type: "academy",
+            label: "Skok do elity",
+            bonus: "Szybki rozwój przy dobrej formie",
+            risk: "Duże ryzyko ławki i słabszych wyników"
+        }
+    ];
+
+    cState.pendingOffers = academyPools;
+
+    area.innerHTML = `
+        <h3 class="text-white font-black m-0 mb-5 text-xl">Akademia startowa</h3>
+        <p class="text-xs text-dim mb-15">Wybierz ścieżkę kariery. Miejsce startu wpłynie na tempo rozwoju i liczbę okazji do jazdy.</p>
+        <div class="copero-action-grid">
+            <div class="copero-card" onclick="signContract(0)">
+                <span class="copero-card-title">${academyPools[0].label}</span>
+                <span class="copero-card-club">${academyPools[0].club}</span>
+                <div class="copero-card-img">${CAREER_CONSTANTS[academyPools[0].league].logo}</div>
+                <span class="copero-card-bot" style="margin-top:5px;">${academyPools[0].league}<br><b style="color:var(--accent)">${academyPools[0].bonus}</b><br><span class="text-dim">${academyPools[0].risk}</span></span>
+            </div>
+            <div class="copero-card" onclick="signContract(1)">
+                <span class="copero-card-title">${academyPools[1].label}</span>
+                <span class="copero-card-club">${academyPools[1].club}</span>
+                <div class="copero-card-img">${CAREER_CONSTANTS[academyPools[1].league].logo}</div>
+                <span class="copero-card-bot" style="margin-top:5px;">${academyPools[1].league}<br><b style="color:var(--accent)">${academyPools[1].bonus}</b><br><span class="text-dim">${academyPools[1].risk}</span></span>
+            </div>
+            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
+                <span class="copero-card-title">${academyPools[2].label}</span>
+                <span class="copero-card-club">${academyPools[2].club}</span>
+                <div class="copero-card-img">${CAREER_CONSTANTS[academyPools[2].league].logo}</div>
+                <span class="copero-card-bot" style="margin-top:5px;">${academyPools[2].league}<br><b style="color:var(--accent)">${academyPools[2].bonus}</b><br><span class="text-dim">${academyPools[2].risk}</span></span>
+            </div>
+        </div>
+    `;
+}
+
 // ==========================================
 // ====== INTERFEJS GRACZA (LEFT PANEL) =====
 // ==========================================
