@@ -7442,9 +7442,133 @@ let qteExpectedKeys = [];
 let qtePressedKeys = [];
 let qteExpectedSwipe = '';
 let qteTimer = null;
-let qteChangeTimer = null; // <--- TEGO BRAKOWAŁO!
+let qteChangeTimer = null; // Zmienna od nagłych zmian QTE
 let swipeStartX = 0;
 let swipeStartY = 0;
+
+function startTrainingQTE() {
+    if (cState.season.trainedThisWeek) return;
+    
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
+        document.body.appendChild(simDiv);
+    }
+    
+    simDiv.innerHTML = `
+        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; display: flex; flex-direction: column; align-items: center; user-select: none;">
+            <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">TRENING NA TORZE</h2>
+            <p style="color:var(--text-dim); font-size:14px; font-weight:700; margin-bottom:30px; text-align:center;">
+                Wciskaj podane litery, kombinacje lub przeciągaj myszką (Swipe)!<br>
+                <span style="color:var(--accent);">Wskazówka:</span> Do Swipe'ów przytrzymaj Lewy Przycisk Myszy (LPM). Uważaj na nagłe zmiany!
+            </p>
+            
+            <div id="qteKeyDisplay" style="font-size: 40px; font-weight: 900; color: #fff; background: rgba(255,255,255,0.1); width: 100%; max-width: 350px; height: 160px; display: flex; justify-content: center; align-items: center; border-radius: 20px; border: 4px solid var(--accent); box-shadow: 0 0 30px rgba(241, 196, 15, 0.4); margin-bottom: 30px; letter-spacing: 2px;">?</div>
+            
+            <div style="width:100%; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;">
+                <div id="qteTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
+            </div>
+            
+            <div id="qteProgress" style="margin-top: 20px; font-size: 18px; color: var(--text-dim); font-weight: 900;">Runda 1/5</div>
+        </div>
+    `;
+    
+    simDiv.style.display = 'flex';
+    
+    document.addEventListener('keydown', handleQteKeyDown);
+    document.addEventListener('keyup', handleQteKeyUp);
+    simDiv.addEventListener('mousedown', handleSwipeStart);
+    simDiv.addEventListener('touchstart', handleSwipeStart, {passive: false});
+    
+    qteRounds = 0;
+    qteSuccesses = 0;
+    qteActive = true;
+    
+    setTimeout(nextQteRound, 1000);
+}
+
+function setupQteTask(isSuddenChange = false) {
+    const display = document.getElementById('qteKeyDisplay');
+    if (!display) return;
+
+    qtePressedKeys = [];
+    let roll = Math.random();
+    
+    if (roll < 0.4) {
+        qteType = 'single';
+        const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
+        qteExpectedKeys = [keys[Math.floor(Math.random() * keys.length)]];
+        display.innerText = qteExpectedKeys[0];
+    } else if (roll < 0.7) {
+        qteType = 'combo';
+        const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
+        let k1 = keys[Math.floor(Math.random() * keys.length)];
+        let k2 = keys[Math.floor(Math.random() * keys.length)];
+        while(k1 === k2) k2 = keys[Math.floor(Math.random() * keys.length)];
+        qteExpectedKeys = [k1, k2];
+        display.innerText = `${k1} + ${k2}`;
+    } else {
+        qteType = 'swipe';
+        const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+        const emojis = {'UP': 'LPM + ⬆️', 'DOWN': 'LPM + ⬇️', 'LEFT': 'LPM + ⬅️', 'RIGHT': 'LPM + ➡️'};
+        qteExpectedSwipe = dirs[Math.floor(Math.random() * dirs.length)];
+        display.innerText = emojis[qteExpectedSwipe];
+    }
+
+    if (isSuddenChange) {
+        display.style.animation = 'none';
+        display.offsetHeight; // Reflow reset
+        display.style.animation = 'pulse 0.3s ease';
+        display.style.color = 'var(--yellow-neon)'; // Zmiana koloru na żółty żeby ostrzec gracza
+        setTimeout(() => { if(qteActive) display.style.color = '#fff'; }, 300);
+        playSound('flip'); // Ostrzegawczy dźwięk zmiany
+    }
+}
+
+function nextQteRound() {
+    if (!qteActive) return;
+    qteRounds++;
+    
+    if (qteRounds > 5) {
+        endTrainingQTE();
+        return;
+    }
+    
+    document.getElementById('qteProgress').innerText = `Runda ${qteRounds}/5`;
+    
+    const display = document.getElementById('qteKeyDisplay');
+    display.style.borderColor = "var(--accent)";
+    display.style.color = "#fff";
+    
+    setupQteTask(false);
+    
+    const timeBar = document.getElementById('qteTimeBar');
+    timeBar.style.transition = 'none';
+    timeBar.style.width = '100%';
+    
+    let baseReactionTime = Math.floor((1200 - (cState.ovr * 5)) * 0.65);
+    if (baseReactionTime < 420) baseReactionTime = 420;
+    
+    let reactionTime = baseReactionTime + 1500; // Dodatkowe 1.5 sekundy czasu
+    
+    setTimeout(() => {
+        timeBar.style.transition = `width ${reactionTime}ms linear`;
+        timeBar.style.width = '0%';
+    }, 50);
+    
+    // 25% szansy, że w połowie czasu QTE nagle się zmieni
+    if (Math.random() < 0.25) {
+        qteChangeTimer = setTimeout(() => {
+            if (qteActive) setupQteTask(true);
+        }, reactionTime * 0.4);
+    }
+    
+    qteTimer = setTimeout(() => {
+        if (qteActive) failQteRound();
+    }, reactionTime);
+}
 
 function handleSwipeStart(e) {
     if (!qteActive || qteType !== 'swipe') return;
@@ -7452,9 +7576,9 @@ function handleSwipeStart(e) {
         swipeStartX = e.touches[0].clientX;
         swipeStartY = e.touches[0].clientY;
     } else {
-        // Mysz musi być Prawym Przyciskiem (Button 2)
-        if (e.button !== 2) return; 
-        e.preventDefault(); 
+        // Mysz musi być Lewym Przyciskiem (Button 0)
+        if (e.button !== 0) return; 
+        e.preventDefault(); // Unikamy zaznaczania tekstu przy przeciąganiu LPM
         swipeStartX = e.clientX;
         swipeStartY = e.clientY;
     }
@@ -7482,6 +7606,7 @@ function handleSwipeEnd(e) {
     let dx = swipeEndX - swipeStartX;
     let dy = swipeEndY - swipeStartY;
     
+    // Próg przeciągnięcia
     if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
         let dir = '';
         if (Math.abs(dx) > Math.abs(dy)) {
@@ -7490,8 +7615,11 @@ function handleSwipeEnd(e) {
             dir = dy > 0 ? 'DOWN' : 'UP';
         }
         
-        if (dir === qteExpectedSwipe) winQteRound();
-        else failQteRound();
+        if (dir === qteExpectedSwipe) {
+            winQteRound();
+        } else {
+            failQteRound();
+        }
     }
 }
 
@@ -7506,16 +7634,24 @@ function handleQteKeyDown(e) {
     if (!allowedKeys.includes(key)) return;
     
     if (qteType === 'single') {
-        if (qteExpectedKeys.includes(key)) winQteRound();
-        else failQteRound();
+        if (qteExpectedKeys.includes(key)) {
+            winQteRound();
+        } else {
+            failQteRound();
+        }
     } else if (qteType === 'combo') {
-        if (!qtePressedKeys.includes(key)) qtePressedKeys.push(key);
+        if (!qtePressedKeys.includes(key)) {
+            qtePressedKeys.push(key);
+        }
         
         let allPressed = qteExpectedKeys.every(k => qtePressedKeys.includes(k));
         let onlyExpectedPressed = qtePressedKeys.every(k => qteExpectedKeys.includes(k));
         
-        if (allPressed && onlyExpectedPressed) winQteRound();
-        else if (qtePressedKeys.length >= qteExpectedKeys.length && !allPressed) failQteRound();
+        if (allPressed && onlyExpectedPressed) {
+            winQteRound();
+        } else if (qtePressedKeys.length >= qteExpectedKeys.length && !allPressed) {
+            failQteRound();
+        }
     }
 }
 
@@ -7523,6 +7659,7 @@ function handleQteKeyUp(e) {
     if (!qteActive || qteType !== 'combo') return;
     let key = e.key.toUpperCase();
     if (key === ' ') key = 'SPACE';
+    
     qtePressedKeys = qtePressedKeys.filter(k => k !== key);
 }
 
@@ -7539,107 +7676,9 @@ function winQteRound() {
     setTimeout(nextQteRound, 1000);
 }
 
-function startTrainingQTE() {
-    if (cState.season.trainedThisWeek) return;
-    
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
-        document.body.appendChild(simDiv);
-    }
-    
-    simDiv.innerHTML = `
-        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; display: flex; flex-direction: column; align-items: center; user-select: none;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">TRENING NA TORZE</h2>
-            <p style="color:var(--text-dim); font-size:14px; font-weight:700; margin-bottom:30px; text-align:center;">Wciskaj podane litery na klawiaturze, kombinacje lub przeciągaj myszką (Swipe)!<br>Masz mało czasu na reakcję.</p>
-            
-            <div id="qteKeyDisplay" style="font-size: 50px; font-weight: 900; color: #fff; background: rgba(255,255,255,0.1); width: 100%; max-width: 350px; height: 160px; display: flex; justify-content: center; align-items: center; border-radius: 20px; border: 4px solid var(--accent); box-shadow: 0 0 30px rgba(241, 196, 15, 0.4); margin-bottom: 30px; letter-spacing: 2px;">?</div>
-            
-            <div style="width:100%; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;">
-                <div id="qteTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
-            </div>
-            
-            <div id="qteProgress" style="margin-top: 20px; font-size: 18px; color: var(--text-dim); font-weight: 900;">Runda 1/5</div>
-        </div>
-    `;
-    
-    simDiv.style.display = 'flex';
-    document.addEventListener('keydown', handleQteKeyDown);
-    document.addEventListener('keyup', handleQteKeyUp);
-    simDiv.addEventListener('mousedown', handleSwipeStart);
-    simDiv.addEventListener('touchstart', handleSwipeStart, {passive: false});
-    
-    qteRounds = 0;
-    qteSuccesses = 0;
-    qteActive = true;
-    
-    setTimeout(nextQteRound, 1000);
-}
-function nextQteRound() {
-    if (!qteActive) return;
-    qteRounds++;
-    
-    if (qteRounds > 5) {
-        endTrainingQTE();
-        return;
-    }
-    
-    document.getElementById('qteProgress').innerText = `Runda ${qteRounds}/5`;
-    
-    const display = document.getElementById('qteKeyDisplay');
-    display.style.borderColor = "var(--accent)";
-    display.style.color = "#fff";
-    
-    qtePressedKeys = [];
-    
-    let roll = Math.random();
-    if (roll < 0.4) {
-        qteType = 'single';
-        const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
-        qteExpectedKeys = [keys[Math.floor(Math.random() * keys.length)]];
-        display.innerText = qteExpectedKeys[0];
-    } else if (roll < 0.7) {
-        qteType = 'combo';
-        const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
-        let k1 = keys[Math.floor(Math.random() * keys.length)];
-        let k2 = keys[Math.floor(Math.random() * keys.length)];
-        while(k1 === k2) k2 = keys[Math.floor(Math.random() * keys.length)];
-        qteExpectedKeys = [k1, k2];
-        display.innerText = `${k1} + ${k2}`;
-    } else {
-        qteType = 'swipe';
-        const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-        const emojis = {'UP': '⬆️ SWIPE', 'DOWN': '⬇️ SWIPE', 'LEFT': '⬅️ SWIPE', 'RIGHT': '➡️ SWIPE'};
-        qteExpectedSwipe = dirs[Math.floor(Math.random() * dirs.length)];
-        display.innerText = emojis[qteExpectedSwipe];
-    }
-    
-    const timeBar = document.getElementById('qteTimeBar');
-    timeBar.style.transition = 'none';
-    timeBar.style.width = '100%';
-    
-    let baseReactionTime = Math.floor((1200 - (cState.ovr * 5)) * 0.65);
-    if (baseReactionTime < 420) baseReactionTime = 420;
-    
-    // Dodajemy +1.5 sekundy, jak prosiłeś
-    let reactionTime = baseReactionTime + 1500; 
-    
-    setTimeout(() => {
-        timeBar.style.transition = `width ${reactionTime}ms linear`;
-        timeBar.style.width = '0%';
-    }, 50);
-    
-    qteTimer = setTimeout(() => {
-        if (qteActive) {
-            failQteRound();
-        }
-    }, reactionTime);
-}
-
 function failQteRound() {
     clearTimeout(qteTimer);
+    clearTimeout(qteChangeTimer);
     const display = document.getElementById('qteKeyDisplay');
     playSound('error');
     display.innerText = "❌";
