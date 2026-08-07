@@ -7431,282 +7431,42 @@ window.closeCalendarOverlay = function() {
 }
 
 // ==========================================
-// ====== MINI GRA: TRENING (QTE) ===========
+// ====== CENTRUM MINIGIER (TRENING) ========
 // ==========================================
 
-let qteActive = false;
-let qteRounds = 0;
-let qteSuccesses = 0;
-let qteType = ''; // 'single', 'combo', 'swipe'
-let qteExpectedKeys = [];
-let qtePressedKeys = [];
-let qteExpectedSwipe = '';
-let qteTimer = null;
-let qteChangeTimer = null; // Zmienna od nagłych zmian QTE
-let swipeStartX = 0;
-let swipeStartY = 0;
+let activeMinigameData = null;
+
+function clearActiveMinigame() {
+    if (activeMinigameData) {
+        clearInterval(activeMinigameData.interval);
+        clearTimeout(activeMinigameData.timeout);
+        if(activeMinigameData.cleanup) activeMinigameData.cleanup();
+        activeMinigameData = null;
+    }
+}
 
 function startTrainingQTE() {
     if (cState.season.trainedThisWeek) return;
     
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
-        document.body.appendChild(simDiv);
-    }
-    
-    simDiv.innerHTML = `
-        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; display: flex; flex-direction: column; align-items: center; user-select: none;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">TRENING NA TORZE</h2>
-            <p style="color:var(--text-dim); font-size:14px; font-weight:700; margin-bottom:30px; text-align:center;">
-                Wciskaj podane litery, kombinacje lub przeciągaj myszką (Swipe)!<br>
-                <span style="color:var(--accent);">Wskazówka:</span> Do Swipe'ów przytrzymaj Lewy Przycisk Myszy (LPM). Uważaj na nagłe zmiany!
-            </p>
-            
-            <div id="qteKeyDisplay" style="font-size: 40px; font-weight: 900; color: #fff; background: rgba(255,255,255,0.1); width: 100%; max-width: 350px; height: 160px; display: flex; justify-content: center; align-items: center; border-radius: 20px; border: 4px solid var(--accent); box-shadow: 0 0 30px rgba(241, 196, 15, 0.4); margin-bottom: 30px; letter-spacing: 2px;">?</div>
-            
-            <div style="width:100%; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;">
-                <div id="qteTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
-            </div>
-            
-            <div id="qteProgress" style="margin-top: 20px; font-size: 18px; color: var(--text-dim); font-weight: 900;">Runda 1/5</div>
-        </div>
-    `;
-    
-    simDiv.style.display = 'flex';
-    
-    document.addEventListener('keydown', handleQteKeyDown);
-    document.addEventListener('keyup', handleQteKeyUp);
-    simDiv.addEventListener('mousedown', handleSwipeStart);
-    simDiv.addEventListener('touchstart', handleSwipeStart, {passive: false});
-    
-    qteRounds = 0;
-    qteSuccesses = 0;
-    qteActive = true;
-    
-    setTimeout(nextQteRound, 1000);
-}
-
-function setupQteTask(isSuddenChange = false) {
-    const display = document.getElementById('qteKeyDisplay');
-    if (!display) return;
-
-    qtePressedKeys = [];
+    // Losowanie minigry
     let roll = Math.random();
-    
-    if (roll < 0.4) {
-        qteType = 'single';
-        const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
-        qteExpectedKeys = [keys[Math.floor(Math.random() * keys.length)]];
-        display.innerText = qteExpectedKeys[0];
-    } else if (roll < 0.7) {
-        qteType = 'combo';
-        const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
-        let k1 = keys[Math.floor(Math.random() * keys.length)];
-        let k2 = keys[Math.floor(Math.random() * keys.length)];
-        while(k1 === k2) k2 = keys[Math.floor(Math.random() * keys.length)];
-        qteExpectedKeys = [k1, k2];
-        display.innerText = `${k1} + ${k2}`;
-    } else {
-        qteType = 'swipe';
-        const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-        const emojis = {'UP': 'LPM + ⬆️', 'DOWN': 'LPM + ⬇️', 'LEFT': 'LPM + ⬅️', 'RIGHT': 'LPM + ➡️'};
-        qteExpectedSwipe = dirs[Math.floor(Math.random() * dirs.length)];
-        display.innerText = emojis[qteExpectedSwipe];
-    }
-
-    if (isSuddenChange) {
-        display.style.animation = 'none';
-        display.offsetHeight; // Reflow reset
-        display.style.animation = 'pulse 0.3s ease';
-        display.style.color = 'var(--yellow-neon)'; // Zmiana koloru na żółty żeby ostrzec gracza
-        setTimeout(() => { if(qteActive) display.style.color = '#fff'; }, 300);
-        playSound('flip'); // Ostrzegawczy dźwięk zmiany
-    }
+    if (roll < 0.25) startMinigameReflex();
+    else if (roll < 0.50) startMinigameStart();
+    else if (roll < 0.75) startMinigameSlide();
+    else startMinigameMechanic();
 }
 
-function nextQteRound() {
-    if (!qteActive) return;
-    qteRounds++;
-    
-    if (qteRounds > 5) {
-        endTrainingQTE();
-        return;
-    }
-    
-    document.getElementById('qteProgress').innerText = `Runda ${qteRounds}/5`;
-    
-    const display = document.getElementById('qteKeyDisplay');
-    display.style.borderColor = "var(--accent)";
-    display.style.color = "#fff";
-    
-    setupQteTask(false);
-    
-    const timeBar = document.getElementById('qteTimeBar');
-    timeBar.style.transition = 'none';
-    timeBar.style.width = '100%';
-    
-    let baseReactionTime = Math.floor((1200 - (cState.ovr * 5)) * 0.65);
-    if (baseReactionTime < 420) baseReactionTime = 420;
-    
-    let reactionTime = baseReactionTime + 1500; // Dodatkowe 1.5 sekundy czasu
-    
-    setTimeout(() => {
-        timeBar.style.transition = `width ${reactionTime}ms linear`;
-        timeBar.style.width = '0%';
-    }, 50);
-    
-    // 25% szansy, że w połowie czasu QTE nagle się zmieni
-    if (Math.random() < 0.25) {
-        qteChangeTimer = setTimeout(() => {
-            if (qteActive) setupQteTask(true);
-        }, reactionTime * 0.4);
-    }
-    
-    qteTimer = setTimeout(() => {
-        if (qteActive) failQteRound();
-    }, reactionTime);
-}
-
-function handleSwipeStart(e) {
-    if (!qteActive || qteType !== 'swipe') return;
-    if (e.type === 'touchstart') {
-        swipeStartX = e.touches[0].clientX;
-        swipeStartY = e.touches[0].clientY;
-    } else {
-        // Mysz musi być Lewym Przyciskiem (Button 0)
-        if (e.button !== 0) return; 
-        e.preventDefault(); // Unikamy zaznaczania tekstu przy przeciąganiu LPM
-        swipeStartX = e.clientX;
-        swipeStartY = e.clientY;
-    }
-    
-    document.addEventListener('mouseup', handleSwipeEnd);
-    document.addEventListener('touchend', handleSwipeEnd);
-}
-
-function handleSwipeEnd(e) {
-    document.removeEventListener('mouseup', handleSwipeEnd);
-    document.removeEventListener('touchend', handleSwipeEnd);
-    if (!qteActive || qteType !== 'swipe') return;
-    
-    let swipeEndX = 0;
-    let swipeEndY = 0;
-    
-    if (e.type === 'touchend') {
-        swipeEndX = e.changedTouches[0].clientX;
-        swipeEndY = e.changedTouches[0].clientY;
-    } else {
-        swipeEndX = e.clientX;
-        swipeEndY = e.clientY;
-    }
-    
-    let dx = swipeEndX - swipeStartX;
-    let dy = swipeEndY - swipeStartY;
-    
-    // Próg przeciągnięcia
-    if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
-        let dir = '';
-        if (Math.abs(dx) > Math.abs(dy)) {
-            dir = dx > 0 ? 'RIGHT' : 'LEFT';
-        } else {
-            dir = dy > 0 ? 'DOWN' : 'UP';
-        }
-        
-        if (dir === qteExpectedSwipe) {
-            winQteRound();
-        } else {
-            failQteRound();
-        }
-    }
-}
-
-function handleQteKeyDown(e) {
-    if (!qteActive || qteType === 'swipe') return;
-    if (e.repeat) return;
-    
-    let key = e.key.toUpperCase();
-    if (key === ' ') key = 'SPACE';
-    
-    const allowedKeys = ['Q','W','E','A','S','D','SPACE','SHIFT'];
-    if (!allowedKeys.includes(key)) return;
-    
-    if (qteType === 'single') {
-        if (qteExpectedKeys.includes(key)) {
-            winQteRound();
-        } else {
-            failQteRound();
-        }
-    } else if (qteType === 'combo') {
-        if (!qtePressedKeys.includes(key)) {
-            qtePressedKeys.push(key);
-        }
-        
-        let allPressed = qteExpectedKeys.every(k => qtePressedKeys.includes(k));
-        let onlyExpectedPressed = qtePressedKeys.every(k => qteExpectedKeys.includes(k));
-        
-        if (allPressed && onlyExpectedPressed) {
-            winQteRound();
-        } else if (qtePressedKeys.length >= qteExpectedKeys.length && !allPressed) {
-            failQteRound();
-        }
-    }
-}
-
-function handleQteKeyUp(e) {
-    if (!qteActive || qteType !== 'combo') return;
-    let key = e.key.toUpperCase();
-    if (key === ' ') key = 'SPACE';
-    
-    qtePressedKeys = qtePressedKeys.filter(k => k !== key);
-}
-
-function winQteRound() {
-    clearTimeout(qteTimer);
-    clearTimeout(qteChangeTimer);
-    const display = document.getElementById('qteKeyDisplay');
-    playSound('guess');
-    qteSuccesses++;
-    display.innerText = "✅";
-    display.style.borderColor = "var(--green-neon)";
-    display.style.color = "var(--green-neon)";
-    qteType = '';
-    setTimeout(nextQteRound, 1000);
-}
-
-function failQteRound() {
-    clearTimeout(qteTimer);
-    clearTimeout(qteChangeTimer);
-    const display = document.getElementById('qteKeyDisplay');
-    playSound('error');
-    display.innerText = "❌";
-    display.style.borderColor = "var(--red-neon)";
-    display.style.color = "var(--red-neon)";
-    qteType = '';
-    setTimeout(nextQteRound, 1000);
-}
-
-function endTrainingQTE() {
-    qteActive = false;
-    document.removeEventListener('keydown', handleQteKeyDown);
-    document.removeEventListener('keyup', handleQteKeyUp);
-    
+function finishTraining(successType) {
+    clearActiveMinigame();
     const simDiv = document.getElementById('simOverlay');
-    if (simDiv) {
-        simDiv.removeEventListener('mousedown', handleSwipeStart);
-        simDiv.removeEventListener('touchstart', handleSwipeStart);
-    }
-
     cState.season.trainedThisWeek = true;
     
     let resultHTML = "";
-    if (qteSuccesses === 5) {
+    if (successType === 'perfect') {
         resultHTML = "<div style='color:#00ff66; font-size:28px; font-weight:900; margin-bottom:20px;'>PERFEKT! 🔥 +25% OVR</div>";
         cState.ovrProgress += 25;
         cState.relations.manager = Math.min(100, cState.relations.manager + 5);
-    } else if (qteSuccesses >= 3) {
+    } else if (successType === 'good') {
         resultHTML = "<div style='color:#2ecc71; font-size:28px; font-weight:900; margin-bottom:20px;'>DOBRZE! 🟢 +10% OVR</div>";
         cState.ovrProgress += 10;
     } else {
@@ -7718,7 +7478,6 @@ function endTrainingQTE() {
         <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px;">
             <h2 style="color:#3498db; font-weight:900; margin-bottom:20px; font-size:36px;">KONIEC TRENINGU</h2>
             ${resultHTML}
-            <div style="font-size:20px; color:var(--text-dim); font-weight:700;">Udało się: ${qteSuccesses} / 5</div>
         </div>
     `;
     
@@ -7735,6 +7494,813 @@ function endTrainingQTE() {
         simDiv.style.display = 'none';
         renderCareerHub();
     }, 2500);
+}
+
+function initSimDiv(content) {
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
+        document.body.appendChild(simDiv);
+    }
+    simDiv.innerHTML = content;
+    simDiv.style.display = 'flex';
+    simDiv.oncontextmenu = (e) => e.preventDefault(); // Blokada menu pod PPM
+    return simDiv;
+}
+
+// ------------------------------------------
+// MINIGRA 1: REFLEKS I QTE
+// ------------------------------------------
+function startMinigameReflex() {
+    const html = `
+        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
+            <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:32px;">TRENING REFLEKSU</h2>
+            <p style="color:var(--text-dim); font-size:14px; font-weight:700; margin-bottom:30px;">
+                Wciskaj podane litery, kombinacje lub przeciągaj myszką!<br>
+                <span style="color:var(--accent);">Wskazówka:</span> Do Swipe'ów przytrzymaj <b>LEWY</b> Przycisk Myszy (LPM).
+            </p>
+            <div id="qteKeyDisplay" style="font-size:40px; font-weight:900; color:#fff; background:rgba(255,255,255,0.1); width:100%; max-width:350px; height:160px; display:flex; justify-content:center; align-items:center; border-radius:20px; border:4px solid var(--accent); margin: 0 auto 30px; letter-spacing:2px;">?</div>
+            <div style="width:100%; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;">
+                <div id="qteTimeBar" style="width:100%; height:100%; background:#e74c3c;"></div>
+            </div>
+            <div id="qteProgress" style="margin-top:20px; font-size:18px; color:var(--text-dim); font-weight:900;">Runda 1/5</div>
+        </div>
+    `;
+    let simDiv = initSimDiv(html);
+    
+    let state = {
+        rounds: 0, successes: 0, type: '', expKeys: [], pressKeys: [], expSwipe: '',
+        timer: null, changeTimer: null, startX: 0, startY: 0
+    };
+    activeMinigameData = { state, cleanup: () => {
+        document.removeEventListener('keydown', onKeyDown);
+        document.removeEventListener('keyup', onKeyUp);
+        simDiv.removeEventListener('mousedown', onSwipeStart);
+        simDiv.removeEventListener('touchstart', onSwipeStart);
+    }};
+
+    function setupTask(isChange = false) {
+        const display = document.getElementById('qteKeyDisplay');
+        state.pressKeys = [];
+        let roll = Math.random();
+        
+        if (roll < 0.4) {
+            state.type = 'single';
+            const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
+            state.expKeys = [keys[Math.floor(Math.random() * keys.length)]];
+            display.innerText = state.expKeys[0];
+        } else if (roll < 0.7) {
+            state.type = 'combo';
+            const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
+            let k1 = keys[Math.floor(Math.random() * keys.length)];
+            let k2 = keys[Math.floor(Math.random() * keys.length)];
+            while(k1 === k2) k2 = keys[Math.floor(Math.random() * keys.length)];
+            state.expKeys = [k1, k2];
+            display.innerText = `${k1} + ${k2}`;
+        } else {
+            state.type = 'swipe';
+            const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+            const emojis = {'UP': 'LPM + ⬆️', 'DOWN': 'LPM + ⬇️', 'LEFT': 'LPM + ⬅️', 'RIGHT': 'LPM + ➡️'};
+            state.expSwipe = dirs[Math.floor(Math.random() * dirs.length)];
+            display.innerText = emojis[state.expSwipe];
+        }
+
+        if (isChange) {
+            display.style.animation = 'none'; display.offsetHeight; 
+            display.style.animation = 'pulse 0.3s ease';
+            display.style.color = 'var(--yellow-neon)';
+            setTimeout(() => { display.style.color = '#fff'; }, 300);
+            playSound('flip');
+        }
+    }
+
+    function nextRound() {
+        state.rounds++;
+        if (state.rounds > 5) {
+            finishTraining(state.successes === 5 ? 'perfect' : (state.successes >= 3 ? 'good' : 'bad'));
+            return;
+        }
+        document.getElementById('qteProgress').innerText = `Runda ${state.rounds}/5`;
+        const display = document.getElementById('qteKeyDisplay');
+        display.style.borderColor = "var(--accent)"; display.style.color = "#fff";
+        
+        setupTask();
+        const timeBar = document.getElementById('qteTimeBar');
+        timeBar.style.transition = 'none'; timeBar.style.width = '100%';
+        
+        let reactionTime = Math.max(420, Math.floor((1200 - (cState.ovr * 5)) * 0.65)) + 1500; 
+        
+        setTimeout(() => { timeBar.style.transition = `width ${reactionTime}ms linear`; timeBar.style.width = '0%'; }, 50);
+        
+        if (Math.random() < 0.25) {
+            state.changeTimer = setTimeout(() => setupTask(true), reactionTime * 0.4);
+        }
+        
+        state.timer = setTimeout(failRound, reactionTime);
+    }
+
+    function winRound() {
+        clearTimeout(state.timer); clearTimeout(state.changeTimer);
+        const display = document.getElementById('qteKeyDisplay');
+        playSound('guess'); state.successes++;
+        display.innerText = "✅"; display.style.borderColor = "var(--green-neon)"; display.style.color = "var(--green-neon)";
+        state.type = ''; setTimeout(nextRound, 1000);
+    }
+
+    function failRound() {
+        clearTimeout(state.timer); clearTimeout(state.changeTimer);
+        const display = document.getElementById('qteKeyDisplay');
+        playSound('error');
+        display.innerText = "❌"; display.style.borderColor = "var(--red-neon)"; display.style.color = "var(--red-neon)";
+        state.type = ''; setTimeout(nextRound, 1000);
+    }
+
+    const onSwipeStart = (e) => {
+        if (state.type !== 'swipe') return;
+        if (e.type === 'touchstart') { state.startX = e.touches[0].clientX; state.startY = e.touches[0].clientY; } 
+        else { if (e.button !== 0) return; e.preventDefault(); state.startX = e.clientX; state.startY = e.clientY; }
+        document.addEventListener('mouseup', onSwipeEnd); document.addEventListener('touchend', onSwipeEnd);
+    };
+
+    const onSwipeEnd = (e) => {
+        document.removeEventListener('mouseup', onSwipeEnd); document.removeEventListener('touchend', onSwipeEnd);
+        if (state.type !== 'swipe') return;
+        let endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+        let endY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
+        let dx = endX - state.startX; let dy = endY - state.startY;
+        
+        if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
+            let dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'RIGHT' : 'LEFT') : (dy > 0 ? 'DOWN' : 'UP');
+            if (dir === state.expSwipe) winRound(); else failRound();
+        }
+    };
+
+    const onKeyDown = (e) => {
+        if (state.type === 'swipe' || e.repeat) return;
+        let key = e.key.toUpperCase(); if (key === ' ') key = 'SPACE';
+        if (!['Q','W','E','A','S','D','SPACE','SHIFT'].includes(key)) return;
+        
+        if (state.type === 'single') {
+            if (state.expKeys.includes(key)) winRound(); else failRound();
+        } else if (state.type === 'combo') {
+            if (!state.pressKeys.includes(key)) state.pressKeys.push(key);
+            let allPressed = state.expKeys.every(k => state.pressKeys.includes(k));
+            let onlyExpPressed = state.pressKeys.every(k => state.expKeys.includes(k));
+            if (allPressed && onlyExpPressed) winRound();
+            else if (state.pressKeys.length >= state.expKeys.length && !allPressed) failRound();
+        }
+    };
+
+    const onKeyUp = (e) => {
+        if (state.type !== 'combo') return;
+        let key = e.key.toUpperCase(); if (key === ' ') key = 'SPACE';
+        state.pressKeys = state.pressKeys.filter(k => k !== key);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    simDiv.addEventListener('mousedown', onSwipeStart);
+    simDiv.addEventListener('touchstart', onSwipeStart, {passive: false});
+
+    setTimeout(nextRound, 1000);
+}
+
+// ------------------------------------------
+// MINIGRA 2: START SPOD TAŚMY
+// ------------------------------------------
+function startMinigameStart() {
+    const html = `
+        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
+            <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">MOMENT STARTOWY</h2>
+            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Trzymaj <b style="color:#fff">SPACJĘ</b> (Sprzęgło) by rozpocząć. Klikaj <b style="color:#fff">W</b> by trzymać obroty na zielonym polu. Gdy zapali się zielone światło – uważaj. Gdy zgaśnie i taśma pójdzie w górę – puść SPACJĘ!</p>
+            
+            <div style="position:relative; width:100%; height:200px; background:#222; border-radius:12px; border:2px solid #444; overflow:hidden; margin-bottom:20px;">
+                <div id="mgLight" style="position:absolute; top:20px; left:50%; transform:translateX(-50%); width:40px; height:40px; border-radius:50%; background:#111; border:2px solid #000; box-shadow: inset 0 0 10px #000;"></div>
+                <div id="mgTape" style="position:absolute; bottom:50px; left:0; width:100%; height:10px; background:repeating-linear-gradient(45deg, #fff, #fff 10px, #ff3333 10px, #ff3333 20px); transition: bottom 0.1s; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"></div>
+                <div style="position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size: 80px;">🏍️</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="font-size:12px; font-weight:900; color:var(--text-dim);">OBROTY (W)</div>
+                <div id="mgRpmStatus" style="font-size:12px; font-weight:900; color:var(--red-neon);">ZA NISKIE!</div>
+            </div>
+            <div style="width:100%; height:20px; background:#111; border-radius:10px; border:1px solid #333; position:relative; overflow:hidden;">
+                <div style="position:absolute; left:35%; width:30%; height:100%; background:rgba(0,255,102,0.3); border-left:2px solid #00ff66; border-right:2px solid #00ff66; z-index:1;"></div>
+                <div id="mgRpmBar" style="position:absolute; left:0; top:0; height:100%; width:10%; background:#fff; z-index:2; transition: width 0.1s;"></div>
+            </div>
+        </div>
+    `;
+    let simDiv = initSimDiv(html);
+
+    let state = {
+        phase: 'wait', // wait, holding, ready (green light), gone
+        rpm: 0,
+        tapeTime: 0,
+        releaseTime: 0,
+        rpmInterval: null
+    };
+    
+    activeMinigameData = { state, cleanup: () => {
+        document.removeEventListener('keydown', onKD);
+        document.removeEventListener('keyup', onKU);
+    }};
+
+    const light = document.getElementById('mgLight');
+    const tape = document.getElementById('mgTape');
+    const rpmBar = document.getElementById('mgRpmBar');
+    const rpmStat = document.getElementById('mgRpmStatus');
+
+    function loop() {
+        if(state.phase === 'finished') return;
+        
+        if(state.phase === 'holding' || state.phase === 'ready') {
+            state.rpm -= (Math.random() * 2 + 1); // Spadek obrotów
+            if(state.rpm < 0) state.rpm = 0;
+            rpmBar.style.width = state.rpm + '%';
+            
+            if(state.rpm >= 35 && state.rpm <= 65) {
+                rpmBar.style.background = '#00ff66'; rpmStat.innerText = "IDEALNIE"; rpmStat.style.color = '#00ff66';
+            } else if (state.rpm > 65) {
+                rpmBar.style.background = '#ff3333'; rpmStat.innerText = "ZA WYSOKIE!"; rpmStat.style.color = '#ff3333';
+            } else {
+                rpmBar.style.background = '#ffcc00'; rpmStat.innerText = "ZA NISKIE!"; rpmStat.style.color = '#ffcc00';
+            }
+        }
+    }
+
+    state.rpmInterval = setInterval(loop, 50);
+
+    const onKD = (e) => {
+        if(e.repeat) return;
+        let key = e.key.toUpperCase();
+        if (key === ' ' || key === 'SPACE') {
+            if(state.phase === 'wait') {
+                state.phase = 'holding';
+                // Za 2-3 sekundy zapal zielone światło
+                setTimeout(() => {
+                    if(state.phase === 'holding') {
+                        state.phase = 'ready';
+                        light.style.background = '#00ff66';
+                        light.style.boxShadow = '0 0 20px #00ff66';
+                        playSound('guess'); // pyk
+                        
+                        // Za 1-3 sekundy taśma w górę
+                        setTimeout(() => {
+                            if(state.phase === 'ready') {
+                                state.phase = 'gone';
+                                state.tapeTime = Date.now();
+                                light.style.background = '#111';
+                                light.style.boxShadow = 'inset 0 0 10px #000';
+                                tape.style.bottom = '250px';
+                                playSound('win'); // bum!
+                            }
+                        }, 1000 + Math.random() * 2000);
+                    }
+                }, 1000 + Math.random() * 1500);
+            }
+        }
+        if (key === 'W' && (state.phase === 'holding' || state.phase === 'ready')) {
+            state.rpm += 8;
+            if(state.rpm > 100) state.rpm = 100;
+        }
+    };
+
+    const onKU = (e) => {
+        let key = e.key.toUpperCase();
+        if (key === ' ' || key === 'SPACE') {
+            if(state.phase === 'holding' || state.phase === 'ready') {
+                // Falstart
+                state.phase = 'finished';
+                tape.style.bottom = '250px'; // wplątany
+                appAlert("Wjechałeś w taśmę! (Falstart)", "Wykluczenie");
+                finishTraining('bad');
+            } else if (state.phase === 'gone') {
+                state.phase = 'finished';
+                state.releaseTime = Date.now();
+                let reactMs = state.releaseTime - state.tapeTime;
+                
+                let rpmWasGood = (state.rpm >= 35 && state.rpm <= 65);
+                let msg = `Czas reakcji: ${(reactMs/1000).toFixed(3)}s\nObroty: ${rpmWasGood ? "Dobre" : "Złe"}\n\n`;
+                
+                if (!rpmWasGood) {
+                    appAlert(msg + "Słabe panowanie nad sprzęgłem sprawiło, że zostałeś na starcie.", "Słabo");
+                    finishTraining('bad');
+                } else if (reactMs < 150) {
+                    appAlert(msg + "Dotknąłeś taśmy! Zbyt wczesny start (poniżej 0.150s uważa się za wstrzelenie).", "Wykluczenie");
+                    finishTraining('bad');
+                } else if (reactMs <= 250) {
+                    appAlert(msg + "Atomowy start! Wygrywasz dojazd do łuku.", "Perfekt");
+                    finishTraining('perfect');
+                } else if (reactMs <= 450) {
+                    appAlert(msg + "Dobry start, jedziesz w kontakcie.", "Dobrze");
+                    finishTraining('good');
+                } else {
+                    appAlert(msg + "Zostałeś na starcie. Słaby refleks.", "Słabo");
+                    finishTraining('bad');
+                }
+            }
+        }
+    };
+
+    document.addEventListener('keydown', onKD);
+    document.addEventListener('keyup', onKU);
+}
+
+// ------------------------------------------
+// MINIGRA 3: KONTROLOWANY ŚLIZG
+// ------------------------------------------
+function startMinigameSlide() {
+    const html = `
+        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
+            <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">KONTROLOWANY ŚLIZG</h2>
+            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Używaj klawiszy <b style="color:#fff">A</b> i <b style="color:#fff">D</b> aby balansować i utrzymać się w bezpiecznej (zielonej) strefie przez 10 sekund!</p>
+            
+            <div style="font-size: 80px; margin-bottom:20px; transition: transform 0.1s;" id="mgSlideRider">🏍️</div>
+
+            <div style="width:100%; height:30px; background:#111; border-radius:15px; border:2px solid #333; position:relative; overflow:hidden; margin-bottom: 20px;">
+                <div style="position:absolute; left:25%; width:50%; height:100%; background:rgba(0,255,102,0.15); border-left:2px dashed rgba(0,255,102,0.5); border-right:2px dashed rgba(0,255,102,0.5); z-index:1;"></div>
+                <div id="mgSlideCursor" style="position:absolute; top:-5px; left:50%; width:10px; height:40px; background:#fff; z-index:2; transform:translateX(-50%); box-shadow: 0 0 10px #fff; border-radius:5px;"></div>
+            </div>
+
+            <div style="font-size:18px; font-weight:900; color:var(--accent);" id="mgSlideTimer">10.0s</div>
+        </div>
+    `;
+    let simDiv = initSimDiv(html);
+
+    let state = {
+        pos: 50, vel: 0, timeLeft: 10.0,
+        interval: null
+    };
+
+    activeMinigameData = { state, cleanup: () => {
+        document.removeEventListener('keydown', onKD);
+    }};
+
+    const cursor = document.getElementById('mgSlideCursor');
+    const rider = document.getElementById('mgSlideRider');
+    const timerText = document.getElementById('mgSlideTimer');
+
+    function loop() {
+        state.vel += (Math.random() - 0.5) * 2.5; // Losowy wiatr/dziury
+        state.pos += state.vel;
+
+        if(state.pos < 0 || state.pos > 100) {
+            clearInterval(state.interval);
+            rider.style.transform = `rotate(${state.pos < 0 ? -90 : 90}deg)`;
+            appAlert("Upadek! Straciłeś panowanie nad motocyklem.", "Kraksa");
+            finishTraining('bad');
+            return;
+        }
+
+        cursor.style.left = `${state.pos}%`;
+        rider.style.transform = `rotate(${(state.pos - 50) * 1.5}deg)`;
+
+        state.timeLeft -= 0.05;
+        timerText.innerText = Math.max(0, state.timeLeft).toFixed(1) + "s";
+
+        if(state.timeLeft <= 0) {
+            clearInterval(state.interval);
+            appAlert("Świetny balans! Przejechałeś łuk płynnie.", "Perfekt");
+            finishTraining('perfect');
+        }
+    }
+
+    state.interval = setInterval(loop, 50);
+
+    const onKD = (e) => {
+        if(e.repeat) return;
+        let key = e.key.toUpperCase();
+        if(key === 'A') state.vel -= 3;
+        if(key === 'D') state.vel += 3;
+    };
+    document.addEventListener('keydown', onKD);
+}
+
+// ------------------------------------------
+// MINIGRA 4: SZYBKI MECHANIK
+// ------------------------------------------
+function startMinigameMechanic() {
+    const html = `
+        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
+            <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">WYMIANA ZĘBATEK</h2>
+            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Kliknij szybko w zębatkę o żądanym rozmiarze!</p>
+            
+            <div id="mgMechTarget" style="font-size:24px; font-weight:900; color:var(--accent); margin-bottom:20px; text-transform:uppercase;">ZAŁÓŻ: 14 zębów</div>
+
+            <div id="mgMechGrid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;"></div>
+
+            <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
+                <div id="mgMechTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
+            </div>
+            
+            <div id="mgMechProgress" style="margin-top: 15px; font-size: 14px; color: var(--text-dim); font-weight: 900;">Runda 1/5</div>
+        </div>
+    `;
+    let simDiv = initSimDiv(html);
+
+    let state = {
+        rounds: 0, successes: 0, target: 0,
+        timer: null
+    };
+
+    activeMinigameData = { state, cleanup: () => {} };
+
+    function nextRound() {
+        state.rounds++;
+        if(state.rounds > 5) {
+            finishTraining(state.successes === 5 ? 'perfect' : (state.successes >= 3 ? 'good' : 'bad'));
+            return;
+        }
+
+        document.getElementById('mgMechProgress').innerText = `Runda ${state.rounds}/5`;
+        
+        let sizes = [13, 14, 15, 16, 55, 56, 57, 58, 59, 60].sort(() => 0.5 - Math.random()).slice(0, 4);
+        state.target = sizes[Math.floor(Math.random() * 4)];
+        
+        document.getElementById('mgMechTarget').innerText = `ZAŁÓŻ: ${state.target} zębów`;
+        
+        const grid = document.getElementById('mgMechGrid');
+        grid.innerHTML = '';
+        sizes.forEach(size => {
+            let btn = document.createElement('button');
+            btn.className = 'hub-action-btn';
+            btn.style.cssText = 'padding:20px; font-size:20px; font-weight:900; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff;';
+            btn.innerText = `${size} ⚙️`;
+            btn.onclick = () => handleChoice(size);
+            grid.appendChild(btn);
+        });
+
+        const timeBar = document.getElementById('mgMechTimeBar');
+        timeBar.style.transition = 'none'; timeBar.style.width = '100%';
+        
+        let time = 2500; // 2.5s na kliknięcie
+        setTimeout(() => { timeBar.style.transition = `width ${time}ms linear`; timeBar.style.width = '0%'; }, 50);
+        
+        state.timer = setTimeout(() => {
+            playSound('error');
+            setTimeout(nextRound, 500);
+        }, time);
+    }
+
+    function handleChoice(size) {
+        clearTimeout(state.timer);
+        if (size === state.target) {
+            playSound('guess');
+            state.successes++;
+            document.getElementById('mgMechTarget').innerText = "DOBRZE!";
+            document.getElementById('mgMechTarget').style.color = "var(--green-neon)";
+        } else {
+            playSound('error');
+            document.getElementById('mgMechTarget').innerText = "ZŁA ZĘBATKA!";
+            document.getElementById('mgMechTarget').style.color = "var(--red-neon)";
+        }
+        setTimeout(() => {
+            document.getElementById('mgMechTarget').style.color = "var(--accent)";
+            nextRound();
+        }, 500);
+    }
+
+    nextRound();
+}
+
+// ==========================================
+// ====== DECYZJE TAKTYCZNE W BIEGU =========
+// ==========================================
+
+function promptHeatDecision(ovr) {
+    return new Promise(resolve => {
+        const box = document.getElementById('simDecisionBox');
+        if(!box) {
+            resolve({ type: 'follow', cFol: 90, cMid: 50, cOut: 50, cCut: 50 });
+            return;
+        }
+        
+        box.style.display = 'flex';
+        
+        // Zestaw realistycznych sytuacji torowych
+        const situations = [
+            {
+                text: "Przeciwnik zamknął krawężnik po starcie i jedzie bardzo wąsko. Co robisz?",
+                fol: { n: "Jedź za nim", b: 80, desc: "Czekasz na jego błąd (Bezpiecznie)" },
+                mid: { n: "Pojedź środkiem", b: 40, desc: "Szukasz innej ścieżki (Ryzykownie)" },
+                out: { n: "Napędź się po dużej", b: 60, desc: "Próbujesz objechać go z tyłu" },
+                cut: { n: "Zetnij do krawężnika", b: 15, desc: "Nożyce! (Bardzo trudne)" }
+            },
+            {
+                text: "Wychodzisz ze startu na prowadzeniu, ale rywal depcze Ci po piętach!",
+                fol: { n: "Trzymaj krawężnik", b: 85, desc: "Zamykasz wewnętrzną ścieżkę" },
+                mid: { n: "Jedź optymalną ścieżką", b: 70, desc: "Klasyczna jazda" },
+                out: { n: "Wynoś się szeroko", b: 50, desc: "Budujesz prędkość, odsłaniasz dół" },
+                cut: { n: "Złam motocykl na prostej", b: 30, desc: "Zaskakujący manewr defensywny" }
+            },
+            {
+                text: "Rywale jadą parą środkiem toru i blokują Cię. Gdzie szukasz luki?",
+                fol: { n: "Siedź na kole", b: 75, desc: "Jedziesz w szprycy" },
+                mid: { n: "Rozpychaj się", b: 25, desc: "Agresywny wjazd w kanapkę" },
+                out: { n: "Pikuj pod bandę", b: 50, desc: "Omijanie kurzu i szukanie przyczepności" },
+                cut: { n: "Ostre zejście do wewnątrz", b: 45, desc: "Atakujesz dolną lukę" }
+            }
+        ];
+        
+        let sit = situations[Math.floor(Math.random() * situations.length)];
+        let ovrMod = Math.floor((ovr - 50) / 2); // Wpływ OVR zawodnika
+
+        let cFol = clamp(sit.fol.b + ovrMod, 5, 95);
+        let cMid = clamp(sit.mid.b + ovrMod, 5, 95);
+        let cOut = clamp(sit.out.b + ovrMod, 5, 95);
+        let cCut = clamp(sit.cut.b + ovrMod, 5, 95);
+
+        document.getElementById('simDecTitle').innerText = sit.text;
+        
+        document.getElementById('btnDecFol').innerHTML = `<b>${sit.fol.n}</b><br><small style="color:#aaa;">${cFol}% szansy<br>(${sit.fol.desc})</small>`;
+        document.getElementById('btnDecMid').innerHTML = `<b>${sit.mid.n}</b><br><small style="color:#aaa;">${cMid}% szansy<br>(${sit.mid.desc})</small>`;
+        document.getElementById('btnDecOut').innerHTML = `<b>${sit.out.n}</b><br><small style="color:#aaa;">${cOut}% szansy<br>(${sit.out.desc})</small>`;
+        document.getElementById('btnDecCut').innerHTML = `<b>${sit.cut.n}</b><br><small style="color:#aaa;">${cCut}% szansy<br>(${sit.cut.desc})</small>`;
+
+        let answered = false;
+        window.resolveSimDecision = (type) => {
+            if(answered) return;
+            answered = true;
+            box.style.display = 'none';
+            resolve({ type, cOut, cCut, cMid, cFol });
+        };
+    });
+}
+
+async function playSingleMatch() {
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
+        document.body.appendChild(simDiv);
+    }
+    
+    simDiv.innerHTML = `
+        <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
+        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
+        <div id="simMatchState" style="font-size:13px; font-weight:900; color:var(--text-dim); margin-bottom: 18px; text-align:center; text-transform:uppercase; letter-spacing:1px;"></div>
+        <div id="simMatchScore" style="font-size:18px; font-weight:900; background:rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 12px; margin-bottom: 18px; text-align:center; letter-spacing:1px;">Wynik meczu 0:0</div>
+        <div style="display:flex; gap: 20px; margin-bottom: 30px;">
+            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
+            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
+        </div>
+        <div id="simEvents" style="max-width: 400px; text-align:center; color: var(--red-neon); font-weight:bold; min-height:50px; line-height: 1.4;"></div>
+        
+        <div id="simDecisionBox" style="display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; margin-top: 10px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+            <div id="simDecTitle" style="color:var(--accent); font-weight:900; font-size:15px; text-align:center; line-height:1.4; margin-bottom: 10px;">Sytuacja na torze...</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecFol" onclick="resolveSimDecision('follow')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecMid" onclick="resolveSimDecision('middle')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecCut" onclick="resolveSimDecision('cut')"></button>
+            </div>
+            <div style="font-size:10px; color:var(--text-dim); text-align:center; margin-top:10px; text-transform:uppercase;">(Nie ma limitu czasu, przemyśl wybór)</div>
+        </div>
+
+        <div id="simProgressContainer" style="width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 20px;">
+            <div id="simProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
+        </div>
+    `;
+    simDiv.style.display = 'flex';
+
+    const simMatchInfo = document.getElementById('simMatchInfo');
+    const simMatchState = document.getElementById('simMatchState');
+    const simMatchScore = document.getElementById('simMatchScore');
+    const simPts = document.getElementById('simPts');
+    const simAvg = document.getElementById('simAvg');
+    const simEvents = document.getElementById('simEvents');
+    const simProgressBar = document.getElementById('simProgressBar');
+    
+    let s = cState.season;
+    let m = s.matchIndex + 1;
+    let matchObj = s.schedule[s.matchIndex];
+    let opponent = matchObj.opp;
+    let isHome = matchObj.isHome;
+    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
+    let oppColor = getCareerClubColor(opponent);
+    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
+    let lData = CAREER_CONSTANTS[playingLeague];
+    
+    let trackComfort = isHome ? 8 : -10;
+    
+    let homeClubName = isHome ? playingClub : opponent;
+    let awayClubName = isHome ? opponent : playingClub;
+    let homeMatchScore = 0;
+    let awayMatchScore = 0;
+
+    const totalMatchHeats = 15;
+    const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const rollTeamHeatScore = (strengthBias) => {
+        const exclusionRoll = Math.random();
+        
+        if (exclusionRoll < 0.02) {
+            return strengthBias >= 0
+                ? { me: 5, opp: 0, is50: true, text: "Podwójne wykluczenie rywali! - 5:0" }
+                : { me: 0, opp: 5, is05: true, text: "Obaj nasi zawodnicy wykluczeni! - 0:5" };
+        }
+        if (exclusionRoll < 0.05) {
+            return strengthBias >= 0
+                ? { me: 5, opp: 1, text: "Wykluczenie rywala - bieg zakończony 5:1" }
+                : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - 1:5" };
+        }
+        if (exclusionRoll < 0.08) {
+            return strengthBias >= 0
+                ? { me: 3, opp: 2, is32: true, text: "Wykluczenie rywala i remisowy układ - 3:2" }
+                : { me: 2, opp: 3, is23: true, text: "Wykluczenie naszego i remisowy układ - 2:3" };
+        }
+
+        const swing = strengthBias + (Math.random() * 0.9 - 0.45);
+        if (swing >= 0.85) return { me: 5, opp: 1, text: "Podwójne zwycięstwo dla nas! - 5:1" };
+        if (swing >= 0.30) return { me: 4, opp: 2, text: "Wygrywamy bieg - 4:2" };
+        if (swing > -0.30) return { me: 3, opp: 3, text: "Remis w biegu - 3:3" };
+        if (swing > -0.85) return { me: 2, opp: 4, text: "Przegrywamy bieg - 2:4" };
+        return { me: 1, opp: 5, text: "Podwójna porażka... - 1:5" };
+    };
+    
+    let heatsInMatch = s.nextMatchHeats || 0;
+    let benched = s.nextMatchBenched || false;
+
+    let heatData = getPlayerHeats(cState.age, heatsInMatch, isHome);
+    let playerHeats = heatData.heats;
+    let startNumber = heatData.number;
+    
+    let matchPts = 0;
+    let matchBon = 0;
+
+    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>${heatsInMatch>0 ? `<div style="font-size: 13px; margin-top:5px; color: var(--accent);">Twój nr startowy: ${startNumber}</div>` : ''}`;
+    
+    let moraleMod = 0;
+    if (cState.relations.team > 80) moraleMod = 3;
+    if (cState.relations.team < 30) moraleMod = -3;
+    let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
+    let ratio = matchEffOvr / lData.diff;
+
+    for (let h = 1; h <= totalMatchHeats; h++) {
+        await new Promise(r => setTimeout(r, 600)); 
+        simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
+        
+        let isPlayerRiding = playerHeats.includes(h);
+        let rideStatus = isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA";
+        
+        let aggHomeText = "";
+        let firstLegScoreMe = 0;
+        let firstLegScoreOpp = 0;
+        let hasFirstLeg = false;
+
+        if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
+            for (let i = 0; i < s.matchIndex; i++) {
+                let pastMatch = s.schedule[i];
+                if (pastMatch.opp === opponent && pastMatch.leg === 1) {
+                    let res = s.matchResults[i];
+                    if (res && res !== "-") {
+                        let p = res.split(':').map(Number);
+                        firstLegScoreMe = isHome ? p[1] : p[0];
+                        firstLegScoreOpp = isHome ? p[0] : p[1];
+                        hasFirstLeg = true;
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (hasFirstLeg) {
+            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
+            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
+            let aggH = isHome ? currentAggMe : currentAggOpp;
+            let aggA = isHome ? currentAggOpp : currentAggMe;
+            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">Dwumecz: ${aggH}:${aggA}</div>`;
+        }
+
+        simMatchScore.innerHTML = `
+            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
+            ${homeMatchScore}:${awayMatchScore} 
+            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
+            ${aggHomeText}
+        `;
+        
+        simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':'var(--text-dim)'};">${rideStatus}</span>`;
+
+        let heatMod = 0;
+        let eventText = `Bieg ${h}: Na torze...`;
+        let eventColor = "#fff";
+        let isExclusionPlayer = false;
+
+        if (isPlayerRiding) {
+            let dec = await promptHeatDecision(cState.ovr);
+            let roll = Math.random() * 100;
+            
+            if (dec.type === 'outside') {
+                if (roll < dec.cOut) { heatMod = 0.8; eventText = `Bieg ${h}: Fenomenalny napęd po zewnętrznej i objeżdżasz rywala!`; eventColor = "var(--green-neon)"; }
+                else { heatMod = -0.6; eventText = `Bieg ${h}: Przeszarżowałeś! Wyniosło Cię pod bandę, tracisz pozycję!`; eventColor = "var(--yellow-neon)"; }
+            } else if (dec.type === 'cut') {
+                if (roll < dec.cCut) { heatMod = 1.0; eventText = `Bieg ${h}: Piękne nożyce! Atak przy krawężniku udany!`; eventColor = "var(--green-neon)"; }
+                else { heatMod = -0.5; eventText = `Bieg ${h}: Próba ścinki nieudana, rywal przewidział Twój ruch i Cię zablokował!`; eventColor = "var(--yellow-neon)"; }
+            } else if (dec.type === 'middle') {
+                if (roll < dec.cMid) { heatMod = 0.6; eventText = `Bieg ${h}: Pewna jazda środkiem toru, rywale bez szans!`; eventColor = "var(--green-neon)"; }
+                else { heatMod = -0.4; eventText = `Bieg ${h}: Zbyt pasywnie środkiem. Tracisz punkt!`; eventColor = "var(--yellow-neon)"; }
+            } else if (dec.type === 'follow') {
+                if (roll < dec.cFol) { heatMod = 0.2; eventText = `Bieg ${h}: Dowiezione punkty bez zbędnego ryzyka.`; eventColor = "#fff"; }
+                else { heatMod = -0.3; eventText = `Bieg ${h}: Jazda gęsiego za rywalem, zabrakło prędkości by powalczyć.`; eventColor = "var(--yellow-neon)"; }
+            } else {
+                heatMod = -0.6; eventText = `Bieg ${h}: Brak reakcji... zostajesz w tyle!`; eventColor = "var(--red-neon)";
+            }
+        } else {
+            if (Math.random() < 0.10) { 
+                const events = [
+                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)" },
+                    { text: "🔥 Atomowy start pary!", mod: 1.0, color: "var(--green-neon)" },
+                    { text: "🚜 Dziura w torze, zawodnik traci rytm...", mod: -1.0, color: "var(--yellow-neon)" },
+                    { text: "🔧 Defekt motocykla na trasie...", p: 0, b: 0, color: "var(--red-neon)" },
+                ];
+                let ev = events[Math.floor(Math.random() * events.length)];
+                eventText = `Bieg ${h}: ${ev.text}`;
+                eventColor = ev.color;
+                if (ev.p === undefined) heatMod = ev.mod;
+            }
+        }
+
+        simEvents.innerText = eventText;
+        simEvents.style.color = eventColor;
+        playSound('flip');
+
+        const strengthBias = clampMatchValue((ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08), -1.2, 1.2);
+        
+        let heatOutcome;
+        if (isExclusionPlayer) {
+            heatOutcome = isHome ? { me: 1, opp: 5 } : { me: 1, opp: 5 }; 
+        } else {
+            heatOutcome = rollTeamHeatScore(strengthBias);
+        }
+        
+        homeMatchScore += isHome ? heatOutcome.me : heatOutcome.opp;
+        awayMatchScore += isHome ? heatOutcome.opp : heatOutcome.me;
+
+        let hPts = 0;
+        let hBon = 0;
+
+        if (isPlayerRiding) {
+            let teamScore = heatOutcome.me;
+            if (isExclusionPlayer) {
+                hPts = 0; hBon = 0;
+            } else {
+                if (teamScore === 5) {
+                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 2; hBon = heatOutcome.is50 ? 0 : 1; }
+                } else if (teamScore === 4) {
+                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 1; hBon = 0; }
+                } else if (teamScore === 3) {
+                    if (Math.random() < 0.2) {
+                        if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 0; hBon = 0; }
+                    } else {
+                        if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 1; hBon = heatOutcome.is32 ? 0 : 1; }
+                    }
+                } else if (teamScore === 2) {
+                    if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 0; hBon = 0; }
+                } else if (teamScore === 1) {
+                    if (Math.random() < 0.5) { hPts = 1; hBon = 0; } else { hPts = 0; hBon = 0; }
+                } else {
+                    hPts = 0; hBon = 0;
+                }
+            }
+
+            matchPts += hPts;
+            matchBon += hBon;
+        }
+
+        simPts.innerText = `${matchPts} (+${matchBon})`;
+        let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
+        simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
+        
+        simMatchScore.innerHTML = `
+            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
+            ${homeMatchScore}:${awayMatchScore} 
+            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
+            ${aggHomeText}
+        `;
+    }
+    
+    await new Promise(r => setTimeout(r, 1000));
+    simDiv.style.display = 'none';
+
+    let finalPlayerTeamScore = isHome ? homeMatchScore : awayMatchScore;
+    let finalOpponentScore = isHome ? awayMatchScore : homeMatchScore;
+
+    simulateBotMatchesForCurrentRound(finalPlayerTeamScore, finalOpponentScore, false);
+
+    s.heats += heatsInMatch;
+    s.pts += matchPts;
+    s.bon += matchBon;
+    s.matchResults.push(`${finalPlayerTeamScore}:${finalOpponentScore}`);
+    s.currentMatchScore = { me: finalPlayerTeamScore, opp: finalOpponentScore };
+    s.matchIndex += 1;
+    s.trainedThisWeek = false; 
+
+    updateLeftPanelUI();
+    saveCareer();
+    renderCareerHub();
 }
 
 // ==========================================
