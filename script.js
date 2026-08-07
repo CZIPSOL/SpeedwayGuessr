@@ -7448,12 +7448,70 @@ function clearActiveMinigame() {
 function startTrainingQTE() {
     if (cState.season.trainedThisWeek) return;
     
-    // Losowanie minigry
+    // Losowanie minigry i przejście do ekranu How To Play
     let roll = Math.random();
-    if (roll < 0.25) startMinigameReflex();
-    else if (roll < 0.50) startMinigameStart();
-    else if (roll < 0.75) startMinigameSlide();
-    else startMinigameMechanic();
+    if (roll < 0.25) showTrainingHTP('reflex');
+    else if (roll < 0.50) showTrainingHTP('start');
+    else if (roll < 0.75) showTrainingHTP('slide');
+    else showTrainingHTP('mechanic');
+}
+
+function showTrainingHTP(type) {
+    let simDiv = document.getElementById('simOverlay');
+    if (!simDiv) {
+        simDiv = document.createElement('div');
+        simDiv.id = 'simOverlay';
+        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
+        document.body.appendChild(simDiv);
+    }
+
+    let title = "";
+    let desc = "";
+    let icon = "";
+    let nextFn = null;
+
+    if (type === 'reflex') {
+        title = "TRENING REFLEKSU";
+        icon = "⚡";
+        desc = "Reaguj na pojawiające się sekwencje!<br><br>Wciskaj podane litery (<b>Q, W, E, A, S, D, SPACJA, SHIFT</b>), ich kombinacje (np. W + SHIFT), lub wykonuj przeciągnięcia myszką, trzymając <b>Lewy Przycisk Myszy (LPM)</b>.<br><br><span style='color:var(--yellow-neon); font-weight: 900;'>UWAGA: Kafelki potrafią nagle zmienić polecenie, zachowaj czujność!</span>";
+        nextFn = startMinigameReflex;
+    } else if (type === 'start') {
+        title = "MOMENT STARTOWY";
+        icon = "🚦";
+        desc = "Wciśnij i <b>trzymaj SPACJĘ</b> (sprzęgło). Utrzymuj obroty silnika w zielonej strefie, pulsacyjnie klikając <b>W</b>.<br><br>Gdy zapali się zielone światło – bądź gotów. Gdy światło zgaśnie i <b>taśma pójdzie w górę</b> – jak najszybciej <b>puść SPACJĘ</b>!<br><br><span style='color:var(--red-neon); font-weight: 900;'>UWAGA: Czas reakcji poniżej 0.150s traktowany jest jako falstart i dotknięcie taśmy!</span>";
+        nextFn = startMinigameStart;
+    } else if (type === 'slide') {
+        title = "KONTROLOWANY ŚLIZG";
+        icon = "🔄";
+        desc = "Złap idealny balans podczas wchodzenia w łuk.<br><br>Używaj klawiszy <b>A (w lewo)</b> i <b>D (w prawo)</b>, aby korygować uślizg koła i utrzymać kursor wewnątrz bezpiecznej zielonej strefy przez 10 sekund.";
+        nextFn = startMinigameSlide;
+    } else if (type === 'mechanic') {
+        title = "SZYBKI MECHANIK";
+        icon = "⚙️";
+        desc = "Liczy się ułamek sekundy! Otrzymasz zadanie założenia konkretnej zębatki (np. \"ZAŁÓŻ: 14 zębów\").<br><br>Szybko odszukaj odpowiedni przycisk na ekranie i kliknij go. Bądź bezbłędny przez 5 rund.";
+        nextFn = startMinigameMechanic;
+    }
+
+    simDiv.innerHTML = `
+        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; display: flex; flex-direction: column; align-items: center; user-select: none;">
+            <div style="font-size: 60px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));">${icon}</div>
+            <h2 style="color:var(--accent); font-weight:900; margin-bottom:20px; font-size:28px; text-transform:uppercase;">${title}</h2>
+            
+            <p style="color:var(--text-main); font-size:14px; font-weight:600; margin-bottom:30px; line-height: 1.6; text-align: left; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                ${desc}
+            </p>
+            
+            <button id="btnStartMinigameHTP" class="btn-reset w-100 p-15 text-lg" style="box-shadow: 0 5px 15px rgba(241,196,15,0.3);">ZROZUMIANO - START TRENINGU</button>
+        </div>
+    `;
+    
+    simDiv.style.display = 'flex';
+    simDiv.oncontextmenu = (e) => e.preventDefault(); // Blokada menu kontekstowego pod PPM
+    
+    document.getElementById('btnStartMinigameHTP').onclick = () => {
+        simDiv.innerHTML = ''; // Czyścimy okno przed startem właściwej minigry
+        nextFn();
+    };
 }
 
 function finishTraining(successType) {
