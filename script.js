@@ -7430,6 +7430,22 @@ window.closeCalendarOverlay = function() {
     }
 }
 
+// ==========================================
+// ====== MINI GRA: TRENING (QTE) ===========
+// ==========================================
+
+let qteActive = false;
+let qteRounds = 0;
+let qteSuccesses = 0;
+let qteType = ''; // 'single', 'combo', 'swipe'
+let qteExpectedKeys = [];
+let qtePressedKeys = [];
+let qteExpectedSwipe = '';
+let qteTimer = null;
+let qteChangeTimer = null; // <--- TEGO BRAKOWAŁO!
+let swipeStartX = 0;
+let swipeStartY = 0;
+
 function handleSwipeStart(e) {
     if (!qteActive || qteType !== 'swipe') return;
     if (e.type === 'touchstart') {
