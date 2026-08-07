@@ -7430,20 +7430,98 @@ window.closeCalendarOverlay = function() {
     }
 }
 
-// ==========================================
-// ====== MINI GRA: TRENING (QTE) ===========
-// ==========================================
+function handleSwipeStart(e) {
+    if (!qteActive || qteType !== 'swipe') return;
+    if (e.type === 'touchstart') {
+        swipeStartX = e.touches[0].clientX;
+        swipeStartY = e.touches[0].clientY;
+    } else {
+        // Mysz musi być Prawym Przyciskiem (Button 2)
+        if (e.button !== 2) return; 
+        e.preventDefault(); 
+        swipeStartX = e.clientX;
+        swipeStartY = e.clientY;
+    }
+    
+    document.addEventListener('mouseup', handleSwipeEnd);
+    document.addEventListener('touchend', handleSwipeEnd);
+}
 
-let qteActive = false;
-let qteRounds = 0;
-let qteSuccesses = 0;
-let qteType = ''; // 'single', 'combo', 'swipe'
-let qteExpectedKeys = [];
-let qtePressedKeys = [];
-let qteExpectedSwipe = '';
-let qteTimer = null;
-let swipeStartX = 0;
-let swipeStartY = 0;
+function handleSwipeEnd(e) {
+    document.removeEventListener('mouseup', handleSwipeEnd);
+    document.removeEventListener('touchend', handleSwipeEnd);
+    if (!qteActive || qteType !== 'swipe') return;
+    
+    let swipeEndX = 0;
+    let swipeEndY = 0;
+    
+    if (e.type === 'touchend') {
+        swipeEndX = e.changedTouches[0].clientX;
+        swipeEndY = e.changedTouches[0].clientY;
+    } else {
+        swipeEndX = e.clientX;
+        swipeEndY = e.clientY;
+    }
+    
+    let dx = swipeEndX - swipeStartX;
+    let dy = swipeEndY - swipeStartY;
+    
+    if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
+        let dir = '';
+        if (Math.abs(dx) > Math.abs(dy)) {
+            dir = dx > 0 ? 'RIGHT' : 'LEFT';
+        } else {
+            dir = dy > 0 ? 'DOWN' : 'UP';
+        }
+        
+        if (dir === qteExpectedSwipe) winQteRound();
+        else failQteRound();
+    }
+}
+
+function handleQteKeyDown(e) {
+    if (!qteActive || qteType === 'swipe') return;
+    if (e.repeat) return;
+    
+    let key = e.key.toUpperCase();
+    if (key === ' ') key = 'SPACE';
+    
+    const allowedKeys = ['Q','W','E','A','S','D','SPACE','SHIFT'];
+    if (!allowedKeys.includes(key)) return;
+    
+    if (qteType === 'single') {
+        if (qteExpectedKeys.includes(key)) winQteRound();
+        else failQteRound();
+    } else if (qteType === 'combo') {
+        if (!qtePressedKeys.includes(key)) qtePressedKeys.push(key);
+        
+        let allPressed = qteExpectedKeys.every(k => qtePressedKeys.includes(k));
+        let onlyExpectedPressed = qtePressedKeys.every(k => qteExpectedKeys.includes(k));
+        
+        if (allPressed && onlyExpectedPressed) winQteRound();
+        else if (qtePressedKeys.length >= qteExpectedKeys.length && !allPressed) failQteRound();
+    }
+}
+
+function handleQteKeyUp(e) {
+    if (!qteActive || qteType !== 'combo') return;
+    let key = e.key.toUpperCase();
+    if (key === ' ') key = 'SPACE';
+    qtePressedKeys = qtePressedKeys.filter(k => k !== key);
+}
+
+function winQteRound() {
+    clearTimeout(qteTimer);
+    clearTimeout(qteChangeTimer);
+    const display = document.getElementById('qteKeyDisplay');
+    playSound('guess');
+    qteSuccesses++;
+    display.innerText = "✅";
+    display.style.borderColor = "var(--green-neon)";
+    display.style.color = "var(--green-neon)";
+    qteType = '';
+    setTimeout(nextQteRound, 1000);
+}
 
 function startTrainingQTE() {
     if (cState.season.trainedThisWeek) return;
@@ -7483,98 +7561,6 @@ function startTrainingQTE() {
     
     setTimeout(nextQteRound, 1000);
 }
-
-function handleSwipeStart(e) {
-    if (!qteActive || qteType !== 'swipe') return;
-    if (e.type === 'touchstart') {
-        swipeStartX = e.touches[0].clientX;
-        swipeStartY = e.touches[0].clientY;
-    } else {
-        e.preventDefault(); // Unikamy przeciągania tekstu
-        swipeStartX = e.clientX;
-        swipeStartY = e.clientY;
-    }
-    
-    document.addEventListener('mouseup', handleSwipeEnd);
-    document.addEventListener('touchend', handleSwipeEnd);
-}
-
-function handleSwipeEnd(e) {
-    document.removeEventListener('mouseup', handleSwipeEnd);
-    document.removeEventListener('touchend', handleSwipeEnd);
-    if (!qteActive || qteType !== 'swipe') return;
-    
-    let swipeEndX = 0;
-    let swipeEndY = 0;
-    
-    if (e.type === 'touchend') {
-        swipeEndX = e.changedTouches[0].clientX;
-        swipeEndY = e.changedTouches[0].clientY;
-    } else {
-        swipeEndX = e.clientX;
-        swipeEndY = e.clientY;
-    }
-    
-    let dx = swipeEndX - swipeStartX;
-    let dy = swipeEndY - swipeStartY;
-    
-    // Próg przeciągnięcia
-    if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
-        let dir = '';
-        if (Math.abs(dx) > Math.abs(dy)) {
-            dir = dx > 0 ? 'RIGHT' : 'LEFT';
-        } else {
-            dir = dy > 0 ? 'DOWN' : 'UP';
-        }
-        
-        if (dir === qteExpectedSwipe) {
-            winQteRound();
-        } else {
-            failQteRound();
-        }
-    }
-}
-
-function handleQteKeyDown(e) {
-    if (!qteActive || qteType === 'swipe') return;
-    if (e.repeat) return;
-    
-    let key = e.key.toUpperCase();
-    if (key === ' ') key = 'SPACE';
-    
-    const allowedKeys = ['Q','W','E','A','S','D','SPACE','SHIFT'];
-    if (!allowedKeys.includes(key)) return;
-    
-    if (qteType === 'single') {
-        if (qteExpectedKeys.includes(key)) {
-            winQteRound();
-        } else {
-            failQteRound();
-        }
-    } else if (qteType === 'combo') {
-        if (!qtePressedKeys.includes(key)) {
-            qtePressedKeys.push(key);
-        }
-        
-        let allPressed = qteExpectedKeys.every(k => qtePressedKeys.includes(k));
-        let onlyExpectedPressed = qtePressedKeys.every(k => qteExpectedKeys.includes(k));
-        
-        if (allPressed && onlyExpectedPressed) {
-            winQteRound();
-        } else if (qtePressedKeys.length >= qteExpectedKeys.length && !allPressed) {
-            failQteRound();
-        }
-    }
-}
-
-function handleQteKeyUp(e) {
-    if (!qteActive || qteType !== 'combo') return;
-    let key = e.key.toUpperCase();
-    if (key === ' ') key = 'SPACE';
-    
-    qtePressedKeys = qtePressedKeys.filter(k => k !== key);
-}
-
 function nextQteRound() {
     if (!qteActive) return;
     qteRounds++;
@@ -7634,18 +7620,6 @@ function nextQteRound() {
             failQteRound();
         }
     }, reactionTime);
-}
-
-function winQteRound() {
-    clearTimeout(qteTimer);
-    const display = document.getElementById('qteKeyDisplay');
-    playSound('guess');
-    qteSuccesses++;
-    display.innerText = "✅";
-    display.style.borderColor = "var(--green-neon)";
-    display.style.color = "var(--green-neon)";
-    qteType = '';
-    setTimeout(nextQteRound, 1000);
 }
 
 function failQteRound() {
@@ -7783,48 +7757,41 @@ function promptHeatDecision(ovr) {
     return new Promise(resolve => {
         const box = document.getElementById('simDecisionBox');
         if(!box) {
-            resolve({ type: 'timeout', cDef: 90 });
+            resolve({ type: 'follow', cFol: 90, cMid: 50, cOut: 50, cCut: 50 });
             return;
         }
         
         box.style.display = 'flex';
         
+        const situations = [
+            "Przeciwnik cały czas trzyma się krawężnika. Co robisz?",
+            "Tor po zewnętrznej wydaje się odsypany. Jak to rozegrasz?",
+            "Rywale jadą parą środkiem toru. Gdzie szukasz luki?",
+            "Zostałeś z tyłu po starcie, musisz gonić! Twój plan to...",
+            "Prowadzisz, ale słyszysz ryk silnika tuż za plecami!"
+        ];
+        let sitText = situations[Math.floor(Math.random() * situations.length)];
+        
         // Obliczanie % szans na podstawie OVR zawodnika
         let cOut = Math.min(85, Math.max(15, 40 + Math.floor((ovr - 65) / 1.5)));
-        let cIn = Math.min(95, Math.max(30, 65 + Math.floor((ovr - 65) / 2)));
-        let cAgr = Math.min(60, Math.max(10, 25 + Math.floor((ovr - 65) / 2)));
-        let cDef = Math.min(95, Math.max(50, 85 + Math.floor((ovr - 65) / 3)));
+        let cCut = Math.min(95, Math.max(30, 65 + Math.floor((ovr - 65) / 2)));
+        let cMid = Math.min(80, Math.max(20, 50 + Math.floor((ovr - 65) / 2)));
+        let cFol = Math.min(95, Math.max(50, 85 + Math.floor((ovr - 65) / 3)));
 
-        document.getElementById('btnDecOut').innerHTML = `Szeroko<br><small>${cOut}%</small>`;
-        document.getElementById('btnDecIn').innerHTML = `Krawężnik<br><small>${cIn}%</small>`;
-        document.getElementById('btnDecAgr').innerHTML = `Agresywnie<br><small>${cAgr}%</small>`;
-        document.getElementById('btnDecDef').innerHTML = `Obrona<br><small>${cDef}%</small>`;
-
-        const timerBar = document.getElementById('simDecTimer');
-        timerBar.style.transition = 'none';
-        timerBar.style.width = '100%';
-        setTimeout(() => {
-            timerBar.style.transition = `width 4s linear`;
-            timerBar.style.width = '0%';
-        }, 50);
+        document.getElementById('simDecTitle').innerText = sitText;
+        document.getElementById('btnDecFol').innerHTML = `Jedź za nim<br><small style="color:#aaa;">${cFol}% szans na sukces</small>`;
+        document.getElementById('btnDecMid').innerHTML = `Pojedź środkiem<br><small style="color:#aaa;">${cMid}% szans na sukces</small>`;
+        document.getElementById('btnDecOut').innerHTML = `Szukaj prędkości pod bandą<br><small style="color:#aaa;">${cOut}% szans na sukces</small>`;
+        document.getElementById('btnDecCut').innerHTML = `Wyjdź szeroko i zetnij<br><small style="color:#aaa;">${cCut}% szans na sukces</small>`;
 
         let answered = false;
 
         window.resolveSimDecision = (type) => {
             if(answered) return;
             answered = true;
-            clearTimeout(timeout);
             box.style.display = 'none';
-            resolve({ type, cOut, cIn, cAgr, cDef });
+            resolve({ type, cOut, cCut, cMid, cFol });
         };
-
-        let timeout = setTimeout(() => {
-            if(!answered) {
-                answered = true;
-                box.style.display = 'none';
-                resolve({ type: 'timeout', cDef });
-            }
-        }, 4000);
     });
 }
 
@@ -7848,16 +7815,13 @@ async function playSingleMatch() {
         </div>
         <div id="simEvents" style="max-width: 400px; text-align:center; color: var(--red-neon); font-weight:bold; min-height:50px;"></div>
         
-        <div id="simDecisionBox" style="display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 350px; margin-top: 10px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 16px; border: 1px solid var(--border-color);">
-            <div style="color:var(--accent); font-weight:900; font-size:12px; text-transform:uppercase; text-align:center;">Decyduj (Masz 4 sekundy):</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                <button class="hub-action-btn" style="padding:10px; font-size:10px; border-radius:8px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')">Szeroko</button>
-                <button class="hub-action-btn" style="padding:10px; font-size:10px; border-radius:8px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecIn" onclick="resolveSimDecision('inside')">Krawężnik</button>
-                <button class="hub-action-btn" style="padding:10px; font-size:10px; border-radius:8px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecAgr" onclick="resolveSimDecision('aggressive')">Agresywnie</button>
-                <button class="hub-action-btn" style="padding:10px; font-size:10px; border-radius:8px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecDef" onclick="resolveSimDecision('defend')">Obrona</button>
-            </div>
-            <div style="width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; margin-top: 5px;">
-                <div id="simDecTimer" style="height: 100%; width: 100%; background: var(--accent);"></div>
+        <div id="simDecisionBox" style="display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin-top: 10px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+            <div id="simDecTitle" style="color:var(--accent); font-weight:900; font-size:15px; text-align:center; line-height:1.4; margin-bottom: 5px;">Sytuacja na torze...</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecFol" onclick="resolveSimDecision('follow')"></button>
+                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecMid" onclick="resolveSimDecision('middle')"></button>
+                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')"></button>
+                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecCut" onclick="resolveSimDecision('cut')"></button>
             </div>
         </div>
 
@@ -7923,7 +7887,6 @@ async function playSingleMatch() {
         return { me: 1, opp: 5, text: "Podwójna porażka... - 1:5" };
     };
     
-    // Zaciąganie pre-kalkulowanego składu (ustalonego w Hubie)
     let heatsInMatch = s.nextMatchHeats || 0;
     let benched = s.nextMatchBenched || false;
 
@@ -7936,7 +7899,6 @@ async function playSingleMatch() {
 
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>${heatsInMatch>0 ? `<div style="font-size: 13px; margin-top:5px; color: var(--accent);">Twój nr startowy: ${startNumber}</div>` : ''}`;
     
-    // Odczyt formy i morale do biasu
     let moraleMod = 0;
     if (cState.relations.team > 80) moraleMod = 3;
     if (cState.relations.team < 30) moraleMod = -3;
@@ -7950,7 +7912,6 @@ async function playSingleMatch() {
         let isPlayerRiding = playerHeats.includes(h);
         let rideStatus = isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA";
         
-        // AGREGAT DWUMECZU
         let aggHomeText = "";
         let firstLegScoreMe = 0;
         let firstLegScoreOpp = 0;
@@ -7995,27 +7956,25 @@ async function playSingleMatch() {
         let isExclusionPlayer = false;
 
         if (isPlayerRiding) {
-            // INTERAKCJA GRACZA
             let dec = await promptHeatDecision(cState.ovr);
             let roll = Math.random() * 100;
             
             if (dec.type === 'outside') {
                 if (roll < dec.cOut) { heatMod = 0.8; eventText = `Bieg ${h}: Fenomenalny napęd po zewnętrznej!`; eventColor = "var(--green-neon)"; }
                 else { heatMod = -0.6; eventText = `Bieg ${h}: Wyniosło Cię pod bandę, tracisz pozycję!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'inside') {
-                if (roll < dec.cIn) { heatMod = 0.5; eventText = `Bieg ${h}: Skuteczna ścinka do krawężnika!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.4; eventText = `Bieg ${h}: Zablokowany przy kredzie!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'aggressive') {
-                if (roll < dec.cAgr) { heatMod = 1.4; eventText = `Bieg ${h}: Ryzykowny, ostry atak udany!`; eventColor = "var(--green-neon)"; }
-                else { isExclusionPlayer = true; eventText = `Bieg ${h}: Przesadziłeś! Wykluczenie!`; eventColor = "var(--red-neon)"; }
-            } else if (dec.type === 'defend') {
-                if (roll < dec.cDef) { heatMod = 0.2; eventText = `Bieg ${h}: Mądra, defensywna jazda.`; eventColor = "#fff"; }
-                else { heatMod = -0.6; eventText = `Bieg ${h}: Zbyt pasywnie, rywal mija Cię z łatwością!`; eventColor = "var(--yellow-neon)"; }
+            } else if (dec.type === 'cut') {
+                if (roll < dec.cCut) { heatMod = 1.0; eventText = `Bieg ${h}: Skuteczne nożyce i atak przy krawężniku!`; eventColor = "var(--green-neon)"; }
+                else { heatMod = -0.5; eventText = `Bieg ${h}: Zablokowany przy próbie ścinki!`; eventColor = "var(--yellow-neon)"; }
+            } else if (dec.type === 'middle') {
+                if (roll < dec.cMid) { heatMod = 0.6; eventText = `Bieg ${h}: Pewna jazda środkiem toru!`; eventColor = "var(--green-neon)"; }
+                else { heatMod = -0.4; eventText = `Bieg ${h}: Zbyt pasywnie środkiem, rywale odjeżdżają!`; eventColor = "var(--yellow-neon)"; }
+            } else if (dec.type === 'follow') {
+                if (roll < dec.cFol) { heatMod = 0.2; eventText = `Bieg ${h}: Dowiezione punkty bez ryzyka.`; eventColor = "#fff"; }
+                else { heatMod = -0.3; eventText = `Bieg ${h}: Jazda gęsiego, brak prędkości...`; eventColor = "var(--yellow-neon)"; }
             } else {
                 heatMod = -0.6; eventText = `Bieg ${h}: Brak reakcji... zostajesz w tyle!`; eventColor = "var(--red-neon)";
             }
         } else {
-            // BOT LOSOWE ZDARZENIA (Gdy nas nie ma na torze)
             if (Math.random() < 0.10) { 
                 const events = [
                     { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)" },
@@ -8038,7 +7997,7 @@ async function playSingleMatch() {
         
         let heatOutcome;
         if (isExclusionPlayer) {
-            heatOutcome = isHome ? { me: 1, opp: 5 } : { me: 1, opp: 5 }; // Gracz zdyskwalifikowany = słaby bieg
+            heatOutcome = isHome ? { me: 1, opp: 5 } : { me: 1, opp: 5 }; 
         } else {
             heatOutcome = rollTeamHeatScore(strengthBias);
         }
@@ -8049,10 +8008,8 @@ async function playSingleMatch() {
         let hPts = 0;
         let hBon = 0;
 
-        // Rozdział indywidualnych punktów po Twojej stronie
         if (isPlayerRiding) {
             let teamScore = heatOutcome.me;
-
             if (isExclusionPlayer) {
                 hPts = 0; hBon = 0;
             } else {
