@@ -9159,9 +9159,10 @@ try {
     window.selectCareerNat = selectCareerNat;
     window.startCareerAcademy = startCareerAcademy;
     window.signContract = signContract; 
+    window.acceptLoan = acceptLoan;
     window.rejectLoan = rejectLoan;
     window.startTrainingQTE = startTrainingQTE;
-    window.endTrainingQTE = endTrainingQTE;
+    window.finishTraining = finishTraining;
     window.triggerMatchOrEvent = triggerMatchOrEvent;
     window.resolveMidSeasonEvent = resolveMidSeasonEvent;
     window.endOfSeason = endOfSeason;
@@ -9171,7 +9172,6 @@ try {
     window.closeTeamAchievement = closeTeamAchievement;
     window.shareCareerResult = shareCareerResult;
     window.showCareerCalendar = showCareerCalendar;
-    
     
 } catch (e) {
     console.error("Global export error:", e);
