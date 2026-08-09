@@ -6171,7 +6171,6 @@ function updateLeftPanelUI() {
     
     document.getElementById('cAge').innerText = cState.age;
 
-    // Aktualizujemy na żywo dodając statystyki z trwającego sezonu
     let totalHeats = cState.stats.heats + (cState.season.active ? cState.season.heats : 0);
     let totalPts = cState.stats.pts + (cState.season.active ? cState.season.pts : 0);
     let totalBon = cState.stats.bon + (cState.season.active ? cState.season.bon : 0);
@@ -6182,13 +6181,13 @@ function updateLeftPanelUI() {
     document.getElementById('cAvg').innerText = avg;
 
     const tBox = document.getElementById('cTrophiesDisplay');
-    let totalMedals = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze + cState.stats.ims;
+    // USUNIĘTO cState.stats.ims
+    let totalMedals = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze;
     
     if (totalMedals === 0) {
         tBox.innerText = "🏆 BRAK TROFEÓW";
     } else {
         let tHtml = "";
-        for(let i=0; i<cState.stats.ims; i++) tHtml += "🌍 ";
         for(let i=0; i<cState.stats.dmpGold; i++) tHtml += "🥇 ";
         for(let i=0; i<cState.stats.dmpSilver; i++) tHtml += "🥈 ";
         for(let i=0; i<cState.stats.dmpBronze; i++) tHtml += "🥉 ";
@@ -6476,15 +6475,20 @@ function updateTableWithMatch(table, homeClub, awayClub, homeScore, awayScore, f
     for (let i = 0; i < currentRoundIdx; i++) {
         let prevRound = fullSchedule[i];
         if (!prevRound) continue;
-        let match = prevRound.find(m => m.home === awayClub && m.away === homeClub);
+        let match = prevRound.find(m => (m.home === awayClub && m.away === homeClub) || (m.home === homeClub && m.away === awayClub));
         if (match && match.homeScore !== undefined) {
-            firstLegMatch = match; break;
+            firstLegMatch = match; 
+            break;
         }
     }
 
     if (firstLegMatch) {
-        let aggHome = homeScore + firstLegMatch.awayScore;
-        let aggAway = awayScore + firstLegMatch.homeScore;
+        let agg1 = homeClub === firstLegMatch.home ? firstLegMatch.homeScore : firstLegMatch.awayScore;
+        let agg2 = awayClub === firstLegMatch.home ? firstLegMatch.homeScore : firstLegMatch.awayScore;
+        
+        let aggHome = homeScore + agg1;
+        let aggAway = awayScore + agg2;
+        
         if (aggHome > aggAway) {
             hRow.b = (hRow.b || 0) + 1; hRow.pts = (hRow.pts || 0) + 1;
         } else if (aggAway > aggHome) {
@@ -6630,13 +6634,12 @@ function renderCareerHub() {
     let currentRound = s.matchIndex + 1;
     let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
     
-    // OBLICZANIE AKTUALNEJ FORMY (Z 3 ostatnich meczów)
     let recentHeats = 0; let recentPts = 0;
     if (s.lastMatches && s.lastMatches.length > 0) {
         s.lastMatches.forEach(m => { recentHeats += m.h; recentPts += m.p + m.b; });
     }
     let currentForm = recentHeats > 0 ? (recentPts / recentHeats).toFixed(2) : avg;
-    if (currentForm === "0.00" && s.matchIndex === 0) currentForm = (cState.ovr / 40).toFixed(2); // Szacunek na start
+    if (currentForm === "0.00" && s.matchIndex === 0) currentForm = (cState.ovr / 40).toFixed(2); 
 
     if (s.matchIndex === s.regularSeasonLength && !s.playoffsGenerated) { generatePlayoffs(); return; }
     if (s.matchIndex === s.regularSeasonLength + 2 && !s.finalsGenerated) { generateFinals(); return; }
@@ -6653,7 +6656,6 @@ function renderCareerHub() {
         return;
     }
 
-    // SYSTEM KONTUZJI
     if (s.injuryRounds > 0) {
         area.innerHTML = `
             <div style="background:rgba(255,51,51,0.1); border-radius:16px; padding:20px; border:1px solid var(--red-neon); text-align:center;">
@@ -6678,7 +6680,6 @@ function renderCareerHub() {
         return;
     }
 
-    // NAPRAWIONA LOGIKA ODSUWANIA OD SKŁADU
     if (s.nextMatchDetermined !== s.matchIndex) {
         let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
         let lData = CAREER_CONSTANTS[playingLeague];
@@ -6686,16 +6687,10 @@ function renderCareerHub() {
         let benched = false;
         let formNum = parseFloat(currentForm);
         
-        // Logika menadżera oparta na PROFESJONALIZMIE i FORMIE
-        if (formNum >= 1.70) {
-            benched = false; // Liderów się nie sadza
-        } else if (formNum < 1.20 && cState.relations.manager < 50) {
-            benched = Math.random() < 0.6; // Słaba forma i słabe relacje = ławka
-        } else if (cState.relations.manager < 30 && cState.attributes.prof < 40) {
-            benched = Math.random() < 0.8; // Złe relacje i brak profesjonalizmu = kosa z zarządem
-        } else if (formNum < 0.8) {
-            benched = true; // Tragiczna forma
-        }
+        if (formNum >= 1.70) benched = false; 
+        else if (formNum < 1.20 && cState.relations.manager < 50) benched = Math.random() < 0.6; 
+        else if (cState.relations.manager < 30 && cState.attributes.prof < 40) benched = Math.random() < 0.8; 
+        else if (formNum < 0.8) benched = true; 
         
         let moraleMod = 0;
         if (cState.relations.team > 80) moraleMod = 4;
@@ -6767,7 +6762,7 @@ function renderCareerHub() {
             <div style="font-size:20px; font-weight:900; margin-bottom:10px;">vs <span style="color:${oppColor};">${nextMatch.opp}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
             
             <div style="font-size:11px; font-weight:900; margin-bottom: 20px; padding: 6px 12px; border: 1px dashed ${s.nextMatchBenched ? 'var(--red-neon)' : 'var(--green-neon)'}; border-radius: 8px; display: inline-block; color: ${s.nextMatchBenched ? 'var(--red-neon)' : 'var(--green-neon)'}; text-transform: uppercase;">
-                ${s.nextMatchBenched ? '❌ ODSUNIĘTY OD SKŁADU LUB REZERWA ('+s.nextMatchHeats+' biegów)' : `✅ PRZEWIDYWANY SKŁAD (${s.nextMatchHeats} BIEGÓW)`}
+                ${s.nextMatchBenched ? '❌ ODSUNIĘTY OD SKŁADU LUB REZERWA' : `✅ W PRZEWIDYWANYM SKŁADZIE`}
             </div>
 
             <div style="display:flex; gap:10px; justify-content:center;">
@@ -7192,7 +7187,6 @@ function endOfSeason() {
     let myTeamData = s.table.find(t => t.isMe);
     if (myTeamData) finalPos = myTeamData.pos;
 
-    // Sprawdzenie Wielkiego Barażu dla gracza
     let wonBarazOEkstralige = false;
     let playedBarazOEkstralige = false;
     let lastMatch = s.schedule[s.schedule.length - 1]; 
@@ -7207,20 +7201,19 @@ function endOfSeason() {
             let myAgg = m1[0] + m2[0];
             let oppAgg = m1[1] + m2[1];
             if (myAgg > oppAgg) wonBarazOEkstralige = true;
-            else if (myAgg === oppAgg && playingLeague === "PGE Ekstraliga") wonBarazOEkstralige = true; // Remis wygrywa ekstraligowiec
+            else if (myAgg === oppAgg && playingLeague === "PGE Ekstraliga") wonBarazOEkstralige = true; 
         }
     }
 
     let ageGrowth = 0;
-    // Inteligentne starzenie bazujące na profesjonalizmie
     let prof = cState.attributes.prof;
     let primeEnd = prof > 75 ? 34 : (prof < 40 ? 29 : 32); 
 
-    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 2) + 2; // Juniorzy rosną szybciej
+    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 2) + 2; 
     else if (cState.age <= 24) ageGrowth = Math.random() < 0.8 ? 1 : 0;
-    else if (cState.age <= primeEnd) ageGrowth = Math.random() < 0.3 ? 1 : 0; // Szczyt kariery
-    else if (cState.age <= primeEnd + 4) ageGrowth = -Math.floor(Math.random() * 2) - 1; // Lekki zjazd
-    else ageGrowth = -Math.floor(Math.random() * 3) - 1; // Koniec kariery mocny zjazd
+    else if (cState.age <= primeEnd) ageGrowth = Math.random() < 0.3 ? 1 : 0; 
+    else if (cState.age <= primeEnd + 4) ageGrowth = -Math.floor(Math.random() * 2) - 1; 
+    else ageGrowth = -Math.floor(Math.random() * 3) - 1; 
 
     let perfGrowth = 0;
     if (officialAvg >= 2.40) perfGrowth = cState.age <= 23 ? 3 : 2;
@@ -7230,7 +7223,6 @@ function endOfSeason() {
     else perfGrowth = -2;
 
     let totalGrowth = ageGrowth + perfGrowth;
-    // OVR limit locks
     if (cState.ovr > 95 && totalGrowth > 0) totalGrowth -= 2; 
     else if (cState.ovr > 90 && totalGrowth > 0) totalGrowth -= 1;
     if (cState.age <= 21 && totalGrowth < 0) totalGrowth = 0; 
@@ -7243,9 +7235,6 @@ function endOfSeason() {
         else if (Math.random() > 0.98) change -= 4;
         cState.teamOVRs[club] = Math.max(35, Math.min(95, cState.teamOVRs[club] + change));
     }
-
-    let gotIMS = false;
-    if (cState.ovr >= 90 && Math.random() < ((cState.ovr - 85) / 25)) { gotIMS = true; cState.stats.ims++; }
 
     let gotDMP = false;
     let medalColor = null;
@@ -7278,24 +7267,20 @@ function endOfSeason() {
         cState.teamOVRs[club] = Math.max(35, Math.min(95, (cState.teamOVRs[club] || 50) + ovrDelta));
     }
 
-    // Logika tabel i przetasowań między ligami
     let pgeTable = playingLeague === "PGE Ekstraliga" ? s.table : generateSeasonTable("PGE Ekstraliga", null, 0, 0);
     let e2Table = playingLeague === "Metalkas 2.E" ? s.table : generateSeasonTable("Metalkas 2.E", null, 0, 0);
     let klzTable = playingLeague === "KLŻ" ? s.table : generateSeasonTable("KLŻ", null, 0, 0);
 
     let pge8th = pgeTable.find(t => t.pos === 8).name;
     let pge7th = pgeTable.find(t => t.pos === 7).name;
-    
     let e2_1st = e2Table.find(t => t.pos === 1).name;
     let e2_2nd = e2Table.find(t => t.pos === 2).name;
-
     let e2_8th = e2Table.find(t => t.pos === 8).name;
     let klz_1st = klzTable.find(t => t.pos === 1).name;
 
     let pgeDrops = [pge8th];
     let e2Promotes = [e2_1st];
 
-    // Wynik wirtualnego (lub prawdziwego) barażu
     let barazWinnerWasM2E = false; 
     if (playedBarazOEkstralige) {
         if (playingLeague === "PGE Ekstraliga" && !wonBarazOEkstralige) barazWinnerWasM2E = true;
@@ -7310,7 +7295,6 @@ function endOfSeason() {
     let e2Drops = [e2_8th];
     let klzPromotes = [klz_1st];
 
-    // Realizujemy przetasowania (unikając duplikatów przy np. byciu 8mym i 7mym, jeśli gracz zajmie to samo co bot)
     pgeDrops.forEach(team => moveClubBetweenLeagues(team, "PGE Ekstraliga", "Metalkas 2.E", -2));
     e2Promotes.forEach(team => moveClubBetweenLeagues(team, "Metalkas 2.E", "PGE Ekstraliga", 3));
     e2Drops.forEach(team => moveClubBetweenLeagues(team, "Metalkas 2.E", "KLŻ", -2));
@@ -7328,8 +7312,7 @@ function endOfSeason() {
         age: cState.age, club: displayClubName, league: playingLeague, ovr: cState.ovr, 
         mec: s.schedule.length, bie: s.heats, pkt: s.pts, bon: s.bon, avg: officialAvg.toFixed(2),
         loan: activeLoanLeague !== null,
-        dmp: gotDMP ? medalColor : null, ims: gotIMS,
-        table: s.table
+        dmp: gotDMP ? medalColor : null, table: s.table // USUNIĘTO IMS
     });
 
     cState.age++;
@@ -7364,6 +7347,66 @@ function endOfSeason() {
     }
 }
 
+function renderTimeline() {
+    const list = document.getElementById('timelineList');
+    const header = document.getElementById('timelineHeader');
+    const empty = document.getElementById('timelineEmpty');
+    
+    if (!list || !header || !empty) return;
+
+    if (!cState.history || cState.history.length === 0) {
+        list.innerHTML = '';
+        header.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+    }
+
+    header.style.display = 'flex';
+    empty.style.display = 'none';
+    list.innerHTML = '';
+
+    cState.history.forEach(h => {
+        let badges = "";
+        if (h.dmp === "ZŁOTO") badges += "🥇";
+        else if (h.dmp === "SREBRO") badges += "🥈";
+        else if (h.dmp === "BRĄZ") badges += "🥉";
+        // USUNIĘTO IMS
+
+        let loanTag = h.loan ? `<span style="font-size:9px; color:var(--text-dim);">(W)</span>` : "";
+
+        list.innerHTML += `
+            <div class="timeline-row">
+                <div class="t-age">${h.age}</div>
+                <div class="t-club">${h.club} ${loanTag} <span style="font-size:10px;">${badges}</span></div>
+                <div class="t-ovr">${h.ovr}</div>
+                <div class="t-mec">${h.mec || 0}</div>
+                <div class="t-bie">${h.bie || 0}</div>
+                <div class="t-pkt">${h.pkt || 0}</div>
+                <div class="t-avg">${h.avg || "0.00"}</div>
+            </div>
+        `;
+    });
+
+    const containerBox = document.getElementById('timelineContainerBox');
+    if (containerBox) {
+        containerBox.scrollTop = containerBox.scrollHeight;
+    }
+}
+
+function shareCareerResult() {
+    // Usunięto IMS ze stringa
+    let text = `🏁 SPEEDWAY GUESSR: KARIERA\n👤 ${cState.name} #${cState.num}\n📊 OVR: ${cState.ovr} | OŚ: ${cState.history.length} sez.\n🏆 Złoto: ${cState.stats.dmpGold} | Srebro: ${cState.stats.dmpSilver} | Brąz: ${cState.stats.dmpBronze}\n📈 Punkty w karierze: ${cState.stats.pts}\n👉 Zagraj: speedwayguessr.pl`;
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Skopiowano podsumowanie do schowka!", "success");
+        }).catch(() => {
+            appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
+        });
+    } else {
+        appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
+    }
+}
 
 // ==========================================
 // ====== OBSŁUGA KALENDARZA LIGOWEGO =======
@@ -8025,13 +8068,17 @@ function startMinigameSlide() {
 // ------------------------------------------
 function startMinigameMechanic() {
     const html = `
-        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
+        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none; position: relative;">
             <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">WYMIANA ZĘBATEK</h2>
-            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Kliknij szybko w zębatkę o żądanym rozmiarze!</p>
+            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Przeciągnij odpowiednią zębatkę na sprzęgło (kółko na środku)!</p>
             
-            <div id="mgMechTarget" style="font-size:24px; font-weight:900; color:var(--accent); margin-bottom:20px; text-transform:uppercase;">ZAŁÓŻ: 14 zębów</div>
+            <div id="mgMechTargetText" style="font-size:24px; font-weight:900; color:var(--accent); margin-bottom:15px; text-transform:uppercase;">ZAŁÓŻ: <span id="mgTargetZeb"></span>z</div>
 
-            <div id="mgMechGrid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;"></div>
+            <!-- Strefa docelowa (Sprzęgło) -->
+            <div id="mgDropzone" style="width: 100px; height: 100px; border: 4px dashed var(--text-dim); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: rgba(0,0,0,0.3); transition: 0.2s;">⚙️</div>
+
+            <!-- Kontener na draggable zębatki -->
+            <div id="mgMechItems" style="display:flex; justify-content:center; gap:15px; margin-bottom:20px; min-height: 60px; position:relative;"></div>
 
             <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
                 <div id="mgMechTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
@@ -8044,10 +8091,17 @@ function startMinigameMechanic() {
 
     let state = {
         rounds: 0, successes: 0, target: 0,
-        timer: null
+        timer: null,
+        draggedEl: null,
+        dragOffsetX: 0, dragOffsetY: 0
     };
 
-    activeMinigameData = { state, cleanup: () => {} };
+    activeMinigameData = { state, cleanup: () => {
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+    }};
+
+    const dropzone = document.getElementById('mgDropzone');
 
     function nextRound() {
         state.rounds++;
@@ -8061,48 +8115,105 @@ function startMinigameMechanic() {
         let sizes = [13, 14, 15, 16, 55, 56, 57, 58, 59, 60].sort(() => 0.5 - Math.random()).slice(0, 4);
         state.target = sizes[Math.floor(Math.random() * 4)];
         
-        document.getElementById('mgMechTarget').innerText = `ZAŁÓŻ: ${state.target} zębów`;
+        document.getElementById('mgTargetZeb').innerText = state.target;
+        document.getElementById('mgMechTargetText').style.color = "var(--accent)";
+        document.getElementById('mgMechTargetText').innerText = `ZAŁÓŻ: ${state.target} zębów`;
+        dropzone.style.borderColor = "var(--text-dim)";
         
-        const grid = document.getElementById('mgMechGrid');
-        grid.innerHTML = '';
+        const container = document.getElementById('mgMechItems');
+        container.innerHTML = '';
+        
         sizes.forEach(size => {
-            let btn = document.createElement('button');
-            btn.className = 'hub-action-btn';
-            btn.style.cssText = 'padding:20px; font-size:20px; font-weight:900; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.2); color:#fff;';
-            btn.innerText = `${size} ⚙️`;
-            btn.onclick = () => handleChoice(size);
-            grid.appendChild(btn);
+            let el = document.createElement('div');
+            el.className = 'gear-item';
+            el.style.cssText = 'width:50px; height:50px; border-radius:50%; background:var(--card-bg); border:2px solid #ccc; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; cursor:grab; touch-action:none; z-index:100; font-size:16px;';
+            el.innerText = `${size}`;
+            el.dataset.size = size;
+            
+            el.addEventListener('pointerdown', (e) => {
+                state.draggedEl = el;
+                el.style.position = 'absolute';
+                el.style.cursor = 'grabbing';
+                let rect = el.getBoundingClientRect();
+                state.dragOffsetX = e.clientX - rect.left;
+                state.dragOffsetY = e.clientY - rect.top;
+                
+                let containerRect = container.getBoundingClientRect();
+                el.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
+                el.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
+            });
+            
+            container.appendChild(el);
         });
 
         const timeBar = document.getElementById('mgMechTimeBar');
         timeBar.style.transition = 'none'; timeBar.style.width = '100%';
         
-        let time = 2500; // 2.5s na kliknięcie
+        let time = 3500; // Zwiększyłem czas na 3.5s, bo drag & drop trwa ciut dłużej
         setTimeout(() => { timeBar.style.transition = `width ${time}ms linear`; timeBar.style.width = '0%'; }, 50);
         
         state.timer = setTimeout(() => {
             playSound('error');
-            setTimeout(nextRound, 500);
+            document.getElementById('mgMechTargetText').innerText = "ZBYT WOLNO!";
+            document.getElementById('mgMechTargetText').style.color = "var(--red-neon)";
+            setTimeout(nextRound, 800);
         }, time);
     }
 
-    function handleChoice(size) {
-        clearTimeout(state.timer);
-        if (size === state.target) {
-            playSound('guess');
-            state.successes++;
-            document.getElementById('mgMechTarget').innerText = "DOBRZE!";
-            document.getElementById('mgMechTarget').style.color = "var(--green-neon)";
+    const onPointerMove = (e) => {
+        if (!state.draggedEl) return;
+        const container = document.getElementById('mgMechItems');
+        const containerRect = container.getBoundingClientRect();
+        
+        state.draggedEl.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
+        state.draggedEl.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
+        
+        // Wizualny hover nad dropzone
+        const dropRect = dropzone.getBoundingClientRect();
+        if (e.clientX > dropRect.left && e.clientX < dropRect.right && e.clientY > dropRect.top && e.clientY < dropRect.bottom) {
+            dropzone.style.borderColor = "var(--accent)";
+            dropzone.style.background = "rgba(241,196,15,0.2)";
         } else {
-            playSound('error');
-            document.getElementById('mgMechTarget').innerText = "ZŁA ZĘBATKA!";
-            document.getElementById('mgMechTarget').style.color = "var(--red-neon)";
+            dropzone.style.borderColor = "var(--text-dim)";
+            dropzone.style.background = "rgba(0,0,0,0.3)";
         }
-        setTimeout(() => {
-            document.getElementById('mgMechTarget').style.color = "var(--accent)";
-            nextRound();
-        }, 500);
-    }
+    };
+
+    const onPointerUp = (e) => {
+        if (!state.draggedEl) return;
+        const dropRect = dropzone.getBoundingClientRect();
+        const size = parseInt(state.draggedEl.dataset.size);
+        
+        // Sprawdzamy czy puszczono nad sprzęgłem
+        if (e.clientX > dropRect.left && e.clientX < dropRect.right && e.clientY > dropRect.top && e.clientY < dropRect.bottom) {
+            clearTimeout(state.timer);
+            if (size === state.target) {
+                playSound('guess');
+                state.successes++;
+                document.getElementById('mgMechTargetText').innerText = "DOBRZE!";
+                document.getElementById('mgMechTargetText').style.color = "var(--green-neon)";
+                dropzone.style.borderColor = "var(--green-neon)";
+            } else {
+                playSound('error');
+                document.getElementById('mgMechTargetText').innerText = "ZŁA ZĘBATKA!";
+                document.getElementById('mgMechTargetText').style.color = "var(--red-neon)";
+                dropzone.style.borderColor = "var(--red-neon)";
+            }
+            state.draggedEl.style.display = 'none';
+            state.draggedEl = null;
+            setTimeout(nextRound, 800);
+        } else {
+            // Wraca na miejsce jeśli puszczono gdzie indziej
+            state.draggedEl.style.position = 'static';
+            state.draggedEl.style.cursor = 'grab';
+            state.draggedEl = null;
+            dropzone.style.borderColor = "var(--text-dim)";
+            dropzone.style.background = "rgba(0,0,0,0.3)";
+        }
+    };
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
 
     nextRound();
 }
@@ -8198,7 +8309,6 @@ async function playSingleMatch() {
         document.body.appendChild(simDiv);
     }
     
-    // UI dla Symulacji... (pozostaje to samo, pomijam dla czytelności kodu)
     simDiv.innerHTML = `
         <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
         <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
@@ -8250,6 +8360,7 @@ async function playSingleMatch() {
     let homeMatchScore = 0; let awayMatchScore = 0;
 
     const totalMatchHeats = 15;
+    const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
     
     let heatsInMatch = s.nextMatchHeats || 0;
     let benched = s.nextMatchBenched || false;
@@ -8272,14 +8383,64 @@ async function playSingleMatch() {
     let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
     let ratio = matchEffOvr / lData.diff;
 
+    // DWUMECZ - OBLICZANIE
+    let firstLegScoreMe = 0;
+    let firstLegScoreOpp = 0;
+    let hasFirstLeg = false;
+
+    if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
+        for (let i = 0; i < s.matchIndex; i++) {
+            let pastMatch = s.schedule[i];
+            if (pastMatch.opp === opponent) { // Ten sam rywal
+                let res = s.matchResults[i];
+                if (res && res !== "-") {
+                    let p = res.split(':').map(Number); // W historii zawsze wynik dom:wyjazd
+                    firstLegScoreMe = pastMatch.isHome ? p[0] : p[1];
+                    firstLegScoreOpp = pastMatch.isHome ? p[1] : p[0];
+                    hasFirstLeg = true;
+                }
+                break;
+            }
+        }
+    }
+
     for (let h = 1; h <= totalMatchHeats; h++) {
         await new Promise(r => setTimeout(r, 600)); 
         simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
         
+        let currentDiff = isHome ? (awayMatchScore - homeMatchScore) : (homeMatchScore - awayMatchScore);
+        
+        // REZERWA TAKTYCZNA (Dodatkowy bieg)
+        if (currentDiff >= 6 && h >= 5 && h <= 14 && !playerHeats.includes(h) && !playerHeats.includes(h-1) && !matchCrashed) {
+            let actualRidesSoFar = playerHeats.filter(ph => ph < h).length;
+            if (actualRidesSoFar < 6 && formNum > 1.5) {
+                if (Math.random() < 0.6) {
+                    playerHeats.push(h);
+                    playerHeats.sort((a,b)=>a-b);
+                    showToast(`🔥 Rezerwa Taktyczna! Menedżer posyła Cię do boju w biegu ${h}!`, "success");
+                }
+            }
+        }
+
         let isPlayerRiding = playerHeats.includes(h) && !matchCrashed;
         let rideStatus = matchCrashed ? "🚑 KONTUZJA" : (isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA");
+        
+        let aggHomeText = "";
+        if (hasFirstLeg) {
+            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
+            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
+            let aggH = isHome ? currentAggMe : currentAggOpp;
+            let aggA = isHome ? currentAggOpp : currentAggMe;
+            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">W Dwumeczu: ${aggH}:${aggA}</div>`;
+        }
 
-        simMatchScore.innerHTML = `<span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> ${homeMatchScore}:${awayMatchScore} <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>`;
+        simMatchScore.innerHTML = `
+            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
+            ${homeMatchScore}:${awayMatchScore} 
+            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
+            ${aggHomeText}
+        `;
+        
         simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':(matchCrashed?'var(--red-neon)':'var(--text-dim)')};">${rideStatus}</span>`;
 
         let heatMod = 0;
@@ -8292,24 +8453,19 @@ async function playSingleMatch() {
             let roll = Math.random() * 100;
             let success = roll < dec.chance;
             
-            // SYSTEM RYZYKA KONTUZJI
             let crashRiskBase = dec.type === 'outside' ? 8 : (dec.type === 'cut' ? 5 : (dec.type === 'middle' ? 2 : 0));
-            let myInjRisk = cState.attributes.injRisk / 10; // 1 to 4% bazowo
+            let myInjRisk = cState.attributes.injRisk / 10; 
             let totalCrashChance = crashRiskBase + myInjRisk;
             
             if (!success && Math.random() * 100 < totalCrashChance) {
-                // KRAKSA!
                 matchCrashed = true;
                 isExclusionPlayer = true;
                 eventText = `Bieg ${h}: POTWORNY UPADEK! Karetka na torze! Koniec zawodów...`;
                 eventColor = "var(--red-neon)";
-                
-                // Przypisanie kontuzji na resztę sezonu
-                let injuryDuration = Math.floor(Math.random() * 3) + 1; // 1 do 3 meczów
+                let injuryDuration = Math.floor(Math.random() * 3) + 1; 
                 s.injuryRounds = injuryDuration;
-                cState.ovr = Math.max(30, cState.ovr - 1); // Traci formę przez ból
+                cState.ovr = Math.max(30, cState.ovr - 1); 
             } else {
-                // NORMALNA WALKA
                 if (success) {
                     heatMod = dec.type === 'outside' ? 0.9 : (dec.type === 'cut' ? 1.0 : (dec.type === 'middle' ? 0.6 : 0.3));
                     eventText = `Bieg ${h}: Świetny manewr! Wyprzedzasz i powiększasz przewagę!`;
@@ -8321,12 +8477,19 @@ async function playSingleMatch() {
                 }
             }
         } else {
-            if (Math.random() < 0.10) { 
+            // Urozmaicone zdarzenia, gdy gracz pauzuje
+            if (Math.random() < 0.15) { 
                 const events = [
-                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", mod: -0.5, color: "var(--red-neon)" },
+                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)", mod: -0.5 },
                     { text: "🔥 Atomowy start pary!", mod: 1.0, color: "var(--green-neon)" },
                     { text: "🚜 Dziura w torze, zawodnik traci rytm...", mod: -0.8, color: "var(--yellow-neon)" },
                     { text: "🔧 Defekt motocykla lidera!", mod: -1.0, color: "var(--red-neon)" },
+                    { text: "💨 Ostrzeżenie za utrudnianie startu (Warning).", mod: -0.2, color: "var(--yellow-neon)" },
+                    { text: "🏍️ Fantastyczna akcja po zewnętrznej!", mod: 0.8, color: "var(--green-neon)" },
+                    { text: "🛑 Upadek na pierwszym łuku! Bieg przerwany.", mod: 0, color: "var(--red-neon)" },
+                    { text: "⚔️ Ostra walka na łokcie, sędzia puszcza grę!", mod: 0.2, color: "var(--accent)" },
+                    { text: "🌧️ Zaczyna kropić deszcz, tor robi się śliski...", mod: -0.5, color: "var(--text-dim)" },
+                    { text: "🚀 Kapitalna ścinka do krawężnika!", mod: 0.7, color: "var(--green-neon)" }
                 ];
                 let ev = events[Math.floor(Math.random() * events.length)];
                 eventText = `Bieg ${h}: ${ev.text}`;
@@ -8339,8 +8502,7 @@ async function playSingleMatch() {
         simEvents.style.color = eventColor;
         playSound('flip');
 
-        // Kalkulacja wyniku biegu
-        const strengthBias = Math.max(-1.2, Math.min(1.2, (ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08)));
+        const strengthBias = clampMatchValue((ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08), -1.2, 1.2);
         
         let heatOutcome;
         if (isExclusionPlayer) {
@@ -8359,7 +8521,7 @@ async function playSingleMatch() {
 
         let hPts = 0; let hBon = 0;
 
-        // Punkty gracza (tylko jeśli dojechał i nie ma wykluczenia)
+        // Punkty gracza
         if (isPlayerRiding && !isExclusionPlayer) {
             let teamScore = heatOutcome.me;
             if (teamScore === 5) { hPts = Math.random() < 0.5 ? 3 : 2; hBon = hPts === 2 ? 1 : 0; }
@@ -8375,7 +8537,16 @@ async function playSingleMatch() {
         let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
         simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
         
-        simMatchScore.innerHTML = `<span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> ${homeMatchScore}:${awayMatchScore} <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>`;
+        // Zaktualizuj tekst dwumeczu
+        if (hasFirstLeg) {
+            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
+            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
+            let aggH = isHome ? currentAggMe : currentAggOpp;
+            let aggA = isHome ? currentAggOpp : currentAggMe;
+            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">W Dwumeczu: ${aggH}:${aggA}</div>`;
+        }
+
+        simMatchScore.innerHTML = `<span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> ${homeMatchScore}:${awayMatchScore} <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>${aggHomeText}`;
     }
     
     await new Promise(r => setTimeout(r, 1500));
@@ -8386,7 +8557,6 @@ async function playSingleMatch() {
 
     simulateBotMatchesForCurrentRound(finalPlayerTeamScore, finalOpponentScore, false);
 
-    // ZAPIS WYNIKÓW I FORMY
     s.heats += heatsInMatch;
     s.pts += matchPts;
     s.bon += matchBon;
@@ -8813,52 +8983,6 @@ function signContract(offerIndex) {
     startNewSeason();
 }
 
-function renderTimeline() {
-    const list = document.getElementById('timelineList');
-    const header = document.getElementById('timelineHeader');
-    const empty = document.getElementById('timelineEmpty');
-    
-    if (!list || !header || !empty) return;
-
-    if (!cState.history || cState.history.length === 0) {
-        list.innerHTML = '';
-        header.style.display = 'none';
-        empty.style.display = 'block';
-        return;
-    }
-
-    header.style.display = 'flex';
-    empty.style.display = 'none';
-    list.innerHTML = '';
-
-    cState.history.forEach(h => {
-        let badges = "";
-        if (h.dmp === "ZŁOTO") badges += "🥇";
-        else if (h.dmp === "SREBRO") badges += "🥈";
-        else if (h.dmp === "BRĄZ") badges += "🥉";
-        if (h.ims) badges += "🌍";
-
-        let loanTag = h.loan ? `<span style="font-size:9px; color:var(--text-dim);">(W)</span>` : "";
-
-        list.innerHTML += `
-            <div class="timeline-row">
-                <div class="t-age">${h.age}</div>
-                <div class="t-club">${h.club} ${loanTag} <span style="font-size:10px;">${badges}</span></div>
-                <div class="t-ovr">${h.ovr}</div>
-                <div class="t-mec">${h.mec || 0}</div>
-                <div class="t-bie">${h.bie || 0}</div>
-                <div class="t-pkt">${h.pkt || 0}</div>
-                <div class="t-avg">${h.avg || "0.00"}</div>
-            </div>
-        `;
-    });
-
-    // Automatyczny scroll w dół po dodaniu sezonu
-    const containerBox = document.getElementById('timelineContainerBox');
-    if (containerBox) {
-        containerBox.scrollTop = containerBox.scrollHeight;
-    }
-}
 
 function forceRetirement() {
     if (confirm("Czy na pewno chcesz zakończyć karierę w tym momencie? Ta decyzja jest nieodwracalna!")) {
@@ -9077,20 +9201,6 @@ function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proc
             proceedCallback();
         }, 300);
     };
-}
-
-function shareCareerResult() {
-    let text = `🏁 SPEEDWAY GUESSR: KARIERA\n👤 ${cState.name} #${cState.num}\n📊 OVR: ${cState.ovr} | OŚ: ${cState.history.length} sez.\n🏆 Złoto: ${cState.stats.dmpGold} | Srebro: ${cState.stats.dmpSilver} | Brąz: ${cState.stats.dmpBronze}\n🌍 IMS: ${cState.stats.ims}\n📈 Punkty w karierze: ${cState.stats.pts}\n👉 Zagraj: speedwayguessr.pl`;
-    
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast("Skopiowano podsumowanie do schowka!", "success");
-        }).catch(() => {
-            appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
-        });
-    } else {
-        appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
-    }
 }
 
 // ----------------------------------------
