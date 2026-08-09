@@ -31,27 +31,30 @@
         "Ostatni spacer", "Wideo przed meczem", "Test sprzętu", "Trudna nawierzchnia", "Ostatnia decyzja"
     ];
 
-    // Opcje bezpieczne nie dają OVR. Opcje z +2/+3 OVR mają niski procent szansy.
-    const themes = [
-        { key: "warsztat", icon: "⚙️", title: "Warsztat", desc: "Mechanicy naciskają na ryzykowną korektę ustawień.", 
-          opt1: { title: "Ryzykuję nowy set", bot1: "+2 OVR | +6 rel. menadżer", bot2: "-2 OVR | -8 rel. drużyna", relTeam: -8, relManager: 6, relFans: 0, succOvr: 2, failOvr: -2, chance: 0.35 }, 
-          opt2: { title: "Zostawiam sprawdzony", bot1: "Brak ryzyka | +5 rel. drużyna", bot2: "Opcja bezpieczna | -4 rel. menadżer", relTeam: 5, relManager: -4, relFans: 0 } },
+     const themes = [
+        { key: "warsztat", icon: "⚙️", title: "Problemy w warsztacie", desc: "Twój najlepszy silnik uległ zatarciu. Mechanicy proponują szybką reanimację lub użycie wolniejszego zapasu.", 
+          opt1: { title: "Ryzykowna reanimacja silnika", bot1: "+2 OVR | +6 rel. Menedżer", bot2: "-3 OVR | -10 rel. Drużyna", relTeam: -10, relManager: 6, relFans: 0, succOvr: 2, failOvr: -3, chance: 0.40 }, 
+          opt2: { title: "Spokojnie, biorę słabszy zapas", bot1: "Brak ryzyka OVR | +5 rel. Drużyna", bot2: "Bezpieczna opcja", relTeam: 5, relManager: -2, relFans: 0 } },
         
-        { key: "szatnia", icon: "🏁", title: "Napięcie w szatni", desc: "Atmosfera w zespole siada po gorszym biegu.", 
-          opt1: { title: "Motywuję kolegów", bot1: "+1 OVR | +8 rel. drużyna", bot2: "-1 OVR | -6 rel. kibice", relTeam: 8, relManager: 0, relFans: -6, succOvr: 1, failOvr: -1, chance: 0.65 }, 
-          opt2: { title: "Nie wtrącam się", bot1: "Brak ryzyka | +2 rel. menadżer", bot2: "Opcja bezpieczna | -5 rel. drużyna", relTeam: -5, relManager: 2, relFans: 0 } },
+        { key: "szatnia", icon: "🏁", title: "Kwas w szatni", desc: "Młody junior wjechał w Ciebie na treningu. Szatnia czeka na Twoją reakcję.", 
+          opt1: { title: "Robię mu awanturę przy wszystkich", bot1: "+1 OVR (Agresja) | +8 rel. Fani", bot2: "-2 OVR | -15 rel. Drużyna", relTeam: -15, relManager: -5, relFans: 8, succOvr: 1, failOvr: -2, chance: 0.50 }, 
+          opt2: { title: "Tłumaczę mu błąd na boku", bot1: "Brak ryzyka OVR | +10 rel. Drużyna", bot2: "Opcja bezpieczna", relTeam: 10, relManager: 5, relFans: 0 } },
         
-        { key: "media", icon: "🎙️", title: "Wywiad na żywo", desc: "Dziennikarze próbują wyciągnąć brudy z klubu.", 
-          opt1: { title: "Szczerze atakuję toromistrza", bot1: "+2 OVR | +9 rel. kibice", bot2: "-2 OVR | -10 rel. menadżer", relTeam: 0, relManager: -10, relFans: 9, succOvr: 2, failOvr: -2, chance: 0.40 }, 
-          opt2: { title: "Udzielam nudnego wywiadu", bot1: "Brak ryzyka | +5 rel. menadżer", bot2: "Opcja bezpieczna | -5 rel. kibice", relTeam: 0, relManager: 5, relFans: -5 } },
+        { key: "media", icon: "🎙️", title: "Atak Dziennikarzy", desc: "Dziennikarze w telewizji na żywo pytają o słabe wyniki Twojego kolegi z pary.", 
+          opt1: { title: "Szczerze zrzucam na niego winę", bot1: "+2 OVR | +15 rel. Fani (Szczerość)", bot2: "-2 OVR | -20 rel. Drużyna", relTeam: -20, relManager: -10, relFans: 15, succOvr: 2, failOvr: -2, chance: 0.35 }, 
+          opt2: { title: "Bronię go, mówiąc że to sport", bot1: "Brak ryzyka OVR | +15 rel. Drużyna", bot2: "Opcja bezpieczna", relTeam: 15, relManager: 5, relFans: -5 } },
         
-        { key: "silnik", icon: "🏍️", title: "Nowy Silnik", desc: "Tuner przysłał prototypowy, ryzykowny sprzęt.", 
-          opt1: { title: "Jadę na prototypie w ciemno!", bot1: "+3 OVR | +5 rel. kibice", bot2: "-3 OVR | -10 rel. menadżer", relTeam: 0, relManager: -10, relFans: 5, succOvr: 3, failOvr: -3, chance: 0.20 }, 
-          opt2: { title: "Odkładam go na półkę", bot1: "Brak ryzyka | +5 rel. menadżer", bot2: "Opcja bezpieczna | -2 rel. kibice", relTeam: 0, relManager: 5, relFans: -2 } },
+        { key: "sponsoring", icon: "💰", title: "Złoty Sponsor", desc: "Bogaty sponsor proponuje Ci wielkie pieniądze za reklamę w trakcie ważnego treningu klubowego.", 
+          opt1: { title: "Opuszczam trening, kręcimy to!", bot1: "+3 OVR (Kasa na sprzęt)", bot2: "-3 OVR | -25 rel. Menedżer", relTeam: -10, relManager: -25, relFans: 10, succOvr: 3, failOvr: -3, chance: 0.25 }, 
+          opt2: { title: "Odrzucam ofertę, liczy się klub", bot1: "Brak ryzyka OVR | +15 rel. Menedżer", bot2: "Opcja bezpieczna", relTeam: 5, relManager: 15, relFans: 5 } },
         
-        { key: "tor", icon: "🚜", title: "Kopny tor", desc: "Gospodarze przygotowali wyjątkowo niebezpieczny, przyczepny tor.", 
-          opt1: { title: "Atakuję po dużej od startu!", bot1: "+3 OVR | +10 rel. kibice", bot2: "-3 OVR | -8 rel. menadżer", relTeam: 0, relManager: -8, relFans: 10, succOvr: 3, failOvr: -3, chance: 0.25 }, 
-          opt2: { title: "Jadę asekuracyjnie przy krawężniku", bot1: "Brak ryzyka | +5 rel. menadżer", bot2: "Opcja bezpieczna | -5 rel. kibice", relTeam: 2, relManager: 5, relFans: -5 } }
+        { key: "impreza", icon: "🍻", title: "Klubowa Impreza", desc: "Zarząd organizuje bankiet w środku sezonu. Następnego dnia rano macie ważny trening punktowany.", 
+          opt1: { title: "Zostaję do końca z prezesem", bot1: "+2 OVR | +15 rel. Menedżer", bot2: "-2 OVR | -10 rel. Fani", relTeam: 5, relManager: 15, relFans: -10, succOvr: 2, failOvr: -2, chance: 0.45 }, 
+          opt2: { title: "Wychodzę szybko, żeby się wyspać", bot1: "Brak ryzyka OVR | +10 rel. Drużyna", bot2: "Opcja bezpieczna", relTeam: 10, relManager: -5, relFans: 5 } },
+
+        { key: "tor", icon: "🚜", title: "Beton czy Kopa?", desc: "Przed arcyważnym meczem domowym toromistrz pyta Cię o zdanie.", 
+          opt1: { title: "Wymuszam zrobienie twardej ścieżki", bot1: "+3 OVR | +10 rel. Fani", bot2: "-3 OVR | -15 rel. Menedżer", relTeam: -5, relManager: -15, relFans: 10, succOvr: 3, failOvr: -3, chance: 0.20 }, 
+          opt2: { title: "Niech przygotuje jak dla wszystkich", bot1: "Brak ryzyka OVR | +5 rel. Drużyna", bot2: "Opcja bezpieczna", relTeam: 5, relManager: 10, relFans: 0 } }
     ];
 
     const eventList = [];

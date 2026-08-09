@@ -5973,7 +5973,13 @@ function showCareerCreator() {
         club: null, league: null, contractYears: 0,
         stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, history: [],
         relations: { manager: 50, team: 50, fans: 50 },
-        season: { active: false, matchIndex: 0, regularSeasonLength: 14, playoffsGenerated: false, finalsGenerated: false, barazGenerated: false, fullSchedule: [], schedule: [], matchResults: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false },
+        // NOWE ATRYBUTY:
+        attributes: { 
+            media: Math.floor(Math.random() * 30) + 40, // 40-70 Medialność
+            prof: Math.floor(Math.random() * 40) + 40,  // 40-80 Profesjonalizm
+            injRisk: Math.floor(Math.random() * 30) + 10 // 10-40 Ryzyko kontuzji
+        },
+        season: { active: false, matchIndex: 0, regularSeasonLength: 14, playoffsGenerated: false, finalsGenerated: false, barazGenerated: false, fullSchedule: [], schedule: [], matchResults: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false, lastMatches: [], injuryRounds: 0 },
         leagues: {
             "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
             "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
@@ -6607,6 +6613,14 @@ function renderCareerHub() {
     let totalMatches = s.schedule.length;
     let currentRound = s.matchIndex + 1;
     let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
+    
+    // OBLICZANIE AKTUALNEJ FORMY (Z 3 ostatnich meczów)
+    let recentHeats = 0; let recentPts = 0;
+    if (s.lastMatches && s.lastMatches.length > 0) {
+        s.lastMatches.forEach(m => { recentHeats += m.h; recentPts += m.p + m.b; });
+    }
+    let currentForm = recentHeats > 0 ? (recentPts / recentHeats).toFixed(2) : avg;
+    if (currentForm === "0.00" && s.matchIndex === 0) currentForm = (cState.ovr / 40).toFixed(2); // Szacunek na start
 
     if (s.matchIndex === s.regularSeasonLength && !s.playoffsGenerated) { generatePlayoffs(); return; }
     if (s.matchIndex === s.regularSeasonLength + 2 && !s.finalsGenerated) { generateFinals(); return; }
@@ -6623,30 +6637,53 @@ function renderCareerHub() {
         return;
     }
 
+    // SYSTEM KONTUZJI
+    if (s.injuryRounds > 0) {
+        area.innerHTML = `
+            <div style="background:rgba(255,51,51,0.1); border-radius:16px; padding:20px; border:1px solid var(--red-neon); text-align:center;">
+                <div style="font-size:40px; margin-bottom:10px;">🚑</div>
+                <div style="font-size:20px; font-weight:900; margin-bottom:10px; color: var(--red-neon);">KONTUZJA</div>
+                <p style="font-size:12px; color:var(--text-dim); margin-bottom:15px;">Przechodzisz rehabilitację. Opuścisz jeszcze ${s.injuryRounds} mecz(e).</p>
+                <button onclick="skipInjuryRound()" class="hub-action-btn" style="padding:12px 30px; border-radius:10px; background:var(--red-neon); color:#fff; font-weight:900; border:none; text-transform:uppercase; font-size:12px;">Kuruj się (Pomiń mecz)</button>
+            </div>
+        `;
+        return;
+    }
+
     let nextMatch = s.schedule[s.matchIndex];
     if (nextMatch.opp === "PAUZA") {
         area.innerHTML = `
             <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
                 <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
                 <div style="font-size:20px; font-weight:900; margin-bottom:15px; color: var(--accent);">PAUZA W TEJ KOLEJCE</div>
-                <p style="font-size:12px; color:var(--text-dim); margin-bottom:15px;">Twoja drużyna odpoczywa, ale rywale jadą swoje mecze.</p>
                 <button onclick="skipPauseRound()" class="hub-action-btn" style="padding:12px 30px; border-radius:10px; background:var(--accent); color:#000; font-weight:900; border:none; text-transform:uppercase; font-size:12px;">Pomiń Kolejkę</button>
             </div>
         `;
         return;
     }
 
-    // PRE-KALKULACJA SKŁADU NA NAJBLIŻSZY MECZ (Zapisywana do pamięci, aby nie migała przy odświeżaniu interfejsu)
+    // NAPRAWIONA LOGIKA ODSUWANIA OD SKŁADU
     if (s.nextMatchDetermined !== s.matchIndex) {
         let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
         let lData = CAREER_CONSTANTS[playingLeague];
         
         let benched = false;
-        if (cState.relations.manager < 30 && Math.random() < 0.3) benched = true;
+        let formNum = parseFloat(currentForm);
+        
+        // Logika menadżera oparta na PROFESJONALIZMIE i FORMIE
+        if (formNum >= 1.70) {
+            benched = false; // Liderów się nie sadza
+        } else if (formNum < 1.20 && cState.relations.manager < 50) {
+            benched = Math.random() < 0.6; // Słaba forma i słabe relacje = ławka
+        } else if (cState.relations.manager < 30 && cState.attributes.prof < 40) {
+            benched = Math.random() < 0.8; // Złe relacje i brak profesjonalizmu = kosa z zarządem
+        } else if (formNum < 0.8) {
+            benched = true; // Tragiczna forma
+        }
         
         let moraleMod = 0;
-        if (cState.relations.team > 80) moraleMod = 3;
-        if (cState.relations.team < 30) moraleMod = -3;
+        if (cState.relations.team > 80) moraleMod = 4;
+        if (cState.relations.team < 30) moraleMod = -4;
 
         let trackComfort = nextMatch.isHome ? 8 : -10;
         let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
@@ -6657,8 +6694,8 @@ function renderCareerHub() {
         
         if (benched) heatsInMatch = Math.random() < 0.3 ? 1 : 0;
         else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
-        else if (ratio > 1.15) heatsInMatch = Math.floor(Math.random() * 2) + 5; 
-        else if (ratio > 0.95) heatsInMatch = Math.floor(Math.random() * 2) + 4; 
+        else if (ratio > 1.15 || formNum > 2.0) heatsInMatch = Math.floor(Math.random() * 2) + 5; 
+        else if (ratio > 0.95 || formNum > 1.6) heatsInMatch = Math.floor(Math.random() * 2) + 4; 
         else if (ratio > 0.80) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
         else heatsInMatch = Math.floor(Math.random() * 2) + 2; 
 
@@ -6679,17 +6716,31 @@ function renderCareerHub() {
     let trainBtnClick = s.trainedThisWeek ? "" : "startTrainingQTE()";
 
     area.innerHTML = `
-        <div style="display:flex; gap:15px; margin-bottom:15px;">
-            <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
+        <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+            <div style="flex:1; min-width: 150px; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
                 <div style="font-size:10px; color:var(--text-dim); font-weight:900; margin-bottom:10px;">RELACJE</div>
                 ${drawRelationBar("Menedżer", cState.relations.manager, "#3498db")}
                 ${drawRelationBar("Drużyna", cState.relations.team, "#2ecc71")}
                 ${drawRelationBar("Kibice", cState.relations.fans, "#e74c3c")}
             </div>
-            <div style="flex:1; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05); text-align:center; display:flex; flex-direction:column; justify-content:center;">
-                <div style="font-size:10px; color:var(--text-dim); font-weight:900;">TWOJA FORMA (SEZON)</div>
-                <div style="font-size:32px; font-weight:900; color:var(--accent); margin: 5px 0;">${avg}</div>
-                <div style="font-size:11px; font-weight:bold; color:#fff;">Pkt: ${s.pts}+${s.bon} | Biegi: ${s.heats}</div>
+            
+            <div style="flex:1; min-width: 150px; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:10px; color:var(--text-dim); font-weight:900; margin-bottom:10px;">CECHY ZAWODNIKA</div>
+                ${drawRelationBar("Profesjonalizm", cState.attributes.prof, "#9b59b6")}
+                ${drawRelationBar("Medialność", cState.attributes.media, "#f1c40f")}
+                ${drawRelationBar("Podatność na urazy", cState.attributes.injRisk, "#e67e22")}
+            </div>
+
+            <div style="flex:1; min-width: 100%; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-around; align-items:center;">
+                <div style="text-align:center;">
+                    <div style="font-size:10px; color:var(--text-dim); font-weight:900;">ŚR. SEZONU</div>
+                    <div style="font-size:26px; font-weight:900; color:#fff;">${avg}</div>
+                </div>
+                <div style="width:1px; height:40px; background:rgba(255,255,255,0.1);"></div>
+                <div style="text-align:center;">
+                    <div style="font-size:10px; color:var(--text-dim); font-weight:900;">AKTUALNA FORMA</div>
+                    <div style="font-size:26px; font-weight:900; color:${parseFloat(currentForm) > 1.8 ? 'var(--green-neon)' : (parseFloat(currentForm) < 1.2 ? 'var(--red-neon)' : 'var(--accent)')};">${currentForm}</div>
+                </div>
             </div>
         </div>
 
@@ -6700,7 +6751,7 @@ function renderCareerHub() {
             <div style="font-size:20px; font-weight:900; margin-bottom:10px;">vs <span style="color:${oppColor};">${nextMatch.opp}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
             
             <div style="font-size:11px; font-weight:900; margin-bottom: 20px; padding: 6px 12px; border: 1px dashed ${s.nextMatchBenched ? 'var(--red-neon)' : 'var(--green-neon)'}; border-radius: 8px; display: inline-block; color: ${s.nextMatchBenched ? 'var(--red-neon)' : 'var(--green-neon)'}; text-transform: uppercase;">
-                ${s.nextMatchBenched ? '❌ ODSUNIĘTY OD SKŁADU LUB REZERWOWY ('+s.nextMatchHeats+' biegów)' : `✅ PRZEWIDYWANY SKŁAD (${s.nextMatchHeats} BIEGÓW)`}
+                ${s.nextMatchBenched ? '❌ ODSUNIĘTY OD SKŁADU LUB REZERWA ('+s.nextMatchHeats+' biegów)' : `✅ PRZEWIDYWANY SKŁAD (${s.nextMatchHeats} BIEGÓW)`}
             </div>
 
             <div style="display:flex; gap:10px; justify-content:center;">
@@ -6709,6 +6760,19 @@ function renderCareerHub() {
             </div>
         </div>
     `;
+}
+
+// Obsługa pomijania meczu z powodu kontuzji
+window.skipInjuryRound = function() {
+    let s = cState.season;
+    s.injuryRounds--;
+    simulateBotMatchesForCurrentRound(0, 0, true);
+    s.matchResults.push("🚑");
+    s.currentMatchScore = { me: 0, opp: 0 };
+    s.matchIndex += 1;
+    s.trainedThisWeek = false;
+    saveCareer();
+    renderCareerHub();
 }
 
 function renderCareerSeasonTable() {
@@ -7132,24 +7196,28 @@ function endOfSeason() {
     }
 
     let ageGrowth = 0;
-    if (cState.age <= 20) ageGrowth = Math.floor(Math.random() * 2) + 1;
-    else if (cState.age <= 23) ageGrowth = Math.random() < 0.7 ? 1 : 0;
-    else if (cState.age <= 27) ageGrowth = Math.random() < 0.25 ? 1 : 0;
-    else if (cState.age <= 31) ageGrowth = Math.random() < 0.18 ? 1 : 0;
-    else if (cState.age <= 35) ageGrowth = 0;
-    else ageGrowth = -Math.floor(Math.random() * 2) - 1;
+    // Inteligentne starzenie bazujące na profesjonalizmie
+    let prof = cState.attributes.prof;
+    let primeEnd = prof > 75 ? 34 : (prof < 40 ? 29 : 32); 
+
+    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 2) + 2; // Juniorzy rosną szybciej
+    else if (cState.age <= 24) ageGrowth = Math.random() < 0.8 ? 1 : 0;
+    else if (cState.age <= primeEnd) ageGrowth = Math.random() < 0.3 ? 1 : 0; // Szczyt kariery
+    else if (cState.age <= primeEnd + 4) ageGrowth = -Math.floor(Math.random() * 2) - 1; // Lekki zjazd
+    else ageGrowth = -Math.floor(Math.random() * 3) - 1; // Koniec kariery mocny zjazd
 
     let perfGrowth = 0;
-    if (officialAvg >= 2.35) perfGrowth = cState.age <= 22 ? 2 : 1;
+    if (officialAvg >= 2.40) perfGrowth = cState.age <= 23 ? 3 : 2;
     else if (officialAvg >= 2.00) perfGrowth = 1;
     else if (officialAvg >= 1.60) perfGrowth = 0;
     else if (officialAvg >= 1.20) perfGrowth = -1;
     else perfGrowth = -2;
 
     let totalGrowth = ageGrowth + perfGrowth;
+    // OVR limit locks
     if (cState.ovr > 95 && totalGrowth > 0) totalGrowth -= 2; 
     else if (cState.ovr > 90 && totalGrowth > 0) totalGrowth -= 1;
-    if (cState.age <= 22 && totalGrowth < 0) totalGrowth = 0; 
+    if (cState.age <= 21 && totalGrowth < 0) totalGrowth = 0; 
     
     cState.ovr = Math.max(30, Math.min(99, cState.ovr + totalGrowth));
 
@@ -8027,7 +8095,7 @@ function startMinigameMechanic() {
 // ====== DECYZJE TAKTYCZNE W BIEGU =========
 // ==========================================
 
-function promptHeatDecision(ovr) {
+function promptHeatDecision(ovr, form, prof) {
     return new Promise(resolve => {
         const box = document.getElementById('simDecisionBox');
         if(!box) {
@@ -8037,56 +8105,74 @@ function promptHeatDecision(ovr) {
         
         box.style.display = 'flex';
         
-        // Zestaw realistycznych sytuacji torowych
+        // Zestaw bardziej realistycznych sytuacji
         const situations = [
             {
-                text: "Przeciwnik zamknął krawężnik po starcie i jedzie bardzo wąsko. Co robisz?",
-                fol: { n: "Jedź za nim", b: 80, desc: "Czekasz na jego błąd (Bezpiecznie)" },
-                mid: { n: "Pojedź środkiem", b: 40, desc: "Szukasz innej ścieżki (Ryzykownie)" },
-                out: { n: "Napędź się po dużej", b: 60, desc: "Próbujesz objechać go z tyłu" },
-                cut: { n: "Zetnij do krawężnika", b: 15, desc: "Nożyce! (Bardzo trudne)" }
+                text: "Rywale zamknęli Cię po starcie w 'kanapce'. Jesteś trzeci.",
+                fol: { n: "Siedź na kole", b: 80, desc: "Czekasz na błąd" },
+                mid: { n: "Rozpychaj się", b: 40, desc: "Agresywnie wchodzisz między nich" },
+                out: { n: "Wyjazd na dużą", b: 50, desc: "Szukasz prędkości po zewn." },
+                cut: { n: "Ostre nożyce", b: 35, desc: "Schodzisz do krawężnika" }
             },
             {
-                text: "Wychodzisz ze startu na prowadzeniu, ale rywal depcze Ci po piętach!",
-                fol: { n: "Trzymaj krawężnik", b: 85, desc: "Zamykasz wewnętrzną ścieżkę" },
-                mid: { n: "Jedź optymalną ścieżką", b: 70, desc: "Klasyczna jazda" },
-                out: { n: "Wynoś się szeroko", b: 50, desc: "Budujesz prędkość, odsłaniasz dół" },
-                cut: { n: "Złam motocykl na prostej", b: 30, desc: "Zaskakujący manewr defensywny" }
+                text: "Prowadzisz, ale tor jest wyjątkowo śliski po opadach deszczu.",
+                fol: { n: "Trzymaj krawężnik", b: 85, desc: "Najbezpieczniejsza ścieżka" },
+                mid: { n: "Płynna jazda", b: 65, desc: "Szukasz przyczepności" },
+                out: { n: "Atak szerzej", b: 30, desc: "Bardzo wysokie ryzyko upadku!" },
+                cut: { n: "Asekuracja", b: 70, desc: "Pilnujesz wewnętrznej" }
             },
             {
-                text: "Rywale jadą parą środkiem toru i blokują Cię. Gdzie szukasz luki?",
-                fol: { n: "Siedź na kole", b: 75, desc: "Jedziesz w szprycy" },
-                mid: { n: "Rozpychaj się", b: 25, desc: "Agresywny wjazd w kanapkę" },
-                out: { n: "Pikuj pod bandę", b: 50, desc: "Omijanie kurzu i szukanie przyczepności" },
-                cut: { n: "Ostre zejście do wewnątrz", b: 45, desc: "Atakujesz dolną lukę" }
+                text: "Jedziesz drugi. Lider zostawia mnóstwo miejsca pod bandą.",
+                fol: { n: "Jedź jego śladem", b: 75, desc: "Nie ryzykujesz" },
+                mid: { n: "Atak środkiem", b: 50, desc: "Próbujesz go wyprzedzić" },
+                out: { n: "Napędź się pod bandą", b: 75, desc: "Idealna okazja na atak!" },
+                cut: { n: "Pikuj w krawężnik", b: 40, desc: "Niespodziewany atak z dołu" }
+            },
+            {
+                text: "Zostałeś na starcie... Musisz gonić z czwartej pozycji!",
+                fol: { n: "Czekaj z tyłu", b: 90, desc: "Może komuś zdefektuje motocykl" },
+                mid: { n: "Ostra pogoń", b: 50, desc: "Jazda na limicie" },
+                out: { n: "Ryzykowny atak po dużej", b: 40, desc: "All-in po zewnętrznej" },
+                cut: { n: "Ścinka na pierwszym łuku", b: 55, desc: "Próbujesz wejść pod łokieć" }
             }
         ];
         
         let sit = situations[Math.floor(Math.random() * situations.length)];
-        let ovrMod = Math.floor((ovr - 50) / 2); // Wpływ OVR zawodnika
+        
+        // Modifikatory szans
+        let ovrMod = Math.floor((ovr - 50) / 2); // Do +24% dla topowych graczy
+        let formMod = (form - 1.5) * 10; // -5% do +15% za formę
+        let profMod = (prof - 50) / 5; // Drobny bonus za profesjonalizm (skupienie)
+        
+        let totalMod = ovrMod + formMod + profMod;
 
-        let cFol = clamp(sit.fol.b + ovrMod, 5, 95);
-        let cMid = clamp(sit.mid.b + ovrMod, 5, 95);
-        let cOut = clamp(sit.out.b + ovrMod, 5, 95);
-        let cCut = clamp(sit.cut.b + ovrMod, 5, 95);
+        // Dodanie losowego rozrzutu +/- 5% żeby każda gra była inna
+        const applyMod = (base) => clamp(base + totalMod + (Math.floor(Math.random() * 11) - 5), 5, 95);
+
+        let cFol = applyMod(sit.fol.b);
+        let cMid = applyMod(sit.mid.b);
+        let cOut = applyMod(sit.out.b);
+        let cCut = applyMod(sit.cut.b);
 
         document.getElementById('simDecTitle').innerText = sit.text;
-        
-        document.getElementById('btnDecFol').innerHTML = `<b>${sit.fol.n}</b><br><small style="color:#aaa;">${cFol}% szansy<br>(${sit.fol.desc})</small>`;
-        document.getElementById('btnDecMid').innerHTML = `<b>${sit.mid.n}</b><br><small style="color:#aaa;">${cMid}% szansy<br>(${sit.mid.desc})</small>`;
-        document.getElementById('btnDecOut').innerHTML = `<b>${sit.out.n}</b><br><small style="color:#aaa;">${cOut}% szansy<br>(${sit.out.desc})</small>`;
-        document.getElementById('btnDecCut').innerHTML = `<b>${sit.cut.n}</b><br><small style="color:#aaa;">${cCut}% szansy<br>(${sit.cut.desc})</small>`;
+        document.getElementById('btnDecFol').innerHTML = `<b>${sit.fol.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cFol)}%<br>(${sit.fol.desc})</small>`;
+        document.getElementById('btnDecMid').innerHTML = `<b>${sit.mid.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cMid)}%<br>(${sit.mid.desc})</small>`;
+        document.getElementById('btnDecOut').innerHTML = `<b>${sit.out.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cOut)}%<br>(${sit.out.desc})</small>`;
+        document.getElementById('btnDecCut').innerHTML = `<b>${sit.cut.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cCut)}%<br>(${sit.cut.desc})</small>`;
 
         let answered = false;
         window.resolveSimDecision = (type) => {
             if(answered) return;
             answered = true;
             box.style.display = 'none';
-            resolve({ type, cOut, cCut, cMid, cFol });
+            // Przekazujemy wybrane prawdopodobieństwo, by system wiedział czy się udało
+            let pickedChance = type === 'follow' ? cFol : (type === 'middle' ? cMid : (type === 'outside' ? cOut : cCut));
+            resolve({ type, chance: pickedChance });
         };
     });
 }
 
+// Zmodyfikowany playSingleMatch - zawiera logikę kontuzji i formy
 async function playSingleMatch() {
     let simDiv = document.getElementById('simOverlay');
     if (!simDiv) {
@@ -8096,6 +8182,7 @@ async function playSingleMatch() {
         document.body.appendChild(simDiv);
     }
     
+    // UI dla Symulacji... (pozostaje to samo, pomijam dla czytelności kodu)
     simDiv.innerHTML = `
         <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
         <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
@@ -8110,12 +8197,11 @@ async function playSingleMatch() {
         <div id="simDecisionBox" style="display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; margin-top: 10px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
             <div id="simDecTitle" style="color:var(--accent); font-weight:900; font-size:15px; text-align:center; line-height:1.4; margin-bottom: 10px;">Sytuacja na torze...</div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecFol" onclick="resolveSimDecision('follow')"></button>
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecMid" onclick="resolveSimDecision('middle')"></button>
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')"></button>
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:13px; border-radius:10px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecCut" onclick="resolveSimDecision('cut')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecFol" onclick="resolveSimDecision('follow')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecMid" onclick="resolveSimDecision('middle')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')"></button>
+                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecCut" onclick="resolveSimDecision('cut')"></button>
             </div>
-            <div style="font-size:10px; color:var(--text-dim); text-align:center; margin-top:10px; text-transform:uppercase;">(Nie ma limitu czasu, przemyśl wybór)</div>
         </div>
 
         <div id="simProgressContainer" style="width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 20px;">
@@ -8143,41 +8229,11 @@ async function playSingleMatch() {
     let lData = CAREER_CONSTANTS[playingLeague];
     
     let trackComfort = isHome ? 8 : -10;
-    
     let homeClubName = isHome ? playingClub : opponent;
     let awayClubName = isHome ? opponent : playingClub;
-    let homeMatchScore = 0;
-    let awayMatchScore = 0;
+    let homeMatchScore = 0; let awayMatchScore = 0;
 
     const totalMatchHeats = 15;
-    const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
-
-    const rollTeamHeatScore = (strengthBias) => {
-        const exclusionRoll = Math.random();
-        
-        if (exclusionRoll < 0.02) {
-            return strengthBias >= 0
-                ? { me: 5, opp: 0, is50: true, text: "Podwójne wykluczenie rywali! - 5:0" }
-                : { me: 0, opp: 5, is05: true, text: "Obaj nasi zawodnicy wykluczeni! - 0:5" };
-        }
-        if (exclusionRoll < 0.05) {
-            return strengthBias >= 0
-                ? { me: 5, opp: 1, text: "Wykluczenie rywala - bieg zakończony 5:1" }
-                : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - 1:5" };
-        }
-        if (exclusionRoll < 0.08) {
-            return strengthBias >= 0
-                ? { me: 3, opp: 2, is32: true, text: "Wykluczenie rywala i remisowy układ - 3:2" }
-                : { me: 2, opp: 3, is23: true, text: "Wykluczenie naszego i remisowy układ - 2:3" };
-        }
-
-        const swing = strengthBias + (Math.random() * 0.9 - 0.45);
-        if (swing >= 0.85) return { me: 5, opp: 1, text: "Podwójne zwycięstwo dla nas! - 5:1" };
-        if (swing >= 0.30) return { me: 4, opp: 2, text: "Wygrywamy bieg - 4:2" };
-        if (swing > -0.30) return { me: 3, opp: 3, text: "Remis w biegu - 3:3" };
-        if (swing > -0.85) return { me: 2, opp: 4, text: "Przegrywamy bieg - 2:4" };
-        return { me: 1, opp: 5, text: "Podwójna porażka... - 1:5" };
-    };
     
     let heatsInMatch = s.nextMatchHeats || 0;
     let benched = s.nextMatchBenched || false;
@@ -8186,10 +8242,13 @@ async function playSingleMatch() {
     let playerHeats = heatData.heats;
     let startNumber = heatData.number;
     
-    let matchPts = 0;
-    let matchBon = 0;
+    let matchPts = 0; let matchBon = 0;
+    let matchCrashed = false;
 
     simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>${heatsInMatch>0 ? `<div style="font-size: 13px; margin-top:5px; color: var(--accent);">Twój nr startowy: ${startNumber}</div>` : ''}`;
+    
+    let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : (cState.ovr / 40).toFixed(2);
+    let formNum = parseFloat(avg);
     
     let moraleMod = 0;
     if (cState.relations.team > 80) moraleMod = 3;
@@ -8201,46 +8260,11 @@ async function playSingleMatch() {
         await new Promise(r => setTimeout(r, 600)); 
         simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
         
-        let isPlayerRiding = playerHeats.includes(h);
-        let rideStatus = isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA";
-        
-        let aggHomeText = "";
-        let firstLegScoreMe = 0;
-        let firstLegScoreOpp = 0;
-        let hasFirstLeg = false;
+        let isPlayerRiding = playerHeats.includes(h) && !matchCrashed;
+        let rideStatus = matchCrashed ? "🚑 KONTUZJA" : (isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA");
 
-        if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
-            for (let i = 0; i < s.matchIndex; i++) {
-                let pastMatch = s.schedule[i];
-                if (pastMatch.opp === opponent && pastMatch.leg === 1) {
-                    let res = s.matchResults[i];
-                    if (res && res !== "-") {
-                        let p = res.split(':').map(Number);
-                        firstLegScoreMe = isHome ? p[1] : p[0];
-                        firstLegScoreOpp = isHome ? p[0] : p[1];
-                        hasFirstLeg = true;
-                    }
-                    break;
-                }
-            }
-        }
-
-        if (hasFirstLeg) {
-            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
-            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
-            let aggH = isHome ? currentAggMe : currentAggOpp;
-            let aggA = isHome ? currentAggOpp : currentAggMe;
-            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">Dwumecz: ${aggH}:${aggA}</div>`;
-        }
-
-        simMatchScore.innerHTML = `
-            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
-            ${homeMatchScore}:${awayMatchScore} 
-            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
-            ${aggHomeText}
-        `;
-        
-        simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':'var(--text-dim)'};">${rideStatus}</span>`;
+        simMatchScore.innerHTML = `<span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> ${homeMatchScore}:${awayMatchScore} <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>`;
+        simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':(matchCrashed?'var(--red-neon)':'var(--text-dim)')};">${rideStatus}</span>`;
 
         let heatMod = 0;
         let eventText = `Bieg ${h}: Na torze...`;
@@ -8248,36 +8272,50 @@ async function playSingleMatch() {
         let isExclusionPlayer = false;
 
         if (isPlayerRiding) {
-            let dec = await promptHeatDecision(cState.ovr);
+            let dec = await promptHeatDecision(cState.ovr, formNum, cState.attributes.prof);
             let roll = Math.random() * 100;
+            let success = roll < dec.chance;
             
-            if (dec.type === 'outside') {
-                if (roll < dec.cOut) { heatMod = 0.8; eventText = `Bieg ${h}: Fenomenalny napęd po zewnętrznej i objeżdżasz rywala!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.6; eventText = `Bieg ${h}: Przeszarżowałeś! Wyniosło Cię pod bandę, tracisz pozycję!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'cut') {
-                if (roll < dec.cCut) { heatMod = 1.0; eventText = `Bieg ${h}: Piękne nożyce! Atak przy krawężniku udany!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.5; eventText = `Bieg ${h}: Próba ścinki nieudana, rywal przewidział Twój ruch i Cię zablokował!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'middle') {
-                if (roll < dec.cMid) { heatMod = 0.6; eventText = `Bieg ${h}: Pewna jazda środkiem toru, rywale bez szans!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.4; eventText = `Bieg ${h}: Zbyt pasywnie środkiem. Tracisz punkt!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'follow') {
-                if (roll < dec.cFol) { heatMod = 0.2; eventText = `Bieg ${h}: Dowiezione punkty bez zbędnego ryzyka.`; eventColor = "#fff"; }
-                else { heatMod = -0.3; eventText = `Bieg ${h}: Jazda gęsiego za rywalem, zabrakło prędkości by powalczyć.`; eventColor = "var(--yellow-neon)"; }
+            // SYSTEM RYZYKA KONTUZJI
+            let crashRiskBase = dec.type === 'outside' ? 8 : (dec.type === 'cut' ? 5 : (dec.type === 'middle' ? 2 : 0));
+            let myInjRisk = cState.attributes.injRisk / 10; // 1 to 4% bazowo
+            let totalCrashChance = crashRiskBase + myInjRisk;
+            
+            if (!success && Math.random() * 100 < totalCrashChance) {
+                // KRAKSA!
+                matchCrashed = true;
+                isExclusionPlayer = true;
+                eventText = `Bieg ${h}: POTWORNY UPADEK! Karetka na torze! Koniec zawodów...`;
+                eventColor = "var(--red-neon)";
+                
+                // Przypisanie kontuzji na resztę sezonu
+                let injuryDuration = Math.floor(Math.random() * 3) + 1; // 1 do 3 meczów
+                s.injuryRounds = injuryDuration;
+                cState.ovr = Math.max(30, cState.ovr - 1); // Traci formę przez ból
             } else {
-                heatMod = -0.6; eventText = `Bieg ${h}: Brak reakcji... zostajesz w tyle!`; eventColor = "var(--red-neon)";
+                // NORMALNA WALKA
+                if (success) {
+                    heatMod = dec.type === 'outside' ? 0.9 : (dec.type === 'cut' ? 1.0 : (dec.type === 'middle' ? 0.6 : 0.3));
+                    eventText = `Bieg ${h}: Świetny manewr! Wyprzedzasz i powiększasz przewagę!`;
+                    eventColor = "var(--green-neon)";
+                } else {
+                    heatMod = dec.type === 'outside' ? -0.8 : (dec.type === 'cut' ? -0.5 : (dec.type === 'middle' ? -0.4 : -0.2));
+                    eventText = `Bieg ${h}: Błąd na trasie! Rywal zamyka Cię i ucieka.`;
+                    eventColor = "var(--yellow-neon)";
+                }
             }
         } else {
             if (Math.random() < 0.10) { 
                 const events = [
-                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)" },
+                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", mod: -0.5, color: "var(--red-neon)" },
                     { text: "🔥 Atomowy start pary!", mod: 1.0, color: "var(--green-neon)" },
-                    { text: "🚜 Dziura w torze, zawodnik traci rytm...", mod: -1.0, color: "var(--yellow-neon)" },
-                    { text: "🔧 Defekt motocykla na trasie...", p: 0, b: 0, color: "var(--red-neon)" },
+                    { text: "🚜 Dziura w torze, zawodnik traci rytm...", mod: -0.8, color: "var(--yellow-neon)" },
+                    { text: "🔧 Defekt motocykla lidera!", mod: -1.0, color: "var(--red-neon)" },
                 ];
                 let ev = events[Math.floor(Math.random() * events.length)];
                 eventText = `Bieg ${h}: ${ev.text}`;
                 eventColor = ev.color;
-                if (ev.p === undefined) heatMod = ev.mod;
+                heatMod = ev.mod;
             }
         }
 
@@ -8285,62 +8323,46 @@ async function playSingleMatch() {
         simEvents.style.color = eventColor;
         playSound('flip');
 
-        const strengthBias = clampMatchValue((ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08), -1.2, 1.2);
+        // Kalkulacja wyniku biegu
+        const strengthBias = Math.max(-1.2, Math.min(1.2, (ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08)));
         
         let heatOutcome;
         if (isExclusionPlayer) {
             heatOutcome = isHome ? { me: 1, opp: 5 } : { me: 1, opp: 5 }; 
         } else {
-            heatOutcome = rollTeamHeatScore(strengthBias);
+            const swing = strengthBias + (Math.random() * 0.9 - 0.45);
+            if (swing >= 0.85) heatOutcome = { me: 5, opp: 1 };
+            else if (swing >= 0.30) heatOutcome = { me: 4, opp: 2 };
+            else if (swing > -0.30) heatOutcome = { me: 3, opp: 3 };
+            else if (swing > -0.85) heatOutcome = { me: 2, opp: 4 };
+            else heatOutcome = { me: 1, opp: 5 };
         }
         
         homeMatchScore += isHome ? heatOutcome.me : heatOutcome.opp;
         awayMatchScore += isHome ? heatOutcome.opp : heatOutcome.me;
 
-        let hPts = 0;
-        let hBon = 0;
+        let hPts = 0; let hBon = 0;
 
-        if (isPlayerRiding) {
+        // Punkty gracza (tylko jeśli dojechał i nie ma wykluczenia)
+        if (isPlayerRiding && !isExclusionPlayer) {
             let teamScore = heatOutcome.me;
-            if (isExclusionPlayer) {
-                hPts = 0; hBon = 0;
-            } else {
-                if (teamScore === 5) {
-                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 2; hBon = heatOutcome.is50 ? 0 : 1; }
-                } else if (teamScore === 4) {
-                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 1; hBon = 0; }
-                } else if (teamScore === 3) {
-                    if (Math.random() < 0.2) {
-                        if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 0; hBon = 0; }
-                    } else {
-                        if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 1; hBon = heatOutcome.is32 ? 0 : 1; }
-                    }
-                } else if (teamScore === 2) {
-                    if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 0; hBon = 0; }
-                } else if (teamScore === 1) {
-                    if (Math.random() < 0.5) { hPts = 1; hBon = 0; } else { hPts = 0; hBon = 0; }
-                } else {
-                    hPts = 0; hBon = 0;
-                }
-            }
-
-            matchPts += hPts;
-            matchBon += hBon;
+            if (teamScore === 5) { hPts = Math.random() < 0.5 ? 3 : 2; hBon = hPts === 2 ? 1 : 0; }
+            else if (teamScore === 4) { hPts = Math.random() < 0.6 ? 3 : 1; hBon = 0; }
+            else if (teamScore === 3) { hPts = Math.random() < 0.4 ? 2 : (Math.random() < 0.5 ? 1 : 0); hBon = hPts===1 ? 1 : 0; }
+            else if (teamScore === 2) { hPts = Math.random() < 0.5 ? 2 : 0; hBon = 0; }
+            else if (teamScore === 1) { hPts = Math.random() < 0.5 ? 1 : 0; hBon = 0; }
+            
+            matchPts += hPts; matchBon += hBon;
         }
 
         simPts.innerText = `${matchPts} (+${matchBon})`;
         let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
         simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
         
-        simMatchScore.innerHTML = `
-            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
-            ${homeMatchScore}:${awayMatchScore} 
-            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
-            ${aggHomeText}
-        `;
+        simMatchScore.innerHTML = `<span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> ${homeMatchScore}:${awayMatchScore} <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>`;
     }
     
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1500));
     simDiv.style.display = 'none';
 
     let finalPlayerTeamScore = isHome ? homeMatchScore : awayMatchScore;
@@ -8348,6 +8370,7 @@ async function playSingleMatch() {
 
     simulateBotMatchesForCurrentRound(finalPlayerTeamScore, finalOpponentScore, false);
 
+    // ZAPIS WYNIKÓW I FORMY
     s.heats += heatsInMatch;
     s.pts += matchPts;
     s.bon += matchBon;
@@ -8355,6 +8378,10 @@ async function playSingleMatch() {
     s.currentMatchScore = { me: finalPlayerTeamScore, opp: finalOpponentScore };
     s.matchIndex += 1;
     s.trainedThisWeek = false; 
+    
+    if (!s.lastMatches) s.lastMatches = [];
+    s.lastMatches.push({ h: heatsInMatch, p: matchPts, b: matchBon });
+    if (s.lastMatches.length > 3) s.lastMatches.shift();
 
     updateLeftPanelUI();
     saveCareer();
