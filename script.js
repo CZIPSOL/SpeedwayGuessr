@@ -6325,28 +6325,33 @@ function showMidSeasonEventWindow() {
     `;
 }
 
-function resolveMidSeasonEventWithWheel(succOVR, failOVR, chance, relT, relM, relF = 0) {
-    relT = relT < 0 ? Math.max(relT, -5) : relT;
-    relM = relM < 0 ? Math.max(relM, -5) : relM;
-    relF = relF < 0 ? Math.max(relF, -5) : relF;
+function resolveMidSeasonEventWithWheel(succOVR, failOVR, chance, relT, relM, relF = 0, prof = 0, media = 0, injRisk = 0) {
     cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
     cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
     cState.relations.fans = Math.max(0, Math.min(100, cState.relations.fans + relF));
+
+    cState.attributes.prof = Math.max(0, Math.min(100, cState.attributes.prof + prof));
+    cState.attributes.media = Math.max(0, Math.min(100, cState.attributes.media + media));
+    cState.attributes.injRisk = Math.max(0, Math.min(100, cState.attributes.injRisk + injRisk));
+    
     resolveRandomEvent(succOVR, failOVR, chance, true);
 }
 
-function safeMidSeasonEvent(relT, relM, relF = 0) {
-    relT = relT < 0 ? Math.max(relT, -5) : relT;
-    relM = relM < 0 ? Math.max(relM, -5) : relM;
-    relF = relF < 0 ? Math.max(relF, -5) : relF;
+function safeMidSeasonEvent(relT, relM, relF = 0, prof = 0, media = 0, injRisk = 0) {
     cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
     cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
     cState.relations.fans = Math.max(0, Math.min(100, cState.relations.fans + relF));
+
+    cState.attributes.prof = Math.max(0, Math.min(100, cState.attributes.prof + prof));
+    cState.attributes.media = Math.max(0, Math.min(100, cState.attributes.media + media));
+    cState.attributes.injRisk = Math.max(0, Math.min(100, cState.attributes.injRisk + injRisk));
+    
     saveCareer();
     updateLeftPanelUI();
-    showToast("Uniknąłeś ryzyka. Zmiana relacji w zespole.", "normal");
+    showToast("Zdarzenie zakończone. Zaktualizowano atrybuty i relacje.", "normal");
     renderCareerHub();
 }
+
 
 function resolveMidSeasonEvent() {
     showMidSeasonEventWindow();
@@ -7605,7 +7610,7 @@ function showTrainingHTP(type) {
     } else if (type === 'start') {
         title = "MOMENT STARTOWY";
         icon = "🚦";
-        desc = "Wciśnij i <b>trzymaj SPACJĘ</b> (sprzęgło). Utrzymuj obroty silnika w zielonej strefie, pulsacyjnie klikając <b>W</b>.<br><br>Gdy zapali się zielone światło – bądź gotów. Gdy światło zgaśnie i <b>taśma pójdzie w górę</b> – jak najszybciej <b>puść SPACJĘ</b>!<br><br><span style='color:var(--red-neon); font-weight: 900;'>UWAGA: Czas reakcji poniżej 0.150s traktowany jest jako falstart i dotknięcie taśmy!</span>";
+        desc = "Wciśnij i <b>trzymaj SPACJĘ</b> (sprzęgło). Utrzymuj obroty silnika w zielonej strefie, <b style='color:#fff'>przytrzymując lub puszczając W</b>.<br><br>Gdy zapali się zielone światło – bądź gotów. Gdy światło zgaśnie i <b>taśma pójdzie w górę</b> – jak najszybciej <b>puść SPACJĘ</b>!<br><br><span style='color:var(--red-neon); font-weight: 900;'>UWAGA: Czas reakcji poniżej 0.150s traktowany jest jako falstart i dotknięcie taśmy!</span>";
         nextFn = startMinigameStart;
     } else if (type === 'slide') {
         title = "KONTROLOWANY ŚLIZG";
@@ -7615,7 +7620,7 @@ function showTrainingHTP(type) {
     } else if (type === 'mechanic') {
         title = "SZYBKI MECHANIK";
         icon = "⚙️";
-        desc = "Liczy się ułamek sekundy! Otrzymasz zadanie założenia konkretnej zębatki (np. \"ZAŁÓŻ: 14 zębów\").<br><br>Szybko odszukaj odpowiedni przycisk na ekranie i kliknij go. Bądź bezbłędny przez 5 rund.";
+        desc = "Liczy się ułamek sekundy! Otrzymasz zadanie założenia konkretnej zębatki (np. \"ZAŁÓŻ: 14 zębów\").<br><br>Odszukaj odpowiednią zębatkę, a następnie kliknij i <b>przeciągnij ją</b> na sprzęgło (kółko na środku).";
         nextFn = startMinigameMechanic;
     }
 
@@ -7633,10 +7638,10 @@ function showTrainingHTP(type) {
     `;
     
     simDiv.style.display = 'flex';
-    simDiv.oncontextmenu = (e) => e.preventDefault(); // Blokada menu kontekstowego pod PPM
+    simDiv.oncontextmenu = (e) => e.preventDefault(); 
     
     document.getElementById('btnStartMinigameHTP').onclick = () => {
-        simDiv.innerHTML = ''; // Czyścimy okno przed startem właściwej minigry
+        simDiv.innerHTML = ''; 
         nextFn();
     };
 }
@@ -7859,7 +7864,7 @@ function startMinigameStart() {
     const html = `
         <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
             <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">MOMENT STARTOWY</h2>
-            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Trzymaj <b style="color:#fff">SPACJĘ</b> (Sprzęgło) by rozpocząć. Klikaj <b style="color:#fff">W</b> by trzymać obroty na zielonym polu. Gdy zapali się zielone światło – uważaj. Gdy zgaśnie i taśma pójdzie w górę – puść SPACJĘ!</p>
+            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Trzymaj <b style="color:#fff">SPACJĘ</b> (Sprzęgło) by rozpocząć. Utrzymuj obroty na zielonym polu, <b style="color:#fff">trzymając lub puszczając W</b>. Gdy zapali się zielone światło – uważaj. Gdy zgaśnie i taśma pójdzie w górę – puść SPACJĘ!</p>
             
             <div style="position:relative; width:100%; height:200px; background:#222; border-radius:12px; border:2px solid #444; overflow:hidden; margin-bottom:20px;">
                 <div id="mgLight" style="position:absolute; top:20px; left:50%; transform:translateX(-50%); width:40px; height:40px; border-radius:50%; background:#111; border:2px solid #000; box-shadow: inset 0 0 10px #000;"></div>
@@ -7884,7 +7889,8 @@ function startMinigameStart() {
         rpm: 0,
         tapeTime: 0,
         releaseTime: 0,
-        rpmInterval: null
+        rpmInterval: null,
+        wHeld: false
     };
     
     activeMinigameData = { state, cleanup: () => {
@@ -7901,8 +7907,16 @@ function startMinigameStart() {
         if(state.phase === 'finished') return;
         
         if(state.phase === 'holding' || state.phase === 'ready') {
-            state.rpm -= (Math.random() * 2 + 1); // Spadek obrotów
+            
+            if (state.wHeld) {
+                state.rpm += 4; // Gaz rośnie po wciśnięciu
+            } else {
+                state.rpm -= 3; // Gaz spada po puszczeniu
+            }
+
             if(state.rpm < 0) state.rpm = 0;
+            if(state.rpm > 100) state.rpm = 100;
+
             rpmBar.style.width = state.rpm + '%';
             
             if(state.rpm >= 35 && state.rpm <= 65) {
@@ -7946,9 +7960,8 @@ function startMinigameStart() {
                 }, 1000 + Math.random() * 1500);
             }
         }
-        if (key === 'W' && (state.phase === 'holding' || state.phase === 'ready')) {
-            state.rpm += 8;
-            if(state.rpm > 100) state.rpm = 100;
+        if (key === 'W') {
+            state.wHeld = true;
         }
     };
 
@@ -7986,6 +7999,9 @@ function startMinigameStart() {
                     finishTraining('bad');
                 }
             }
+        }
+        if (key === 'W') {
+            state.wHeld = false;
         }
     };
 
