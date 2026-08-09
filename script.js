@@ -5907,11 +5907,27 @@ function loadCareer() {
     let saved = localStorage.getItem('speedwayCareerSave_v4');
     if (saved) {
         cState = JSON.parse(saved);
+        
+        // --- ZABEZPIECZENIE (Kompatybilność dla starych zapisów) ---
+        if (!cState.attributes) {
+            cState.attributes = { 
+                media: Math.floor(Math.random() * 30) + 40,
+                prof: Math.floor(Math.random() * 40) + 40,
+                injRisk: Math.floor(Math.random() * 30) + 10
+            };
+        }
+        if (cState.season && typeof cState.season.injuryRounds === 'undefined') {
+            cState.season.injuryRounds = 0;
+            cState.season.lastMatches = [];
+        }
+        // -----------------------------------------------------------
+
         if (cState.season && cState.season.active && !cState.season.fullSchedule) {
             startNewSeason();
             appAlert("Zaktualizowano system terminarza ligowego. Twój obecny sezon musiał zostać zresetowany do pierwszej kolejki (Twoje statystyki OVR pozostają bez zmian).", "Aktualizacja gry");
             return;
         }
+        
         document.getElementById('careerSetup').style.display = 'none';
         document.getElementById('careerMainPanel').style.display = 'flex'; 
         updateLeftPanelUI();
