@@ -7733,6 +7733,8 @@ function startMinigameReflex() {
 
     function setupTask(isChange = false) {
         const display = document.getElementById('qteKeyDisplay');
+        if (!display) return;
+        
         state.pressKeys = [];
         let roll = Math.random();
         
@@ -7761,7 +7763,7 @@ function startMinigameReflex() {
             display.style.animation = 'none'; display.offsetHeight; 
             display.style.animation = 'pulse 0.3s ease';
             display.style.color = 'var(--yellow-neon)';
-            setTimeout(() => { display.style.color = '#fff'; }, 300);
+            setTimeout(() => { if(document.getElementById('qteKeyDisplay')) document.getElementById('qteKeyDisplay').style.color = '#fff'; }, 300);
             playSound('flip');
         }
     }
@@ -7772,38 +7774,55 @@ function startMinigameReflex() {
             finishTraining(state.successes === 5 ? 'perfect' : (state.successes >= 3 ? 'good' : 'bad'));
             return;
         }
-        document.getElementById('qteProgress').innerText = `Runda ${state.rounds}/5`;
+        
+        const progEl = document.getElementById('qteProgress');
+        if (progEl) progEl.innerText = `Runda ${state.rounds}/5`;
+        
         const display = document.getElementById('qteKeyDisplay');
-        display.style.borderColor = "var(--accent)"; display.style.color = "#fff";
+        if (display) {
+            display.style.borderColor = "var(--accent)"; 
+            display.style.color = "#fff";
+        }
         
         setupTask();
         const timeBar = document.getElementById('qteTimeBar');
-        timeBar.style.transition = 'none'; timeBar.style.width = '100%';
-        
-        let reactionTime = Math.max(420, Math.floor((1200 - (cState.ovr * 5)) * 0.65)) + 1500; 
-        
-        setTimeout(() => { timeBar.style.transition = `width ${reactionTime}ms linear`; timeBar.style.width = '0%'; }, 50);
-        
-        if (Math.random() < 0.25) {
-            state.changeTimer = setTimeout(() => setupTask(true), reactionTime * 0.4);
+        if (timeBar) {
+            timeBar.style.transition = 'none'; timeBar.style.width = '100%';
+            
+            let reactionTime = Math.max(420, Math.floor((1200 - (cState.ovr * 5)) * 0.65)) + 1500; 
+            
+            setTimeout(() => { 
+                if(document.getElementById('qteTimeBar')) {
+                    document.getElementById('qteTimeBar').style.transition = `width ${reactionTime}ms linear`; 
+                    document.getElementById('qteTimeBar').style.width = '0%'; 
+                }
+            }, 50);
+            
+            if (Math.random() < 0.25) {
+                state.changeTimer = setTimeout(() => setupTask(true), reactionTime * 0.4);
+            }
+            
+            state.timer = setTimeout(failRound, reactionTime);
         }
-        
-        state.timer = setTimeout(failRound, reactionTime);
     }
 
     function winRound() {
         clearTimeout(state.timer); clearTimeout(state.changeTimer);
         const display = document.getElementById('qteKeyDisplay');
-        playSound('guess'); state.successes++;
-        display.innerText = "✅"; display.style.borderColor = "var(--green-neon)"; display.style.color = "var(--green-neon)";
+        if (display) {
+            playSound('guess'); state.successes++;
+            display.innerText = "✅"; display.style.borderColor = "var(--green-neon)"; display.style.color = "var(--green-neon)";
+        }
         state.type = ''; setTimeout(nextRound, 1000);
     }
 
     function failRound() {
         clearTimeout(state.timer); clearTimeout(state.changeTimer);
         const display = document.getElementById('qteKeyDisplay');
-        playSound('error');
-        display.innerText = "❌"; display.style.borderColor = "var(--red-neon)"; display.style.color = "var(--red-neon)";
+        if (display) {
+            playSound('error');
+            display.innerText = "❌"; display.style.borderColor = "var(--red-neon)"; display.style.color = "var(--red-neon)";
+        }
         state.type = ''; setTimeout(nextRound, 1000);
     }
 
@@ -8090,10 +8109,8 @@ function startMinigameMechanic() {
             
             <div id="mgMechTargetText" style="font-size:24px; font-weight:900; color:var(--accent); margin-bottom:15px; text-transform:uppercase;">ZAŁÓŻ: <span id="mgTargetZeb"></span>z</div>
 
-            <!-- Strefa docelowa (Sprzęgło) -->
             <div id="mgDropzone" style="width: 100px; height: 100px; border: 4px dashed var(--text-dim); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: rgba(0,0,0,0.3); transition: 0.2s;">⚙️</div>
 
-            <!-- Kontener na draggable zębatki -->
             <div id="mgMechItems" style="display:flex; justify-content:center; gap:15px; margin-bottom:20px; min-height: 60px; position:relative;"></div>
 
             <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
@@ -8106,10 +8123,8 @@ function startMinigameMechanic() {
     let simDiv = initSimDiv(html);
 
     let state = {
-        rounds: 0, successes: 0, target: 0,
-        timer: null,
-        draggedEl: null,
-        dragOffsetX: 0, dragOffsetY: 0
+        rounds: 0, successes: 0, target: 0, timer: null,
+        draggedEl: null, dragOffsetX: 0, dragOffsetY: 0
     };
 
     activeMinigameData = { state, cleanup: () => {
@@ -8126,65 +8141,83 @@ function startMinigameMechanic() {
             return;
         }
 
-        document.getElementById('mgMechProgress').innerText = `Runda ${state.rounds}/5`;
+        const progEl = document.getElementById('mgMechProgress');
+        if (progEl) progEl.innerText = `Runda ${state.rounds}/5`;
         
         let sizes = [13, 14, 15, 16, 55, 56, 57, 58, 59, 60].sort(() => 0.5 - Math.random()).slice(0, 4);
         state.target = sizes[Math.floor(Math.random() * 4)];
         
-        document.getElementById('mgTargetZeb').innerText = state.target;
-        document.getElementById('mgMechTargetText').style.color = "var(--accent)";
-        document.getElementById('mgMechTargetText').innerText = `ZAŁÓŻ: ${state.target} zębów`;
-        dropzone.style.borderColor = "var(--text-dim)";
+        const targetZeb = document.getElementById('mgTargetZeb');
+        if (targetZeb) targetZeb.innerText = state.target;
+        
+        const txtTarget = document.getElementById('mgMechTargetText');
+        if (txtTarget) {
+            txtTarget.style.color = "var(--accent)";
+            txtTarget.innerText = `ZAŁÓŻ: ${state.target} zębów`;
+        }
+        
+        if (dropzone) dropzone.style.borderColor = "var(--text-dim)";
         
         const container = document.getElementById('mgMechItems');
-        container.innerHTML = '';
-        
-        sizes.forEach(size => {
-            let el = document.createElement('div');
-            el.className = 'gear-item';
-            el.style.cssText = 'width:50px; height:50px; border-radius:50%; background:var(--card-bg); border:2px solid #ccc; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; cursor:grab; touch-action:none; z-index:100; font-size:16px;';
-            el.innerText = `${size}`;
-            el.dataset.size = size;
-            
-            el.addEventListener('pointerdown', (e) => {
-                state.draggedEl = el;
-                el.style.position = 'absolute';
-                el.style.cursor = 'grabbing';
-                let rect = el.getBoundingClientRect();
-                state.dragOffsetX = e.clientX - rect.left;
-                state.dragOffsetY = e.clientY - rect.top;
+        if (container) {
+            container.innerHTML = '';
+            sizes.forEach(size => {
+                let el = document.createElement('div');
+                el.className = 'gear-item';
+                el.style.cssText = 'width:50px; height:50px; border-radius:50%; background:var(--card-bg); border:2px solid #ccc; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; cursor:grab; touch-action:none; z-index:100; font-size:16px;';
+                el.innerText = `${size}`;
+                el.dataset.size = size;
                 
-                let containerRect = container.getBoundingClientRect();
-                el.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
-                el.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
+                el.addEventListener('pointerdown', (e) => {
+                    state.draggedEl = el;
+                    el.style.position = 'absolute';
+                    el.style.cursor = 'grabbing';
+                    let rect = el.getBoundingClientRect();
+                    state.dragOffsetX = e.clientX - rect.left;
+                    state.dragOffsetY = e.clientY - rect.top;
+                    
+                    let containerRect = container.getBoundingClientRect();
+                    el.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
+                    el.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
+                });
+                
+                container.appendChild(el);
             });
-            
-            container.appendChild(el);
-        });
+        }
 
         const timeBar = document.getElementById('mgMechTimeBar');
-        timeBar.style.transition = 'none'; timeBar.style.width = '100%';
-        
-        let time = 3500; // Zwiększyłem czas na 3.5s, bo drag & drop trwa ciut dłużej
-        setTimeout(() => { timeBar.style.transition = `width ${time}ms linear`; timeBar.style.width = '0%'; }, 50);
-        
-        state.timer = setTimeout(() => {
-            playSound('error');
-            document.getElementById('mgMechTargetText').innerText = "ZBYT WOLNO!";
-            document.getElementById('mgMechTargetText').style.color = "var(--red-neon)";
-            setTimeout(nextRound, 800);
-        }, time);
+        if (timeBar) {
+            timeBar.style.transition = 'none'; timeBar.style.width = '100%';
+            
+            let time = 3500; 
+            setTimeout(() => { 
+                if(document.getElementById('mgMechTimeBar')) {
+                    document.getElementById('mgMechTimeBar').style.transition = `width ${time}ms linear`; 
+                    document.getElementById('mgMechTimeBar').style.width = '0%'; 
+                }
+            }, 50);
+            
+            state.timer = setTimeout(() => {
+                playSound('error');
+                const txt = document.getElementById('mgMechTargetText');
+                if (txt) {
+                    txt.innerText = "ZBYT WOLNO!";
+                    txt.style.color = "var(--red-neon)";
+                }
+                setTimeout(nextRound, 800);
+            }, time);
+        }
     }
 
     const onPointerMove = (e) => {
         if (!state.draggedEl) return;
         const container = document.getElementById('mgMechItems');
-        const containerRect = container.getBoundingClientRect();
+        if(!container || !dropzone) return;
         
+        const containerRect = container.getBoundingClientRect();
         state.draggedEl.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
         state.draggedEl.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
         
-        // Wizualny hover nad dropzone
         const dropRect = dropzone.getBoundingClientRect();
         if (e.clientX > dropRect.left && e.clientX < dropRect.right && e.clientY > dropRect.top && e.clientY < dropRect.bottom) {
             dropzone.style.borderColor = "var(--accent)";
@@ -8197,29 +8230,29 @@ function startMinigameMechanic() {
 
     const onPointerUp = (e) => {
         if (!state.draggedEl) return;
+        if (!dropzone) return;
+
         const dropRect = dropzone.getBoundingClientRect();
         const size = parseInt(state.draggedEl.dataset.size);
         
-        // Sprawdzamy czy puszczono nad sprzęgłem
         if (e.clientX > dropRect.left && e.clientX < dropRect.right && e.clientY > dropRect.top && e.clientY < dropRect.bottom) {
             clearTimeout(state.timer);
+            const txt = document.getElementById('mgMechTargetText');
+
             if (size === state.target) {
                 playSound('guess');
                 state.successes++;
-                document.getElementById('mgMechTargetText').innerText = "DOBRZE!";
-                document.getElementById('mgMechTargetText').style.color = "var(--green-neon)";
+                if(txt) { txt.innerText = "DOBRZE!"; txt.style.color = "var(--green-neon)"; }
                 dropzone.style.borderColor = "var(--green-neon)";
             } else {
                 playSound('error');
-                document.getElementById('mgMechTargetText').innerText = "ZŁA ZĘBATKA!";
-                document.getElementById('mgMechTargetText').style.color = "var(--red-neon)";
+                if(txt) { txt.innerText = "ZŁA ZĘBATKA!"; txt.style.color = "var(--red-neon)"; }
                 dropzone.style.borderColor = "var(--red-neon)";
             }
             state.draggedEl.style.display = 'none';
             state.draggedEl = null;
             setTimeout(nextRound, 800);
         } else {
-            // Wraca na miejsce jeśli puszczono gdzie indziej
             state.draggedEl.style.position = 'static';
             state.draggedEl.style.cursor = 'grab';
             state.draggedEl = null;
@@ -8238,11 +8271,15 @@ function startMinigameMechanic() {
 // ====== DECYZJE TAKTYCZNE W BIEGU =========
 // ==========================================
 
+// ==========================================
+// ====== DECYZJE TAKTYCZNE W BIEGU =========
+// ==========================================
+
 function promptHeatDecision(ovr, form, prof) {
     return new Promise(resolve => {
         const box = document.getElementById('simDecisionBox');
         if(!box) {
-            resolve({ type: 'follow', cFol: 90, cMid: 50, cOut: 50, cCut: 50 });
+            resolve({ type: 'follow', chance: 90 });
             return;
         }
         
@@ -8283,13 +8320,13 @@ function promptHeatDecision(ovr, form, prof) {
         let sit = situations[Math.floor(Math.random() * situations.length)];
         
         // Modifikatory szans
-        let ovrMod = Math.floor((ovr - 50) / 2); // Do +24% dla topowych graczy
-        let formMod = (form - 1.5) * 10; // -5% do +15% za formę
-        let profMod = (prof - 50) / 5; // Drobny bonus za profesjonalizm (skupienie)
+        let ovrMod = Math.floor((ovr - 50) / 2); 
+        let formMod = (form - 1.5) * 10; 
+        let profMod = (prof - 50) / 5; 
         
         let totalMod = ovrMod + formMod + profMod;
 
-        // Dodanie losowego rozrzutu +/- 5% żeby każda gra była inna
+        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
         const applyMod = (base) => clamp(base + totalMod + (Math.floor(Math.random() * 11) - 5), 5, 95);
 
         let cFol = applyMod(sit.fol.b);
@@ -8308,14 +8345,13 @@ function promptHeatDecision(ovr, form, prof) {
             if(answered) return;
             answered = true;
             box.style.display = 'none';
-            // Przekazujemy wybrane prawdopodobieństwo, by system wiedział czy się udało
             let pickedChance = type === 'follow' ? cFol : (type === 'middle' ? cMid : (type === 'outside' ? cOut : cCut));
             resolve({ type, chance: pickedChance });
         };
     });
 }
 
-// Zmodyfikowany playSingleMatch - zawiera logikę kontuzji i formy
+// Zmodyfikowany playSingleMatch - zawiera logikę kontuzji, formy oraz Poprawiony Dwumecz!
 async function playSingleMatch() {
     let simDiv = document.getElementById('simOverlay');
     if (!simDiv) {
@@ -8399,15 +8435,18 @@ async function playSingleMatch() {
     let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
     let ratio = matchEffOvr / lData.diff;
 
-    // DWUMECZ - OBLICZANIE
+    // ===========================================
+    // DWUMECZ - OBLICZANIE (POPRAWIONE)
+    // ===========================================
     let firstLegScoreMe = 0;
     let firstLegScoreOpp = 0;
     let hasFirstLeg = false;
 
     if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
-        for (let i = 0; i < s.matchIndex; i++) {
+        // PĘTLA WSTECZ - Dzięki temu w fazie play-off znajdziemy pierwszy mecz półfinałowy z tym samym rywalem
+        for (let i = s.matchIndex - 1; i >= 0; i--) {
             let pastMatch = s.schedule[i];
-            if (pastMatch.opp === opponent) { // Ten sam rywal
+            if (pastMatch.opp === opponent && pastMatch.leg === 1) { 
                 let res = s.matchResults[i];
                 if (res && res !== "-") {
                     let p = res.split(':').map(Number); // W historii zawsze wynik dom:wyjazd
@@ -8415,7 +8454,7 @@ async function playSingleMatch() {
                     firstLegScoreOpp = pastMatch.isHome ? p[1] : p[0];
                     hasFirstLeg = true;
                 }
-                break;
+                break; // Kończymy na najświeższym historycznym meczu
             }
         }
     }
@@ -8493,7 +8532,6 @@ async function playSingleMatch() {
                 }
             }
         } else {
-            // Urozmaicone zdarzenia, gdy gracz pauzuje
             if (Math.random() < 0.15) { 
                 const events = [
                     { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)", mod: -0.5 },
@@ -8537,7 +8575,6 @@ async function playSingleMatch() {
 
         let hPts = 0; let hBon = 0;
 
-        // Punkty gracza
         if (isPlayerRiding && !isExclusionPlayer) {
             let teamScore = heatOutcome.me;
             if (teamScore === 5) { hPts = Math.random() < 0.5 ? 3 : 2; hBon = hPts === 2 ? 1 : 0; }
@@ -8553,7 +8590,6 @@ async function playSingleMatch() {
         let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
         simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
         
-        // Zaktualizuj tekst dwumeczu
         if (hasFirstLeg) {
             let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
             let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
@@ -8660,322 +8696,6 @@ function getPlayerHeats(age, numHeats, isHome) {
 // ==========================================
 // ====== SYMULACJA POJEDYNCZEGO MECZU ======
 // ==========================================
-
-function promptHeatDecision(ovr) {
-    return new Promise(resolve => {
-        const box = document.getElementById('simDecisionBox');
-        if(!box) {
-            resolve({ type: 'follow', cFol: 90, cMid: 50, cOut: 50, cCut: 50 });
-            return;
-        }
-        
-        box.style.display = 'flex';
-        
-        const situations = [
-            "Przeciwnik cały czas trzyma się krawężnika. Co robisz?",
-            "Tor po zewnętrznej wydaje się odsypany. Jak to rozegrasz?",
-            "Rywale jadą parą środkiem toru. Gdzie szukasz luki?",
-            "Zostałeś z tyłu po starcie, musisz gonić! Twój plan to...",
-            "Prowadzisz, ale słyszysz ryk silnika tuż za plecami!"
-        ];
-        let sitText = situations[Math.floor(Math.random() * situations.length)];
-        
-        // Obliczanie % szans na podstawie OVR zawodnika
-        let cOut = Math.min(85, Math.max(15, 40 + Math.floor((ovr - 65) / 1.5)));
-        let cCut = Math.min(95, Math.max(30, 65 + Math.floor((ovr - 65) / 2)));
-        let cMid = Math.min(80, Math.max(20, 50 + Math.floor((ovr - 65) / 2)));
-        let cFol = Math.min(95, Math.max(50, 85 + Math.floor((ovr - 65) / 3)));
-
-        document.getElementById('simDecTitle').innerText = sitText;
-        document.getElementById('btnDecFol').innerHTML = `Jedź za nim<br><small style="color:#aaa;">${cFol}% szans na sukces</small>`;
-        document.getElementById('btnDecMid').innerHTML = `Pojedź środkiem<br><small style="color:#aaa;">${cMid}% szans na sukces</small>`;
-        document.getElementById('btnDecOut').innerHTML = `Szukaj prędkości pod bandą<br><small style="color:#aaa;">${cOut}% szans na sukces</small>`;
-        document.getElementById('btnDecCut').innerHTML = `Wyjdź szeroko i zetnij<br><small style="color:#aaa;">${cCut}% szans na sukces</small>`;
-
-        let answered = false;
-
-        window.resolveSimDecision = (type) => {
-            if(answered) return;
-            answered = true;
-            box.style.display = 'none';
-            resolve({ type, cOut, cCut, cMid, cFol });
-        };
-    });
-}
-
-async function playSingleMatch() {
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
-        document.body.appendChild(simDiv);
-    }
-    
-    simDiv.innerHTML = `
-        <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
-        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
-        <div id="simMatchState" style="font-size:13px; font-weight:900; color:var(--text-dim); margin-bottom: 18px; text-align:center; text-transform:uppercase; letter-spacing:1px;"></div>
-        <div id="simMatchScore" style="font-size:18px; font-weight:900; background:rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 12px; margin-bottom: 18px; text-align:center; letter-spacing:1px;">Wynik meczu 0:0</div>
-        <div style="display:flex; gap: 20px; margin-bottom: 30px;">
-            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
-            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
-        </div>
-        <div id="simEvents" style="max-width: 400px; text-align:center; color: var(--red-neon); font-weight:bold; min-height:50px;"></div>
-        
-        <div id="simDecisionBox" style="display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 400px; margin-top: 10px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-            <div id="simDecTitle" style="color:var(--accent); font-weight:900; font-size:15px; text-align:center; line-height:1.4; margin-bottom: 5px;">Sytuacja na torze...</div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecFol" onclick="resolveSimDecision('follow')"></button>
-                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecMid" onclick="resolveSimDecision('middle')"></button>
-                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')"></button>
-                <button class="hub-action-btn" style="padding:12px; font-size:12px; border-radius:10px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecCut" onclick="resolveSimDecision('cut')"></button>
-            </div>
-        </div>
-
-        <div id="simProgressContainer" style="width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 20px;">
-            <div id="simProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
-        </div>
-    `;
-    simDiv.style.display = 'flex';
-
-    const simMatchInfo = document.getElementById('simMatchInfo');
-    const simMatchState = document.getElementById('simMatchState');
-    const simMatchScore = document.getElementById('simMatchScore');
-    const simPts = document.getElementById('simPts');
-    const simAvg = document.getElementById('simAvg');
-    const simEvents = document.getElementById('simEvents');
-    const simProgressBar = document.getElementById('simProgressBar');
-    
-    let s = cState.season;
-    let m = s.matchIndex + 1;
-    let matchObj = s.schedule[s.matchIndex];
-    let opponent = matchObj.opp;
-    let isHome = matchObj.isHome;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-    let oppColor = getCareerClubColor(opponent);
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let lData = CAREER_CONSTANTS[playingLeague];
-    
-    let trackComfort = isHome ? 8 : -10;
-    
-    // Ustalamy strony dla UI
-    let homeClubName = isHome ? playingClub : opponent;
-    let awayClubName = isHome ? opponent : playingClub;
-    let homeMatchScore = 0;
-    let awayMatchScore = 0;
-
-    const totalMatchHeats = 15;
-    const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
-
-    const rollTeamHeatScore = (strengthBias) => {
-        const exclusionRoll = Math.random();
-        
-        if (exclusionRoll < 0.02) {
-            return strengthBias >= 0
-                ? { me: 5, opp: 0, is50: true, text: "Podwójne wykluczenie rywali! - 5:0" }
-                : { me: 0, opp: 5, is05: true, text: "Obaj nasi zawodnicy wykluczeni! - 0:5" };
-        }
-        if (exclusionRoll < 0.05) {
-            return strengthBias >= 0
-                ? { me: 5, opp: 1, text: "Wykluczenie rywala - bieg zakończony 5:1" }
-                : { me: 1, opp: 5, text: "Wykluczenie naszego zawodnika - 1:5" };
-        }
-        if (exclusionRoll < 0.08) {
-            return strengthBias >= 0
-                ? { me: 3, opp: 2, is32: true, text: "Wykluczenie rywala i remisowy układ - 3:2" }
-                : { me: 2, opp: 3, is23: true, text: "Wykluczenie naszego i remisowy układ - 2:3" };
-        }
-
-        const swing = strengthBias + (Math.random() * 0.9 - 0.45);
-        if (swing >= 0.85) return { me: 5, opp: 1, text: "Podwójne zwycięstwo dla nas! - 5:1" };
-        if (swing >= 0.30) return { me: 4, opp: 2, text: "Wygrywamy bieg - 4:2" };
-        if (swing > -0.30) return { me: 3, opp: 3, text: "Remis w biegu - 3:3" };
-        if (swing > -0.85) return { me: 2, opp: 4, text: "Przegrywamy bieg - 2:4" };
-        return { me: 1, opp: 5, text: "Podwójna porażka... - 1:5" };
-    };
-    
-    let heatsInMatch = s.nextMatchHeats || 0;
-    let benched = s.nextMatchBenched || false;
-
-    let heatData = getPlayerHeats(cState.age, heatsInMatch, isHome);
-    let playerHeats = heatData.heats;
-    let startNumber = heatData.number;
-    
-    let matchPts = 0;
-    let matchBon = 0;
-
-    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>${heatsInMatch>0 ? `<div style="font-size: 13px; margin-top:5px; color: var(--accent);">Twój nr startowy: ${startNumber}</div>` : ''}`;
-    
-    let moraleMod = 0;
-    if (cState.relations.team > 80) moraleMod = 3;
-    if (cState.relations.team < 30) moraleMod = -3;
-    let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
-    let ratio = matchEffOvr / lData.diff;
-
-    for (let h = 1; h <= totalMatchHeats; h++) {
-        await new Promise(r => setTimeout(r, 600)); 
-        simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
-        
-        let isPlayerRiding = playerHeats.includes(h);
-        let rideStatus = isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA";
-        
-        let aggHomeText = "";
-        let firstLegScoreMe = 0;
-        let firstLegScoreOpp = 0;
-        let hasFirstLeg = false;
-
-        if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
-            for (let i = 0; i < s.matchIndex; i++) {
-                let pastMatch = s.schedule[i];
-                if (pastMatch.opp === opponent && pastMatch.leg === 1) {
-                    let res = s.matchResults[i];
-                    if (res && res !== "-") {
-                        let p = res.split(':').map(Number);
-                        firstLegScoreMe = isHome ? p[1] : p[0];
-                        firstLegScoreOpp = isHome ? p[0] : p[1];
-                        hasFirstLeg = true;
-                    }
-                    break;
-                }
-            }
-        }
-
-        if (hasFirstLeg) {
-            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
-            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
-            let aggH = isHome ? currentAggMe : currentAggOpp;
-            let aggA = isHome ? currentAggOpp : currentAggMe;
-            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">Dwumecz: ${aggH}:${aggA}</div>`;
-        }
-
-        simMatchScore.innerHTML = `
-            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
-            ${homeMatchScore}:${awayMatchScore} 
-            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
-            ${aggHomeText}
-        `;
-        
-        simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':'var(--text-dim)'};">${rideStatus}</span>`;
-
-        let heatMod = 0;
-        let eventText = `Bieg ${h}: Na torze...`;
-        let eventColor = "#fff";
-        let isExclusionPlayer = false;
-
-        if (isPlayerRiding) {
-            let dec = await promptHeatDecision(cState.ovr);
-            let roll = Math.random() * 100;
-            
-            if (dec.type === 'outside') {
-                if (roll < dec.cOut) { heatMod = 0.8; eventText = `Bieg ${h}: Fenomenalny napęd po zewnętrznej!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.6; eventText = `Bieg ${h}: Wyniosło Cię pod bandę, tracisz pozycję!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'cut') {
-                if (roll < dec.cCut) { heatMod = 1.0; eventText = `Bieg ${h}: Skuteczne nożyce i atak przy krawężniku!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.5; eventText = `Bieg ${h}: Zablokowany przy próbie ścinki!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'middle') {
-                if (roll < dec.cMid) { heatMod = 0.6; eventText = `Bieg ${h}: Pewna jazda środkiem toru!`; eventColor = "var(--green-neon)"; }
-                else { heatMod = -0.4; eventText = `Bieg ${h}: Zbyt pasywnie środkiem, rywale odjeżdżają!`; eventColor = "var(--yellow-neon)"; }
-            } else if (dec.type === 'follow') {
-                if (roll < dec.cFol) { heatMod = 0.2; eventText = `Bieg ${h}: Dowiezione punkty bez ryzyka.`; eventColor = "#fff"; }
-                else { heatMod = -0.3; eventText = `Bieg ${h}: Jazda gęsiego, brak prędkości...`; eventColor = "var(--yellow-neon)"; }
-            } else {
-                heatMod = -0.6; eventText = `Bieg ${h}: Brak reakcji... zostajesz w tyle!`; eventColor = "var(--red-neon)";
-            }
-        } else {
-            if (Math.random() < 0.10) { 
-                const events = [
-                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)" },
-                    { text: "🔥 Atomowy start pary!", mod: 1.0, color: "var(--green-neon)" },
-                    { text: "🚜 Dziura w torze, zawodnik traci rytm...", mod: -1.0, color: "var(--yellow-neon)" },
-                    { text: "🔧 Defekt motocykla na trasie...", p: 0, b: 0, color: "var(--red-neon)" },
-                ];
-                let ev = events[Math.floor(Math.random() * events.length)];
-                eventText = `Bieg ${h}: ${ev.text}`;
-                eventColor = ev.color;
-                if (ev.p === undefined) heatMod = ev.mod;
-            }
-        }
-
-        simEvents.innerText = eventText;
-        simEvents.style.color = eventColor;
-        playSound('flip');
-
-        const strengthBias = clampMatchValue((ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08), -1.2, 1.2);
-        
-        let heatOutcome;
-        if (isExclusionPlayer) {
-            heatOutcome = isHome ? { me: 1, opp: 5 } : { me: 1, opp: 5 }; 
-        } else {
-            heatOutcome = rollTeamHeatScore(strengthBias);
-        }
-        
-        homeMatchScore += isHome ? heatOutcome.me : heatOutcome.opp;
-        awayMatchScore += isHome ? heatOutcome.opp : heatOutcome.me;
-
-        let hPts = 0;
-        let hBon = 0;
-
-        if (isPlayerRiding) {
-            let teamScore = heatOutcome.me;
-            if (isExclusionPlayer) {
-                hPts = 0; hBon = 0;
-            } else {
-                if (teamScore === 5) {
-                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 2; hBon = heatOutcome.is50 ? 0 : 1; }
-                } else if (teamScore === 4) {
-                    if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 1; hBon = 0; }
-                } else if (teamScore === 3) {
-                    if (Math.random() < 0.2) {
-                        if (Math.random() < 0.5) { hPts = 3; hBon = 0; } else { hPts = 0; hBon = 0; }
-                    } else {
-                        if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 1; hBon = heatOutcome.is32 ? 0 : 1; }
-                    }
-                } else if (teamScore === 2) {
-                    if (Math.random() < 0.5) { hPts = 2; hBon = 0; } else { hPts = 0; hBon = 0; }
-                } else if (teamScore === 1) {
-                    if (Math.random() < 0.5) { hPts = 1; hBon = 0; } else { hPts = 0; hBon = 0; }
-                } else {
-                    hPts = 0; hBon = 0;
-                }
-            }
-
-            matchPts += hPts;
-            matchBon += hBon;
-        }
-
-        simPts.innerText = `${matchPts} (+${matchBon})`;
-        let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
-        simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
-        
-        simMatchScore.innerHTML = `
-            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
-            ${homeMatchScore}:${awayMatchScore} 
-            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
-            ${aggHomeText}
-        `;
-    }
-    
-    await new Promise(r => setTimeout(r, 1000));
-    simDiv.style.display = 'none';
-
-    let finalPlayerTeamScore = isHome ? homeMatchScore : awayMatchScore;
-    let finalOpponentScore = isHome ? awayMatchScore : homeMatchScore;
-
-    simulateBotMatchesForCurrentRound(finalPlayerTeamScore, finalOpponentScore, false);
-
-    s.heats += heatsInMatch;
-    s.pts += matchPts;
-    s.bon += matchBon;
-    s.matchResults.push(`${finalPlayerTeamScore}:${finalOpponentScore}`);
-    s.currentMatchScore = { me: finalPlayerTeamScore, opp: finalOpponentScore };
-    s.matchIndex += 1;
-    s.trainedThisWeek = false; 
-
-    updateLeftPanelUI();
-    saveCareer();
-    renderCareerHub();
-}
 
 function signContract(offerIndex) {
     if (!cState.pendingOffers || !cState.pendingOffers[offerIndex]) return;
