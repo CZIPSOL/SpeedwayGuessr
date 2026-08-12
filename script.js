@@ -3036,9 +3036,42 @@ function revealTargetInfoUI(finalName) {
 
     document.getElementById('mysteryPlaceholder').style.display = 'none'; 
     const photoImg = document.getElementById('mysteryPhoto'); 
-    photoImg.src = `images/riders/image_0.png`; 
+    const photoWrapper = document.getElementById('photoWrapper');
+    
+    photoImg.src = target && target.image ? `images/riders/${target.image}` : `images/riders/image_0.png`; 
     photoImg.style.display = 'block';
-    document.getElementById('photoWrapper').classList.add('revealed'); 
+    photoWrapper.classList.add('revealed'); 
+
+    // ---- LOGIKA PRAW AUTORSKICH ZDJĘCIA (COPYRIGHTS) ----
+    let cpEl = document.getElementById('photoCopyright');
+    if (!cpEl) {
+        cpEl = document.createElement('div');
+        cpEl.id = 'photoCopyright';
+        // Style wymuszające tekst pionowy od dołu do góry w rogu zdjęcia
+        cpEl.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            z-index: 10;
+        `;
+        photoWrapper.appendChild(cpEl);
+    }
+    
+    if (target && target.cp) {
+        cpEl.innerHTML = `&copy; ${target.cp}`;
+        cpEl.style.display = 'block';
+    } else {
+        cpEl.style.display = 'none';
+    }
+    // -----------------------------------------------------
     
     document.getElementById('mysteryName').innerText = finalName || (target ? target.name : "???");
     
@@ -3046,7 +3079,7 @@ function revealTargetInfoUI(finalName) {
     
     document.querySelectorAll('.path-box').forEach(box => {
         if (!box.dataset.index || !target) return;
-        let trueClub = target.pastClubs[box.dataset.index]; // Zamiast serverTargetClubs
+        let trueClub = target.pastClubs[box.dataset.index]; 
         let cleanC = getCleanClubName(trueClub).toLowerCase(); 
         if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery', 'aresztowanie'].includes(cleanC)) { box.classList.add('club-special'); }
         box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
@@ -3186,9 +3219,41 @@ function revealTargetInfoUI(finalName) {
     const target = _unlockTarget();
     document.getElementById('mysteryPlaceholder').style.display = 'none'; 
     const photoImg = document.getElementById('mysteryPhoto'); 
-    photoImg.src = `images/riders/image_0.png`; 
+    const photoWrapper = document.getElementById('photoWrapper');
+    
+    photoImg.src = target && target.image ? `images/riders/${target.image}` : `images/riders/image_0.png`; 
     photoImg.style.display = 'block';
-    document.getElementById('photoWrapper').classList.add('revealed'); 
+    photoWrapper.classList.add('revealed'); 
+
+    // ---- LOGIKA PRAW AUTORSKICH ZDJĘCIA (COPYRIGHTS) ----
+    let cpEl = document.getElementById('photoCopyright');
+    if (!cpEl) {
+        cpEl = document.createElement('div');
+        cpEl.id = 'photoCopyright';
+        cpEl.style.cssText = `
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            z-index: 10;
+        `;
+        photoWrapper.appendChild(cpEl);
+    }
+    
+    if (target && target.cp) {
+        cpEl.innerHTML = `&copy; ${target.cp}`;
+        cpEl.style.display = 'block';
+    } else {
+        cpEl.style.display = 'none';
+    }
+    // -----------------------------------------------------
     
     document.getElementById('mysteryName').innerText = finalName || "???";
     
