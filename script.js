@@ -369,6 +369,14 @@ const CURRENT_GAME_VERSION = "Beta v1.3.2";
 const changelog = {
     pl: [
         {
+            version: "Beta v1.4.0", date: "12.08.2026",
+            changes: [
+                "🏍️ <b>Speedway Legend (Tryb Kariery) - OPEN BETA!</b> Wyczekiwany tryb kariery jest już oficjalnie otwarty dla wszystkich graczy! Stwórz swojego zawodnika, pnij się po ligowych szczeblach, bierz udział w losowych zdarzeniach, trenuj na minigrach i zostań legendą żużla.",
+                "🐛 <b>Faza Testów:</b> Ponieważ tryb kariery to ogromny projekt, wciąż znajduje się w fazie testów. Wszelkie błędy lub sugestie prosimy zgłaszać poprzez nasz Discord lub formularz 'Zgłoś błąd' w menu gry.",
+                "🛠️ <b>Poprawki:</b> Załatano krytyczne błędy powodujące zawieszanie gry w trakcie minigier treningowych (Refleks i Szybki Mechanik) oraz naprawiono logikę podliczania wyników w dwumeczach (Play-Offy)."
+            ]
+        },
+        {
             version: "Beta v1.3.2", date: "02.08.2026",
             changes: [
                 "⚙️ <b>Ustawienia pokoju w Clashu:</b> Dodano możliwość podglądu i konfiguracji ustawień pokoju dla meczu Towarzyskiego i Lokalnego. Host może dalej edytować wszystko, a dołączony gracz widzi ustawienia w trybie podglądu.",
@@ -449,6 +457,14 @@ const changelog = {
         }
     ],
     en: [
+       {
+            version: "Beta v1.4.0", date: "12.08.2026",
+            changes: [
+                "🏍️ <b>Speedway Legend (Career Mode) - OPEN BETA!</b> Our highly anticipated single-player career mode is now open to all players! Build your identity, climb the league ladders, manage relations, and become a speedway legend.",
+                "🐛 <b>Beta Phase:</b> Because this is a massive project, the career mode is still in beta testing. Please report any bugs or suggestions via our Discord or the 'Report Bug' form in the game menu.",
+                "🛠️ <b>Under the hood fixes:</b> Patched critical bugs causing the game to freeze during training minigames (Reflex and Quick Mechanic) and fixed aggregate score calculations in Play-Offs."
+            ]
+        },
         {
             version: "Beta v1.3.2", date: "02.08.2026",
             changes: [
