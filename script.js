@@ -5951,9 +5951,15 @@ function loadCareer() {
 // ====== MENU GŁÓWNE KARIERY ===============
 // ==========================================
 
-function openCareerMode() {
-    if (!window.isAdmin && !window.isTester) {
-        appAlert("Tryb 'Speedway Legend' znajduje się w fazie zamkniętych testów.", "Brak dostępu 🔒"); return;
+// ==========================================
+// ====== MENU GŁÓWNE KARIERY ===============
+// ==========================================
+
+async function openCareerMode() {
+    // Sprawdzamy czy użytkownik widział już komunikat o Open Becie
+    if (!localStorage.getItem('speedwayCareerBetaWarningSeen')) {
+        await appAlert("Tryb Kariery (Speedway Legend) wszedł w fazę OPEN BETA! 🚀\n\nJako że gra jest wciąż w fazie testów, możesz natrafić na drobne błędy. Wszelkie problemy oraz sugestie prosimy zgłaszać poprzez formularz 'Zgłoś błąd' w menu głównym gry lub bezpośrednio na naszym serwerze Discord.\n\nBaw się dobrze!", "OPEN BETA");
+        localStorage.setItem('speedwayCareerBetaWarningSeen', 'true');
     }
 
     document.getElementById('mainMenuContainer').style.display = 'none';
