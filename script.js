@@ -172,9 +172,11 @@ if (!playerId) {
 let customClashSettings = {
     size: 3, 
     turnTime: 120, 
-    filterMode: 'leagues', // 'leagues' lub 'clubs'
+    filterMode: 'leagues', 
     leagues: { ext: true, m2e: true, klz: true, other: true },
-    excludedClubs: [], // Lista klubów odznaczonych ręcznie
+    excludedClubs: [], 
+    // NOWE
+    mods: { steal: false, veto: false, joker: false, tieBreaker: false }
 };
 let clashCustomSettingsReadOnly = false;
 
@@ -187,11 +189,27 @@ function openClashCustomSettings(readOnly = false) {
     const overlay = document.getElementById('clashCustomSettingsOverlay');
     overlay.style.display = 'block'; 
     setTimeout(() => overlay.style.opacity = '1', 10);
-    renderCustomClubsChips(); // Generuje listę klubów za każdym otwarciem okna
-    // Setup required-countries slider UI if present
+    
+    // Reset na pierwszą zakładkę
+    switchClashSettingsTab('board');
+
+    // 1. Ustawienie Kafelków Planszy i Czasu
+    const size = customClashSettings.size || 3;
+    const time = customClashSettings.turnTime || 120;
+    
+    // Symulujemy kliknięcie w odpowiedni kafelek, by go zaświecić
+    const sizeCard = document.querySelector(`.size-card[onclick*="${size}"]`);
+    if (sizeCard) selectClashSettingCard('size', size, sizeCard);
+    
+    const timeCard = document.querySelector(`.time-card[onclick*="${time}"]`);
+    if (timeCard) selectClashSettingCard('time', time, timeCard);
+
+    // 2. Kluby
+    renderCustomClubsChips(); 
+    
+    // 3. Suwak państw
     const reqSlider = document.getElementById('customClashRequiredCountries');
     const reqLabel = document.getElementById('customClashRequiredCountriesLabel');
-    const size = customClashSettings.size || 3;
     if (reqSlider) {
         reqSlider.min = 0;
         reqSlider.max = size;
@@ -200,25 +218,28 @@ function openClashCustomSettings(readOnly = false) {
         reqSlider.oninput = () => { if (reqLabel) reqLabel.innerText = reqSlider.value; };
     }
 
-    const saveBtn = overlay.querySelector('button[onclick="saveClashCustomSettings()"]');
-    const closeBtn = overlay.querySelector('button[onclick="closeClashCustomSettings()"]');
+    // 4. Modyfikatory
+    if(customClashSettings.mods) {
+        document.getElementById('customModSteal').checked = customClashSettings.mods.steal || false;
+        document.getElementById('customModVeto').checked = customClashSettings.mods.veto || false;
+        document.getElementById('customModJoker').checked = customClashSettings.mods.joker || false;
+        document.getElementById('customModTieBreaker').checked = customClashSettings.mods.tieBreaker || false;
+    }
+
+    // Blokowanie klikania dla "gościa"
+    const saveBtn = document.getElementById('btnSaveClashSettings');
+    
     overlay.querySelectorAll('input, select, textarea').forEach(el => {
         el.disabled = !!readOnly;
     });
-    if (saveBtn) saveBtn.style.display = readOnly ? 'none' : 'block';
-    if (closeBtn) closeBtn.style.display = 'block';
-    overlay.querySelectorAll('.club-chip').forEach(chip => {
-        chip.style.pointerEvents = readOnly ? 'none' : 'auto';
-        chip.style.opacity = readOnly ? '0.7' : '1';
+    overlay.querySelectorAll('.clash-setting-card').forEach(card => {
+        if (readOnly) card.classList.add('disabled');
+        else card.classList.remove('disabled');
     });
+    
+    if (saveBtn) saveBtn.style.display = readOnly ? 'none' : 'block';
 
     let info = document.getElementById('clashCustomSettingsReadOnlyInfo');
-    if (!info) {
-        info = document.createElement('div');
-        info.id = 'clashCustomSettingsReadOnlyInfo';
-        info.className = 'text-xs text-dim mb-15 text-center';
-        overlay.querySelector('.stats-modal').insertBefore(info, overlay.querySelector('.stats-modal').children[1]);
-    }
     info.innerText = readOnly ? 'Podgląd ustawień pokoju. Tylko host może je edytować.' : '';
     info.style.display = readOnly ? 'block' : 'none';
 }
@@ -279,22 +300,31 @@ function saveClashCustomSettings() {
         closeClashCustomSettings();
         return;
     }
-    customClashSettings.size = parseInt(document.getElementById('customClashSize').value);
-    customClashSettings.turnTime = parseInt(document.getElementById('customClashTime').value);
-    // Required countries (number of column constraints)
+
+    // Czytamy z ukrytych inputów (które aktualizowały kafelki)
+    customClashSettings.size = parseInt(document.getElementById('customClashSizeValue').value);
+    customClashSettings.turnTime = parseInt(document.getElementById('customClashTimeValue').value);
+    
+    // Państwa
     const reqEl = document.getElementById('customClashRequiredCountries');
     if (reqEl) {
         let reqVal = parseInt(reqEl.value) || 0;
         if (reqVal < 0) reqVal = 0;
         if (reqVal > customClashSettings.size) reqVal = customClashSettings.size;
         customClashSettings.requiredCountries = reqVal;
-    } else {
-        customClashSettings.requiredCountries = customClashSettings.requiredCountries || 0;
     }
-    // Exclude inactive players checkbox
+    
     const exclEl = document.getElementById('customClashExcludeInactive');
     if (exclEl) customClashSettings.excludeInactivePlayers = !!exclEl.checked;
     
+    // Modyfikatory
+    if (!customClashSettings.mods) customClashSettings.mods = {};
+    customClashSettings.mods.steal = document.getElementById('customModSteal').checked;
+    customClashSettings.mods.veto = document.getElementById('customModVeto').checked;
+    customClashSettings.mods.joker = document.getElementById('customModJoker').checked;
+    customClashSettings.mods.tieBreaker = document.getElementById('customModTieBreaker').checked;
+
+    // Zapis lig / klubów
     if (customClashSettings.filterMode === 'leagues') {
         customClashSettings.leagues.ext = document.getElementById('customLeagueExt').checked;
         customClashSettings.leagues.m2e = document.getElementById('customLeagueM2e').checked;
@@ -303,10 +333,10 @@ function saveClashCustomSettings() {
         
         if (!customClashSettings.leagues.ext && !customClashSettings.leagues.m2e && !customClashSettings.leagues.klz && !customClashSettings.leagues.other) {
             appAlert("Musisz wybrać co najmniej jedną pulę klubów!", "Błąd ustawień");
+            switchClashSettingsTab('clubs'); // Przerzuć go do okna gdzie jest błąd
             return;
         }
     } else {
-        // Zbieramy odznaczone kluby
         const chips = document.querySelectorAll('#customClubsChipsContainer .club-chip');
         customClashSettings.excludedClubs = [];
         let activeCount = 0;
@@ -319,10 +349,10 @@ function saveClashCustomSettings() {
             }
         });
 
-        // Wymóg absolutnego minimum, żeby plansza w ogóle miała szansę się wygenerować
         const requiredClubs = customClashSettings.size * 2;
         if (activeCount < requiredClubs) {
             appAlert(`Musisz zostawić włączonych co najmniej ${requiredClubs} klubów dla planszy ${customClashSettings.size}x${customClashSettings.size}!`, "Błąd ustawień");
+            switchClashSettingsTab('clubs');
             return;
         }
     }
@@ -368,6 +398,13 @@ const CURRENT_GAME_VERSION = "Beta v1.3.2";
 
 const changelog = {
     pl: [
+        {
+        version: "Beta v1.4.1", date: "19.08.2026",
+            changes: [
+                "🏍️ <b>Zakończenie testów Trybu Kariery:</b> Podjęliśmy decyzję o zamknięciu trybu Kariery (Speedway Legend). Na rynku istnieją inne, dedykowane menedżery żużlowe, a my postanowiliśmy skupić w 100% nasze siły na rozwoju unikalnego trybu multiplayer - <b>Speedway Clash</b>!",
+                "❤️ <b>Dziękujemy testerom:</b> Ogromne podziękowania dla każdego, kto wziął udział w fazie Open Beta, grał, zgłaszał błędy i dzielił się z nami cennymi pomysłami. Jesteście najlepsi!"
+            ]
+        },
         {
             version: "Beta v1.4.0", date: "12.08.2026",
             changes: [
@@ -457,6 +494,13 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.4.1", date: "19.08.2026",
+            changes: [
+                "🏍️ <b>End of Career Mode testing:</b> We have made the decision to close the Career mode (Speedway Legend). There are other dedicated speedway managers on the market, and we want to focus 100% of our efforts on developing our unique multiplayer mode - <b>Speedway Clash</b>!",
+                "❤️ <b>Thank you to all testers:</b> A massive thank you to everyone who participated in the Open Beta, played, reported bugs, and shared their valuable ideas with us. You are the best!"
+            ]
+        },
        {
             version: "Beta v1.4.0", date: "12.08.2026",
             changes: [
@@ -3458,7 +3502,7 @@ async function loadDesktopRanking(type) {
     if (!tbody || !thead || !title) return;
 
     if (type === 'league') {
-        title.innerHTML = `<i>${t('desktopRankClash')}</i>`;
+        title.innerHTML = `<i>${t('desktopRankClash')} - SEZON BETA</i>`;
         title.style.color = '#3399ff';
         if (tabs) tabs.style.display = 'none';
     } else if (type === 'timeattack') {
@@ -4910,6 +4954,35 @@ function showVsScreen(data) {
     document.getElementById('cp1Nick').innerHTML = p1NickHTML; 
     document.getElementById('cp2Nick').innerHTML = p2NickHTML;
 
+    let opponentNick = myClashColor === 'red' ? data.p2.nick : data.p1.nick;
+    let myWins = 0;
+    let oppWins = 0;
+    
+    // Szukamy w lokalnej historii gracza meczów z tym rywalem
+    if (userStats.clashHistory) {
+        userStats.clashHistory.forEach(match => {
+            if (match.opponent === opponentNick) {
+                if (match.result.includes('WYGRANA')) myWins++;
+                if (match.result.includes('PORAŻKA')) oppWins++;
+            }
+        });
+    }
+
+    const h2hContainer = document.getElementById('vsH2HStats');
+    const h2hScore = document.getElementById('vsH2HScore');
+    
+    if (myWins > 0 || oppWins > 0) {
+        // Ustawiamy kolory zalezne od tego, czy gracz jest P1(red) czy P2(blue)
+        if (myClashColor === 'red') {
+            h2hScore.innerHTML = `<span style="color:#ff3333">${myWins}</span> : <span style="color:#3399ff">${oppWins}</span>`;
+        } else {
+            h2hScore.innerHTML = `<span style="color:#ff3333">${oppWins}</span> : <span style="color:#3399ff">${myWins}</span>`;
+        }
+        h2hContainer.style.display = 'block';
+    } else {
+        h2hContainer.style.display = 'none'; // Pierwszy mecz
+    }
+
     vsOverlay.style.display = 'block'; setTimeout(() => vsOverlay.style.opacity = '1', 10); playSound('win');
 
     if(!isLocalClash && myClashColor === 'red') {
@@ -4920,6 +4993,61 @@ function showVsScreen(data) {
         setTimeout(() => { updateLocalClashData({ status: 'coinToss', coinTossWinner }); }, 3000);
     }
 }
+// --- NOWA FUNKCJA: WYSYŁANIE EMOTEK ---
+function sendClashEmote(emoji) {
+    if (!currentClashRoom || isLocalClash) return;
+    
+    // Anty-Spam (max 1 emotka na sekundę)
+    if (window.lastEmoteSentTime && Date.now() - window.lastEmoteSentTime < 1000) return;
+    window.lastEmoteSentTime = Date.now();
+
+    const emoteData = { emoji: emoji, ts: Date.now() };
+    const fieldToUpdate = myClashColor === 'red' ? 'emoteP1' : 'emoteP2';
+
+    db.collection("clash_rooms").doc(currentClashRoom).update({
+        [fieldToUpdate]: emoteData
+    }).catch(e => console.log("Błąd wysyłania emotki:", e));
+}
+
+// --- NOWA FUNKCJA: RYSOWANIE EMOTEK ---
+let lastProcessedEmoteP1 = 0;
+let lastProcessedEmoteP2 = 0;
+
+function showFloatingEmote(emoji, playerColor) {
+    const parentId = playerColor === 'red' ? 'clashPlayer1' : 'clashPlayer2';
+    const parent = document.getElementById(parentId);
+    if (!parent) return;
+
+    const emoteEl = document.createElement('div');
+    emoteEl.className = 'floating-emote';
+    emoteEl.innerText = emoji;
+    
+    // Centrowanie nad nickiem gracza
+    emoteEl.style.left = '50%';
+    emoteEl.style.top = '-20px';
+
+    parent.appendChild(emoteEl);
+
+    // Dźwięk powiadomienia ("pyk")
+    playSound('flip');
+
+    setTimeout(() => {
+        if (emoteEl.parentNode) emoteEl.parentNode.removeChild(emoteEl);
+    }, 2500);
+}
+
+// Zmodyfikuj `listenToClashRoom()` by obsługiwała emotki (dodaj to na końcu listenera):
+        // W funkcji listenToClashRoom() gdzieś na końcu bloku przed zamknięciem `});`
+        if (data.emoteP1 && data.emoteP1.ts > lastProcessedEmoteP1) {
+            lastProcessedEmoteP1 = data.emoteP1.ts;
+            // Pokazuj emotkę tylko, jeśli to NIE TY ją wysłałeś (byś nie widział jej podwójnie),
+            // albo jeśli to ty, żeby zobaczyć że działa - zróbmy, że widzisz własne emotki też.
+            showFloatingEmote(data.emoteP1.emoji, 'red');
+        }
+        if (data.emoteP2 && data.emoteP2.ts > lastProcessedEmoteP2) {
+            lastProcessedEmoteP2 = data.emoteP2.ts;
+            showFloatingEmote(data.emoteP2.emoji, 'blue');
+        }
 
 function playCoinToss(data) {
     const vsOverlay = document.getElementById('clashVsOverlay'); vsOverlay.style.opacity = '0'; setTimeout(() => vsOverlay.style.display = 'none', 300);
@@ -5683,6 +5811,35 @@ function showClashInfo() {
 function closeClashInfo() {
     const overlay = document.getElementById('clashInfoOverlay');
     overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+// Otwieranie zakładek
+window.switchClashSettingsTab = function(tabId) {
+    document.querySelectorAll('.settings-tab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById('tab-' + tabId).style.display = 'block';
+    
+    // Szukamy przycisku, który to wywołał i go podświetlamy
+    document.querySelectorAll('.settings-tab-btn').forEach(b => {
+        if(b.getAttribute('onclick').includes(tabId)) b.classList.add('active');
+    });
+}
+
+// Zaznaczanie kafelków (Rozmiar i Czas)
+window.selectClashSettingCard = function(groupId, value, element) {
+    if (clashCustomSettingsReadOnly) return;
+    
+    document.querySelectorAll(`.${groupId}-card`).forEach(c => c.classList.remove('active'));
+    element.classList.add('active');
+    
+    document.getElementById(`customClash${groupId.charAt(0).toUpperCase() + groupId.slice(1)}Value`).value = value;
+
+    // Jeżeli wybrano planszę inną niż 3x3, aktualizujemy zasięg suwaka krajów
+    if (groupId === 'size') {
+        const reqSlider = document.getElementById('customClashRequiredCountries');
+        if (reqSlider) reqSlider.max = value;
+    }
 }
 
 // --- FORMULARZ ZGŁASZANIA BRAKUJĄCYCH ZAWODNIKÓW ---

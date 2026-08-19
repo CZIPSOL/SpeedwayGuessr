@@ -2319,3 +2319,151 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 #simPts, #simAvg {
     text-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
+
+/* --- EMOTKI W CLASHU --- */
+.clash-emote-panel {
+    display: flex; gap: 8px; justify-content: center; margin-top: 15px;
+}
+.clash-emote-btn {
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); 
+    border-radius: 50%; width: 40px; height: 40px; font-size: 20px; 
+    cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center;
+}
+.clash-emote-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+
+@keyframes emoteFloatUp {
+    0% { opacity: 0; transform: translate(-50%, 20px) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, 0px) scale(1.5); }
+    80% { opacity: 1; transform: translate(-50%, -20px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -40px) scale(0.8); }
+}
+.floating-emote {
+    position: absolute; font-size: 40px; pointer-events: none; z-index: 100;
+    animation: emoteFloatUp 2.5s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5));
+}
+
+/* ============================================== */
+/* ====== NOWY UKŁAD USTAWIEŃ CLASH (TABS) ====== */
+/* ============================================== */
+
+.clash-settings-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    flex: 1;
+    min-height: 350px;
+    max-height: 50vh;
+}
+
+.clash-settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 160px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 15px;
+    flex-shrink: 0;
+}
+
+.settings-tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 12px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.settings-tab-btn.active {
+    background: rgba(241, 196, 15, 0.1);
+    color: var(--accent);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.clash-settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Kafelki wyboru wartości (Plansza / Czas) */
+.clash-setting-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.clash-setting-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.clash-setting-card b {
+    font-size: 16px;
+    color: #fff;
+}
+
+.clash-setting-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.clash-setting-card.active {
+    background: rgba(241, 196, 15, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.2);
+}
+
+.clash-setting-card.active b {
+    color: var(--accent);
+}
+
+.clash-setting-card.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Dostosowanie mobilne */
+@media (max-width: 768px) {
+    .clash-settings-layout {
+        flex-direction: column;
+        max-height: 60vh;
+    }
+    .clash-settings-sidebar {
+        flex-direction: row;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-right: 0;
+        padding-bottom: 10px;
+        overflow-x: auto;
+    }
+    .settings-tab-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        box-shadow: inset 0 -3px 0 transparent;
+    }
+    .settings-tab-btn.active {
+        box-shadow: inset 0 -3px 0 var(--accent) !important;
+    }
+}

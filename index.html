@@ -19,7 +19,7 @@
 
     <link rel="canonical" href="https://speedwayguessr.pl/">
     <link rel="icon" type="image/png" href="images/speedwayguessr-icon.png">
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=1.2">
     <meta property="og:image" content="https://speedwayguessr.pl/miniatura_speedwayguessr.png">
     <script>
         let savedTheme = localStorage.getItem('theme') || 'dark';
@@ -396,7 +396,7 @@
     <div class="nav-arrow">▶</div>
     </div>
 
-    <div class="nav-item-modern hover-yellow" onclick="openCareerMode()">
+    <div class="nav-item-modern hover-yellow" onclick="openCareerMode()" style="display: none;">
                     <div class="nav-icon-box" style="border-color: #d4af37; color: #d4af37;">🏍️</div>
                     <div class="nav-text-main" style="color: #d4af37;">KARIERA (OPEN BETA)</div>
                     <div class="nav-arrow">▶</div>
@@ -751,7 +751,7 @@
         <!-- PRAWA STRONA: Leaderboard (LIGA) wbudowany na sztywno -->
         <div class="desktop-right">
             <div class="desktop-leaderboard-panel">
-                <h2 style="color: #3399ff;"><i>LEADERBOARD (CLASH)</i></h2>
+                <h2 style="color: #3399ff;"><i>LEADERBOARD (CLASH - SEZON BETA)</i></h2>
                 
                 <div class="desktop-table-wrapper">
                     <table class="ranking-table desktop-table">
@@ -845,15 +845,22 @@
     <!-- ====== EKRAN VS (POŁĄCZONO GRACZY) ====== -->
     <!-- ============================================== -->
     <div id="clashVsOverlay" class="win-overlay" style="display: none; z-index: 10005;">
-        <div class="vs-screen-content">
-            <div class="vs-player p1">
-                <div class="vs-icon drop-shadow-red">🔴</div>
-                <h2 id="vsP1Name" class="vs-name">Gracz 1</h2>
+        <div class="vs-screen-content" style="flex-direction: column;"> <!-- ZMIANA NA COLUMN -->
+            <div style="display: flex; align-items: center; gap: 40px; width: 100%; justify-content: center;">
+                <div class="vs-player p1">
+                    <div class="vs-icon drop-shadow-red">🔴</div>
+                    <h2 id="vsP1Name" class="vs-name">Gracz 1</h2>
+                </div>
+                <h1 class="vs-separator">VS</h1>
+                <div class="vs-player p2">
+                    <div class="vs-icon drop-shadow-blue">🔵</div>
+                    <h2 id="vsP2Name" class="vs-name">Gracz 2</h2>
+                </div>
             </div>
-            <h1 class="vs-separator">VS</h1>
-            <div class="vs-player p2">
-                <div class="vs-icon drop-shadow-blue">🔵</div>
-                <h2 id="vsP2Name" class="vs-name">Gracz 2</h2>
+            <!-- NOWY KONTENER HEAD-TO-HEAD -->
+            <div id="vsH2HStats" style="margin-top: 30px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px 30px; text-align: center; display: none;">
+                <div style="font-size: 10px; color: var(--text-dim); text-transform: uppercase; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px;">Historia pojedynków (H2H)</div>
+                <div id="vsH2HScore" style="font-size: 24px; font-weight: 900; color: #fff;">0 : 0</div>
             </div>
         </div>
     </div>
@@ -1066,6 +1073,16 @@
             <!-- Puste, zawartość wygeneruje się z JavaScript w zależności od rozmiaru 3x3, 4x4, 5x5 -->
         </div>
         <button onclick="leaveClashRoom()" class="btn-close mt-30 w-100 border-red text-red" data-i18n="clashSurrender">PODDAJ SIĘ / WYJDŹ</button>
+        <button onclick="leaveClashRoom()" class="btn-close mt-30 w-100 border-red text-red" data-i18n="clashSurrender">PODDAJ SIĘ / WYJDŹ</button>
+        
+        <!-- NOWY PANEL EMOTEK -->
+        <div class="clash-emote-panel" id="clashEmotePanel">
+            <button class="clash-emote-btn" onclick="sendClashEmote('🤯')">🤯</button>
+            <button class="clash-emote-btn" onclick="sendClashEmote('👏')">👏</button>
+            <button class="clash-emote-btn" onclick="sendClashEmote('🤬')">🤬</button>
+            <button class="clash-emote-btn" onclick="sendClashEmote('⏳')">⏳</button>
+            <button class="clash-emote-btn" onclick="sendClashEmote('🤡')">🤡</button>
+        </div>
     </div>
 
     <!-- EKRAN PODSUMOWANIA I REWANŻU -->
@@ -1254,96 +1271,188 @@
         </div>
     </div>
 
-    <!-- USTAWIENIA NIESTANDARDOWE CLASH -->
+<!-- USTAWIENIA NIESTANDARDOWE CLASH (ZAKŁADKI) -->
     <div id="clashCustomSettingsOverlay" class="win-overlay" style="display: none; z-index: 10040;">
-        <div class="stats-modal modal-md" style="max-height:80vh; overflow-y:auto; padding-right:12px;">
-            <h2 class="text-accent mb-15">USTAWIENIA POKOJU</h2>
+        <div class="stats-modal modal-lg" style="max-height:85vh; overflow:hidden; display: flex; flex-direction: column;">
             
-            <div class="form-group-clash text-left">
-                <label>Wymiary planszy</label>
-                <select id="customClashSize" class="custom-select">
-                    <option value="3" selected>Klasyczna (3x3)</option>
-                    <option value="4">Powiększona (4x4) - Trudna</option>
-                    <option value="5">Ogromna (5x5) - Bardzo trudna</option>
-                </select>
-            </div>
+            <h2 class="text-accent mb-15 text-center uppercase font-black" style="letter-spacing: 2px;">USTAWIENIA POKOJU</h2>
+            <div id="clashCustomSettingsReadOnlyInfo" class="text-xs text-dim mb-15 text-center" style="display: none;"></div>
 
-            <div class="form-group-clash text-left">
-                <label>Czas na odpowiedź</label>
-                <select id="customClashTime" class="custom-select">
-                    <option value="30">30 sekund (Speedrun)</option>
-                    <option value="60">60 sekund</option>
-                    <option value="120" selected>120 sekund (Standard)</option>
-                    <option value="300">5 minut</option>
-                </select>
-            </div>
-
-            <div class="form-group-clash text-left">
-                <label class="text-center">Pula klubów</label>
+            <!-- LAYOUT Z PASKIEM BOCZNYM -->
+            <div class="clash-settings-layout">
                 
-                <!-- Przełącznik Trybu Filtracji -->
-                <div class="filter-toggle-container">
-                    <span id="labelLeagues" class="filter-toggle-label active">WG LIG</span>
-                    <label class="switch">
-                        <input type="checkbox" id="clubFilterToggle" onchange="toggleClubFilterMode()">
-                        <span class="slider"></span>
-                    </label>
-                    <span id="labelClubs" class="filter-toggle-label">WG KLUBÓW</span>
+                <!-- LEWY PASEK BOK (ZAKŁADKI) -->
+                <div class="clash-settings-sidebar">
+                    <button class="settings-tab-btn active" onclick="switchClashSettingsTab('board')">
+                        <span style="font-size:16px;">🏁</span> Plansza
+                    </button>
+                    <button class="settings-tab-btn" onclick="switchClashSettingsTab('clubs')">
+                        <span style="font-size:16px;">🛡️</span> Kluby
+                    </button>
+                    <button class="settings-tab-btn" onclick="switchClashSettingsTab('mods')">
+                        <span style="font-size:16px;">⚡</span> Modyfikatory
+                    </button>
                 </div>
 
-                <!-- Sekcja LIG -->
-                <div id="filterLeaguesSection" class="modern-checkbox-list">
-                    <label class="modern-checkbox-label">
-                        <input type="checkbox" id="customLeagueExt" checked>
-                        <span class="modern-checkbox-text">PGE Ekstraliga</span>
-                    </label>
-                    <label class="modern-checkbox-label">
-                        <input type="checkbox" id="customLeagueM2e" checked>
-                        <span class="modern-checkbox-text">Metalkas 2. Ekstraliga</span>
-                    </label>
-                    <label class="modern-checkbox-label">
-                        <input type="checkbox" id="customLeagueKlz" checked>
-                        <span class="modern-checkbox-text">Krajowa Liga Żużlowa</span>
-                    </label>
-                    <label class="modern-checkbox-label">
-                        <input type="checkbox" id="customLeagueOther" checked>
-                        <span class="modern-checkbox-text">Kluby Historyczne / Inne</span>
-                    </label>
-                </div>
+                <!-- PRAWA STRONA (ZAWARTOŚĆ) -->
+                <div class="clash-settings-content">
+                    
+                    <!-- ===================================== -->
+                    <!-- ZAKŁADKA 1: PLANSZA -->
+                    <!-- ===================================== -->
+                    <div id="tab-board" class="settings-tab-panel active text-left">
+                        <label class="text-dim text-xs font-bold uppercase mb-10" style="display:block;">Rozmiar planszy</label>
+                        <input type="hidden" id="customClashSizeValue" value="3">
+                        <div class="clash-setting-card-grid mb-20">
+                            <div class="clash-setting-card size-card" onclick="selectClashSettingCard('size', 3, this)">
+                                <b>3x3</b><br><span class="text-dim text-xs">Klasyczna</span>
+                            </div>
+                            <div class="clash-setting-card size-card" onclick="selectClashSettingCard('size', 4, this)">
+                                <b>4x4</b><br><span class="text-dim text-xs">Trudna</span>
+                            </div>
+                            <div class="clash-setting-card size-card" onclick="selectClashSettingCard('size', 5, this)">
+                                <b>5x5</b><br><span class="text-dim text-xs">Hardcore</span>
+                            </div>
+                        </div>
 
-                <!-- Sekcja KONKRETNYCH KLUBÓW -->
-                <div id="filterClubsSection" style="display: none;">
-                    <div class="flex-row gap-10 justify-center mb-10">
-                        <button onclick="toggleAllClubs(true)" class="btn-flat" style="font-size:10px; padding:6px 12px; border-radius:8px;">ZAZNACZ WSZYSTKIE</button>
-                        <button onclick="toggleAllClubs(false)" class="btn-flat" style="font-size:10px; padding:6px 12px; border-radius:8px;">ODZNACZ WSZYSTKIE</button>
+                        <label class="text-dim text-xs font-bold uppercase mb-10" style="display:block;">Czas na odpowiedź</label>
+                        <input type="hidden" id="customClashTimeValue" value="120">
+                        <div class="clash-setting-card-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="clash-setting-card time-card" onclick="selectClashSettingCard('time', 30, this)">
+                                <b>30s</b><br><span class="text-dim text-xs">Speedrun</span>
+                            </div>
+                            <div class="clash-setting-card time-card" onclick="selectClashSettingCard('time', 60, this)">
+                                <b>60s</b><br><span class="text-dim text-xs">Szybko</span>
+                            </div>
+                            <div class="clash-setting-card time-card" onclick="selectClashSettingCard('time', 120, this)">
+                                <b>120s</b><br><span class="text-dim text-xs">Standard</span>
+                            </div>
+                            <div class="clash-setting-card time-card" onclick="selectClashSettingCard('time', 300, this)">
+                                <b>5 min</b><br><span class="text-dim text-xs">Luz</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="club-chips-wrapper" id="customClubsChipsContainer">
-                        <!-- Generowane z JS -->
+
+                    <!-- ===================================== -->
+                    <!-- ZAKŁADKA 2: KLUBY -->
+                    <!-- ===================================== -->
+                    <div id="tab-clubs" class="settings-tab-panel text-left" style="display: none;">
+                        <label class="text-dim text-xs font-bold uppercase mb-10 text-center" style="display:block;">Filtrowanie klubów</label>
+                        
+                        <div class="filter-toggle-container">
+                            <span id="labelLeagues" class="filter-toggle-label active">WG LIG</span>
+                            <label class="switch">
+                                <input type="checkbox" id="clubFilterToggle" onchange="toggleClubFilterMode()">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="labelClubs" class="filter-toggle-label">WG KLUBÓW</span>
+                        </div>
+
+                        <!-- Ligi -->
+                        <div id="filterLeaguesSection" class="modern-checkbox-list mb-15">
+                            <label class="modern-checkbox-label">
+                                <input type="checkbox" id="customLeagueExt" checked>
+                                <span class="modern-checkbox-text">PGE Ekstraliga</span>
+                            </label>
+                            <label class="modern-checkbox-label">
+                                <input type="checkbox" id="customLeagueM2e" checked>
+                                <span class="modern-checkbox-text">Metalkas 2. Ekstraliga</span>
+                            </label>
+                            <label class="modern-checkbox-label">
+                                <input type="checkbox" id="customLeagueKlz" checked>
+                                <span class="modern-checkbox-text">Krajowa Liga Żużlowa</span>
+                            </label>
+                            <label class="modern-checkbox-label">
+                                <input type="checkbox" id="customLeagueOther" checked>
+                                <span class="modern-checkbox-text">Kluby Historyczne / Inne</span>
+                            </label>
+                        </div>
+
+                        <!-- Kluby -->
+                        <div id="filterClubsSection" style="display: none; margin-bottom: 15px;">
+                            <div class="flex-row gap-10 justify-center mb-10">
+                                <button onclick="toggleAllClubs(true)" class="btn-flat" style="font-size:10px; padding:6px 12px; border-radius:8px;">ZAZNACZ WSZYSTKIE</button>
+                                <button onclick="toggleAllClubs(false)" class="btn-flat" style="font-size:10px; padding:6px 12px; border-radius:8px;">ODZNACZ WSZYSTKIE</button>
+                            </div>
+                            <div class="club-chips-wrapper" id="customClubsChipsContainer"></div>
+                        </div>
+
+                        <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+
+                        <label class="text-dim text-xs font-bold uppercase mb-10" style="display:block;">Wymagana narodowość (Kolumny)</label>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input id="customClashRequiredCountries" type="range" min="0" max="3" value="0" style="flex:1;" oninput="document.getElementById('customClashRequiredCountriesLabel').innerText = this.value">
+                            <span id="customClashRequiredCountriesLabel" style="min-width:28px; text-align:center; font-weight:900; color:var(--accent);">0</span>
+                        </div>
+                        <div class="text-xs text-dim mt-8 mb-15">0 = brak wymogu. Im wyższa wartość, tym więcej kolumn będzie wymagało konkretnego kraju.</div>
+
+                        <label class="modern-checkbox-label" style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="customClashExcludeInactive">
+                            <span class="modern-checkbox-text">Wyklucz nieaktywnych (Kontekst / Ś.P.)</span>
+                        </label>
                     </div>
+
+                    <!-- ===================================== -->
+                    <!-- ZAKŁADKA 3: MODYFIKATORY -->
+                    <!-- ===================================== -->
+                    <div id="tab-mods" class="settings-tab-panel text-left" style="display: none;">
+                        <label class="text-accent text-xs font-bold uppercase mb-10 text-center" style="display:block;">Zasady Specjalne</label>
+                        <div class="text-dim text-xs text-center mb-15">Zmieniają balans gry. Dostępne tylko w meczach Towarzyskich.</div>
+                        
+                        <div class="modern-checkbox-list">
+                            <label class="modern-checkbox-label" title="Pozwala raz na mecz przejąć zajęte pole przeciwnika">
+                                <input type="checkbox" id="customModSteal">
+                                <span class="modern-checkbox-text">🥷 Kradzież Pól (1 na mecz)</span>
+                            </label>
+                            <label class="modern-checkbox-label" title="Każdy gracz banuje 1 klub przed startem">
+                                <input type="checkbox" id="customModVeto">
+                                <span class="modern-checkbox-text">🚫 Faza Banowania Klubów (Veto)</span>
+                            </label>
+                            <label class="modern-checkbox-label" title="Ignoruje warunek państwa kosztem skrócenia czasu o połowę">
+                                <input type="checkbox" id="customModJoker">
+                                <span class="modern-checkbox-text">🃏 Karta Joker (1 na mecz)</span>
+                            </label>
+                            <label class="modern-checkbox-label" title="Gdy plansza się zapełni i jest remis, decyduje szybkie pole finałowe">
+                                <input type="checkbox" id="customModTieBreaker">
+                                <span class="modern-checkbox-text">🏁 Złoty Bieg (Rozstrzyganie remisów)</span>
+                            </label>
+                        </div>
+                    </div>
+
                 </div>
-            </div>
+            </div> <!-- End Layout -->
 
-            <div class="form-group-clash text-left" style="margin-top:10px;">
-                <label>Wymagana liczba narodowości (kolumny)</label>
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <input id="customClashRequiredCountries" type="range" min="0" max="3" value="0" style="flex:1;" oninput="document.getElementById('customClashRequiredCountriesLabel').innerText = this.value">
-                    <span id="customClashRequiredCountriesLabel" style="min-width:28px; text-align:center;">0</span>
-                </div>
-                <div class="text-xs text-dim mt-8">Wybierz ile kolumn wymaga zawodnika z określonego kraju. (0 = brak wymogu)</div>
+            <!-- PRZYCISKI DOLNE (Fixed) -->
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px;">
+                <button onclick="closeClashCustomSettings()" class="btn-close flex-1 text-sm p-12">ANULUJ</button>
+                <button id="btnSaveClashSettings" onclick="saveClashCustomSettings()" class="btn-reset flex-2 text-sm p-12">ZAPISZ USTAWIENIA</button>
             </div>
-
-            <div class="form-group-clash text-left" style="margin-top:8px;">
-                <label class="modern-checkbox-label" style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" id="customClashExcludeInactive">
-                    <span class="modern-checkbox-text">Wyklucz zawodników nieaktywnych / zawieszonych</span>
-                </label>
-                <div class="text-xs text-dim mt-8">Jeśli włączone, generator puli pominie zawodników oznaczonych jako nieaktywni.</div>
-            </div>
-
-            <button onclick="saveClashCustomSettings()" class="btn-reset w-100 text-sm p-15">ZAPISZ USTAWIENIA</button>
-            <button onclick="closeClashCustomSettings()" class="btn-close w-100 mt-10 text-sm p-15">ANULUJ</button>
+            
         </div>
     </div>
+
+    <!-- NOWA SEKCJA: MODYFIKATORY ZASAD -->
+            <div class="form-group-clash text-left mt-20">
+                <label class="text-accent text-center w-100" style="display:block;">MODYFIKATORY (Tylko Towarzyskie)</label>
+                <div class="modern-checkbox-list mt-10">
+                    <label class="modern-checkbox-label" title="Pozwala raz na mecz przejąć zajęte pole przeciwnika">
+                        <input type="checkbox" id="customModSteal">
+                        <span class="modern-checkbox-text">🥷 Kradzież Pól (1 na mecz)</span>
+                    </label>
+                    <label class="modern-checkbox-label" title="Każdy gracz banuje 1 klub przed startem">
+                        <input type="checkbox" id="customModVeto">
+                        <span class="modern-checkbox-text">🚫 Faza Banowania Klubów (Veto)</span>
+                    </label>
+                    <label class="modern-checkbox-label" title="Ignoruje warunek państwa kosztem skrócenia czasu o połowę">
+                        <input type="checkbox" id="customModJoker">
+                        <span class="modern-checkbox-text">🃏 Karta Joker (1 na mecz)</span>
+                    </label>
+                    <label class="modern-checkbox-label" title="Gdy plansza się zapełni i jest remis, decyduje szybkie pole finałowe">
+                        <input type="checkbox" id="customModTieBreaker">
+                        <span class="modern-checkbox-text">🏁 Złoty Bieg (Rozstrzyganie remisów)</span>
+                    </label>
+                </div>
+            </div>
 
     <!-- ============================================== -->
     <!-- ====== STOPKA I AKCJE PO GRZE ====== -->
@@ -1379,7 +1488,7 @@
 
     <script src="db.js?v2.2"></script>
     <script src="events.js?v2.3"></script>
-    <script src="script.js?v2.72"></script>
+    <script src="script.js?v2.73"></script>
 
     
 </body>
