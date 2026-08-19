@@ -5062,9 +5062,6 @@ function sendClashEmote(emoji) {
     }).catch(e => console.log("Błąd wysyłania emotki:", e));
 }
 
-// --- NOWA FUNKCJA: RYSOWANIE EMOTEK ---
-let lastProcessedEmoteP1 = 0;
-let lastProcessedEmoteP2 = 0;
 
 function showFloatingEmote(emoji, playerColor) {
     const parentId = playerColor === 'red' ? 'clashPlayer1' : 'clashPlayer2';
