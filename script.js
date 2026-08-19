@@ -2156,51 +2156,61 @@ async function syncLeagueScoreToFirebase() {
     if (!playerId) return; 
 
     // BLOKADA ANTI-CRASH: Jeśli masz ID z Google, ale Firebase jeszcze Cię nie zautoryzował (trwa ładowanie), 
-    // to bezwzględnie blokujemy wysyłkę, żeby serwer nie wyrzucił błędu Permissions!
+    // to bezwzględnie blokujemy wysyłkę.
     if (!auth.currentUser && !playerId.startsWith('guest_')) {
         return; 
     }
 
     const league = ensureLeagueStats(userStats).clashLeague;
+    let eloToSend = Math.round(league.elo);
+    
+    // Ochrona przed zepsutymi wartościami (NaN, ujemne)
+    if (isNaN(eloToSend) || eloToSend === null || eloToSend < 0) eloToSend = 1000;
+    if (eloToSend > 5000) eloToSend = 5000;
 
     try {
-        await db.collection('leaderboard_clash_beta').doc(playerId).set({
+        // SPRAWDZAMY ZANIM WYŚLEMY (aby uniknąć czerwonego błędu Permissions w konsoli)
+        const docRef = db.collection('leaderboard_clash_beta').doc(playerId);
+        const docSnap = await docRef.get();
+        
+        if (docSnap.exists) {
+            const cloudData = docSnap.data();
+            const cloudElo = cloudData.elo || 1000;
+            
+            // Jeśli różnica ELO wykracza poza reguły bazy danych (prawie 200),
+            // Oznacza to, że gracz grał na innym urządzeniu i lokalny save jest zepsuty/stary!
+            if (Math.abs(cloudElo - eloToSend) > 190) {
+                console.warn(`Wykryto asynchronizację ELO (Lokalne: ${eloToSend} vs Serwer: ${cloudElo}). Pobieram poprawne dane z rankingu...`);
+                
+                userStats.clashLeague.elo = cloudElo;
+                userStats.clashLeague.matchesPlayed = cloudData.matchesPlayed || league.matchesPlayed;
+                userStats.clashLeague.wins = cloudData.wins || league.wins;
+                userStats.clashLeague.losses = cloudData.losses || league.losses;
+                userStats.clashLeague.draws = cloudData.draws || league.draws;
+                
+                localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
+                updateLeagueUI();
+                
+                return; // Zamykamy funkcję - NIE ZAPISUJEMY starych danych do bazy!
+            }
+        }
+
+        // Jeśli różnica jest w normie (albo gracz gra pierwszy raz), bezpiecznie aktualizujemy bazę
+        await docRef.set({
             nick: playerNickname || 'Gracz',
             club: userStats.favoriteClub || null,
-            elo: Math.round(league.elo),
+            elo: eloToSend,
             matchesPlayed: league.matchesPlayed,
             wins: league.wins,
             losses: league.losses,
             draws: league.draws,
-            rank: getLeagueRankName(league.elo, league.matchesPlayed),
+            rank: getLeagueRankName(eloToSend, league.matchesPlayed),
             provisional: league.matchesPlayed < 5,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+
     } catch (e) { 
-        console.error('League leaderboard sync error:', e); 
-        
-        // AUTO-NAPRAWA (DESYNC): Jeżeli serwer wywalił błąd Permissions, prawdopodobnie Twoje lokalne ELO 
-        // różni się od chmurowego o więcej niż pozwalają na to reguły (grałeś na innym urządzeniu).
-        if (e.message.includes('permissions') && auth.currentUser) {
-            try {
-                const docRef = await db.collection('leaderboard_clash_beta').doc(playerId).get();
-                if (docRef.exists) {
-                    const cloudData = docRef.data();
-                    if (Math.abs(cloudData.elo - league.elo) > 50) {
-                        console.warn("Wykryto asynchronizację ELO. Naprawiam dane za pomocą chmury...");
-                        userStats.clashLeague.elo = cloudData.elo;
-                        userStats.clashLeague.matchesPlayed = cloudData.matchesPlayed;
-                        userStats.clashLeague.wins = cloudData.wins;
-                        userStats.clashLeague.losses = cloudData.losses;
-                        userStats.clashLeague.draws = cloudData.draws;
-                        localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
-                        updateLeagueUI();
-                    }
-                }
-            } catch (err) {
-                console.error("Nie udało się naprawić asynchronizacji ELO:", err);
-            }
-        }
+        console.warn('Ostrzeżenie synchronizacji Ligi Clash:', e.message); 
     }
 }
 
