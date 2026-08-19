@@ -2222,6 +2222,11 @@ function updateStatsOnWin() {
     if (!hintActive) userStats.trackers.winsNoHint++;
     checkAchievements();
 
+    // NOWOŚĆ: Postęp misji i EXP
+    updateMissionProgress('play_endless', 1);
+    if (!hintActive) updateMissionProgress('no_hint_win', 1);
+    addExp(20); // 20 EXP za wygraną
+
     if(userStats.currentStreak > userStats.maxStreak) userStats.maxStreak = userStats.currentStreak;
     if (gameMode === 'daily') {
         userStats.dailyResults[selectedDailyDay] = 'win'; userStats.dailyHistory.push(true);
@@ -2234,6 +2239,11 @@ function updateStatsOnWin() {
 function updateStatsOnLoss() {
     if(hasWon || hasLost) return; hasLost = true;
     userStats.played++; userStats.currentStreak = 0; 
+    
+    // NOWOŚĆ: Postęp misji i EXP
+    updateMissionProgress('play_endless', 1);
+    addExp(5); // Nagroda pocieszenia
+
     if (gameMode === 'daily') {
         userStats.dailyResults[selectedDailyDay] = 'loss'; userStats.dailyHistory.push(false);
         if (userStats.dailyHistory.length > 5) userStats.dailyHistory.shift();
@@ -3011,6 +3021,13 @@ function finishTimeAttack() {
     if (validCount > userStats.timeAttack.highestScore) {
         userStats.timeAttack.highestScore = validCount;
     }
+
+    // NOWOŚĆ: Postęp misji i EXP dla Time Attack
+    if (validCount > 0) {
+        updateMissionProgress('ta_score', validCount);
+        addExp(validCount * 2); // 2 exp za każdego zgadniętego
+    }
+
     saveStats();
     syncTimeAttackScoreToFirebase(validCount);
     
@@ -4524,10 +4541,18 @@ async function updateLeagueStats(gameData) {
                 eloChange += 5;
                 resultText += ` (SERIA 🔥 +5)`;
             }
+            
+            // NOWOŚĆ
+            updateMissionProgress('win_clash', 1);
+            addExp(50); // Dużo EXP za wygraną
+            
         } else {
             league.losses++;
             league.winStreak = 0;
             resultText = finishedBySurrender ? "PORAŻKA (PODDANIE)" : "PORAŻKA";
+            
+            // NOWOŚĆ
+            addExp(15); // Nagroda pocieszenia
         }
     }
 
@@ -9281,6 +9306,212 @@ function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proc
     };
 }
 
+// ==============================================
+// ====== SYSTEM POZIOMÓW, MISJI I SKLEPU =======
+// ==============================================
+
+const MISSIONS_POOL = [
+    { type: 'play_endless', target: 3, desc: 'Rozegraj 3 gry w trybie Endless', exp: 100, coins: 50 },
+    { type: 'play_endless', target: 5, desc: 'Rozegraj 5 gier w trybie Endless', exp: 150, coins: 80 },
+    { type: 'win_clash', target: 1, desc: 'Wygraj 1 mecz w Speedway Clash', exp: 200, coins: 100 },
+    { type: 'win_clash', target: 3, desc: 'Wygraj 3 mecze w Speedway Clash', exp: 400, coins: 200 },
+    { type: 'ta_score', target: 20, desc: 'Zdobądź 20 pkt. w Time Attack (Suma)', exp: 150, coins: 70 },
+    { type: 'ta_score', target: 50, desc: 'Zdobądź 50 pkt. w Time Attack (Suma)', exp: 300, coins: 150 },
+    { type: 'no_hint_win', target: 1, desc: 'Wygraj grę bez podpowiedzi (Daily/Endless)', exp: 100, coins: 50 },
+    { type: 'no_hint_win', target: 3, desc: 'Wygraj 3 gry bez podpowiedzi (Daily/Endless)', exp: 250, coins: 120 }
+];
+
+function ensureProgressionStats() {
+    if (typeof userStats.level === 'undefined') userStats.level = 1;
+    if (typeof userStats.exp === 'undefined') userStats.exp = 0;
+    if (typeof userStats.coins === 'undefined') userStats.coins = 0;
+    if (!userStats.missions) userStats.missions = { date: "", tasks: [] };
+    if (!userStats.equippedTitle) userStats.equippedTitle = null;
+    
+    // Sprawdzamy czy to nowy dzień -> generujemy nowe misje
+    const todayStr = new Date().toLocaleDateString();
+    if (userStats.missions.date !== todayStr) {
+        userStats.missions.date = todayStr;
+        
+        // Losujemy 3 unikalne misje z puli
+        let shuffled = [...MISSIONS_POOL].sort(() => 0.5 - Math.random());
+        userStats.missions.tasks = shuffled.slice(0, 3).map(m => ({
+            ...m, progress: 0, completed: false, claimed: false
+        }));
+    }
+}
+
+function getRequiredExp(level) {
+    return Math.floor(100 * Math.pow(1.2, level - 1)); // Eksponencjalny wzrost EXP
+}
+
+function addExp(amount) {
+    ensureProgressionStats();
+    userStats.exp += amount;
+    let reqExp = getRequiredExp(userStats.level);
+    
+    let leveledUp = false;
+    while (userStats.exp >= reqExp) {
+        userStats.exp -= reqExp;
+        userStats.level++;
+        userStats.coins += 100; // Bonus 100 monet za wbicie poziomu!
+        reqExp = getRequiredExp(userStats.level);
+        leveledUp = true;
+    }
+    
+    if (leveledUp) {
+        showToast(`🎉 AWANS NA POZIOM ${userStats.level}! (+100 🪙)`, "success");
+    }
+    saveStats();
+}
+
+function updateMissionProgress(type, amount = 1) {
+    ensureProgressionStats();
+    let updated = false;
+    
+    userStats.missions.tasks.forEach((task) => {
+        if (task.type === type && !task.completed) {
+            task.progress += amount;
+            if (task.progress >= task.target) {
+                task.progress = task.target;
+                task.completed = true;
+                showToast(`✅ Misja ukończona: ${task.desc}!`, "success");
+            }
+            updated = true;
+        }
+    });
+    
+    if (updated) saveStats();
+}
+
+function renderProfileExpBar() {
+    ensureProgressionStats();
+    const lvlEl = document.getElementById('profileLevel');
+    const coinsEl = document.getElementById('profileCoins');
+    const expBar = document.getElementById('profileExpBar');
+    const expText = document.getElementById('profileExpText');
+    
+    if(!lvlEl || !coinsEl) return;
+    
+    const reqExp = getRequiredExp(userStats.level);
+    const pct = Math.min(100, Math.floor((userStats.exp / reqExp) * 100));
+    
+    lvlEl.innerText = userStats.level;
+    coinsEl.innerText = userStats.coins;
+    expBar.style.width = `${pct}%`;
+    expText.innerText = `${userStats.exp} / ${reqExp} EXP`;
+}
+
+// Nadpisanie domyślnej funkcji Profilu, by rysowała też EXP
+const originalOpenProfile = openProfile;
+window.openProfile = function() {
+    originalOpenProfile();
+    renderProfileExpBar();
+}
+
+// ==============================================
+// ====== UI MISJI I SKLEPU =====================
+// ==============================================
+
+function openMissionsShop() {
+    ensureProgressionStats();
+    document.getElementById('mainMenuContainer').style.display = 'none';
+    const desktopMenu = document.getElementById('desktopMainMenu');
+    if(desktopMenu) desktopMenu.style.display = 'none';
+    
+    const overlay = document.getElementById('missionsShopOverlay');
+    overlay.style.display = 'flex';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+    
+    switchMsTab('missions');
+}
+
+function closeMissionsShop() {
+    const overlay = document.getElementById('missionsShopOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        window.location.reload(); // Prosty powrót do widoku głównego
+    }, 300);
+}
+
+function switchMsTab(tab) {
+    document.getElementById('msTabMissions').classList.remove('active');
+    document.getElementById('msTabShop').classList.remove('active');
+    
+    if (tab === 'missions') {
+        document.getElementById('msTabMissions').classList.add('active');
+        document.getElementById('msPanelMissions').style.display = 'block';
+        document.getElementById('msPanelShop').style.display = 'none';
+        renderMissions();
+    } else {
+        document.getElementById('msTabShop').classList.add('active');
+        document.getElementById('msPanelMissions').style.display = 'none';
+        document.getElementById('msPanelShop').style.display = 'block';
+        renderShop();
+    }
+    
+    document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
+}
+
+function renderMissions() {
+    const container = document.getElementById('missionsListContainer');
+    container.innerHTML = '';
+    
+    userStats.missions.tasks.forEach((task, index) => {
+        let pct = Math.min(100, Math.floor((task.progress / task.target) * 100));
+        
+        let actionHtml = '';
+        if (task.claimed) {
+            actionHtml = `<button class="shop-btn" style="background:transparent; border:1px solid var(--text-dim); color:var(--text-dim);" disabled>Odebrano</button>`;
+        } else if (task.completed) {
+            actionHtml = `<button class="shop-btn shop-btn-buy" onclick="claimMission(${index})">Odbierz</button>`;
+        } else {
+            actionHtml = `<span style="font-size: 13px; font-weight: 900; color: var(--text-dim);">${task.progress} / ${task.target}</span>`;
+        }
+
+        container.innerHTML += `
+            <div class="mission-card ${task.completed ? 'completed' : ''}">
+                <div class="mission-info">
+                    <div class="mission-title">${task.desc}</div>
+                    <div class="mission-reward">NAGRODA: ${task.exp} EXP | ${task.coins} 🪙</div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px;">
+                        <div style="width: ${pct}%; height: 100%; background: ${task.completed ? 'var(--green-neon)' : 'var(--accent)'};"></div>
+                    </div>
+                </div>
+                <div>${actionHtml}</div>
+            </div>
+        `;
+    });
+}
+
+function claimMission(index) {
+    let task = userStats.missions.tasks[index];
+    if (!task || task.claimed || !task.completed) return;
+    
+    task.claimed = true;
+    userStats.coins += task.coins;
+    addExp(task.exp);
+    
+    showToast(`Odebrano: ${task.coins} 🪙 i ${task.exp} EXP`, "success");
+    saveStats();
+    
+    document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
+    renderMissions();
+}
+
+function renderShop() {
+    const container = document.getElementById('shopListContainer');
+    // SKLEP W BUDOWIE:
+    container.innerHTML = `
+        <div style="text-align: center; margin-top: 40px; color: var(--text-dim);">
+            <div style="font-size: 50px; margin-bottom: 10px;">🚧</div>
+            <h3 style="color: var(--accent); text-transform: uppercase; font-weight: 900; font-size: 20px;">SKLEP W BUDOWIE</h3>
+            <p style="font-size: 13px; font-weight: 600;">System tytułów gracza jest aktualnie w produkcji.<br>Graj i oszczędzaj monety na zbliżające się nowości!</p>
+        </div>
+    `;
+}
+
 // ----------------------------------------
 // GLOBALNE FUNKCJE DLA HTML-A (ZABEZPIECZENIE)
 // ----------------------------------------
@@ -9376,6 +9607,10 @@ try {
     window.closeTeamAchievement = closeTeamAchievement;
     window.shareCareerResult = shareCareerResult;
     window.showCareerCalendar = showCareerCalendar;
+    window.openMissionsShop = openMissionsShop;
+    window.closeMissionsShop = closeMissionsShop;
+    window.switchMsTab = switchMsTab;
+    window.claimMission = claimMission;
     
 } catch (e) {
     console.error("Global export error:", e);

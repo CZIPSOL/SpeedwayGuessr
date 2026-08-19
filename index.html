@@ -167,7 +167,17 @@
                 <div id="userInfoDisplayProfile" class="user-info-text text-green text-xs font-bold mt-10" style="display:none;"></div>
             </div>
 
-            
+            <!-- NOWOŚĆ: POZIOM, EXP I MONETY -->
+            <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
+                <div class="flex-between mb-10">
+                    <div style="font-size: 16px; font-weight: 900; color: var(--accent);">Poziom <span id="profileLevel">1</span></div>
+                    <div style="font-size: 16px; font-weight: 900; color: #f1c40f;">🪙 <span id="profileCoins">0</span></div>
+                </div>
+                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; position: relative;">
+                    <div id="profileExpBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: 0.3s;"></div>
+                </div>
+                <div id="profileExpText" class="text-xs text-dim mt-5 text-right font-bold">0 / 100 EXP</div>
+            </div>
 
             <!-- ZMIANA NICKU -->
             <div class="setting-block mb-25 w-100">
@@ -307,6 +317,40 @@
         </div>
     </div>
 
+    <!-- MISJE DZIENNE I SKLEP -->
+    <div id="missionsShopOverlay" class="win-overlay" style="display: none; z-index: 10035;">
+        <div class="stats-modal modal-lg" style="max-height:85vh; overflow:hidden; display: flex; flex-direction: column;">
+            
+            <div class="flex-between mb-15">
+                <h2 class="text-accent m-0 uppercase font-black">Misje i Sklep</h2>
+                <div style="font-size: 18px; font-weight: 900; color: #f1c40f; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 12px; border: 1px solid #f1c40f;">🪙 <span id="shopCoinsDisplay">0</span></div>
+            </div>
+
+            <div class="tabs-container" style="margin-bottom: 15px;">
+                <button id="msTabMissions" class="rank-tab active" onclick="switchMsTab('missions')" style="flex:1;">ZADANIA DZIENNE</button>
+                <button id="msTabShop" class="rank-tab" onclick="switchMsTab('shop')" style="flex:1;">SKLEP (TYTUŁY)</button>
+            </div>
+
+            <!-- ZAKŁADKA MISJI -->
+            <div id="msPanelMissions" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                <p class="text-xs text-dim mb-15">Wykonuj misje i zdobywaj EXP oraz Monety! Misje odświeżają się codziennie o północy.</p>
+                <div id="missionsListContainer" class="flex-col gap-10">
+                    <!-- Ładowane z JS -->
+                </div>
+            </div>
+
+            <!-- ZAKŁADKA SKLEPU -->
+            <div id="msPanelShop" style="flex: 1; overflow-y: auto; padding-right: 5px; display: none;">
+                <p class="text-xs text-dim mb-15">Kupuj unikalne tytuły za Monety. Wyposażony tytuł wyświetla się obok nicku w Clashu i w rankingach!</p>
+                <div id="shopListContainer" class="flex-col gap-10">
+                    <!-- Ładowane z JS -->
+                </div>
+            </div>
+
+            <button onclick="closeMissionsShop()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
+        </div>
+    </div>
+
     <!-- AKTUALIZACJE / CHANGELOG MODAL -->
     <div id="updatesOverlay" class="win-overlay" style="display: none; z-index: 10010;">
         <div class="stats-modal updates-modal">
@@ -396,7 +440,11 @@
     <div class="nav-arrow">▶</div>
     </div>
 
-
+    <div class="nav-item-modern hover-yellow" onclick="openMissionsShop()">
+                    <div class="nav-icon-box" style="border-color: #f39c12; color: #f39c12;">📜</div>
+                    <div class="nav-text-main" style="color: #f39c12;">MISJE I SKLEP</div>
+                    <div class="nav-arrow">▶</div>
+                </div>
 
                 <!-- ODDZIELENIE -->
                 <div class="nav-divider-modern"></div>
@@ -512,6 +560,11 @@
             <button class="menu-btn btn-timeattack mt-15" id="btnTimeAttackMobile" onclick="openTimeAttackMenu()">
                 <span class="btn-icon text-shadow">⏱️</span>
                 <span class="btn-text text-shadow">TIME ATTACK</span>
+            </button>
+
+            <button class="menu-btn mt-15" style="background: linear-gradient(135deg, #f39c12 0%, #d35400 100%); color: white;" onclick="openMissionsShop()">
+                <span class="btn-icon text-shadow">📜</span>
+                <span class="btn-text text-shadow">MISJE I SKLEP</span>
             </button>
         </div>
 
@@ -1460,7 +1513,7 @@
 
     <script src="db.js?v2.2"></script>
     <script src="events.js?v2.3"></script>
-    <script src="script.js?v2.79"></script>
+    <script src="script.js?v2.80"></script>
 
     
 </body>
