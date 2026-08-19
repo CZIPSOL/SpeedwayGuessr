@@ -756,6 +756,8 @@ async function syncStatsFromFirebase() {
             updateLeagueUI();
             updateDiscordButtonUI();
         }
+        // ZMIANA: Dopiero tutaj, mając w 100% pewne chmurowe ELO, wysyłamy update do tabeli wyników
+        syncLeagueScoreToFirebase();
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
 }
 
@@ -1982,14 +1984,18 @@ function loadStats() {
         if (!userStats.recentEndless) userStats.recentEndless = [];
         if (!userStats.clashHistory) userStats.clashHistory = [];
         ensureLeagueStats(userStats);
-        ensureTimeAttackStats(userStats); // <--- DODANA LINIJKA
+        ensureTimeAttackStats(userStats);
     }
     ensureLeagueStats(userStats);
-    ensureTimeAttackStats(userStats); // <--- DODANA LINIJKA
+    ensureTimeAttackStats(userStats);
     updateDiscordButtonUI();
     
+    // ZMIANA: Wysyłamy wciemno ELO tylko dla Gości. Zalogowani (Google) 
+    // wyślą swój wynik DOPIERO PO pobraniu najświeższych danych z chmury!
     setTimeout(() => {
-        syncLeagueScoreToFirebase();
+        if (!auth.currentUser && playerId && playerId.startsWith('guest_')) {
+            syncLeagueScoreToFirebase();
+        }
     }, 1500);
 }
 function saveStats() { 
