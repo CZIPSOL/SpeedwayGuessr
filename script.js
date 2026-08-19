@@ -4732,7 +4732,50 @@ async function toggleClashRematch() {
     document.getElementById('btnRematch').style.background = "#555";
 }
 
-// --- SILNIK SIECIOWY GRY ---
+// ==============================================
+// ====== SYSTEM EMOTEK (SZYBKI CZAT) ===========
+// ==============================================
+let lastProcessedEmoteP1 = 0;
+let lastProcessedEmoteP2 = 0;
+
+function sendClashEmote(emoji) {
+    if (!currentClashRoom || isLocalClash) return;
+    
+    // Anty-Spam (max 1 emotka na sekundę)
+    if (window.lastEmoteSentTime && Date.now() - window.lastEmoteSentTime < 1000) return;
+    window.lastEmoteSentTime = Date.now();
+
+    const emoteData = { emoji: emoji, ts: Date.now() };
+    const fieldToUpdate = myClashColor === 'red' ? 'emoteP1' : 'emoteP2';
+
+    db.collection("clash_rooms").doc(currentClashRoom).update({
+        [fieldToUpdate]: emoteData
+    }).catch(e => console.log("Błąd wysyłania emotki:", e));
+}
+
+function showFloatingEmote(emoji, playerColor) {
+    const parentId = playerColor === 'red' ? 'clashPlayer1' : 'clashPlayer2';
+    const parent = document.getElementById(parentId);
+    if (!parent) return;
+
+    const emoteEl = document.createElement('div');
+    emoteEl.className = 'floating-emote';
+    emoteEl.innerText = emoji;
+    
+    // Centrowanie nad nickiem gracza
+    emoteEl.style.left = '50%';
+    emoteEl.style.top = '-20px';
+
+    parent.appendChild(emoteEl);
+
+    // Dźwięk powiadomienia
+    playSound('flip');
+
+    setTimeout(() => {
+        if (emoteEl.parentNode) emoteEl.parentNode.removeChild(emoteEl);
+    }, 2500);
+}
+
 // --- SILNIK SIECIOWY GRY ---
 function listenToClashRoom() {
     if(!currentClashRoom) return;
@@ -4748,9 +4791,6 @@ function listenToClashRoom() {
         
         // ==========================================
         // 🚨 ZABEZPIECZENIE ANTI-ZOMBIE (BŁĄD WYŚCIGU)
-        // Jeśli nasz kolor to czerwony (Host), to my musimy być w data.p1.
-        // Jeśli nasz kolor to niebieski (Gość), to my musimy być w data.p2.
-        // Jeśli nas tam nie ma, oznacza to, że w ułamku sekundy Firebase wrzucił kogoś innego!
         // ==========================================
         if (data.type === 'league') {
             if (myClashColor === 'red' && data.p1 && data.p1.id !== playerId) {
@@ -4856,12 +4896,12 @@ function listenToClashRoom() {
                 if (!validBoard) { clashRows = ['unia leszno', 'stal gorzów', 'włókniarz częstochowa']; clashCols = ['apator toruń', 'sparta wrocław', 'falubaz zielona góra']; }
                 
                 let constraints = generateValidClashConstraint(clashRows, clashCols, bSize); 
-                let bSize = (data.board && data.board.length) ? Math.sqrt(data.board.length) : (data.boardSize || 3);
-                if (!Number.isInteger(bSize)) bSize = 3;
+                let newBSize = (data.board && data.board.length) ? Math.sqrt(data.board.length) : (data.boardSize || 3);
+                if (!Number.isInteger(newBSize)) newBSize = 3;
 
                 db.collection("clash_rooms").doc(currentClashRoom).update({
                     status: 'vsScreen', turn: Math.random() < 0.5 ? 'red' : 'blue',
-                    board: Array(bSize * bSize).fill(null), guessedPlayers: Array(bSize * bSize).fill(null), lastAction: '',
+                    board: Array(newBSize * newBSize).fill(null), guessedPlayers: Array(newBSize * newBSize).fill(null), lastAction: '',
                     rows: clashRows, cols: clashCols, constraints: constraints, rematchP1: false, rematchP2: false 
                 });
             }
@@ -4890,6 +4930,19 @@ function listenToClashRoom() {
                 }
             }
         }
+
+        // ==========================================================
+        // ODBIERANIE I WYSWIETLANIE EMOTEK
+        // ==========================================================
+        if (data.emoteP1 && data.emoteP1.ts > lastProcessedEmoteP1) {
+            lastProcessedEmoteP1 = data.emoteP1.ts;
+            showFloatingEmote(data.emoteP1.emoji, 'red');
+        }
+        if (data.emoteP2 && data.emoteP2.ts > lastProcessedEmoteP2) {
+            lastProcessedEmoteP2 = data.emoteP2.ts;
+            showFloatingEmote(data.emoteP2.emoji, 'blue');
+        }
+
     });
 }
 
@@ -5036,18 +5089,6 @@ function showFloatingEmote(emoji, playerColor) {
     }, 2500);
 }
 
-// Zmodyfikuj `listenToClashRoom()` by obsługiwała emotki (dodaj to na końcu listenera):
-        // W funkcji listenToClashRoom() gdzieś na końcu bloku przed zamknięciem `});`
-        if (data.emoteP1 && data.emoteP1.ts > lastProcessedEmoteP1) {
-            lastProcessedEmoteP1 = data.emoteP1.ts;
-            // Pokazuj emotkę tylko, jeśli to NIE TY ją wysłałeś (byś nie widział jej podwójnie),
-            // albo jeśli to ty, żeby zobaczyć że działa - zróbmy, że widzisz własne emotki też.
-            showFloatingEmote(data.emoteP1.emoji, 'red');
-        }
-        if (data.emoteP2 && data.emoteP2.ts > lastProcessedEmoteP2) {
-            lastProcessedEmoteP2 = data.emoteP2.ts;
-            showFloatingEmote(data.emoteP2.emoji, 'blue');
-        }
 
 function playCoinToss(data) {
     const vsOverlay = document.getElementById('clashVsOverlay'); vsOverlay.style.opacity = '0'; setTimeout(() => vsOverlay.style.display = 'none', 300);
