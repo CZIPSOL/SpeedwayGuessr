@@ -9322,11 +9322,13 @@ const MISSIONS_POOL = [
 ];
 
 function ensureProgressionStats() {
-    if (typeof userStats.level === 'undefined') userStats.level = 1;
-    if (typeof userStats.exp === 'undefined') userStats.exp = 0;
-    if (typeof userStats.coins === 'undefined') userStats.coins = 0;
-    if (!userStats.missions) userStats.missions = { date: "", tasks: [] };
-    if (!userStats.equippedTitle) userStats.equippedTitle = null;
+    let needsSave = false;
+
+    if (typeof userStats.level === 'undefined') { userStats.level = 1; needsSave = true; }
+    if (typeof userStats.exp === 'undefined') { userStats.exp = 0; needsSave = true; }
+    if (typeof userStats.coins === 'undefined') { userStats.coins = 0; needsSave = true; }
+    if (!userStats.missions) { userStats.missions = { date: "", tasks: [] }; needsSave = true; }
+    if (!userStats.equippedTitle) { userStats.equippedTitle = null; needsSave = true; }
     
     // Sprawdzamy czy to nowy dzień -> generujemy nowe misje
     const todayStr = new Date().toLocaleDateString();
@@ -9338,6 +9340,21 @@ function ensureProgressionStats() {
         userStats.missions.tasks = shuffled.slice(0, 3).map(m => ({
             ...m, progress: 0, completed: false, claimed: false
         }));
+        
+        needsSave = true;
+    }
+
+    // NAPRAWA: Zapisujemy stan do pamięci od razu po wygenerowaniu misji, 
+    // aby po odświeżeniu strony lub restarcie gry się nie resetowały!
+    if (needsSave) {
+        localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
+        // Jeśli gracz jest zalogowany to wysyłamy też aktualizację w tle na Firebase
+        if (auth.currentUser) {
+            db.collection('users').doc(auth.currentUser.uid).set({
+                stats: JSON.stringify(userStats),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true }).catch(e => console.warn(e));
+        }
     }
 }
 
