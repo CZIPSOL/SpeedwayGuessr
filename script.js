@@ -766,7 +766,12 @@ function ensureLeagueStats(stats) {
     if (!stats.clashLeague) stats.clashLeague = { matchesPlayed: 0, wins: 0, losses: 0, draws: 0, elo: 1000 };
     if (typeof stats.clashLeague.abandons !== 'number') stats.clashLeague.abandons = 0; 
     if (typeof stats.clashLeague.banUntil !== 'number') stats.clashLeague.banUntil = 0; 
-    if (typeof stats.clashLeague.tabSwitches !== 'number') stats.clashLeague.tabSwitches = 0; // Dodano nowy tracker
+    if (typeof stats.clashLeague.tabSwitches !== 'number') stats.clashLeague.tabSwitches = 0;
+    
+    // Pancerne zabezpieczenie: jeśli ELO zepsuło się i jest "NaN" lub "null", przywróć do 1000
+    if (isNaN(stats.clashLeague.elo) || stats.clashLeague.elo === null) {
+        stats.clashLeague.elo = 1000;
+    }
     return stats;
 }
 
@@ -2149,7 +2154,15 @@ async function sendScoreToDatabase(isWin, attempts) {
 
 async function syncLeagueScoreToFirebase() {
     if (!playerId) return; 
+
+    // BLOKADA ANTI-CRASH: Jeśli masz ID z Google, ale Firebase jeszcze Cię nie zautoryzował (trwa ładowanie), 
+    // to bezwzględnie blokujemy wysyłkę, żeby serwer nie wyrzucił błędu Permissions!
+    if (!auth.currentUser && !playerId.startsWith('guest_')) {
+        return; 
+    }
+
     const league = ensureLeagueStats(userStats).clashLeague;
+
     try {
         await db.collection('leaderboard_clash_beta').doc(playerId).set({
             nick: playerNickname || 'Gracz',
@@ -2163,7 +2176,32 @@ async function syncLeagueScoreToFirebase() {
             provisional: league.matchesPlayed < 5,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
-    } catch (e) { console.error('League leaderboard sync error:', e); }
+    } catch (e) { 
+        console.error('League leaderboard sync error:', e); 
+        
+        // AUTO-NAPRAWA (DESYNC): Jeżeli serwer wywalił błąd Permissions, prawdopodobnie Twoje lokalne ELO 
+        // różni się od chmurowego o więcej niż pozwalają na to reguły (grałeś na innym urządzeniu).
+        if (e.message.includes('permissions') && auth.currentUser) {
+            try {
+                const docRef = await db.collection('leaderboard_clash_beta').doc(playerId).get();
+                if (docRef.exists) {
+                    const cloudData = docRef.data();
+                    if (Math.abs(cloudData.elo - league.elo) > 50) {
+                        console.warn("Wykryto asynchronizację ELO. Naprawiam dane za pomocą chmury...");
+                        userStats.clashLeague.elo = cloudData.elo;
+                        userStats.clashLeague.matchesPlayed = cloudData.matchesPlayed;
+                        userStats.clashLeague.wins = cloudData.wins;
+                        userStats.clashLeague.losses = cloudData.losses;
+                        userStats.clashLeague.draws = cloudData.draws;
+                        localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
+                        updateLeagueUI();
+                    }
+                }
+            } catch (err) {
+                console.error("Nie udało się naprawić asynchronizacji ELO:", err);
+            }
+        }
+    }
 }
 
 function updateStatsOnWin() {
@@ -2831,6 +2869,12 @@ async function loadTimeAttackRanking() {
 
 async function syncTimeAttackScoreToFirebase(score) {
     if (!playerId) return; 
+
+    // Identyczna blokada jak w przypadku Ligi Clash
+    if (!auth.currentUser && !playerId.startsWith('guest_')) {
+        return; 
+    }
+
     try {
         const docRef = db.collection('leaderboard_timeattack').doc(playerId);
         const doc = await docRef.get();
