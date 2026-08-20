@@ -399,6 +399,15 @@ const CURRENT_GAME_VERSION = "Beta v1.3.2";
 const changelog = {
     pl: [
         {
+            version: "Beta v1.5.0", date: "20.08.2026",
+            changes: [
+                "💬 <b>Emotki w Clashu:</b> Dodano możliwość wysyłania szybkich reakcji (emotek) podczas meczów ligowych i towarzyskich!",
+                "⚔️ <b>Historia pojedynków (H2H):</b> Na ekranie ładowania meczu (VS) pojawia się teraz bezpośredni bilans Twoich dotychczasowych starć z danym przeciwnikiem.",
+                "📜 <b>Misje, EXP i Monety:</b> Wprowadzono system zdobywania doświadczenia (poziomy konta) oraz waluty za wykonywanie codziennych wyzwań. Sklep jest obecnie w budowie 🚧.",
+                "🎲 <b>Modyfikatory Zasad:</b> Od teraz w ustawieniach meczu Towarzyskiego możesz włączyć szalone zasady urozmaicające grę: Fazę Veto, Kartę Joker, Kradzież Pól oraz Złoty Bieg!"
+            ]
+        },
+        {
         version: "Beta v1.4.1", date: "19.08.2026",
             changes: [
                 "🏍️ <b>Zakończenie testów Trybu Kariery:</b> Podjęliśmy decyzję o zamknięciu trybu Kariery (Speedway Legend). Na rynku istnieją inne, dedykowane menedżery żużlowe, a my postanowiliśmy skupić w 100% nasze siły na rozwoju unikalnego trybu multiplayer - <b>Speedway Clash</b>!",
@@ -494,6 +503,15 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.5.0", date: "20.08.2026",
+            changes: [
+                "💬 <b>Clash Emotes:</b> Added the ability to send quick reactions (emotes) during league and friendly matches!",
+                "⚔️ <b>Head-to-Head (H2H):</b> The VS loading screen now displays your direct win/loss record against your current opponent.",
+                "📜 <b>Missions, EXP & Coins:</b> Introduced a progression system with account levels and currency earned by completing daily challenges. Shop is currently under construction 🚧.",
+                "🎲 <b>Rule Modifiers:</b> You can now enable crazy rules in Friendly match settings to spice up the game: Veto Phase, Joker Card, Cell Stealing, and Golden Heat!"
+            ]
+        },
         {
             version: "Beta v1.4.1", date: "19.08.2026",
             changes: [
