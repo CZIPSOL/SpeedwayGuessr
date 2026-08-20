@@ -768,13 +768,14 @@ async function syncStatsFromFirebase() {
         const docRef = await db.collection('users').doc(auth.currentUser.uid).get();
         if (docRef.exists && docRef.data().stats) {
             let cloudStats = JSON.parse(docRef.data().stats);
-            userStats = Object.assign(userStats, cloudStats);
+            // Bezpieczne wczytanie danych bez utraty wewnątrz przypisania:
+            userStats = { ...userStats, ...cloudStats };
             ensureLeagueStats(userStats);
             localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
             updateLeagueUI();
             updateDiscordButtonUI();
         }
-        // ZMIANA: Dopiero tutaj, mając w 100% pewne chmurowe ELO, wysyłamy update do tabeli wyników
+        // Dopiero tutaj, mając pewność chmurowych statystyk, ładujemy ranking
         syncLeagueScoreToFirebase();
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
 }
@@ -1841,9 +1842,22 @@ function playSound(type) {
 }
 
 const helmetImgObj = new Image(); function preloadHelmetImage() { helmetImgObj.src = 'kask-zycie.png'; }
-window.onload = async function() { 
+
+// ZMIANA Z window.onload na DOMContentLoaded by gra ładowała się natychmiast, bez czekania na grafiki!
+document.addEventListener('DOMContentLoaded', async function() { 
     setRandomBackground();
     
+    // --- GŁÓWNA POPRAWKA ---
+    // Wczytujemy dane gracza ZANIM gra zostanie zablokowana przez łączenie z chmurą! 
+    loadStats(); 
+    initDailyMenu(); 
+    renderLastGames(); 
+    preloadHelmetImage(); 
+    setLang(currentLang); 
+    updateSoundBtn(); 
+    updateLeagueUI(); 
+    checkUnseenUpdates();
+
     // === SPRAWDZANIE PRZERWY TECHNICZNEJ I OSTRZEŻEŃ ===
     try {
         const getConfigFunc = functions.httpsCallable('getConfig');
@@ -1910,19 +1924,19 @@ window.onload = async function() {
         }
 
         // 2. CAŁKOWITA PRZERWA TECHNICZNA
-                if (configResponse.data && configResponse.data.maintenanceMode === true) {
-                    if (!window.isAdmin) { // <-- Tylko admin przechodzi. Tester i zwykły gracz dostają blokadę.
-                        window.isMaintenanceBlocked = true;
-                        document.getElementById('maintenanceOverlay').style.display = 'block';
-                        document.getElementById('maintenanceOverlay').style.opacity = '1';
-                        
-                        if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
-                        if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
-                        return; 
-                    } else {
-                        showToast("🔐 Tryb Admina: Przerwa techniczna pominięta!", "success");
-                    }
-                }
+        if (configResponse.data && configResponse.data.maintenanceMode === true) {
+            if (!window.isAdmin) {
+                window.isMaintenanceBlocked = true;
+                document.getElementById('maintenanceOverlay').style.display = 'block';
+                document.getElementById('maintenanceOverlay').style.opacity = '1';
+                
+                if (document.getElementById('mainMenuContainer')) document.getElementById('mainMenuContainer').style.display = 'none';
+                if (document.getElementById('desktopMainMenu')) document.getElementById('desktopMainMenu').style.display = 'none';
+                return; 
+            } else {
+                showToast("🔐 Tryb Admina: Przerwa techniczna pominięta!", "success");
+            }
+        }
 
         // 3. BANNER INFORMACYJNY
         if (configResponse.data && configResponse.data.infoMode === true) {
@@ -1987,33 +2001,31 @@ window.onload = async function() {
     } catch(e) {
         console.warn("Nie udało się połączyć z serwerem, by sprawdzić status.", e);
     }
+});
 
-    loadStats(); 
-    initDailyMenu(); 
-    renderLastGames(); 
-    preloadHelmetImage(); 
-    setLang(currentLang); 
-    updateSoundBtn(); 
-    updateLeagueUI(); 
-    checkUnseenUpdates();
-};
+
 function loadStats() {
     let saved = localStorage.getItem('speedwayStatsV2'); 
     if(saved) {
-        userStats = JSON.parse(saved);
+        try {
+            let parsed = JSON.parse(saved);
+            // Używamy bezpiecznego przypisania dekonstruktem zamiast nadpisywać obiekt:
+            userStats = { ...userStats, ...parsed };
+        } catch(e) {
+            console.error("Błąd ładowania statystyk lokalnych:", e);
+        }
         if (!userStats.dailyResults) userStats.dailyResults = {};
         if (!userStats.dailyHistory) userStats.dailyHistory = [];
         if (!userStats.dailyGuesses) userStats.dailyGuesses = {};
         if (!userStats.recentEndless) userStats.recentEndless = [];
         if (!userStats.clashHistory) userStats.clashHistory = [];
-        ensureLeagueStats(userStats);
-        ensureTimeAttackStats(userStats);
     }
+    
     ensureLeagueStats(userStats);
     ensureTimeAttackStats(userStats);
     updateDiscordButtonUI();
     
-    // ZMIANA: Wysyłamy wciemno ELO tylko dla Gości. Zalogowani (Google) 
+    // Wysyłamy wciemno ELO tylko dla Gości. Zalogowani (Google) 
     // wyślą swój wynik DOPIERO PO pobraniu najświeższych danych z chmury!
     setTimeout(() => {
         if (!auth.currentUser && playerId && playerId.startsWith('guest_')) {
@@ -2021,6 +2033,7 @@ function loadStats() {
         }
     }, 1500);
 }
+
 function saveStats() { 
     localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); 
     updateLeagueUI();
