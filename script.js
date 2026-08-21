@@ -2252,9 +2252,14 @@ function updateStatsOnWin() {
     if (!hintActive) userStats.trackers.winsNoHint++;
     checkAchievements();
 
-    // NOWOŚĆ: Postęp misji i EXP
-    updateMissionProgress('play_endless', 1);
-    if (!hintActive) updateMissionProgress('no_hint_win', 1);
+    if (gameMode === 'endless') {
+        updateMissionProgress('play_endless', 1);
+        updateMissionProgress('win_endless', 1);
+        if (!hintActive) updateMissionProgress('no_hint_win', 1);
+        updateMissionProgress('streak_endless', userStats.currentStreak, true); // isMaxMode = true
+    } else if (gameMode === 'daily') {
+        updateMissionProgress('play_daily', 1);
+    }
     addExp(20); // 20 EXP za wygraną
 
     if(userStats.currentStreak > userStats.maxStreak) userStats.maxStreak = userStats.currentStreak;
@@ -2270,8 +2275,9 @@ function updateStatsOnLoss() {
     if(hasWon || hasLost) return; hasLost = true;
     userStats.played++; userStats.currentStreak = 0; 
     
-    // NOWOŚĆ: Postęp misji i EXP
-    updateMissionProgress('play_endless', 1);
+    if (gameMode === 'endless') updateMissionProgress('play_endless', 1);
+    else if (gameMode === 'daily') updateMissionProgress('play_daily', 1);
+    
     addExp(5); // Nagroda pocieszenia
 
     if (gameMode === 'daily') {
@@ -2380,10 +2386,12 @@ async function returnToMainMenu() {
 // Aktywacja podpowiedzi z przycisku
 function useHint() {
     if (hintActive) return;
-    hintActive = true;
-    hintsUsedCount = 1;
-    document.getElementById('btnHint').style.display = 'none'; // Ukrywamy po kliknięciu
-    updateHintDisplay();
+    const target = _unlockTarget();
+    hintActive = true; hintsUsedCount = 1;
+    document.getElementById('btnHint').style.display = 'none'; 
+    document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
+    
+    updateMissionProgress('use_hint', 1); // ZALICZENIE MISJI
     showToast("Użyto podpowiedzi!", "success");
 }
 
@@ -3054,21 +3062,9 @@ function finishTimeAttack() {
     renderTimeAttackScore();
     renderTimeAttackList(); 
     
-    // Zapis statystyk i bazy!
-    const validCount = timeAttackSolved.filter(p => !p.isMissed).length;
-    
-    ensureTimeAttackStats(userStats);
-    userStats.timeAttack.played++;
-    userStats.timeAttack.totalScore += validCount;
-    if (validCount > userStats.timeAttack.highestScore) {
-        userStats.timeAttack.highestScore = validCount;
-    }
 
-    // NOWOŚĆ: Postęp misji i EXP dla Time Attack
-    if (validCount > 0) {
-        updateMissionProgress('ta_score', validCount);
-        addExp(validCount * 2); // 2 exp za każdego zgadniętego
-    }
+// Zapis statystyk i bazy!
+    const validCount = timeAttackSolved.filter(p => !p.isMissed).length;
 
     saveStats();
     syncTimeAttackScoreToFirebase(validCount);
@@ -4588,17 +4584,17 @@ async function updateLeagueStats(gameData) {
                 resultText += ` (SERIA 🔥 +5)`;
             }
             
-            // NOWOŚĆ
+            updateMissionProgress('play_clash', 1);
             updateMissionProgress('win_clash', 1);
-            addExp(50); // Dużo EXP za wygraną
+            addExp(50); 
             
         } else {
             league.losses++;
             league.winStreak = 0;
             resultText = finishedBySurrender ? "PORAŻKA (PODDANIE)" : "PORAŻKA";
             
-            // NOWOŚĆ
-            addExp(15); // Nagroda pocieszenia
+            updateMissionProgress('play_clash', 1);
+            addExp(15); 
         }
     }
 
@@ -5502,6 +5498,7 @@ async function executeValidClashMove(playerName) {
     let turnColor = isLocalClash ? clashTurn : myClashColor;
     let newBoard = [...clashBoardState]; 
     newBoard[clashActiveCellIdx] = turnColor;
+    if (turnColor === myClashColor) updateMissionProgress('claim_cells_clash', 1);
     
     // Obliczanie bSize dynamicznie dla ochrony przed starymi danymi
     let bSize = (isLocalClash ? localClashData.board : currentClashData.board) ? Math.sqrt(isLocalClash ? localClashData.board.length : currentClashData.board.length) : 3;
@@ -9357,21 +9354,38 @@ function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proc
 // ==============================================
 
 const MISSIONS_POOL_DAILY = [
-    { type: 'play_endless', target: 3, desc: 'Rozegraj 3 gry Endless', exp: 100, coins: 50 },
+    { type: 'play_endless', target: 3, desc: 'Rozegraj 3 gry Endless', exp: 50, coins: 20 },
+    { type: 'win_endless', target: 1, desc: 'Wygraj 1 grę Endless', exp: 80, coins: 40 },
+    { type: 'no_hint_win', target: 1, desc: 'Wygraj grę bez podpowiedzi', exp: 100, coins: 50 },
+    { type: 'play_clash', target: 1, desc: 'Rozegraj 1 mecz w Clash', exp: 100, coins: 50 },
     { type: 'win_clash', target: 1, desc: 'Wygraj 1 mecz w Clash', exp: 200, coins: 100 },
+    { type: 'claim_cells_clash', target: 5, desc: 'Przejmij 5 pól w Clash', exp: 150, coins: 70 },
+    { type: 'play_ta', target: 2, desc: 'Zagraj 2 razy w Time Attack', exp: 80, coins: 30 },
     { type: 'ta_score', target: 20, desc: 'Zdobądź 20 pkt. w Time Attack (Suma)', exp: 150, coins: 70 },
-    { type: 'no_hint_win', target: 1, desc: 'Wygraj grę bez podpowiedzi', exp: 100, coins: 50 }
+    { type: 'use_hint', target: 3, desc: 'Użyj podpowiedzi 3 razy', exp: 40, coins: 15 },
+    { type: 'play_daily', target: 1, desc: 'Rozegraj dzisiejsze Daily', exp: 100, coins: 50 }
 ];
 
 const MISSIONS_POOL_WEEKLY = [
-    { type: 'play_endless', target: 20, desc: 'Rozegraj 20 gier Endless', exp: 500, coins: 300 },
-    { type: 'win_clash', target: 10, desc: 'Wygraj 10 meczów w Clash', exp: 800, coins: 500 },
-    { type: 'no_hint_win', target: 15, desc: 'Wygraj 15 gier bez podpowiedzi', exp: 600, coins: 350 }
+    { type: 'play_endless', target: 20, desc: 'Rozegraj 20 gier Endless', exp: 400, coins: 200 },
+    { type: 'win_endless', target: 10, desc: 'Wygraj 10 gier Endless', exp: 500, coins: 250 },
+    { type: 'no_hint_win', target: 10, desc: 'Wygraj 10 gier bez podpowiedzi', exp: 600, coins: 350 },
+    { type: 'play_clash', target: 10, desc: 'Rozegraj 10 meczów w Clash', exp: 600, coins: 300 },
+    { type: 'win_clash', target: 5, desc: 'Wygraj 5 meczów w Clash', exp: 800, coins: 400 },
+    { type: 'claim_cells_clash', target: 30, desc: 'Przejmij 30 pól w Clash', exp: 700, coins: 350 },
+    { type: 'ta_score', target: 150, desc: 'Zdobądź 150 pkt. w Time Attack (Suma)', exp: 600, coins: 300 },
+    { type: 'ta_single_score', target: 20, desc: 'Zdobądź 20 pkt. w 1 grze Time Attack', exp: 500, coins: 250 },
+    { type: 'streak_endless', target: 5, desc: 'Wygraj 5 gier Endless z rzędu', exp: 800, coins: 400 }
 ];
 
 const MISSIONS_POOL_MONTHLY = [
-    { type: 'play_endless', target: 100, desc: 'Rozegraj 100 gier Endless', exp: 2000, coins: 1500 },
-    { type: 'win_clash', target: 30, desc: 'Wygraj 30 meczów w Clash', exp: 3000, coins: 2000 }
+    { type: 'play_endless', target: 100, desc: 'Rozegraj 100 gier Endless', exp: 1500, coins: 1000 },
+    { type: 'win_endless', target: 50, desc: 'Wygraj 50 gier Endless', exp: 2000, coins: 1200 },
+    { type: 'play_clash', target: 50, desc: 'Rozegraj 50 meczów w Clash', exp: 2000, coins: 1200 },
+    { type: 'win_clash', target: 25, desc: 'Wygraj 25 meczów w Clash', exp: 3000, coins: 2000 },
+    { type: 'claim_cells_clash', target: 150, desc: 'Przejmij 150 pól w Clash', exp: 2500, coins: 1500 },
+    { type: 'ta_score', target: 500, desc: 'Zdobądź 500 pkt. w Time Attack (Suma)', exp: 2500, coins: 1500 },
+    { type: 'streak_endless', target: 15, desc: 'Wygraj 15 gier Endless z rzędu', exp: 3500, coins: 2500 }
 ];
 
 function ensureProgressionStats() {
@@ -9458,21 +9472,30 @@ function addExp(amount) {
     saveStats();
 }
 
-function updateMissionProgress(type, amount = 1) {
+function updateMissionProgress(type, amount = 1, isMaxMode = false) {
     ensureProgressionStats();
     let updated = false;
     
-    // Sprawdzamy wszystkie listy zadań
     [userStats.missions.dailyTasks, userStats.missions.weeklyTasks, userStats.missions.monthlyTasks].forEach(taskList => {
         taskList.forEach(task => {
             if (task.type === type && !task.completed) {
-                task.progress += amount;
+                // Jeśli to misja typu "Zdobądź w jednym meczu" to nadpisujemy wynik, jeśli jest wyższy
+                if (isMaxMode) {
+                    if (amount > task.progress) {
+                        task.progress = amount;
+                        updated = true;
+                    }
+                } else {
+                    // Tradycyjne misje sumujące się (np. rozegraj 100 gier)
+                    task.progress += amount;
+                    updated = true;
+                }
+                
                 if (task.progress >= task.target) {
                     task.progress = task.target;
                     task.completed = true;
                     showToast(`✅ Misja ukończona: ${task.desc}!`, "success");
                 }
-                updated = true;
             }
         });
     });
