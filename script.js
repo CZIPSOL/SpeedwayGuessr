@@ -1415,7 +1415,7 @@ const i18n = {
         account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby zsynchronizować postęp!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick (max 12 znaków)", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ",
         settingsTitle: "USTAWIENIA", sound: "Dźwięk:", soundOn: "Włączony 🔊", soundOff: "Wyłączony 🔇",
         subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ",
-        teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "W GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów",
+        teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "Jeździ/ił w GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów",
         stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Obecna Seria", statMax: "Najlepsza Seria", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY",
         winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", 
         theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", themeSystem: "System", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
@@ -2164,20 +2164,18 @@ async function sendScoreToDatabase(isWin, attempts) {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
         const safeNick = escapeHTML(playerNickname);
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        
-        batch.set(dailyRef, { nick: safeNick, club: userStats.favoriteClub || null, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });
-        
+        batch.set(dailyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });        
         const increment = firebase.firestore.FieldValue.increment;
         const winIncrement = isWin ? 1 : 0; 
         
         const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-        batch.set(weeklyRef, { nick: safeNick, club: userStats.favoriteClub || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(weeklyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-        batch.set(monthlyRef, { nick: safeNick, club: userStats.favoriteClub || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(monthlyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-        batch.set(alltimeRef, { nick: safeNick, club: userStats.favoriteClub || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(alltimeRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         await batch.commit();
     } catch (e) { console.error("DB Error:", e); }
@@ -2230,6 +2228,7 @@ async function syncLeagueScoreToFirebase() {
         await docRef.set({
             nick: playerNickname || 'Gracz',
             club: userStats.favoriteClub || null,
+            bg: userStats.equippedBg || null,
             elo: eloToSend,
             matchesPlayed: league.matchesPlayed,
             wins: league.wins,
@@ -2721,7 +2720,7 @@ function renderTimeAttackList() {
             <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 5px; text-align: center; font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase;">
                 <div>Kraj</div>
                 <div>Wiek</div>
-                <div>GP</div>
+                <div>Jeździ/ił w GP?</div>
                 <div>DMP</div>
                 <div>Status</div>
             </div>
@@ -3581,7 +3580,6 @@ async function loadDesktopRanking(type) {
     const title = document.getElementById('desktopRankingTitle');
     const tabs = document.getElementById('desktopRankTabs');
     
-
     async function fetchVisibleLeaderboardRows(collectionName, orderField, visibleLimit, rowFilter) {
         const rows = [];
         let lastDoc = null;
@@ -3607,6 +3605,7 @@ async function loadDesktopRanking(type) {
 
         return { rows, hadAnyDocs };
     }
+    
     if (!tbody || !thead || !title) return;
 
     if (type === 'league') {
@@ -3645,7 +3644,6 @@ async function loadDesktopRanking(type) {
             );
             let scores = leaderboardData.rows;
             
-            // Fix: Pobieramy dane zalogowanego usera niezależnie od limitu
             let myScoreFound = false;
             let myPersonalScore = null;
             if (playerId) {
@@ -3663,16 +3661,16 @@ async function loadDesktopRanking(type) {
             let pos = 1;
             scores.forEach((row) => {
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (safeNick === playerNickname) myScoreFound = true; // Sprawdzamy czy złapaliśmy go w Top 20
+                if (safeNick === playerNickname) myScoreFound = true;
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-                // DOKLEJANIE KLUBU
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let bgClass = row.bg ? row.bg : '';
+                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 tbody.innerHTML += `
-                    <tr ${isMe}>
+                    <tr class="${bgClass}" ${isMeStyle}>
                         <td style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td style="font-size:10px;">${rangaText}</td>
@@ -3681,16 +3679,15 @@ async function loadDesktopRanking(type) {
                 pos++;
             });
 
-            // FIX: Jeśli gracz ma rangę, ale wypadł poza Top 20, doklejamy go na dół tabeli jako "Jego Wynik"
             if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5) {
                 let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                // DOKLEJANIE KLUBU
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
                 tbody.innerHTML += `<tr><td colspan="4" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
                 tbody.innerHTML += `
-                    <tr style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
+                    <tr class="${myBgClass}" style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
                         <td style="color:var(--accent); font-weight:900;">--</td>
                         <td style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
                         <td style="font-size:10px;">${myRank}</td>
@@ -3703,7 +3700,6 @@ async function loadDesktopRanking(type) {
             let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(20).get();
             let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
             
-            // To samo dla Time Attack: dbamy by gracz widział siebie
             let myScoreFound = false;
             let myPersonalScore = null;
             if (playerId) {
@@ -3718,15 +3714,14 @@ async function loadDesktopRanking(type) {
             scores.forEach((row) => {
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
                 if (safeNick === playerNickname) myScoreFound = true;
-
-                // DOKLEJANIE KLUBU
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let bgClass = row.bg ? row.bg : '';
+                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
                 tbody.innerHTML += `
-                    <tr ${isMe}>
+                    <tr class="${bgClass}" ${isMeStyle}>
                         <td class="${rankClass}" style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
                         <td style="color:#1dd1a1; font-weight:900; text-align: center;">${row.score}</td>
@@ -3734,16 +3729,14 @@ async function loadDesktopRanking(type) {
                 pos++;
             });
 
-            // Dodaj gracza poniżej limitu
             if (!myScoreFound && myPersonalScore) {
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                
-                // DOKLEJANIE KLUBU
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
                 tbody.innerHTML += `<tr><td colspan="3" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
                 tbody.innerHTML += `
-                    <tr style="background: rgba(29, 209, 161, 0.1); border: 1px solid #1dd1a1;">
+                    <tr class="${myBgClass}" style="background: rgba(29, 209, 161, 0.1); border: 1px solid #1dd1a1;">
                         <td style="color:var(--accent); font-weight:900;">--</td>
                         <td style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #1dd1a1;">(TY)</span></td>
                         <td style="color:#1dd1a1; font-weight:900; text-align: center;">${myPersonalScore.score}</td>
@@ -3779,14 +3772,13 @@ async function loadDesktopRanking(type) {
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                
-                // DOKLEJANIE KLUBU (Daily, Weekly, Monthly, All-time)
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="color: var(--accent);"' : '';
+                let bgClass = row.bg ? row.bg : '';
+                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="color: var(--accent);"' : '';
                 
                 tbody.innerHTML += `
-                    <tr ${isMe}>
+                    <tr class="${bgClass}" ${isMeStyle}>
                         <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td>${wonText}</td>
@@ -3798,6 +3790,7 @@ async function loadDesktopRanking(type) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">${t('errorDB')}</td></tr>`; 
     }
 }
+
 // ==============================================
 // ====== WERSJA MOBILNA RANKINGU (MODAL) =======
 // ==============================================
@@ -3818,13 +3811,28 @@ async function loadRanking(type) {
         if (thead) thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th>${t('colRank')}</th><th>Mecze</th><th style="color:var(--accent);">${t('colElo')}</th></tr>`;
         
         try {
-            const leaderboardData = await fetchVisibleLeaderboardRows(
-                'leaderboard_clash_beta',
-                'elo',
-                100,
-                (row) => (row.matchesPlayed || 0) >= 5
-            );
-            let scores = leaderboardData.rows;
+            // Ponownie używamy tej samej helper-funkcji co na desktopie do pobierania ELO (trzeba ją było wydzielić lub powielić)
+            let lastDoc = null;
+            let scores = [];
+            let hadAnyDocs = false;
+            
+            while (scores.length < 100) {
+                let query = db.collection('leaderboard_clash_beta').orderBy('elo', 'desc').limit(100);
+                if (lastDoc) query = query.startAfter(lastDoc);
+
+                const snapshot = await query.get();
+                if (snapshot.empty) break;
+
+                hadAnyDocs = true;
+                for (const doc of snapshot.docs) {
+                    if (scores.length >= 100) break;
+                    const row = doc.data();
+                    if ((row.matchesPlayed || 0) >= 5) scores.push(row);
+                }
+
+                lastDoc = snapshot.docs[snapshot.docs.length - 1];
+                if (snapshot.size < 100) break;
+            }
 
             let myScoreFound = false;
             let myPersonalScore = null;
@@ -3835,7 +3843,7 @@ async function loadRanking(type) {
             
             if (tbody) tbody.innerHTML = '';
             if (scores.length === 0) { 
-                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">${leaderboardData.hadAnyDocs ? t('noResultsCalib') : t('noResults')}</td></tr>`; 
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="text-align: center;">${hadAnyDocs ? t('noResultsCalib') : t('noResults')}</td></tr>`; 
                 return; 
             }
 
@@ -3843,24 +3851,24 @@ async function loadRanking(type) {
 
             scores.forEach((row) => {
                 let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (safeRenderNick === playerNickname) myScoreFound = true; // Złapaliśmy go
+                if (safeRenderNick === playerNickname) myScoreFound = true; 
 
                 let rankClass = ""; 
                 if (currentRankPosition === 1) rankClass = "rank-1"; 
                 else if (currentRankPosition === 2) rankClass = "rank-2"; 
                 else if (currentRankPosition === 3) rankClass = "rank-3";
                 
-                // DOKLEJANIE KLUBU W CLASH (Mobile)
                 safeRenderNick += getMiniClubBadge(row.club); 
                 
-                let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let bgClass = row.bg ? row.bg : '';
+                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
                 let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18);
                 
                 if (tbody) { 
-                    tbody.innerHTML += `<tr ${isMe}>
+                    tbody.innerHTML += `<tr class="${bgClass}" ${isMeStyle}>
                         <td class="${rankClass}">${currentRankPosition}</td>
                         <td class="rank-nick ${rankClass}" style="text-align:left;">${safeRenderNick}</td>
                         <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
@@ -3875,19 +3883,17 @@ async function loadRanking(type) {
                 currentRankPosition++;
             });
 
-            // Dodaj gracza jeśli wypadł poza Top 100
             if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5 && tbody) {
                 let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let myRankClass = getRankClass(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let myRankImg = getLeagueImageTag(myPersonalScore.elo, myPersonalScore.matchesPlayed, 18);
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                
-                // DOKLEJANIE KLUBU
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
                 tbody.innerHTML += `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
                 tbody.innerHTML += `
-                    <tr style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
+                    <tr class="${myBgClass}" style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
                         <td style="color:var(--accent); font-weight:900;">--</td>
                         <td class="rank-nick" style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
                         <td style="font-size:10px; font-weight:900;" class="${myRankClass}">
@@ -3898,10 +3904,6 @@ async function loadRanking(type) {
                         <td style="color:var(--text-dim); font-size:11px;">${myPersonalScore.matchesPlayed}</td>
                         <td style="font-weight:900; color:var(--accent); font-size:14px;">${myPersonalScore.elo}</td>
                     </tr>`;
-            }
-
-            if (tbody && tbody.innerHTML === '') {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-dim);">${t('noResultsCalib')}</td></tr>`;
             }
 
         } catch (e) { 
@@ -3925,7 +3927,7 @@ async function loadRanking(type) {
 
     try {
         let snapshot;
-        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(100).get(); // Dałem limit 100 żeby było spójnie z Clashem na mobile
+        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(100).get();
         else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(100).get();
         else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(100).get();
         else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(100).get();
@@ -3957,14 +3959,13 @@ async function loadRanking(type) {
             let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? t('no') : '0'}</span>`;
             
             let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-            
-            // DOKLEJANIE KLUBU W ZWYKLYCH TRYBACH (Mobile)
             safeRenderNick += getMiniClubBadge(row.club); 
             
-            let isMe = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            let bgClass = row.bg ? row.bg : '';
+            let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             if (tbody) { 
-                tbody.innerHTML += `<tr ${isMe}>
+                tbody.innerHTML += `<tr class="${bgClass}" ${isMeStyle}>
                     <td class="${rankClass}">${index + 1}</td>
                     <td class="rank-nick ${rankClass}" style="text-align:left;">${safeRenderNick}</td>
                     <td>${wonText}</td>
@@ -3977,6 +3978,8 @@ async function loadRanking(type) {
         if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--red-neon);">${t('errorDB')}</td></tr>`; 
     }
 }
+
+
 function closeRanking() { const overlay = document.getElementById('rankingOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 
 function launchConfetti() {
@@ -9360,6 +9363,8 @@ function ensureProgressionStats() {
     if (typeof userStats.coins === 'undefined') { userStats.coins = 0; needsSave = true; }
     if (!userStats.missions) { userStats.missions = { date: "", tasks: [] }; needsSave = true; }
     if (!userStats.equippedTitle) { userStats.equippedTitle = null; needsSave = true; }
+    if (!userStats.ownedBgs) { userStats.ownedBgs = []; needsSave = true; }
+    if (typeof userStats.equippedBg === 'undefined') { userStats.equippedBg = null; needsSave = true; }
     
     // Sprawdzamy czy to nowy dzień -> generujemy nowe misje
     const todayStr = new Date().toLocaleDateString();
@@ -9549,15 +9554,68 @@ function claimMission(index) {
 }
 
 function renderShop() {
+// Dostępne tła w sklepie
+const SHOP_BACKGROUNDS = [
+    { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Złote tło w rankingu', price: 5000 },
+    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Ogniste tło w rankingu', price: 10000 },
+    { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Neonowe zielone tło', price: 15000 },
+    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Niebieskie tło oceanu', price: 20000 }
+];
+
+function renderShop() {
+    ensureProgressionStats();
+    if (!userStats.ownedBgs) userStats.ownedBgs = [];
+    if (!userStats.equippedBg) userStats.equippedBg = null;
+
     const container = document.getElementById('shopListContainer');
-    // SKLEP W BUDOWIE:
-    container.innerHTML = `
-        <div style="text-align: center; margin-top: 40px; color: var(--text-dim);">
-            <div style="font-size: 50px; margin-bottom: 10px;">🚧</div>
-            <h3 style="color: var(--accent); text-transform: uppercase; font-weight: 900; font-size: 20px;">SKLEP W BUDOWIE</h3>
-            <p style="font-size: 13px; font-weight: 600;">System tytułów gracza jest aktualnie w produkcji.<br>Graj i oszczędzaj monety na zbliżające się nowości!</p>
-        </div>
-    `;
+    container.innerHTML = `<p class="text-xs text-dim mb-15">Kupuj unikalne tła, które wyróżnią Twój nick na tablicach wyników!</p>`;
+    
+    SHOP_BACKGROUNDS.forEach(bg => {
+        const isOwned = userStats.ownedBgs.includes(bg.id);
+        const isEquipped = userStats.equippedBg === bg.id;
+        
+        let actionBtn = '';
+        if (isEquipped) {
+            actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipBackground(null)">ZDEJMIJ</button>`;
+        } else if (isOwned) {
+            actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipBackground('${bg.id}')">ZAŁÓŻ</button>`;
+        } else {
+            actionBtn = `<button class="shop-btn shop-btn-buy" onclick="buyBackground('${bg.id}', ${bg.price})">${bg.price} 🪙</button>`;
+        }
+
+        container.innerHTML += `
+            <div class="shop-item-card ${bg.id}">
+                <div>
+                    <div class="shop-item-title">${bg.name}</div>
+                    <div style="font-size:10px; color:var(--text-dim); font-weight:700;">${bg.desc}</div>
+                </div>
+                <div>${actionBtn}</div>
+            </div>
+        `;
+    });
+}
+
+window.buyBackground = function(id, price) {
+    if (userStats.coins >= price) {
+        userStats.coins -= price;
+        userStats.ownedBgs.push(id);
+        userStats.equippedBg = id; // Automatycznie zakładamy po zakupie
+        saveStats();
+        renderShop();
+        document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
+        showToast("Zakupiono nowe tło!", "success");
+    } else {
+        showToast("Nie masz wystarczająco Monet!", "error");
+        playSound('error');
+    }
+}
+
+window.equipBackground = function(id) {
+    userStats.equippedBg = id;
+    saveStats();
+    renderShop();
+    showToast(id ? "Tło założone!" : "Tło zdjęte.", "normal");
+}
 }
 
 // ----------------------------------------

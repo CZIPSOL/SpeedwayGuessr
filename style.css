@@ -1696,12 +1696,15 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         margin-bottom: 40px;
     }
 
-    /* Tekst i kluby wyrównane do lewej strony obok zdjęcia */
+/* Tekst i kluby wyrównane do lewej strony obok zdjęcia */
     .info-container-centered {
         text-align: left;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        flex: 1;
+        min-width: 0; /* Zatrzymuje rozpychanie całego prawego bloku */
+        width: 100%;
     }
 
     .team-path-centered {
@@ -1709,6 +1712,12 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         flex-direction: column;
         align-items: flex-start; /* Ścieżka klubów zaczyna się od lewej */
         gap: 10px;
+        width: 100%; /* Wypełnia dostępne miejsce */
+        min-width: 0; /* Gwarantuje pojawienie się paska scrolla */
+    }
+
+    .path-boxes {
+        width: 100%; /* Wymusza szerokość do paska scrolla na PC */
     }
 
     .table-wrapper {
@@ -1930,7 +1939,28 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     .post-game-actions button:last-child { margin-bottom: 0; }
     .calendar-weekdays { font-size: 10px; }
     .cal-day { font-size: 12px; }
-    .table-headers { display: none; } 
+    .table-headers { 
+        display: grid !important; 
+        grid-template-columns: repeat(5, 1fr); 
+        gap: 4px; 
+        width: 100%; 
+        padding: 0 5px 8px 5px; 
+        box-sizing: border-box; 
+    }
+    .table-headers .col-name, 
+    .table-headers .col-clubs-header { 
+        display: none !important; 
+    }
+    .table-headers .col-attr { 
+        width: 100%; 
+        padding: 0; 
+        font-size: 8.5px; 
+        line-height: 1.1;
+        text-align: center; 
+        display: flex; 
+        align-items: flex-end; 
+        justify-content: center; 
+    }
     .table-wrapper { width: 100%; max-width: 100%; overflow: hidden; } /* Blokada rozlewania tabeli */
 
     /* UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
@@ -2516,4 +2546,24 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     text-transform: uppercase;
     vertical-align: middle;
     border: 1px solid;
+}
+
+/* ============================================== */
+/* ====== TŁA DO RANKINGU ZE SKLEPU ============= */
+/* ============================================== */
+.rank-bg-gold { 
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.3) 0%, transparent 100%) !important; 
+    border-left: 3px solid #d4af37 !important; 
+}
+.rank-bg-fire { 
+    background: linear-gradient(90deg, rgba(226, 88, 34, 0.3) 0%, transparent 100%) !important; 
+    border-left: 3px solid #e25822 !important; 
+}
+.rank-bg-toxic { 
+    background: linear-gradient(90deg, rgba(57, 255, 20, 0.2) 0%, transparent 100%) !important; 
+    border-left: 3px solid #39ff14 !important; 
+}
+.rank-bg-ocean { 
+    background: linear-gradient(90deg, rgba(0, 105, 148, 0.3) 0%, transparent 100%) !important; 
+    border-left: 3px solid #006994 !important; 
 }
