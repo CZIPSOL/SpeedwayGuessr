@@ -2552,7 +2552,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 /* ====== TŁA DO RANKINGU ZE SKLEPU ============= */
 /* ============================================== */
 
-/* Bardzo mocny czarny obrys (outline) dla tekstów na tłach, żeby zawsze były czytelne */
+/* Grubszy cień dla tekstów, aby były w 100% czytelne na animacjach i zdjęciach */
 .ranking-table tbody tr[class*="rank-bg-"] td {
     position: relative;
     z-index: 2;
@@ -2561,90 +2561,105 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 }
 .shop-item-card[class*="rank-bg-"] {
     text-shadow: 2px 2px 4px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000, 1px 1px 2px #000 !important;
+    color: #fff !important;
+}
+.shop-item-card[class*="rank-bg-"] .shop-item-title {
+    color: #fff !important;
 }
 
-/* 1. ZŁOTO */
+/* 1. ZŁOTO (CSS) */
 .rank-bg-gold { 
-    background: linear-gradient(90deg, rgba(212, 175, 55, 0.4) 0%, transparent 100%) !important; 
+    background-color: #000 !important;
+    background-image: linear-gradient(90deg, rgba(212, 175, 55, 0.5) 0%, rgba(0,0,0,0.9) 100%) !important; 
     border-left: 3px solid #d4af37 !important; 
 }
 
-/* 2. OGIEŃ (Animowany GIF) */
+/* 2. OGIEŃ (Animowany GIF Tenor) */
 .rank-bg-fire { 
+    background-color: #000 !important;
     background-image: 
         linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(200, 40, 0, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.pinimg.com/originals/a0/0a/4b/a00a4b3d8819d9b626e2a222384a30ff.gif') !important; 
+        url('https://media.tenor.com/5lR-zLwPzE8AAAAC/fire-flame.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #ff4500 !important; 
 }
 
-/* 3. TOKSYCZNY KWAS (Animowany GIF) */
+/* 3. TOKSYCZNY KWAS (Animowany GIF Tenor) */
 .rank-bg-toxic { 
+    background-color: #000 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(57, 255, 20, 0.3) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.pinimg.com/originals/cd/53/78/cd53787729f1262d1c68f121a221f7ee.gif') !important; 
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(57, 255, 20, 0.4) 50%, rgba(0,0,0,0.9) 100%),
+        url('https://media.tenor.com/d_y3Z7hH7dYAAAAC/neon-green.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #39ff14 !important; 
 }
 
-/* 4. OCEAN (Animowany CSS) */
+/* 4. OCEAN (Animacja 100% CSS - Zawsze działa i płynnie faluje) */
 @keyframes ocean-wave { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-ocean { 
-    background: linear-gradient(45deg, rgba(0, 51, 102, 0.8), rgba(0, 153, 204, 0.4), rgba(0, 51, 102, 0.8)) !important; 
+    background-color: #000 !important;
+    background-image: linear-gradient(45deg, rgba(0, 51, 102, 0.9), rgba(0, 153, 204, 0.5), rgba(0, 51, 102, 0.9)) !important; 
     background-size: 200% 200% !important;
     border-left: 3px solid #0099cc !important; 
     animation: ocean-wave 5s ease infinite !important;
 }
 
-/* 5. BŁYSKAWICE (Animowany GIF) */
+/* 5. BŁYSKAWICE (Animowany GIF Tenor) */
 .rank-bg-lightning { 
+    background-color: #000 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0, 255, 255, 0.2) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.pinimg.com/originals/65/9b/38/659b380f55cf6a3fb964b38dcbabfce3.gif') !important; 
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0, 150, 255, 0.3) 50%, rgba(0,0,0,0.9) 100%),
+        url('https://media.tenor.com/9lM2wBf2c8kAAAAC/lightning-blue.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #00ffff !important; 
 }
 
-/* 6. MROCZNY LAS */
+/* 6. MROCZNY LAS (CSS) */
 .rank-bg-forest { 
-    background: linear-gradient(90deg, rgba(1, 50, 32, 0.8), rgba(34, 139, 34, 0.3), rgba(0, 0, 0, 0.8)) !important; 
+    background-color: #000 !important;
+    background-image: linear-gradient(90deg, rgba(1, 50, 32, 0.8), rgba(34, 139, 34, 0.3), rgba(0,0,0,0.9)) !important; 
     border-left: 3px solid #228b22 !important; 
 }
 
-/* 7. SERCA (Animowany GIF) */
+/* 7. SERCA (Animowany GIF Tenor) */
 .rank-bg-hearts { 
+    background-color: #000 !important;
     background-image: 
         linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(255, 20, 147, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.pinimg.com/originals/c9/28/05/c92805fa6054ba50f3b4da672809fb2d.gif') !important; 
+        url('https://media.tenor.com/GIfq9q2oMpwAAAAC/hearts.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #ff1493 !important; 
 }
 
-/* 8. MYDLANE BAŃKI (Animowany GIF) */
+/* 8. MYDLANE BAŃKI (Animowany GIF Tenor) */
 .rank-bg-bubbles { 
+    background-color: #000 !important;
     background-image: 
         linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(135, 206, 235, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.pinimg.com/originals/8a/0a/be/8a0abe37d6e84d4ec62b0c169b828db5.gif') !important; 
+        url('https://media.tenor.com/h5T2h9H9d0EAAAAC/bubbles.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #87ceeb !important; 
 }
 
-/* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 */
+/* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 (Logo po lewej stronie!) */
 .rank-bg-sadurski { 
+    background-color: #000 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.95) 100%), 
+        /* Przyciemnienie mocne po lewej stronie by biały tekst (nick/poziom) był widoczny na logo */
+        linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.9) 100%), 
         url('images/sadurski.png') !important;
-    background-position: center, left 10px center !important;
+    /* Obrazek po lewej, odsunięty o 5px, wyrównany na środek w pionie */
+    background-position: center, left 5px center !important;
     background-repeat: no-repeat !important;
-    /* Pierwsze to gradient, drugie to obrazek logo (85% wysokości wiersza) */
-    background-size: 100% 100%, auto 85% !important;
+    /* Gradient zajmuje 100%, a obrazek logo 90% wysokości wiersza */
+    background-size: 100% 100%, auto 90% !important;
     border-left: 4px solid #f1c40f !important;
-    box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.3) !important;
+    box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.4) !important;
 }
 
 /* ============================================== */
