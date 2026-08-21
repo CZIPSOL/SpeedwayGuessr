@@ -3646,14 +3646,14 @@ async function loadDesktopRanking(type) {
             
             let myScoreFound = false;
             let myPersonalScore = null;
-            if (playerId) {
+            if (typeof playerId !== 'undefined' && playerId) {
                 const myDoc = await db.collection("leaderboard_clash_beta").doc(playerId).get();
                 if (myDoc.exists) myPersonalScore = myDoc.data();
             }
 
             tbody.innerHTML = '';
             if (scores.length === 0) {
-                const emptyText = leaderboardData.hadAnyDocs ? t('noResultsCalib') : t('noResults');
+                const emptyText = leaderboardData.hadAnyDocs ? (t('noResultsCalib') || 'Kalibracja w toku...') : t('noResults');
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${emptyText}</td></tr>`;
                 return;
             }
@@ -3661,13 +3661,13 @@ async function loadDesktopRanking(type) {
             let pos = 1;
             scores.forEach((row) => {
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (safeNick === playerNickname) myScoreFound = true;
+                if (typeof playerNickname !== 'undefined' && safeNick === playerNickname) myScoreFound = true;
                 
-                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-                safeNick += getMiniClubBadge(row.club); 
+                let rangaText = typeof getLeagueRankName === 'function' ? getLeagueRankName(row.elo, row.matchesPlayed) : row.rank;
+                if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMeStyle = (typeof playerNickname !== 'undefined' && (row.nick || t('defaultPlayer')) === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 tbody.innerHTML += `
                     <tr class="${bgClass}" ${isMeStyle}>
@@ -3680,9 +3680,9 @@ async function loadDesktopRanking(type) {
             });
 
             if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5) {
-                let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
+                let myRank = typeof getLeagueRankName === 'function' ? getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed) : myPersonalScore.rank;
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                if (typeof getMiniClubBadge === 'function') mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
                 tbody.innerHTML += `<tr><td colspan="4" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
@@ -3702,7 +3702,7 @@ async function loadDesktopRanking(type) {
             
             let myScoreFound = false;
             let myPersonalScore = null;
-            if (playerId) {
+            if (typeof playerId !== 'undefined' && playerId) {
                 const myDoc = await db.collection("leaderboard_timeattack").doc(playerId).get();
                 if (myDoc.exists) myPersonalScore = myDoc.data();
             }
@@ -3713,11 +3713,11 @@ async function loadDesktopRanking(type) {
             let pos = 1;
             scores.forEach((row) => {
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (safeNick === playerNickname) myScoreFound = true;
-                safeNick += getMiniClubBadge(row.club); 
+                if (typeof playerNickname !== 'undefined' && safeNick === playerNickname) myScoreFound = true;
+                if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMeStyle = (typeof playerNickname !== 'undefined' && (row.nick || t('defaultPlayer')) === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
                 tbody.innerHTML += `
@@ -3731,7 +3731,7 @@ async function loadDesktopRanking(type) {
 
             if (!myScoreFound && myPersonalScore) {
                 let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                if (typeof getMiniClubBadge === 'function') mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
                 tbody.innerHTML += `<tr><td colspan="3" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
@@ -3772,10 +3772,10 @@ async function loadDesktopRanking(type) {
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 
                 let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                safeNick += getMiniClubBadge(row.club); 
+                if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="color: var(--accent);"' : '';
+                let isMeStyle = (typeof playerNickname !== 'undefined' && (row.nick || t('defaultPlayer')) === playerNickname) ? 'style="color: var(--accent);"' : '';
                 
                 tbody.innerHTML += `
                     <tr class="${bgClass}" ${isMeStyle}>
@@ -3787,9 +3787,10 @@ async function loadDesktopRanking(type) {
             });
         }
     } catch (e) { 
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">${t('errorDB')}</td></tr>`; 
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych</td></tr>`; 
     }
-}
+};
+
 
 // ==============================================
 // ====== WERSJA MOBILNA RANKINGU (MODAL) =======
