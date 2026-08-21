@@ -9344,15 +9344,22 @@ function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proc
 // ====== SYSTEM POZIOMÓW, MISJI I SKLEPU =======
 // ==============================================
 
-const MISSIONS_POOL = [
-    { type: 'play_endless', target: 3, desc: 'Rozegraj 3 gry w trybie Endless', exp: 100, coins: 50 },
-    { type: 'play_endless', target: 5, desc: 'Rozegraj 5 gier w trybie Endless', exp: 150, coins: 80 },
-    { type: 'win_clash', target: 1, desc: 'Wygraj 1 mecz w Speedway Clash', exp: 200, coins: 100 },
-    { type: 'win_clash', target: 3, desc: 'Wygraj 3 mecze w Speedway Clash', exp: 400, coins: 200 },
+const MISSIONS_POOL_DAILY = [
+    { type: 'play_endless', target: 3, desc: 'Rozegraj 3 gry Endless', exp: 100, coins: 50 },
+    { type: 'win_clash', target: 1, desc: 'Wygraj 1 mecz w Clash', exp: 200, coins: 100 },
     { type: 'ta_score', target: 20, desc: 'Zdobądź 20 pkt. w Time Attack (Suma)', exp: 150, coins: 70 },
-    { type: 'ta_score', target: 50, desc: 'Zdobądź 50 pkt. w Time Attack (Suma)', exp: 300, coins: 150 },
-    { type: 'no_hint_win', target: 1, desc: 'Wygraj grę bez podpowiedzi (Daily/Endless)', exp: 100, coins: 50 },
-    { type: 'no_hint_win', target: 3, desc: 'Wygraj 3 gry bez podpowiedzi (Daily/Endless)', exp: 250, coins: 120 }
+    { type: 'no_hint_win', target: 1, desc: 'Wygraj grę bez podpowiedzi', exp: 100, coins: 50 }
+];
+
+const MISSIONS_POOL_WEEKLY = [
+    { type: 'play_endless', target: 20, desc: 'Rozegraj 20 gier Endless', exp: 500, coins: 300 },
+    { type: 'win_clash', target: 10, desc: 'Wygraj 10 meczów w Clash', exp: 800, coins: 500 },
+    { type: 'no_hint_win', target: 15, desc: 'Wygraj 15 gier bez podpowiedzi', exp: 600, coins: 350 }
+];
+
+const MISSIONS_POOL_MONTHLY = [
+    { type: 'play_endless', target: 100, desc: 'Rozegraj 100 gier Endless', exp: 2000, coins: 1500 },
+    { type: 'win_clash', target: 30, desc: 'Wygraj 30 meczów w Clash', exp: 3000, coins: 2000 }
 ];
 
 function ensureProgressionStats() {
@@ -9361,30 +9368,51 @@ function ensureProgressionStats() {
     if (typeof userStats.level === 'undefined') { userStats.level = 1; needsSave = true; }
     if (typeof userStats.exp === 'undefined') { userStats.exp = 0; needsSave = true; }
     if (typeof userStats.coins === 'undefined') { userStats.coins = 0; needsSave = true; }
-    if (!userStats.missions) { userStats.missions = { date: "", tasks: [] }; needsSave = true; }
+    
+    if (!userStats.missions) { userStats.missions = { date: "", weeklyDate: "", monthlyDate: "", dailyTasks: [], weeklyTasks: [], monthlyTasks: [] }; needsSave = true; }
+    
+    // Upewniamy się, że struktury istnieją (dla starych graczy)
+    if (!userStats.missions.dailyTasks) userStats.missions.dailyTasks = [];
+    if (!userStats.missions.weeklyTasks) userStats.missions.weeklyTasks = [];
+    if (!userStats.missions.monthlyTasks) userStats.missions.monthlyTasks = [];
+
     if (!userStats.equippedTitle) { userStats.equippedTitle = null; needsSave = true; }
     if (!userStats.ownedBgs) { userStats.ownedBgs = []; needsSave = true; }
     if (typeof userStats.equippedBg === 'undefined') { userStats.equippedBg = null; needsSave = true; }
     
-    // Sprawdzamy czy to nowy dzień -> generujemy nowe misje
-    const todayStr = new Date().toLocaleDateString();
+    const d = new Date();
+    const todayStr = d.toLocaleDateString();
+    
+    // Generowanie Dziennych
     if (userStats.missions.date !== todayStr) {
         userStats.missions.date = todayStr;
-        
-        // Losujemy 3 unikalne misje z puli
-        let shuffled = [...MISSIONS_POOL].sort(() => 0.5 - Math.random());
-        userStats.missions.tasks = shuffled.slice(0, 3).map(m => ({
-            ...m, progress: 0, completed: false, claimed: false
-        }));
-        
+        let shuffled = [...MISSIONS_POOL_DAILY].sort(() => 0.5 - Math.random());
+        userStats.missions.dailyTasks = shuffled.slice(0, 3).map(m => ({ ...m, progress: 0, completed: false, claimed: false }));
         needsSave = true;
     }
 
-    // NAPRAWA: Zapisujemy stan do pamięci od razu po wygenerowaniu misji, 
-    // aby po odświeżeniu strony lub restarcie gry się nie resetowały!
+    // Generowanie Tygodniowych (Prosty reset co poniedziałek - oparty na dacie)
+    let dayNum = d.getDay() || 7; 
+    let monday = new Date(d); monday.setDate(d.getDate() - dayNum + 1);
+    let mondayStr = monday.toLocaleDateString();
+    if (userStats.missions.weeklyDate !== mondayStr) {
+        userStats.missions.weeklyDate = mondayStr;
+        let shuffled = [...MISSIONS_POOL_WEEKLY].sort(() => 0.5 - Math.random());
+        userStats.missions.weeklyTasks = shuffled.slice(0, 2).map(m => ({ ...m, progress: 0, completed: false, claimed: false }));
+        needsSave = true;
+    }
+
+    // Generowanie Miesięcznych
+    let monthStr = `${d.getFullYear()}_${d.getMonth() + 1}`;
+    if (userStats.missions.monthlyDate !== monthStr) {
+        userStats.missions.monthlyDate = monthStr;
+        let shuffled = [...MISSIONS_POOL_MONTHLY].sort(() => 0.5 - Math.random());
+        userStats.missions.monthlyTasks = shuffled.slice(0, 1).map(m => ({ ...m, progress: 0, completed: false, claimed: false }));
+        needsSave = true;
+    }
+
     if (needsSave) {
         localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
-        // Jeśli gracz jest zalogowany to wysyłamy też aktualizację w tle na Firebase
         if (auth.currentUser) {
             db.collection('users').doc(auth.currentUser.uid).set({
                 stats: JSON.stringify(userStats),
@@ -9422,16 +9450,19 @@ function updateMissionProgress(type, amount = 1) {
     ensureProgressionStats();
     let updated = false;
     
-    userStats.missions.tasks.forEach((task) => {
-        if (task.type === type && !task.completed) {
-            task.progress += amount;
-            if (task.progress >= task.target) {
-                task.progress = task.target;
-                task.completed = true;
-                showToast(`✅ Misja ukończona: ${task.desc}!`, "success");
+    // Sprawdzamy wszystkie listy zadań
+    [userStats.missions.dailyTasks, userStats.missions.weeklyTasks, userStats.missions.monthlyTasks].forEach(taskList => {
+        taskList.forEach(task => {
+            if (task.type === type && !task.completed) {
+                task.progress += amount;
+                if (task.progress >= task.target) {
+                    task.progress = task.target;
+                    task.completed = true;
+                    showToast(`✅ Misja ukończona: ${task.desc}!`, "success");
+                }
+                updated = true;
             }
-            updated = true;
-        }
+        });
     });
     
     if (updated) saveStats();
@@ -9462,63 +9493,63 @@ window.openProfile = function() {
     renderProfileExpBar();
 }
 
+
 // ==============================================
-// ====== UI MISJI I SKLEPU =====================
+// ====== UI MISJI (NOWY LAYOUT) ================
 // ==============================================
 
-function openMissionsShop() {
+function openMissionsModal() {
     ensureProgressionStats();
     document.getElementById('mainMenuContainer').style.display = 'none';
     const desktopMenu = document.getElementById('desktopMainMenu');
     if(desktopMenu) desktopMenu.style.display = 'none';
     
-    const overlay = document.getElementById('missionsShopOverlay');
+    const overlay = document.getElementById('missionsModalOverlay');
     overlay.style.display = 'flex';
     setTimeout(() => overlay.style.opacity = '1', 10);
     
-    switchMsTab('missions');
+    switchMissionTab('daily');
+    document.getElementById('missionsCoinsDisplay').innerText = userStats.coins;
 }
 
-function closeMissionsShop() {
-    const overlay = document.getElementById('missionsShopOverlay');
+function closeMissionsModal() {
+    const overlay = document.getElementById('missionsModalOverlay');
     overlay.style.opacity = '0';
     setTimeout(() => {
         overlay.style.display = 'none';
-        window.location.reload(); // Prosty powrót do widoku głównego
+        window.location.reload(); 
     }, 300);
 }
 
-function switchMsTab(tab) {
-    document.getElementById('msTabMissions').classList.remove('active');
-    document.getElementById('msTabShop').classList.remove('active');
-    
-    if (tab === 'missions') {
-        document.getElementById('msTabMissions').classList.add('active');
-        document.getElementById('msPanelMissions').style.display = 'block';
-        document.getElementById('msPanelShop').style.display = 'none';
-        renderMissions();
-    } else {
-        document.getElementById('msTabShop').classList.add('active');
-        document.getElementById('msPanelMissions').style.display = 'none';
-        document.getElementById('msPanelShop').style.display = 'block';
-        renderShop();
-    }
-    
-    document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
-}
+window.switchMissionTab = function(type) {
+    // Podświetlenie przycisków
+    const btns = document.querySelectorAll('#missionsModalOverlay .settings-tab-btn');
+    btns.forEach(b => {
+        if(b.getAttribute('onclick').includes(type)) b.classList.add('active');
+        else b.classList.remove('active');
+    });
 
-function renderMissions() {
     const container = document.getElementById('missionsListContainer');
     container.innerHTML = '';
     
-    userStats.missions.tasks.forEach((task, index) => {
+    let taskList = [];
+    if (type === 'daily') taskList = userStats.missions.dailyTasks;
+    else if (type === 'weekly') taskList = userStats.missions.weeklyTasks;
+    else if (type === 'monthly') taskList = userStats.missions.monthlyTasks;
+
+    if (taskList.length === 0) {
+        container.innerHTML = '<div class="text-dim text-center mt-20">Brak dostępnych misji.</div>';
+        return;
+    }
+    
+    taskList.forEach((task, index) => {
         let pct = Math.min(100, Math.floor((task.progress / task.target) * 100));
         
         let actionHtml = '';
         if (task.claimed) {
             actionHtml = `<button class="shop-btn" style="background:transparent; border:1px solid var(--text-dim); color:var(--text-dim);" disabled>Odebrano</button>`;
         } else if (task.completed) {
-            actionHtml = `<button class="shop-btn shop-btn-buy" onclick="claimMission(${index})">Odbierz</button>`;
+            actionHtml = `<button class="shop-btn shop-btn-buy" onclick="claimMission('${type}', ${index})">Odbierz</button>`;
         } else {
             actionHtml = `<span style="font-size: 13px; font-weight: 900; color: var(--text-dim);">${task.progress} / ${task.target}</span>`;
         }
@@ -9538,8 +9569,13 @@ function renderMissions() {
     });
 }
 
-function claimMission(index) {
-    let task = userStats.missions.tasks[index];
+window.claimMission = function(type, index) {
+    let taskList = [];
+    if (type === 'daily') taskList = userStats.missions.dailyTasks;
+    else if (type === 'weekly') taskList = userStats.missions.weeklyTasks;
+    else if (type === 'monthly') taskList = userStats.missions.monthlyTasks;
+
+    let task = taskList[index];
     if (!task || task.claimed || !task.completed) return;
     
     task.claimed = true;
@@ -9549,50 +9585,88 @@ function claimMission(index) {
     showToast(`Odebrano: ${task.coins} 🪙 i ${task.exp} EXP`, "success");
     saveStats();
     
-    document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
-    renderMissions();
+    document.getElementById('missionsCoinsDisplay').innerText = userStats.coins;
+    switchMissionTab(type); // Odświeżenie listy
 }
 
-function renderShop() {
-// Dostępne tła w sklepie
+// ==============================================
+// ====== UI SKLEPU (NOWY LAYOUT) ===============
+// ==============================================
+
 const SHOP_BACKGROUNDS = [
-    { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Złote tło w rankingu', price: 5000 },
-    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Ogniste tło w rankingu', price: 10000 },
-    { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Neonowe zielone tło', price: 15000 },
-    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Niebieskie tło oceanu', price: 20000 }
+    { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Świetliste, złote tło', price: 5000 },
+    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płomienne podświetlenie', price: 10000 },
+    { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Neonowa zieleń reaktora', price: 15000 },
+    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Spokojny, niebieski gradient', price: 20000 }
 ];
 
-function renderShop() {
+function openShopModal() {
     ensureProgressionStats();
-    if (!userStats.ownedBgs) userStats.ownedBgs = [];
-    if (!userStats.equippedBg) userStats.equippedBg = null;
+    document.getElementById('mainMenuContainer').style.display = 'none';
+    const desktopMenu = document.getElementById('desktopMainMenu');
+    if(desktopMenu) desktopMenu.style.display = 'none';
+    
+    const overlay = document.getElementById('shopModalOverlay');
+    overlay.style.display = 'flex';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+    
+    switchShopTab('backgrounds');
+    document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
+}
+
+function closeShopModal() {
+    const overlay = document.getElementById('shopModalOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        window.location.reload(); 
+    }, 300);
+}
+
+window.switchShopTab = function(tab) {
+    const btns = document.querySelectorAll('#shopModalOverlay .settings-tab-btn');
+    btns.forEach(b => {
+        if(b.getAttribute('onclick').includes(tab)) b.classList.add('active');
+        else b.classList.remove('active');
+    });
 
     const container = document.getElementById('shopListContainer');
-    container.innerHTML = `<p class="text-xs text-dim mb-15">Kupuj unikalne tła, które wyróżnią Twój nick na tablicach wyników!</p>`;
+    container.innerHTML = '';
     
-    SHOP_BACKGROUNDS.forEach(bg => {
-        const isOwned = userStats.ownedBgs.includes(bg.id);
-        const isEquipped = userStats.equippedBg === bg.id;
+    if (tab === 'backgrounds') {
+        container.innerHTML = `<p class="text-xs text-dim mb-15">Tła nakładają się na Twój wiersz w tabelach wyników, czyniąc Twój profil unikalnym!</p>`;
         
-        let actionBtn = '';
-        if (isEquipped) {
-            actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipBackground(null)">ZDEJMIJ</button>`;
-        } else if (isOwned) {
-            actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipBackground('${bg.id}')">ZAŁÓŻ</button>`;
-        } else {
-            actionBtn = `<button class="shop-btn shop-btn-buy" onclick="buyBackground('${bg.id}', ${bg.price})">${bg.price} 🪙</button>`;
-        }
+        SHOP_BACKGROUNDS.forEach(bg => {
+            const isOwned = userStats.ownedBgs.includes(bg.id);
+            const isEquipped = userStats.equippedBg === bg.id;
+            
+            let actionBtn = '';
+            if (isEquipped) {
+                actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipBackground(null)">ZDEJMIJ</button>`;
+            } else if (isOwned) {
+                actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipBackground('${bg.id}')">ZAŁÓŻ</button>`;
+            } else {
+                actionBtn = `<button class="shop-btn shop-btn-buy" onclick="buyBackground('${bg.id}', ${bg.price})">${bg.price} 🪙</button>`;
+            }
 
-        container.innerHTML += `
-            <div class="shop-item-card ${bg.id}">
-                <div>
-                    <div class="shop-item-title">${bg.name}</div>
-                    <div style="font-size:10px; color:var(--text-dim); font-weight:700;">${bg.desc}</div>
+            container.innerHTML += `
+                <div class="shop-item-card ${bg.id}" style="border-left: none !important;">
+                    <div style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                        <div class="shop-item-title" style="color: #fff;">${bg.name}</div>
+                        <div style="font-size:10px; color:rgba(255,255,255,0.7); font-weight:700;">${bg.desc}</div>
+                    </div>
+                    <div>${actionBtn}</div>
                 </div>
-                <div>${actionBtn}</div>
+            `;
+        });
+    } else if (tab === 'titles') {
+        container.innerHTML = `
+            <div style="text-align:center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); margin-top: 20px;">
+                <div style="font-size: 30px; margin-bottom: 5px;">🚧</div>
+                <div style="font-size: 13px; color: var(--text-dim); font-weight: 700;">Kategoria w budowie... Oszczędzaj monety!</div>
             </div>
         `;
-    });
+    }
 }
 
 window.buyBackground = function(id, price) {
@@ -9601,7 +9675,7 @@ window.buyBackground = function(id, price) {
         userStats.ownedBgs.push(id);
         userStats.equippedBg = id; // Automatycznie zakładamy po zakupie
         saveStats();
-        renderShop();
+        switchShopTab('backgrounds');
         document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
         showToast("Zakupiono nowe tło!", "success");
     } else {
@@ -9613,9 +9687,8 @@ window.buyBackground = function(id, price) {
 window.equipBackground = function(id) {
     userStats.equippedBg = id;
     saveStats();
-    renderShop();
+    switchShopTab('backgrounds');
     showToast(id ? "Tło założone!" : "Tło zdjęte.", "normal");
-}
 }
 
 // ----------------------------------------
@@ -9717,6 +9790,10 @@ try {
     window.closeMissionsShop = closeMissionsShop;
     window.switchMsTab = switchMsTab;
     window.claimMission = claimMission;
+    window.openMissionsModal = openMissionsModal;
+    window.closeMissionsModal = closeMissionsModal;
+    window.openShopModal = openShopModal;
+    window.closeShopModal = closeShopModal;
     
 } catch (e) {
     console.error("Global export error:", e);
