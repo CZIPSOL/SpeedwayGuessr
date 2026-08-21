@@ -2399,48 +2399,60 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
     const controls = document.getElementById('gameDailyControls'); 
-    // POPRAWKA: Szukamy pola .input-section WYŁĄCZNIE wewnątrz #gameContainer!
     const inputSec = document.querySelector('#gameContainer .input-section'); 
-    if (!modeDisplay || !controls || !inputSec) return;
+    
+    if (!modeDisplay || !controls || !inputSec) {
+        console.warn("Elementy HTML dla gry nie są jeszcze gotowe.");
+        return;
+    }
 
     inputSec.style.display = 'none'; 
 
-    let target;
-    if (gameMode === 'daily') {
-        controls.style.display = 'flex'; 
-        dailyNumberGlobal = getDailyDateString(selectedDailyDay);
-        modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
-        target = _generateDailyTarget(selectedDailyDay);
-    } else {
-        controls.style.display = 'none';
-        modeDisplay.innerText = i18n[currentLang].modeEndless;
+    try {
+        let target;
+        if (gameMode === 'daily') {
+            controls.style.display = 'flex'; 
+            dailyNumberGlobal = getDailyDateString(selectedDailyDay);
+            modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
+            target = _generateDailyTarget(selectedDailyDay);
+        } else {
+            controls.style.display = 'none';
+            modeDisplay.innerText = i18n[currentLang].modeEndless;
+            
+            if (!userStats.recentEndless) userStats.recentEndless = [];
+            let validTarget = false;
+            while (!validTarget) {
+                target = playersDB[Math.floor(Math.random() * playersDB.length)];
+                if (!userStats.recentEndless.includes(target.id)) validTarget = true;
+            }
+            userStats.recentEndless.push(target.id);
+            if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
+            saveStats();
+        }
+
+        _lockTarget(target.id); 
+
+        if (gameMode === 'daily') {
+            if (userStats.dailyResults[selectedDailyDay]) { 
+                restorePlayedGame(); return; 
+            } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) { 
+                inputSec.style.display = 'block'; restoreInProgressDaily(); return; 
+            }
+        }
+
+        buildTeamPath(); 
+        setupAutocomplete(); 
+        updateCounterDisplay(); 
+        document.getElementById('mysteryName').innerText = "???"; 
         
-        if (!userStats.recentEndless) userStats.recentEndless = [];
-        let validTarget = false;
-        while (!validTarget) {
-            target = playersDB[Math.floor(Math.random() * playersDB.length)];
-            if (!userStats.recentEndless.includes(target.id)) validTarget = true;
-        }
-        userStats.recentEndless.push(target.id);
-        if (userStats.recentEndless.length > 50) userStats.recentEndless.shift();
-        saveStats();
+        // Pokazuje pole wpisywania
+        inputSec.style.display = 'block'; 
+        
+    } catch (e) {
+        console.error("Błąd w trakcie inicjalizacji gry:", e);
+        // Gwarancja, że pole wpisywania pojawi się mimo małych błędów
+        inputSec.style.display = 'block'; 
     }
-
-    _lockTarget(target.id); // Zamykamy gracza w sejfie
-
-    if (gameMode === 'daily') {
-        if (userStats.dailyResults[selectedDailyDay]) { 
-            restorePlayedGame(); return; 
-        } else if (userStats.dailyGuesses[selectedDailyDay] && userStats.dailyGuesses[selectedDailyDay].length > 0) { 
-            inputSec.style.display = 'block'; restoreInProgressDaily(); return; 
-        }
-    }
-
-    buildTeamPath(); 
-    setupAutocomplete(); 
-    updateCounterDisplay(); 
-    document.getElementById('mysteryName').innerText = "???"; 
-    inputSec.style.display = 'block'; 
 }
 
 // Przywracanie wpisanych zawodników w niezakończonej grze Daily
