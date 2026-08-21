@@ -9594,10 +9594,15 @@ window.claimMission = function(type, index) {
 // ==============================================
 
 const SHOP_BACKGROUNDS = [
-    { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Świetliste, złote tło', price: 5000 },
-    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płomienne podświetlenie', price: 10000 },
-    { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Neonowa zieleń reaktora', price: 15000 },
-    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Spokojny, niebieski gradient', price: 20000 }
+    { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Lśniące, animowane złoto', price: 5000 },
+    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płonące, animowane tło', price: 10000 },
+    { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Pulsujący kwas', price: 15000 },
+    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Falująca woda', price: 20000 },
+    { id: 'rank-bg-lightning', name: 'Gniew Zeusa', desc: 'Uderzenia błyskawic', price: 25000 },
+    { id: 'rank-bg-forest', name: 'Mroczny Las', desc: 'Głęboka, mistyczna zieleń', price: 30000 },
+    { id: 'rank-bg-hearts', name: 'Miłosny Szał', desc: 'Pulsujące odcienie różu', price: 35000 },
+    { id: 'rank-bg-bubbles', name: 'Mydlane Bańki', desc: 'Lekkie, unoszące się kolory', price: 40000 },
+    { id: 'rank-bg-sadurski', name: 'Sadurski Racing', desc: 'SPECJALNE TŁO: Krzysztof Sadurski (Złote 759)', price: 75900 }
 ];
 
 function openShopModal() {
@@ -9786,10 +9791,6 @@ try {
     window.closeTeamAchievement = closeTeamAchievement;
     window.shareCareerResult = shareCareerResult;
     window.showCareerCalendar = showCareerCalendar;
-    window.openMissionsShop = openMissionsShop;
-    window.closeMissionsShop = closeMissionsShop;
-    window.switchMsTab = switchMsTab;
-    window.claimMission = claimMission;
     window.openMissionsModal = openMissionsModal;
     window.closeMissionsModal = closeMissionsModal;
     window.openShopModal = openShopModal;
