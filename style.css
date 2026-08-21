@@ -2569,7 +2569,28 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     color: #fff !important;
 }
 
-/* 1. ZŁOTO (Przesuwający się złoty blask) */
+/* ============================================== */
+/* ====== TŁA DO RANKINGU ZE SKLEPU ============= */
+/* ============================================== */
+
+/* Bardzo mocny czarny cień dla tekstów, aby były w 100% czytelne na animacjach i zdjęciach */
+.ranking-table tbody tr[class*="rank-bg-"] td {
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000 !important;
+    font-weight: 900 !important;
+    color: #fff !important;
+}
+.shop-item-card[class*="rank-bg-"] {
+    text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000 !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+}
+.shop-item-card[class*="rank-bg-"] .shop-item-title {
+    color: #fff !important;
+}
+
+/* 1. ZŁOTO (Przesuwający się złoty blask - CSS) */
 @keyframes gold-shine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-gold { 
     background: linear-gradient(90deg, #111, #8b6508, #ffd700, #8b6508, #111) !important; 
@@ -2578,81 +2599,91 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     border-left: 3px solid #d4af37 !important; 
 }
 
-/* 2. PIEKIELNY OGIEŃ (Animowane płomienie gradientowe) */
-@keyframes fire-glow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+/* 2. PIEKIELNY OGIEŃ (Twój Giphy) */
 .rank-bg-fire { 
-    background: linear-gradient(90deg, #2a0000, #ff2a00, #ff7b00, #2a0000) !important; 
-    background-size: 300% 300% !important;
-    animation: fire-glow 2s ease infinite !important;
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/q4voi8znbYANE5GtYI/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #ff4500 !important; 
 }
 
-/* 3. TOKSYCZNY KWAS (Pulsujący neon) */
-@keyframes toxic-pulse { 0% { box-shadow: inset 0 0 20px #00ff00; } 50% { box-shadow: inset 0 0 70px #39ff14; } 100% { box-shadow: inset 0 0 20px #00ff00; } }
+/* 3. TOKSYCZNY KWAS (Twój Giphy) */
 .rank-bg-toxic { 
-    background: linear-gradient(90deg, #001a00, #004d00, #001a00) !important; 
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/1sv8rJuRVyax5a31L3/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #39ff14 !important; 
-    animation: toxic-pulse 1.5s infinite !important;
 }
 
-/* 4. GŁĘBIA OCEANU (Falujący błękit) */
-@keyframes ocean-wave { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+/* 4. OCEAN (Twój Giphy) */
 .rank-bg-ocean { 
-    background: linear-gradient(45deg, #001122, #005588, #001122) !important; 
-    background-size: 200% 200% !important;
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/46hpy8xB3MiHfruixn/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #0099cc !important; 
-    animation: ocean-wave 4s ease infinite !important;
 }
 
-/* 5. BŁYSKAWICE (Miganie prądu) */
-@keyframes lightning-strike { 
-    0%, 92%, 98%, 100% { background-color: #00001a; box-shadow: none; } 
-    95%, 99% { background-color: #00ffff; box-shadow: inset 0 0 40px #fff; } 
-}
+/* 5. BŁYSKAWICE (Twój Giphy) */
 .rank-bg-lightning { 
-    background-image: linear-gradient(90deg, rgba(0,0,0,0.8), transparent, rgba(0,0,0,0.8)) !important;
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/CKlafeh1NAxz35KTq4/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #00ffff !important; 
-    animation: lightning-strike 4s infinite !important;
 }
 
-/* 6. MROCZNY LAS (Powolny, gęsty mrok) */
-@keyframes forest-breathe { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+/* 6. MROCZNY LAS (Twój Giphy) */
 .rank-bg-forest { 
-    background: linear-gradient(90deg, #001100, #004411, #001100) !important; 
-    background-size: 200% 200% !important;
-    animation: forest-breathe 6s ease infinite !important;
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/gyVxILbrZ2UM7lGBVK/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #228b22 !important; 
 }
 
-/* 7. SERCA (Bicie serca) */
-@keyframes heart-beat { 0%, 100% { background-size: 100% 100%; } 50% { background-size: 150% 150%; } }
+/* 7. SERCA (Twój Giphy) */
 .rank-bg-hearts { 
-    background: radial-gradient(circle at center, #8b005d, #220011) !important;
-    background-position: center !important;
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/RH7e0AYVpzSBeGDxF3/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #ff1493 !important; 
-    animation: heart-beat 1.5s infinite !important;
 }
 
-/* 8. MYDLANE BAŃKI (Lekki dryf) */
-@keyframes bubbles-float { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+/* 8. MYDLANE BAŃKI (Twój Giphy) */
 .rank-bg-bubbles { 
-    background: linear-gradient(45deg, #002233, #0088cc, #002233) !important;
-    background-size: 300% 300% !important;
+    background-color: #000 !important;
+    background-image: 
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.95) 100%),
+        url('https://media.giphy.com/media/xUOwG6aAEpMmDVStcA/giphy.gif') !important; 
+    background-size: 100% 100%, cover !important;
+    background-position: center, center !important;
     border-left: 3px solid #87ceeb !important; 
-    animation: bubbles-float 8s linear infinite !important;
 }
 
 /* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 (Znak wodny na środku!) */
 .rank-bg-sadurski { 
     background-color: #050505 !important;
     background-image: 
-        /* Ciemny na brzegach (na tekst), lekko przezroczysty na środku (na logo) */
         linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.95) 100%), 
         url('images/sadurski.png') !important;
-    /* Obrazek umieszczony dokładnie na ŚRODKU wiersza */
     background-position: center, center center !important;
     background-repeat: no-repeat !important;
-    /* Gradient na całości, Obrazek wysoki na 95% wysokości wiersza i zachowuje proporcje */
     background-size: 100% 100%, contain !important;
     border-left: 4px solid #f1c40f !important;
     box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.2) !important;
