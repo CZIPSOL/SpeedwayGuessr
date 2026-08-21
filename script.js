@@ -2399,7 +2399,8 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 async function initGame() {
     const modeDisplay = document.getElementById('gameModeDisplay'); 
     const controls = document.getElementById('gameDailyControls'); 
-    const inputSec = document.querySelector('.input-section');
+    // POPRAWKA: Szukamy pola .input-section WYŁĄCZNIE wewnątrz #gameContainer!
+    const inputSec = document.querySelector('#gameContainer .input-section'); 
     if (!modeDisplay || !controls || !inputSec) return;
 
     inputSec.style.display = 'none'; 
@@ -2414,7 +2415,6 @@ async function initGame() {
         controls.style.display = 'none';
         modeDisplay.innerText = i18n[currentLang].modeEndless;
         
-        // Endless losuje na froncie i odrzuca zawodników z historii
         if (!userStats.recentEndless) userStats.recentEndless = [];
         let validTarget = false;
         while (!validTarget) {
@@ -3789,7 +3789,7 @@ async function loadDesktopRanking(type) {
     } catch (e) { 
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych</td></tr>`; 
     }
-};
+}
 
 
 // ==============================================
