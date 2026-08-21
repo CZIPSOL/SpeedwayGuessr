@@ -2552,15 +2552,16 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 /* ====== TŁA DO RANKINGU ZE SKLEPU ============= */
 /* ============================================== */
 
-/* Grubszy cień dla tekstów, aby były w 100% czytelne na animacjach i zdjęciach */
+/* Bardzo mocny czarny cień dla tekstów, aby były w 100% czytelne na animacjach i zdjęciach */
 .ranking-table tbody tr[class*="rank-bg-"] td {
     position: relative;
     z-index: 2;
-    text-shadow: 2px 2px 4px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000, 1px 1px 2px #000 !important;
+    text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000 !important;
     font-weight: 900 !important;
+    color: #fff !important;
 }
 .shop-item-card[class*="rank-bg-"] {
-    text-shadow: 2px 2px 4px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000, 1px 1px 2px #000 !important;
+    text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000 !important;
     color: #fff !important;
     border: 1px solid rgba(255,255,255,0.3) !important;
 }
@@ -2568,97 +2569,91 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     color: #fff !important;
 }
 
-/* 1. ZŁOTO (CSS) */
+/* 1. ZŁOTO (Przesuwający się złoty blask) */
+@keyframes gold-shine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-gold { 
-    background-color: #111 !important;
-    background-image: linear-gradient(90deg, rgba(212, 175, 55, 0.6) 0%, rgba(0,0,0,0.8) 100%) !important; 
+    background: linear-gradient(90deg, #111, #8b6508, #ffd700, #8b6508, #111) !important; 
+    background-size: 300% 300% !important;
+    animation: gold-shine 4s ease infinite !important;
     border-left: 3px solid #d4af37 !important; 
 }
 
-/* 2. OGIEŃ (Animowany GIF Gifer) */
+/* 2. PIEKIELNY OGIEŃ (Animowane płomienie gradientowe) */
+@keyframes fire-glow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-fire { 
-    background-color: #110000 !important;
-    background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(200, 40, 0, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.gifer.com/1vY.gif') !important; 
-    background-size: 100% 100%, cover !important;
-    background-position: center, center !important;
+    background: linear-gradient(90deg, #2a0000, #ff2a00, #ff7b00, #2a0000) !important; 
+    background-size: 300% 300% !important;
+    animation: fire-glow 2s ease infinite !important;
     border-left: 3px solid #ff4500 !important; 
 }
 
-/* 3. TOKSYCZNY KWAS (Animowany GIF Gifer) */
+/* 3. TOKSYCZNY KWAS (Pulsujący neon) */
+@keyframes toxic-pulse { 0% { box-shadow: inset 0 0 20px #00ff00; } 50% { box-shadow: inset 0 0 70px #39ff14; } 100% { box-shadow: inset 0 0 20px #00ff00; } }
 .rank-bg-toxic { 
-    background-color: #001100 !important;
-    background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(57, 255, 20, 0.3) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.gifer.com/origin/f7/f7bd1de8b2b73bc030cb3298c5643440_w200.gif') !important; 
-    background-size: 100% 100%, cover !important;
-    background-position: center, center !important;
+    background: linear-gradient(90deg, #001a00, #004d00, #001a00) !important; 
     border-left: 3px solid #39ff14 !important; 
+    animation: toxic-pulse 1.5s infinite !important;
 }
 
-/* 4. OCEAN (Animacja 100% CSS - Zawsze działa i płynnie faluje) */
+/* 4. GŁĘBIA OCEANU (Falujący błękit) */
 @keyframes ocean-wave { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-ocean { 
-    background-color: #000 !important;
-    background-image: linear-gradient(45deg, rgba(0, 51, 102, 0.9), rgba(0, 153, 204, 0.4), rgba(0, 51, 102, 0.9)) !important; 
+    background: linear-gradient(45deg, #001122, #005588, #001122) !important; 
     background-size: 200% 200% !important;
     border-left: 3px solid #0099cc !important; 
-    animation: ocean-wave 5s ease infinite !important;
+    animation: ocean-wave 4s ease infinite !important;
 }
 
-/* 5. BŁYSKAWICE (Animowany GIF Gifer) */
+/* 5. BŁYSKAWICE (Miganie prądu) */
+@keyframes lightning-strike { 
+    0%, 92%, 98%, 100% { background-color: #00001a; box-shadow: none; } 
+    95%, 99% { background-color: #00ffff; box-shadow: inset 0 0 40px #fff; } 
+}
 .rank-bg-lightning { 
-    background-color: #000011 !important;
-    background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0, 150, 255, 0.2) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.gifer.com/origin/73/731175e11029c7b94982ff42ba93240e_w200.gif') !important; 
-    background-size: 100% 100%, cover !important;
-    background-position: center, center !important;
+    background-image: linear-gradient(90deg, rgba(0,0,0,0.8), transparent, rgba(0,0,0,0.8)) !important;
     border-left: 3px solid #00ffff !important; 
+    animation: lightning-strike 4s infinite !important;
 }
 
-/* 6. MROCZNY LAS (CSS) */
+/* 6. MROCZNY LAS (Powolny, gęsty mrok) */
+@keyframes forest-breathe { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-forest { 
-    background-color: #000 !important;
-    background-image: linear-gradient(90deg, rgba(1, 50, 32, 0.8), rgba(34, 139, 34, 0.3), rgba(0,0,0,0.9)) !important; 
+    background: linear-gradient(90deg, #001100, #004411, #001100) !important; 
+    background-size: 200% 200% !important;
+    animation: forest-breathe 6s ease infinite !important;
     border-left: 3px solid #228b22 !important; 
 }
 
-/* 7. SERCA (Animowany GIF Gifer) */
+/* 7. SERCA (Bicie serca) */
+@keyframes heart-beat { 0%, 100% { background-size: 100% 100%; } 50% { background-size: 150% 150%; } }
 .rank-bg-hearts { 
-    background-color: #110011 !important;
-    background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(255, 20, 147, 0.3) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.gifer.com/fetch/w300-preview/c8/c8bcaf0cf8cc95e1e12d59dfad5c86aa.gif') !important; 
-    background-size: 100% 100%, cover !important;
-    background-position: center, center !important;
+    background: radial-gradient(circle at center, #8b005d, #220011) !important;
+    background-position: center !important;
     border-left: 3px solid #ff1493 !important; 
+    animation: heart-beat 1.5s infinite !important;
 }
 
-/* 8. MYDLANE BAŃKI (Animowany GIF Gifer) */
+/* 8. MYDLANE BAŃKI (Lekki dryf) */
+@keyframes bubbles-float { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
 .rank-bg-bubbles { 
-    background-color: #001111 !important;
-    background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(135, 206, 235, 0.3) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://i.gifer.com/origin/c8/c848529fba75bbfe7b2ebce4cfcb9a04_w200.gif') !important; 
-    background-size: 100% 100%, cover !important;
-    background-position: center, center !important;
+    background: linear-gradient(45deg, #002233, #0088cc, #002233) !important;
+    background-size: 300% 300% !important;
     border-left: 3px solid #87ceeb !important; 
+    animation: bubbles-float 8s linear infinite !important;
 }
 
-/* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 */
+/* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 (Znak wodny na środku!) */
 .rank-bg-sadurski { 
-    background-color: #000 !important;
+    background-color: #050505 !important;
     background-image: 
-        /* Gradient ciemny po lewej (na tekst), przezroczysty po prawej (żeby odsłonić logo) */
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.2) 100%), 
+        /* Ciemny na brzegach (na tekst), lekko przezroczysty na środku (na logo) */
+        linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.95) 100%), 
         url('images/sadurski.png') !important;
-    /* Obrazek przeniesiony na PRAWO, tak by nie zachodził na początkowe statystyki gracza */
-    background-position: center, right 5px center !important;
+    /* Obrazek umieszczony dokładnie na ŚRODKU wiersza */
+    background-position: center, center center !important;
     background-repeat: no-repeat !important;
-    /* Gradient zajmuje 100%, a logo Sadurski Racing idealnie 90% wysokości wiersza */
-    background-size: 100% 100%, auto 90% !important;
+    /* Gradient na całości, Obrazek wysoki na 95% wysokości wiersza i zachowuje proporcje */
+    background-size: 100% 100%, contain !important;
     border-left: 4px solid #f1c40f !important;
     box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.2) !important;
 }
