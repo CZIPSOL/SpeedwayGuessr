@@ -3811,7 +3811,6 @@ async function loadRanking(type) {
         if (thead) thead.innerHTML = `<tr><th>${t('colPos')}</th><th style="text-align: left;">${t('colNick')}</th><th>${t('colRank')}</th><th>Mecze</th><th style="color:var(--accent);">${t('colElo')}</th></tr>`;
         
         try {
-            // Ponownie używamy tej samej helper-funkcji co na desktopie do pobierania ELO (trzeba ją było wydzielić lub powielić)
             let lastDoc = null;
             let scores = [];
             let hadAnyDocs = false;

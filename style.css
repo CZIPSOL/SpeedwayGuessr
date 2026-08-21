@@ -2562,6 +2562,7 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .shop-item-card[class*="rank-bg-"] {
     text-shadow: 2px 2px 4px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000, 1px 1px 2px #000 !important;
     color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
 }
 .shop-item-card[class*="rank-bg-"] .shop-item-title {
     color: #fff !important;
@@ -2569,28 +2570,28 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 /* 1. ZŁOTO (CSS) */
 .rank-bg-gold { 
-    background-color: #000 !important;
-    background-image: linear-gradient(90deg, rgba(212, 175, 55, 0.5) 0%, rgba(0,0,0,0.9) 100%) !important; 
+    background-color: #111 !important;
+    background-image: linear-gradient(90deg, rgba(212, 175, 55, 0.6) 0%, rgba(0,0,0,0.8) 100%) !important; 
     border-left: 3px solid #d4af37 !important; 
 }
 
-/* 2. OGIEŃ (Animowany GIF Tenor) */
+/* 2. OGIEŃ (Animowany GIF Gifer) */
 .rank-bg-fire { 
-    background-color: #000 !important;
+    background-color: #110000 !important;
     background-image: 
         linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(200, 40, 0, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://media.tenor.com/5lR-zLwPzE8AAAAC/fire-flame.gif') !important; 
+        url('https://i.gifer.com/1vY.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #ff4500 !important; 
 }
 
-/* 3. TOKSYCZNY KWAS (Animowany GIF Tenor) */
+/* 3. TOKSYCZNY KWAS (Animowany GIF Gifer) */
 .rank-bg-toxic { 
-    background-color: #000 !important;
+    background-color: #001100 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(57, 255, 20, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://media.tenor.com/d_y3Z7hH7dYAAAAC/neon-green.gif') !important; 
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(57, 255, 20, 0.3) 50%, rgba(0,0,0,0.9) 100%),
+        url('https://i.gifer.com/origin/f7/f7bd1de8b2b73bc030cb3298c5643440_w200.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #39ff14 !important; 
@@ -2600,18 +2601,18 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 @keyframes ocean-wave { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 .rank-bg-ocean { 
     background-color: #000 !important;
-    background-image: linear-gradient(45deg, rgba(0, 51, 102, 0.9), rgba(0, 153, 204, 0.5), rgba(0, 51, 102, 0.9)) !important; 
+    background-image: linear-gradient(45deg, rgba(0, 51, 102, 0.9), rgba(0, 153, 204, 0.4), rgba(0, 51, 102, 0.9)) !important; 
     background-size: 200% 200% !important;
     border-left: 3px solid #0099cc !important; 
     animation: ocean-wave 5s ease infinite !important;
 }
 
-/* 5. BŁYSKAWICE (Animowany GIF Tenor) */
+/* 5. BŁYSKAWICE (Animowany GIF Gifer) */
 .rank-bg-lightning { 
-    background-color: #000 !important;
+    background-color: #000011 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0, 150, 255, 0.3) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://media.tenor.com/9lM2wBf2c8kAAAAC/lightning-blue.gif') !important; 
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0, 150, 255, 0.2) 50%, rgba(0,0,0,0.9) 100%),
+        url('https://i.gifer.com/origin/73/731175e11029c7b94982ff42ba93240e_w200.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #00ffff !important; 
@@ -2624,42 +2625,42 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     border-left: 3px solid #228b22 !important; 
 }
 
-/* 7. SERCA (Animowany GIF Tenor) */
+/* 7. SERCA (Animowany GIF Gifer) */
 .rank-bg-hearts { 
-    background-color: #000 !important;
+    background-color: #110011 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(255, 20, 147, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://media.tenor.com/GIfq9q2oMpwAAAAC/hearts.gif') !important; 
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(255, 20, 147, 0.3) 50%, rgba(0,0,0,0.9) 100%),
+        url('https://i.gifer.com/fetch/w300-preview/c8/c8bcaf0cf8cc95e1e12d59dfad5c86aa.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #ff1493 !important; 
 }
 
-/* 8. MYDLANE BAŃKI (Animowany GIF Tenor) */
+/* 8. MYDLANE BAŃKI (Animowany GIF Gifer) */
 .rank-bg-bubbles { 
-    background-color: #000 !important;
+    background-color: #001111 !important;
     background-image: 
-        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(135, 206, 235, 0.4) 50%, rgba(0,0,0,0.9) 100%),
-        url('https://media.tenor.com/h5T2h9H9d0EAAAAC/bubbles.gif') !important; 
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(135, 206, 235, 0.3) 50%, rgba(0,0,0,0.9) 100%),
+        url('https://i.gifer.com/origin/c8/c848529fba75bbfe7b2ebce4cfcb9a04_w200.gif') !important; 
     background-size: 100% 100%, cover !important;
     background-position: center, center !important;
     border-left: 3px solid #87ceeb !important; 
 }
 
-/* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 (Logo po lewej stronie!) */
+/* 9. SPECJALNE: KRZYSZTOF SADURSKI 759 */
 .rank-bg-sadurski { 
     background-color: #000 !important;
     background-image: 
-        /* Przyciemnienie mocne po lewej stronie by biały tekst (nick/poziom) był widoczny na logo */
-        linear-gradient(90deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.9) 100%), 
+        /* Gradient ciemny po lewej (na tekst), przezroczysty po prawej (żeby odsłonić logo) */
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 40%, rgba(0,0,0,0.2) 100%), 
         url('images/sadurski.png') !important;
-    /* Obrazek po lewej, odsunięty o 5px, wyrównany na środek w pionie */
-    background-position: center, left 5px center !important;
+    /* Obrazek przeniesiony na PRAWO, tak by nie zachodził na początkowe statystyki gracza */
+    background-position: center, right 5px center !important;
     background-repeat: no-repeat !important;
-    /* Gradient zajmuje 100%, a obrazek logo 90% wysokości wiersza */
+    /* Gradient zajmuje 100%, a logo Sadurski Racing idealnie 90% wysokości wiersza */
     background-size: 100% 100%, auto 90% !important;
     border-left: 4px solid #f1c40f !important;
-    box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.4) !important;
+    box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.2) !important;
 }
 
 /* ============================================== */
