@@ -9631,14 +9631,14 @@ window.claimMission = function(type, index) {
 // Dostępne tła w sklepie
 const SHOP_BACKGROUNDS = [
     { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Lśniące, złote tło', price: 5000 },
-    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płonące animowane tło', price: 10000 },
+    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Błękitna animacja', price: 10000 },
+    { id: 'rank-bg-bubbles', name: 'Mydlane Bańki', desc: 'Unoszące się bąbelki', price: 10000 },
     { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Płynący, radioaktywny kwas', price: 15000 },
-    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Błękitna animacja', price: 20000 },
+    { id: 'rank-bg-forest', name: 'Mroczny Las', desc: 'Głęboka, mistyczna zieleń', price: 15000 },
+    { id: 'rank-bg-hearts', name: 'Miłosny Szał', desc: 'Deszcz czerwonych serc', price: 15000 },
     { id: 'rank-bg-lightning', name: 'Gniew Zeusa', desc: 'Uderzenia błyskawic', price: 25000 },
-    { id: 'rank-bg-forest', name: 'Mroczny Las', desc: 'Głęboka, mistyczna zieleń', price: 30000 },
-    { id: 'rank-bg-hearts', name: 'Miłosny Szał', desc: 'Deszcz czerwonych serc', price: 35000 },
-    { id: 'rank-bg-bubbles', name: 'Mydlane Bańki', desc: 'Unoszące się bąbelki', price: 40000 },
-    { id: 'rank-bg-sadurski', name: 'Sadurski Racing', desc: 'SPECJALNE TŁO: KS759', price: 75900 }
+    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płonące animowane tło', price: 50000 },
+    { id: 'rank-bg-sadurski', name: 'Sadurski Racing', desc: 'SPECJALNE TŁO: KS759', price: 7590 }
 ];
 
 function openShopModal() {
