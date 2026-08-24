@@ -152,9 +152,8 @@
         
         <div class="flex-between mb-15 pb-10" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
             <h2 class="text-white m-0 uppercase font-black" style="color: #3498db;">Profil Gracza 👤</h2>
-            <div style="font-size: 14px; font-weight: 900; color: #f1c40f; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 12px; border: 1px solid #f1c40f;">
-                Poziom <span id="profileLevelTop">1</span>
-            </div>
+            <!-- Przycisk zamykania z prawej strony na górze dla wygody -->
+            <button onclick="closeProfile()" class="icon-btn-small" style="font-size: 24px;">❌</button>
         </div>
 
         <div class="shop-layout">
@@ -180,11 +179,14 @@
                             <div id="profileNickOverview" style="font-size: 24px; font-weight: 900; color: #fff;">GRACZ</div>
                             <div id="profileClubOverview" style="font-size: 12px; color: var(--text-dim); font-weight: 700; margin-bottom: 8px;">WYBIERZ KLUB 🛡️</div>
                             
-                            <!-- Pasek EXP -->
+                            <!-- Pasek EXP z połączonym Levelem -->
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                                <div style="font-size: 12px; font-weight: 900; color: var(--accent); text-transform: uppercase;">POZIOM <span id="profileLevelTop" style="font-size: 16px;">1</span></div>
+                                <div id="profileExpTextOverview" class="text-xs text-dim font-bold">0 / 100 EXP</div>
+                            </div>
                             <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative;">
                                 <div id="profileExpBarOverview" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: 0.3s;"></div>
                             </div>
-                            <div id="profileExpTextOverview" class="text-xs text-dim mt-5 font-bold">0 / 100 EXP</div>
                         </div>
                     </div>
 
@@ -237,25 +239,55 @@
                         </button>
                     </div>
 
-                    <!-- POWIĄZANE KONTA (DISCORD / GOOGLE) -->
+                    <!-- POWIĄZANE KONTA (DISCORD / GOOGLE) - PRZEBUDOWANE -->
                     <div class="setting-block mb-10 w-100" style="align-items: flex-start; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
                         <label class="text-accent text-xs uppercase font-bold mb-10">Powiązane Konta</label>
                         
-                        <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google w-100 mb-10" style="padding: 10px;">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
-                        </button>
-                        <div id="userInfoDisplayProfile" class="user-info-text text-green text-xs font-bold mb-10 text-center w-100" style="display:none;"></div>
+                        <!-- SEKCJA GOOGLE -->
+                        <div style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="font-size: 10px; color: var(--text-dim); margin-bottom: 8px; font-weight: bold;">AUTORYZACJA GOOGLE (ZAPIS W CHMURZE)</div>
+                            <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google w-100" style="padding: 10px; margin-bottom: 5px;">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
+                            </button>
+                            <div id="userInfoDisplayProfile" class="user-info-text text-green text-xs font-bold text-center w-100" style="display:none;"></div>
+                        </div>
 
-                        <button id="btnLinkDiscord" onclick="startDiscordLinking()" class="menu-btn w-100" style="background-color: #5865F2; padding: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                            <span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM
-                        </button>
+                        <!-- SEKCJA DISCORD -->
+                        <div style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                            <div style="font-size: 10px; color: var(--text-dim); margin-bottom: 8px; font-weight: bold;">SPOŁECZNOŚĆ (RANGI NA SERWERZE)</div>
+                            <button id="btnLinkDiscord" onclick="startDiscordLinking()" class="menu-btn w-100" style="background-color: #5865F2; padding: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                                <span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM
+                            </button>
+                        </div>
+                        
                     </div>
                 </div>
 
             </div>
         </div>
+    </div>
+</div>
 
-        <button onclick="closeProfile()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
+<!-- PUBLICZNY PROFIL GRACZA (Z RANKINGU) -->
+<div id="publicProfileOverlay" class="win-overlay" style="display: none; z-index: 10050;">
+    <div class="stats-modal modal-md" style="padding: 25px;">
+        <h2 class="text-white m-0 uppercase font-black mb-15" style="color: #3498db; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Oglądasz profil 👁️</h2>
+        
+        <div style="display: flex; gap: 20px; align-items: center; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px;">
+            <img id="pubAvatar" src="" style="width: 80px; height: 80px; border-radius: 12px; border: 2px solid var(--border-color); object-fit: cover; background: #222;">
+            <div style="flex: 1; text-align: left;">
+                <div id="pubNick" style="font-size: 24px; font-weight: 900; color: #fff;">ŁADOWANIE...</div>
+                <div id="pubClub" style="font-size: 12px; color: var(--text-dim); font-weight: 700; margin-bottom: 5px;"></div>
+                <div id="pubLevel" style="font-size: 12px; font-weight: 900; color: var(--accent); text-transform: uppercase;">POZIOM --</div>
+            </div>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+            <div class="stat-box" style="padding: 15px;"><span id="pubPlayed" class="stat-num" style="font-size: 24px; color: var(--accent);">--</span><span class="stat-label">Rozegrane Ogółem</span></div>
+            <div class="stat-box" style="padding: 15px;"><span id="pubWon" class="stat-num" style="font-size: 24px; color: var(--green-neon);">--</span><span class="stat-label">Wygrane Ogółem</span></div>
+        </div>
+
+        <button onclick="closePublicProfile()" class="btn-close w-100 p-12 text-sm">ZAMKNIJ PROFIL</button>
     </div>
 </div>
 
@@ -1207,8 +1239,16 @@
         </div>
 
         <div class="clash-header">
-            <div id="clashPlayer1" class="clash-player">🔴 <span id="cp1Nick">Gracz 1</span></div>
-            <div id="clashPlayer2" class="clash-player">🔵 <span id="cp2Nick">Gracz 2</span></div>
+            <div id="clashPlayer1" class="clash-player">
+                <img id="cp1Avatar" src="" style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ff3333; object-fit: cover; display: none;">
+                <span id="cp1Icon">🔴</span> 
+                <span id="cp1Nick">Gracz 1</span>
+            </div>
+            <div id="clashPlayer2" class="clash-player">
+                <img id="cp2Avatar" src="" style="width: 28px; height: 28px; border-radius: 50%; border: 2px solid #3399ff; object-fit: cover; display: none;">
+                <span id="cp2Icon">🔵</span> 
+                <span id="cp2Nick">Gracz 2</span>
+            </div>
         </div>
 
         <div class="clash-grid" id="clashGrid">
@@ -1262,16 +1302,16 @@
     </div>
 
 <div id="coinTossOverlay" class="win-overlay" style="display: none; z-index: 10003;">
-        <div class="stats-modal coin-modal">
-            <div class="coin-container">
-                <div class="coin" id="clashCoinInner">
-                    <div class="coin-face coin-front">🔴</div>
-                    <div class="coin-face coin-back">🔵</div>
-                </div>
+    <div class="stats-modal coin-modal">
+        <div class="coin-container">
+            <div class="coin" id="clashCoinInner">
+                <div class="coin-face coin-front" id="coinFaceRed" style="overflow: hidden;">🔴</div>
+                <div class="coin-face coin-back" id="coinFaceBlue" style="overflow: hidden;">🔵</div>
             </div>
-            <h2 id="coinTossResult" class="coin-result-text"></h2>
         </div>
+        <h2 id="coinTossResult" class="coin-result-text"></h2>
     </div>
+</div>
 
     <!-- WYSZUKIWANIE MECZU LIGOWEGO -->
     <div id="clashMatchmakingOverlay" class="win-overlay" style="display: none; z-index: 10015;">
@@ -1607,7 +1647,7 @@
 
     <script src="db.js?v2.3"></script>
     <script src="events.js?v2.3"></script>
-    <script src="script.js?v2.96"></script>
+    <script src="script.js?v2.98"></script>
 
     
 </body>

@@ -3614,32 +3614,6 @@ async function loadDesktopRanking(type) {
     const title = document.getElementById('desktopRankingTitle');
     const tabs = document.getElementById('desktopRankTabs');
     
-    async function fetchVisibleLeaderboardRows(collectionName, orderField, visibleLimit, rowFilter) {
-        const rows = [];
-        let lastDoc = null;
-        let hadAnyDocs = false;
-
-        while (rows.length < visibleLimit) {
-            let query = db.collection(collectionName).orderBy(orderField, 'desc').limit(100);
-            if (lastDoc) query = query.startAfter(lastDoc);
-
-            const snapshot = await query.get();
-            if (snapshot.empty) break;
-
-            hadAnyDocs = true;
-            for (const doc of snapshot.docs) {
-                if (rows.length >= visibleLimit) break;
-                const row = doc.data();
-                if (!rowFilter || rowFilter(row)) rows.push(row);
-            }
-
-            lastDoc = snapshot.docs[snapshot.docs.length - 1];
-            if (snapshot.size < 100) break;
-        }
-
-        return { rows, hadAnyDocs };
-    }
-    
     if (!tbody || !thead || !title) return;
 
     if (type === 'league') {
@@ -3670,45 +3644,25 @@ async function loadDesktopRanking(type) {
         if (type === 'league') {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
             
-            const leaderboardData = await fetchVisibleLeaderboardRows(
-                'leaderboard_clash_beta',
-                'elo',
-                20,
-                (row) => (row.matchesPlayed || 0) >= 5
-            );
-            let scores = leaderboardData.rows;
-            
-            let myScoreFound = false;
-            let myPersonalScore = null;
-            if (typeof playerId !== 'undefined' && playerId) {
-                const myDoc = await db.collection("leaderboard_clash_beta").doc(playerId).get();
-                if (myDoc.exists) myPersonalScore = myDoc.data();
-            }
+            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(30).get();
+            let scores = []; snapshot.forEach(doc => { let d = doc.data(); d.uid = doc.id; scores.push(d); });
+            scores = scores.filter(row => (row.matchesPlayed || 0) >= 5).slice(0, 20);
 
             tbody.innerHTML = '';
-            if (scores.length === 0) {
-                const emptyText = leaderboardData.hadAnyDocs ? (t('noResultsCalib') || 'Kalibracja w toku...') : t('noResults');
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${emptyText}</td></tr>`;
-                return;
-            }
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
-                // Wyciągamy czysty nick do weryfikacji i renderowania
-                let rawNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (typeof playerNickname !== 'undefined' && rawNick === playerNickname) myScoreFound = true;
-                
-                // Dodajemy efekt CSS ze sklepu, jeśli gracz go ma
+                let rawNick = escapeHTML(row.nick || t('defaultPlayer'));
                 let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
-                
-                let rangaText = typeof getLeagueRankName === 'function' ? getLeagueRankName(row.elo, row.matchesPlayed) : row.rank;
-                if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
+                let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
+                safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (typeof playerNickname !== 'undefined' && rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMeStyle = (rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
                 tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle}>
+                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
                         <td style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td style="font-size:10px;">${rangaText}</td>
@@ -3717,77 +3671,32 @@ async function loadDesktopRanking(type) {
                 pos++;
             });
 
-            if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5) {
-                let myRank = typeof getLeagueRankName === 'function' ? getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed) : myPersonalScore.rank;
-                
-                let myRawNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                let mySafeNick = myPersonalScore.nickEffect && myPersonalScore.nickEffect !== 'default' ? `<span class="${myPersonalScore.nickEffect}">${myRawNick}</span>` : myRawNick;
-                
-                if (typeof getMiniClubBadge === 'function') mySafeNick += getMiniClubBadge(myPersonalScore.club);
-                let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
-                
-                tbody.innerHTML += `<tr><td colspan="4" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
-                tbody.innerHTML += `
-                    <tr class="${myBgClass}" style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
-                        <td style="color:var(--accent); font-weight:900;">--</td>
-                        <td style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
-                        <td style="font-size:10px;">${myRank}</td>
-                        <td style="color:#3399ff; font-weight: bold;">${myPersonalScore.elo}</td>
-                    </tr>`;
-            }
-
         } else if (type === 'timeattack') {
             thead.innerHTML = `<tr><th style="width: 15%;">${t('colPos')}</th><th style="text-align: left; width: 60%;">${t('colNick')}</th><th style="color: #1dd1a1; width: 25%; text-align: center;">${t('colRecord')}</th></tr>`;
             let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(20).get();
-            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            let scores = []; snapshot.forEach(doc => { let d = doc.data(); d.uid = doc.id; scores.push(d); });
             
-            let myScoreFound = false;
-            let myPersonalScore = null;
-            if (typeof playerId !== 'undefined' && playerId) {
-                const myDoc = await db.collection("leaderboard_timeattack").doc(playerId).get();
-                if (myDoc.exists) myPersonalScore = myDoc.data();
-            }
-
             tbody.innerHTML = '';
             if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
-                let rawNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (typeof playerNickname !== 'undefined' && rawNick === playerNickname) myScoreFound = true;
-                
+                let rawNick = escapeHTML(row.nick || t('defaultPlayer'));
                 let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
-                
-                if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
+                safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (typeof playerNickname !== 'undefined' && rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMeStyle = (rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
                 tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle}>
+                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
                         <td class="${rankClass}" style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
                         <td style="color:#1dd1a1; font-weight:900; text-align: center;">${row.score}</td>
                     </tr>`;
                 pos++;
             });
-
-            if (!myScoreFound && myPersonalScore) {
-                let myRawNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                let mySafeNick = myPersonalScore.nickEffect && myPersonalScore.nickEffect !== 'default' ? `<span class="${myPersonalScore.nickEffect}">${myRawNick}</span>` : myRawNick;
-                
-                if (typeof getMiniClubBadge === 'function') mySafeNick += getMiniClubBadge(myPersonalScore.club);
-                let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
-                
-                tbody.innerHTML += `<tr><td colspan="3" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
-                tbody.innerHTML += `
-                    <tr class="${myBgClass}" style="background: rgba(29, 209, 161, 0.1); border: 1px solid #1dd1a1;">
-                        <td style="color:var(--accent); font-weight:900;">--</td>
-                        <td style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #1dd1a1;">(TY)</span></td>
-                        <td style="color:#1dd1a1; font-weight:900; text-align: center;">${myPersonalScore.score}</td>
-                    </tr>`;
-            }
 
         } else {
             let headerText = (type === 'daily') ? t('colSolved') : t('colTotalWins');
@@ -3799,14 +3708,12 @@ async function loadDesktopRanking(type) {
             else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
             else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
             
-            let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+            let scores = []; snapshot.forEach(doc => { let d = doc.data(); d.uid = doc.id; scores.push(d); });
             scores.sort((a, b) => { 
                 let winsA = a.won !== undefined ? a.won : (a.wins || 0); 
                 let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
                 if (winsB !== winsA) return winsB - winsA; 
                 if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
-                let hintsA = a.hints || 0; let hintsB = b.hints || 0;
-                if (hintsA !== hintsB) return hintsA - hintsB;
                 return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
             });
             
@@ -3816,17 +3723,15 @@ async function loadDesktopRanking(type) {
             scores.forEach((row, index) => {
                 let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
-                
-                let rawNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                let rawNick = escapeHTML(row.nick || t('defaultPlayer'));
                 let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
-                
-                if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
+                safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (typeof playerNickname !== 'undefined' && rawNick === playerNickname) ? 'style="color: var(--accent);"' : '';
+                let isMeStyle = (rawNick === playerNickname) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
                 tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle}>
+                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
                         <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td>${wonText}</td>
@@ -5144,10 +5049,9 @@ async function cancelLeagueMatchmaking() {
 
 function showVsScreen(data) {
     if (data.type === 'league') window.hasUpdatedLeague = false;
-    
     isSearchingLeague = false; 
     
-    // Delikatne chowanie okien (bez psucia widoczności planszy)
+    // Delikatne chowanie okien
     ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop', 'clashSummaryOverlay'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.style.opacity = '0'; setTimeout(() => el.style.display = 'none', 300); }
@@ -5159,6 +5063,53 @@ function showVsScreen(data) {
 
     const vsOverlay = document.getElementById('clashVsOverlay');
     
+    // --- 1. AWATARY NA EKRANIE VS (Wczytywanie) ---
+    const defaultIconRed = `<div class="vs-icon drop-shadow-red">🔴</div>`;
+    const defaultIconBlue = `<div class="vs-icon drop-shadow-blue">🔵</div>`;
+    
+    const p1AvatarHTML = data.p1.avatarUrl 
+        ? `<img src="${data.p1.avatarUrl}" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #ff3333; object-fit: cover; filter: drop-shadow(0 0 20px #ff3333);">`
+        : defaultIconRed;
+
+    const p2AvatarHTML = data.p2.avatarUrl 
+        ? `<img src="${data.p2.avatarUrl}" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #3399ff; object-fit: cover; filter: drop-shadow(0 0 20px #3399ff);">`
+        : defaultIconBlue;
+
+    document.querySelector('.vs-player.p1').innerHTML = `${p1AvatarHTML}<h2 id="vsP1Name" class="vs-name">Gracz 1</h2>`;
+    document.querySelector('.vs-player.p2').innerHTML = `${p2AvatarHTML}<h2 id="vsP2Name" class="vs-name">Gracz 2</h2>`;
+
+    // --- 2. AWATARY NA PASKU W GRZE (Aktualizacja góry ekranu) ---
+    const cp1Avatar = document.getElementById('cp1Avatar');
+    const cp1Icon = document.getElementById('cp1Icon');
+    if (data.p1.avatarUrl) {
+        cp1Avatar.src = data.p1.avatarUrl;
+        cp1Avatar.style.display = 'inline-block';
+        cp1Icon.style.display = 'none';
+    } else {
+        cp1Avatar.style.display = 'none';
+        cp1Icon.style.display = 'inline-block';
+    }
+
+    const cp2Avatar = document.getElementById('cp2Avatar');
+    const cp2Icon = document.getElementById('cp2Icon');
+    if (data.p2.avatarUrl) {
+        cp2Avatar.src = data.p2.avatarUrl;
+        cp2Avatar.style.display = 'inline-block';
+        cp2Icon.style.display = 'none';
+    } else {
+        cp2Avatar.style.display = 'none';
+        cp2Icon.style.display = 'inline-block';
+    }
+
+    // --- 3. AWATARY NA MONECIE ---
+    const coinFront = document.getElementById('coinFaceRed');
+    const coinBack = document.getElementById('coinFaceBlue');
+    if (coinFront && coinBack) {
+        coinFront.innerHTML = data.p1.avatarUrl ? `<img src="${data.p1.avatarUrl}" style="width:100%; height:100%; object-fit:cover;">` : `🔴`;
+        coinBack.innerHTML = data.p2.avatarUrl ? `<img src="${data.p2.avatarUrl}" style="width:100%; height:100%; object-fit:cover;">` : `🔵`;
+    }
+
+    // --- Rysowanie Nicków i Lig ---
     let p1NickHTML = data.p1.nick + getMiniClubBadge(data.p1.club); 
     let p2NickHTML = data.p2.nick + getMiniClubBadge(data.p2.club);
     
@@ -5174,11 +5125,10 @@ function showVsScreen(data) {
     document.getElementById('cp1Nick').innerHTML = p1NickHTML; 
     document.getElementById('cp2Nick').innerHTML = p2NickHTML;
 
+    // --- H2H (Historia) ---
     let opponentNick = myClashColor === 'red' ? data.p2.nick : data.p1.nick;
-    let myWins = 0;
-    let oppWins = 0;
+    let myWins = 0; let oppWins = 0;
     
-    // Szukamy w lokalnej historii gracza meczów z tym rywalem
     if (userStats.clashHistory) {
         userStats.clashHistory.forEach(match => {
             if (match.opponent === opponentNick) {
@@ -5192,15 +5142,11 @@ function showVsScreen(data) {
     const h2hScore = document.getElementById('vsH2HScore');
     
     if (myWins > 0 || oppWins > 0) {
-        // Ustawiamy kolory zalezne od tego, czy gracz jest P1(red) czy P2(blue)
-        if (myClashColor === 'red') {
-            h2hScore.innerHTML = `<span style="color:#ff3333">${myWins}</span> : <span style="color:#3399ff">${oppWins}</span>`;
-        } else {
-            h2hScore.innerHTML = `<span style="color:#ff3333">${oppWins}</span> : <span style="color:#3399ff">${myWins}</span>`;
-        }
+        if (myClashColor === 'red') h2hScore.innerHTML = `<span style="color:#ff3333">${myWins}</span> : <span style="color:#3399ff">${oppWins}</span>`;
+        else h2hScore.innerHTML = `<span style="color:#ff3333">${oppWins}</span> : <span style="color:#3399ff">${myWins}</span>`;
         h2hContainer.style.display = 'block';
     } else {
-        h2hContainer.style.display = 'none'; // Pierwszy mecz
+        h2hContainer.style.display = 'none'; 
     }
 
     vsOverlay.style.display = 'block'; setTimeout(() => vsOverlay.style.opacity = '1', 10); playSound('win');
@@ -5213,6 +5159,8 @@ function showVsScreen(data) {
         setTimeout(() => { updateLocalClashData({ status: 'coinToss', coinTossWinner }); }, 3000);
     }
 }
+
+
 // --- NOWA FUNKCJA: WYSYŁANIE EMOTEK ---
 function sendClashEmote(emoji) {
     if (!currentClashRoom || isLocalClash) return;
@@ -5986,8 +5934,8 @@ function updateClashTurnUI() {
     const display = document.getElementById('clashTimerDisplay');
     if (!display) return;
 
-    const cp1 = document.getElementById('cp1Nick');
-    const cp2 = document.getElementById('cp2Nick');
+    const cp1 = document.getElementById('clashPlayer1');
+    const cp2 = document.getElementById('clashPlayer2');
 
     if (clashStatus === 'viewing' || clashStatus === 'summary') {
         display.innerText = 'KONIEC MECZU';
@@ -5997,11 +5945,11 @@ function updateClashTurnUI() {
         return;
     }
 
-    // Highlight which player's turn it is (works for local and online)
+    // Podświetlenie nicku aktywnego gracza
     if (cp1) cp1.classList.toggle('active', clashTurn === 'red');
     if (cp2) cp2.classList.toggle('active', clashTurn === 'blue');
 
-    // Timer color: green if it's your turn or in local mode, white otherwise
+    // Kolor zegara: zielony jeśli Twoja kolej
     if (clashTurn === myClashColor || isLocalClash) {
         display.style.color = '#00ff66';
     } else {
@@ -9955,6 +9903,71 @@ window.equipShopItem = function(category, id) {
     showToast("Wyposażenie zmienione!", "normal");
 }
 
+
+
+// ========================================================
+// ====== PUBLICZNY PROFIL (PODGLĄD INNYCH GRACZY) ========
+// ========================================================
+
+async function openPublicProfile(uid) {
+    if (!uid || uid.startsWith('guest_') || uid === "undefined") {
+        showToast("Konta gości nie posiadają publicznego profilu.", "error");
+        return;
+    }
+
+    const overlay = document.getElementById('publicProfileOverlay');
+    document.getElementById('pubNick').innerText = "ŁADOWANIE...";
+    document.getElementById('pubClub').innerText = "";
+    document.getElementById('pubLevel').innerText = "POZIOM --";
+    document.getElementById('pubPlayed').innerText = "--";
+    document.getElementById('pubWon').innerText = "--";
+    const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
+    document.getElementById('pubAvatar').src = defAvatar;
+
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+
+    try {
+        const doc = await db.collection('users').doc(uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            let parsedStats = {};
+            if (data.stats) {
+                try { parsedStats = JSON.parse(data.stats); } catch(e) {}
+            }
+
+            // Aplikacja danych
+            document.getElementById('pubAvatar').src = data.avatarUrl || parsedStats.avatarUrl || defAvatar;
+            
+            // Pobieramy ostatni zapisany nick w rankingu (można to ulepszyć w przyszłości dodając bazę nicknames)
+            let pNick = parsedStats.nickname || "Gracz"; 
+            // Ponieważ nie trzymamy nicku bezpośrednio w auth usera na froncie, dla ładnego efektu po prostu wpiszmy zdekodowany
+            
+            document.getElementById('pubNick').innerHTML = parsedStats.equippedNick && parsedStats.equippedNick !== 'default' 
+                ? `<span class="${parsedStats.equippedNick}">${pNick}</span>` 
+                : pNick;
+            
+            document.getElementById('pubClub').innerText = parsedStats.favoriteClub ? `Kibicuje: ${parsedStats.favoriteClub}` : "Brak ulubionego klubu";
+            document.getElementById('pubLevel').innerText = `POZIOM ${parsedStats.level || 1}`;
+            document.getElementById('pubPlayed').innerText = parsedStats.played || 0;
+            document.getElementById('pubWon').innerText = parsedStats.won || 0;
+            
+        } else {
+            showToast("Brak szczegółowych danych gracza.", "error");
+            closePublicProfile();
+        }
+    } catch(e) {
+        console.error(e);
+        showToast("Błąd łączenia z chmurą.", "error");
+        closePublicProfile();
+    }
+}
+
+function closePublicProfile() {
+    const overlay = document.getElementById('publicProfileOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
 
 // ----------------------------------------
 // GLOBALNE FUNKCJE DLA HTML-A (ZABEZPIECZENIE)
