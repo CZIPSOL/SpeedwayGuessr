@@ -2049,6 +2049,10 @@ function loadStats() {
 }
 
 function saveStats() { 
+    // Dodajemy zapisywanie nicku bezpośrednio do obiektu statystyk
+    if (playerNickname) {
+        userStats.nickname = playerNickname;
+    }
     localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); 
     updateLeagueUI();
     syncStatsToFirebase(); 
@@ -3662,7 +3666,7 @@ async function loadDesktopRanking(type) {
                 let isMeStyle = (rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
                 tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
+                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}', '${rawNick.replace(/'/g, "\\'")}')">
                         <td style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td style="font-size:10px;">${rangaText}</td>
@@ -3690,7 +3694,7 @@ async function loadDesktopRanking(type) {
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
                 tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
+                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}', '${rawNick.replace(/'/g, "\\'")}')">
                         <td class="${rankClass}" style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
                         <td style="color:#1dd1a1; font-weight:900; text-align: center;">${row.score}</td>
@@ -9909,7 +9913,7 @@ window.equipShopItem = function(category, id) {
 // ====== PUBLICZNY PROFIL (PODGLĄD INNYCH GRACZY) ========
 // ========================================================
 
-async function openPublicProfile(uid) {
+async function openPublicProfile(uid, clickedNick = "Gracz") {
     if (!uid || uid.startsWith('guest_') || uid === "undefined") {
         showToast("Konta gości nie posiadają publicznego profilu.", "error");
         return;
@@ -9936,13 +9940,13 @@ async function openPublicProfile(uid) {
                 try { parsedStats = JSON.parse(data.stats); } catch(e) {}
             }
 
-            // Aplikacja danych
+            // Awatar (Bierze najpierw z roota, potem ze statystyk, na końcu domyślny)
             document.getElementById('pubAvatar').src = data.avatarUrl || parsedStats.avatarUrl || defAvatar;
             
-            // Pobieramy ostatni zapisany nick w rankingu (można to ulepszyć w przyszłości dodając bazę nicknames)
-            let pNick = parsedStats.nickname || "Gracz"; 
-            // Ponieważ nie trzymamy nicku bezpośrednio w auth usera na froncie, dla ładnego efektu po prostu wpiszmy zdekodowany
+            // Szukamy najlepszego nicku (Z roota, ze statsów, a jak nie ma, to ten z tabeli)
+            let pNick = data.displayName || parsedStats.nickname || clickedNick;
             
+            // Nakładamy ewentualny efekt z ulepszonego sklepu
             document.getElementById('pubNick').innerHTML = parsedStats.equippedNick && parsedStats.equippedNick !== 'default' 
                 ? `<span class="${parsedStats.equippedNick}">${pNick}</span>` 
                 : pNick;
