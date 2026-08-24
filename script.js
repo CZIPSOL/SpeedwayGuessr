@@ -398,6 +398,15 @@ const CURRENT_GAME_VERSION = "Beta v1.3.2";
 
 const changelog = {
     pl: [
+         {
+            version: "Beta v1.6.0", date: "24.08.2026",
+            changes: [
+                "🛒 <b>Sklep jest już otwarty!</b> Zdobywaj monety z misji i kupuj unikalne efekty Nicku, Tła dla swojego wiersza w rankingu, Emotki do Clasha, Efekty wygranej oraz Złote Kaski!",
+                "👤 <b>Przebudowa Profilu:</b> Całkowicie nowy, profesjonalny panel gracza podzielony na zakładki (Podsumowanie i Edycja) w eleganckim stylu.",
+                "📷 <b>Własne Awatary:</b> Zalogowani gracze mogą teraz wgrać własne zdjęcie profilowe! Awatar będzie widoczny na Twoim koncie oraz podczas pojedynków z innymi w trybie Clash.",
+                "👁️ <b>Profile Publiczne:</b> Od teraz po kliknięciu w dowolnego gracza w rankingu możesz podejrzeć jego profil, obejrzeć wybrany klub, poziom oraz awatar!"
+            ]
+        },
         {
             version: "Beta v1.5.0", date: "20.08.2026",
             changes: [
@@ -503,6 +512,15 @@ const changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v1.6.0", date: "24.08.2026",
+            changes: [
+                "🛒 <b>The Shop is now open!</b> Earn coins from missions and purchase unique Nickname Effects, Leaderboard Backgrounds, Clash Emotes, Win Animations, and Golden Helmets!",
+                "👤 <b>Profile Overhaul:</b> A completely new, professional player panel split into tabs (Overview and Edit) with a sleek design.",
+                "📷 <b>Custom Avatars:</b> Logged-in players can now upload their own profile pictures! Your avatar will be displayed on your account and during 1v1 matches in Clash mode.",
+                "👁️ <b>Public Profiles:</b> You can now click on any player in the leaderboards to inspect their profile, including their favorite club, level, and avatar!"
+            ]
+        },
         {
             version: "Beta v1.5.0", date: "20.08.2026",
             changes: [
