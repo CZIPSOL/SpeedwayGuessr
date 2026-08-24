@@ -2548,26 +2548,6 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     border: 1px solid;
 }
 
-/* ============================================== */
-/* ====== TŁA DO RANKINGU ZE SKLEPU ============= */
-/* ============================================== */
-
-/* Bardzo mocny czarny cień dla tekstów, aby były w 100% czytelne na animacjach i zdjęciach */
-.ranking-table tbody tr[class*="rank-bg-"] td {
-    position: relative;
-    z-index: 2;
-    text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000 !important;
-    font-weight: 900 !important;
-    color: #fff !important;
-}
-.shop-item-card[class*="rank-bg-"] {
-    text-shadow: 2px 2px 4px #000, -2px -2px 4px #000, 2px -2px 4px #000, -2px 2px 4px #000 !important;
-    color: #fff !important;
-    border: 1px solid rgba(255,255,255,0.3) !important;
-}
-.shop-item-card[class*="rank-bg-"] .shop-item-title {
-    color: #fff !important;
-}
 
 /* ============================================== */
 /* ====== TŁA DO RANKINGU ZE SKLEPU ============= */
@@ -2779,4 +2759,62 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         padding-bottom: 10px;
         overflow-x: auto;
     }
+}
+
+
+/* ============================================== */
+/* ====== EFEKTY NICKÓW ZE SKLEPU =============== */
+/* ============================================== */
+
+/* 1. Tęcza (RGB) */
+@keyframes rgbText {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+.nick-effect-rgb {
+    background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3, #ff0000);
+    background-size: 200% auto;
+    color: #fff;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rgbText 3s linear infinite;
+    font-weight: 900;
+}
+
+/* 2. Piekielny Ogień */
+@keyframes fireText {
+    0% { text-shadow: 0 0 4px #ffaa00, 0 0 10px #ff0000, 0 0 20px #ff0000; }
+    50% { text-shadow: 0 0 4px #ffaa00, 0 0 15px #ff0000, 0 0 30px #ff0000; }
+    100% { text-shadow: 0 0 4px #ffaa00, 0 0 10px #ff0000, 0 0 20px #ff0000; }
+}
+.nick-effect-fire {
+    color: #fff;
+    animation: fireText 1.5s infinite alternate;
+    font-weight: 900;
+}
+
+/* 3. Glitch / Cyberpunk */
+@keyframes glitchText {
+    0% { text-shadow: 2px 0 0 red, -2px 0 0 blue; transform: translate(0); }
+    20% { text-shadow: -2px 0 0 red, 2px 0 0 blue; transform: translate(1px, -1px); }
+    40% { text-shadow: 2px 0 0 red, -2px 0 0 blue; transform: translate(-1px, 1px); }
+    60% { text-shadow: -2px 0 0 red, 2px 0 0 blue; transform: translate(2px, 0); }
+    80% { text-shadow: 2px 0 0 red, -2px 0 0 blue; transform: translate(-1px, -1px); }
+    100% { text-shadow: -2px 0 0 red, 2px 0 0 blue; transform: translate(0); }
+}
+.nick-effect-glitch {
+    color: #fff;
+    animation: glitchText 0.3s infinite;
+    font-weight: 900;
+}
+
+/* 4. Lodowe Ostrze */
+.nick-effect-ice {
+    background: linear-gradient(180deg, #ffffff 0%, #00ffff 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+    font-weight: 900;
 }

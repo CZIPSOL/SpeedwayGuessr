@@ -2163,19 +2163,21 @@ async function sendScoreToDatabase(isWin, attempts) {
     try {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
         const safeNick = escapeHTML(playerNickname);
+        const nickEffectToSave = userStats.equippedNick === 'default' ? null : userStats.equippedNick;
+
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
-        batch.set(dailyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });        
+        batch.set(dailyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, nickEffect: nickEffectToSave, won: isWin ? 1 : 0, guesses: attempts, hints: hintsUsedCount, timestamp: ts }, { merge: true });        
         const increment = firebase.firestore.FieldValue.increment;
         const winIncrement = isWin ? 1 : 0; 
         
         const weeklyRef = db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId);
-        batch.set(weeklyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(weeklyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, nickEffect: nickEffectToSave, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         const monthlyRef = db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId);
-        batch.set(monthlyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(monthlyRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, nickEffect: nickEffectToSave, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         const alltimeRef = db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId);
-        batch.set(alltimeRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
+        batch.set(alltimeRef, { nick: safeNick, club: userStats.favoriteClub || null, bg: userStats.equippedBg || null, nickEffect: nickEffectToSave, wins: increment(winIncrement), guesses: increment(attempts), timestamp: ts }, { merge: true });
         
         await batch.commit();
     } catch (e) { console.error("DB Error:", e); }
@@ -2183,52 +2185,35 @@ async function sendScoreToDatabase(isWin, attempts) {
 
 async function syncLeagueScoreToFirebase() {
     if (!playerId) return; 
-
-    // BLOKADA ANTI-CRASH: Jeśli masz ID z Google, ale Firebase jeszcze Cię nie zautoryzował (trwa ładowanie), 
-    // to bezwzględnie blokujemy wysyłkę.
-    if (!auth.currentUser && !playerId.startsWith('guest_')) {
-        return; 
-    }
+    if (!auth.currentUser && !playerId.startsWith('guest_')) return; 
 
     const league = ensureLeagueStats(userStats).clashLeague;
     let eloToSend = Math.round(league.elo);
-    
-    // Ochrona przed zepsutymi wartościami (NaN, ujemne)
     if (isNaN(eloToSend) || eloToSend === null || eloToSend < 0) eloToSend = 1000;
     if (eloToSend > 5000) eloToSend = 5000;
 
     try {
-        // SPRAWDZAMY ZANIM WYŚLEMY (aby uniknąć czerwonego błędu Permissions w konsoli)
         const docRef = db.collection('leaderboard_clash_beta').doc(playerId);
         const docSnap = await docRef.get();
-        
         if (docSnap.exists) {
             const cloudData = docSnap.data();
             const cloudElo = cloudData.elo || 1000;
-            
-            // Jeśli różnica ELO wykracza poza reguły bazy danych (prawie 200),
-            // Oznacza to, że gracz grał na innym urządzeniu i lokalny save jest zepsuty/stary!
             if (Math.abs(cloudElo - eloToSend) > 190) {
-                console.warn(`Wykryto asynchronizację ELO (Lokalne: ${eloToSend} vs Serwer: ${cloudElo}). Pobieram poprawne dane z rankingu...`);
-                
                 userStats.clashLeague.elo = cloudElo;
                 userStats.clashLeague.matchesPlayed = cloudData.matchesPlayed || league.matchesPlayed;
                 userStats.clashLeague.wins = cloudData.wins || league.wins;
                 userStats.clashLeague.losses = cloudData.losses || league.losses;
                 userStats.clashLeague.draws = cloudData.draws || league.draws;
-                
                 localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
                 updateLeagueUI();
-                
-                return; // Zamykamy funkcję - NIE ZAPISUJEMY starych danych do bazy!
+                return; 
             }
         }
-
-        // Jeśli różnica jest w normie (albo gracz gra pierwszy raz), bezpiecznie aktualizujemy bazę
         await docRef.set({
             nick: playerNickname || 'Gracz',
             club: userStats.favoriteClub || null,
             bg: userStats.equippedBg || null,
+            nickEffect: userStats.equippedNick === 'default' ? null : userStats.equippedNick,
             elo: eloToSend,
             matchesPlayed: league.matchesPlayed,
             wins: league.wins,
@@ -2238,10 +2223,7 @@ async function syncLeagueScoreToFirebase() {
             provisional: league.matchesPlayed < 5,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
-
-    } catch (e) { 
-        console.warn('Ostrzeżenie synchronizacji Ligi Clash:', e.message); 
-    }
+    } catch (e) { console.warn('Ostrzeżenie synchronizacji Ligi Clash:', e.message); }
 }
 
 function updateStatsOnWin() {
@@ -2339,11 +2321,17 @@ function updateCounterDisplay() {
     const container = document.getElementById('livesContainer');
     if (!container) return;
     container.style.display = 'flex'; container.innerHTML = '';
+    
+    let equipped = userStats.equippedHelmet || 'default';
+    let helmetFileName = 'kask-zycie.png'; // Domyślny
+    if (equipped === 'helmet-zloty') helmetFileName = 'images/helmets/kask-zloty.png';
+    else if (equipped === 'helmet-retro') helmetFileName = 'images/helmets/kask-retro.png';
+    
     for (let i = 0; i < GUESS_LIMIT; i++) {
         const isLost = i < guessCount; const isJustLost = (i === guessCount - 1) && !isRestoring && !hasWon; 
         let cls = "helmet-icon";
         if (isJustLost) cls += " life-lost-anim"; else if (isLost) cls += " helmet-lost"; 
-        container.innerHTML += `<img src="kask-zycie.png" class="${cls}" alt="Kask">`;
+        container.innerHTML += `<img src="${helmetFileName}" class="${cls}" alt="Kask">`;
     }
 }
 
@@ -2382,6 +2370,21 @@ async function returnToMainMenu() {
     window.location.reload();
 }
 
+function renderClashEmotePanel() {
+    const panel = document.getElementById('clashEmotePanel');
+    if (!panel) return;
+    panel.innerHTML = '';
+    
+    let emotes = ['🤯', '👏', '🤬', '⏳', '🤡']; 
+    
+    if (userStats.equippedEmote === 'emote-sedzia') emotes = ['🟥', '🟨', '🏁', '🛑', '🎥'];
+    else if (userStats.equippedEmote === 'emote-kibic') emotes = ['🌭', '🍻', '🧨', '🎺', '🧣'];
+    else if (userStats.equippedEmote === 'emote-memy') emotes = ['🤡', '💩', '🥱', '💀', '🤫'];
+    
+    emotes.forEach(emo => {
+        panel.innerHTML += `<button class="clash-emote-btn" onclick="sendClashEmote('${emo}')">${emo}</button>`;
+    });
+}
 
 // Aktywacja podpowiedzi z przycisku
 function useHint() {
@@ -2939,20 +2942,17 @@ async function loadTimeAttackRanking() {
 
 async function syncTimeAttackScoreToFirebase(score) {
     if (!playerId) return; 
-
-    // Identyczna blokada jak w przypadku Ligi Clash
-    if (!auth.currentUser && !playerId.startsWith('guest_')) {
-        return; 
-    }
+    if (!auth.currentUser && !playerId.startsWith('guest_')) return; 
 
     try {
         const docRef = db.collection('leaderboard_timeattack').doc(playerId);
         const doc = await docRef.get();
-        
-        // Zapisujemy tylko jeśli nowy wynik jest wyższy niż stary (lub to pierwszy wynik)
         if (!doc.exists || doc.data().score < score) {
             await docRef.set({
                 nick: playerNickname || 'Gracz',
+                club: userStats.favoriteClub || null,
+                bg: userStats.equippedBg || null,
+                nickEffect: userStats.equippedNick === 'default' ? null : userStats.equippedNick,
                 score: score,
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
@@ -3359,8 +3359,20 @@ function renderGuess(player, target, isRestore = false, isWinningGuess = false) 
     guessHistory.push(rowEmojis);
 }
 
+// Nowy efekt: Deszcz monet
+function launchCoins() {
+    const canvas = document.getElementById('confettiCanvas'); const ctx = canvas.getContext('2d'); canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    let particles = []; for (let i = 0; i < 100; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*-canvas.height, color: '#f1c40f', sy: Math.random()*5+3, r: Math.random()*360 });
+    function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p => { ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle='#d4af37'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill(); ctx.restore(); p.y+=p.sy; if(p.y>canvas.height)p.y=-20; }); requestAnimationFrame(draw); } draw();
+}
+
 function handleWin(finalName) {
-    playSound('win'); revealTargetInfoUI(finalName); launchConfetti();
+    playSound('win'); revealTargetInfoUI(finalName); 
+    
+    if (userStats.equippedWin === 'win-coins') launchCoins();
+    else if (userStats.equippedWin === 'win-fireworks') { launchConfetti(); }
+    else launchConfetti(); 
+    
     const overlay = document.getElementById('winOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
     const btnPlayAgainPost = document.getElementById('btnPlayAgainPost');
     if (gameMode === 'daily') { document.getElementById('btnSharePost').style.display = 'inline-block'; btnPlayAgainPost.innerText = i18n[currentLang].btnPlayEndless; } else { document.getElementById('btnSharePost').style.display = 'none'; btnPlayAgainPost.innerText = i18n[currentLang].btnPlayAgain; }
@@ -3668,14 +3680,18 @@ async function loadDesktopRanking(type) {
 
             let pos = 1;
             scores.forEach((row) => {
-                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (typeof playerNickname !== 'undefined' && safeNick === playerNickname) myScoreFound = true;
+                // Wyciągamy czysty nick do weryfikacji i renderowania
+                let rawNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                if (typeof playerNickname !== 'undefined' && rawNick === playerNickname) myScoreFound = true;
+                
+                // Dodajemy efekt CSS ze sklepu, jeśli gracz go ma
+                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
                 
                 let rangaText = typeof getLeagueRankName === 'function' ? getLeagueRankName(row.elo, row.matchesPlayed) : row.rank;
                 if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (typeof playerNickname !== 'undefined' && (row.nick || t('defaultPlayer')) === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMeStyle = (typeof playerNickname !== 'undefined' && rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 tbody.innerHTML += `
                     <tr class="${bgClass}" ${isMeStyle}>
@@ -3689,7 +3705,10 @@ async function loadDesktopRanking(type) {
 
             if (!myScoreFound && myPersonalScore && myPersonalScore.matchesPlayed >= 5) {
                 let myRank = typeof getLeagueRankName === 'function' ? getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed) : myPersonalScore.rank;
-                let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                
+                let myRawNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                let mySafeNick = myPersonalScore.nickEffect && myPersonalScore.nickEffect !== 'default' ? `<span class="${myPersonalScore.nickEffect}">${myRawNick}</span>` : myRawNick;
+                
                 if (typeof getMiniClubBadge === 'function') mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
@@ -3720,12 +3739,15 @@ async function loadDesktopRanking(type) {
 
             let pos = 1;
             scores.forEach((row) => {
-                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (typeof playerNickname !== 'undefined' && safeNick === playerNickname) myScoreFound = true;
+                let rawNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                if (typeof playerNickname !== 'undefined' && rawNick === playerNickname) myScoreFound = true;
+                
+                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+                
                 if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (typeof playerNickname !== 'undefined' && (row.nick || t('defaultPlayer')) === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let isMeStyle = (typeof playerNickname !== 'undefined' && rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
                 tbody.innerHTML += `
@@ -3738,7 +3760,9 @@ async function loadDesktopRanking(type) {
             });
 
             if (!myScoreFound && myPersonalScore) {
-                let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                let myRawNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                let mySafeNick = myPersonalScore.nickEffect && myPersonalScore.nickEffect !== 'default' ? `<span class="${myPersonalScore.nickEffect}">${myRawNick}</span>` : myRawNick;
+                
                 if (typeof getMiniClubBadge === 'function') mySafeNick += getMiniClubBadge(myPersonalScore.club);
                 let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
                 
@@ -3779,11 +3803,13 @@ async function loadDesktopRanking(type) {
                 let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 
-                let safeNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                let rawNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+                
                 if (typeof getMiniClubBadge === 'function') safeNick += getMiniClubBadge(row.club); 
                 
                 let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (typeof playerNickname !== 'undefined' && (row.nick || t('defaultPlayer')) === playerNickname) ? 'style="color: var(--accent);"' : '';
+                let isMeStyle = (typeof playerNickname !== 'undefined' && rawNick === playerNickname) ? 'style="color: var(--accent);"' : '';
                 
                 tbody.innerHTML += `
                     <tr class="${bgClass}" ${isMeStyle}>
@@ -9390,26 +9416,31 @@ const MISSIONS_POOL_MONTHLY = [
 
 function ensureProgressionStats() {
     let needsSave = false;
-
     if (typeof userStats.level === 'undefined') { userStats.level = 1; needsSave = true; }
     if (typeof userStats.exp === 'undefined') { userStats.exp = 0; needsSave = true; }
     if (typeof userStats.coins === 'undefined') { userStats.coins = 0; needsSave = true; }
     
     if (!userStats.missions) { userStats.missions = { date: "", weeklyDate: "", monthlyDate: "", dailyTasks: [], weeklyTasks: [], monthlyTasks: [] }; needsSave = true; }
-    
-    // Upewniamy się, że struktury istnieją (dla starych graczy)
-    if (!userStats.missions.dailyTasks) userStats.missions.dailyTasks = [];
-    if (!userStats.missions.weeklyTasks) userStats.missions.weeklyTasks = [];
-    if (!userStats.missions.monthlyTasks) userStats.missions.monthlyTasks = [];
 
-    if (!userStats.equippedTitle) { userStats.equippedTitle = null; needsSave = true; }
+    // --- NOWE ZMIENNE SKLEPU ---
     if (!userStats.ownedBgs) { userStats.ownedBgs = []; needsSave = true; }
     if (typeof userStats.equippedBg === 'undefined') { userStats.equippedBg = null; needsSave = true; }
     
+    if (!userStats.ownedNicks) { userStats.ownedNicks = ['default']; needsSave = true; }
+    if (!userStats.equippedNick) { userStats.equippedNick = 'default'; needsSave = true; }
+    
+    if (!userStats.ownedHelmets) { userStats.ownedHelmets = ['default']; needsSave = true; }
+    if (!userStats.equippedHelmet) { userStats.equippedHelmet = 'default'; needsSave = true; }
+    
+    if (!userStats.ownedEmotes) { userStats.ownedEmotes = ['default']; needsSave = true; }
+    if (!userStats.equippedEmote) { userStats.equippedEmote = 'default'; needsSave = true; }
+    
+    if (!userStats.ownedWins) { userStats.ownedWins = ['default']; needsSave = true; }
+    if (!userStats.equippedWin) { userStats.equippedWin = 'default'; needsSave = true; }
+
     const d = new Date();
     const todayStr = d.toLocaleDateString();
     
-    // Generowanie Dziennych
     if (userStats.missions.date !== todayStr) {
         userStats.missions.date = todayStr;
         let shuffled = [...MISSIONS_POOL_DAILY].sort(() => 0.5 - Math.random());
@@ -9417,7 +9448,6 @@ function ensureProgressionStats() {
         needsSave = true;
     }
 
-    // Generowanie Tygodniowych (Prosty reset co poniedziałek - oparty na dacie)
     let dayNum = d.getDay() || 7; 
     let monday = new Date(d); monday.setDate(d.getDate() - dayNum + 1);
     let mondayStr = monday.toLocaleDateString();
@@ -9428,7 +9458,6 @@ function ensureProgressionStats() {
         needsSave = true;
     }
 
-    // Generowanie Miesięcznych
     let monthStr = `${d.getFullYear()}_${d.getMonth() + 1}`;
     if (userStats.missions.monthlyDate !== monthStr) {
         userStats.missions.monthlyDate = monthStr;
@@ -9628,19 +9657,42 @@ window.claimMission = function(type, index) {
 // ====== UI SKLEPU (NOWY LAYOUT) ===============
 // ==============================================
 
-// Dostępne tła w sklepie
-const SHOP_BACKGROUNDS = [
-    { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Lśniące, złote tło', price: 5000 },
-    { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Błękitna animacja', price: 10000 },
-    { id: 'rank-bg-bubbles', name: 'Mydlane Bańki', desc: 'Unoszące się bąbelki', price: 10000 },
-    { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Płynący, radioaktywny kwas', price: 15000 },
-    { id: 'rank-bg-forest', name: 'Mroczny Las', desc: 'Głęboka, mistyczna zieleń', price: 15000 },
-    { id: 'rank-bg-hearts', name: 'Miłosny Szał', desc: 'Deszcz czerwonych serc', price: 15000 },
-    { id: 'rank-bg-lightning', name: 'Gniew Zeusa', desc: 'Uderzenia błyskawic', price: 25000 },
-    { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płonące animowane tło', price: 50000 },
-    { id: 'rank-bg-sadurski', name: 'Sadurski Racing', desc: 'SPECJALNE TŁO: KS759', price: 7590 }
-];
+// ==============================================
+// ====== BAZA DANYCH SKLEPU ====================
+// ==============================================
 
+const SHOP_DB = {
+    backgrounds: [
+        { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Lśniące, złote tło', price: 5000 },
+        { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Błękitna animacja', price: 10000 },
+        { id: 'rank-bg-bubbles', name: 'Mydlane Bańki', desc: 'Unoszące się bąbelki', price: 10000 },
+        { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Płynący, radioaktywny kwas', price: 15000 },
+        { id: 'rank-bg-forest', name: 'Mroczny Las', desc: 'Głęboka, mistyczna zieleń', price: 15000 },
+        { id: 'rank-bg-hearts', name: 'Miłosny Szał', desc: 'Deszcz czerwonych serc', price: 15000 },
+        { id: 'rank-bg-lightning', name: 'Gniew Zeusa', desc: 'Uderzenia błyskawic', price: 25000 },
+        { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płonące animowane tło', price: 50000 },
+        { id: 'rank-bg-sadurski', name: 'Sadurski Racing', desc: 'SPECJALNE TŁO: KS759', price: 75900 }
+    ],
+    nicks: [
+        { id: 'nick-effect-ice', name: 'Lodowe Ostrze', desc: 'Mroźna poświata na nazwie', price: 2000 },
+        { id: 'nick-effect-fire', name: 'Płonący Nick', desc: 'Ognista animacja tekstu', price: 4000 },
+        { id: 'nick-effect-rgb', name: 'Gamer RGB', desc: 'Przesuwająca się tęcza', price: 8000 },
+        { id: 'nick-effect-glitch', name: 'Cyber Glitch', desc: 'Klatkujący, zepsuty tekst', price: 12000 }
+    ],
+    helmets: [
+        { id: 'helmet-retro', name: 'Kask Retro', desc: 'Skórzana pilotka z goglami', price: 2000 },
+        { id: 'helmet-zloty', name: 'Złoty Kask', desc: 'Złoty relikt za bezbłędność', price: 3000 },
+    ],
+    emotes: [
+        { id: 'emote-sedzia', name: 'Sędzia', desc: '🟥, 🟨, 🏁, 🛑, 🎥', price: 1500 },
+        { id: 'emote-kibic', name: 'Ultras', desc: '🌭, 🍻, 🧨, 🎺, 🧣', price: 2500 },
+        { id: 'emote-memy', name: 'Troll', desc: '🤡, 💩, 🥱, 💀, 🤫', price: 5000 }
+    ],
+    wins: [
+        { id: 'win-coins', name: 'Deszcz Pieniędzy', desc: 'Monety spadające z nieba', price: 7000 },
+        { id: 'win-fireworks', name: 'Sztuczne Ognie', desc: 'Wybuchy na ekranie', price: 10000 }
+    ]
+};
 function openShopModal() {
     ensureProgressionStats();
     document.getElementById('mainMenuContainer').style.display = 'none';
@@ -9674,63 +9726,95 @@ window.switchShopTab = function(tab) {
     const container = document.getElementById('shopListContainer');
     container.innerHTML = '';
     
-    if (tab === 'backgrounds') {
-        container.innerHTML = `<p class="text-xs text-dim mb-15">Tła nakładają się na Twój wiersz w tabelach wyników, czyniąc Twój profil unikalnym!</p>`;
-        
-        SHOP_BACKGROUNDS.forEach(bg => {
-            const isOwned = userStats.ownedBgs.includes(bg.id);
-            const isEquipped = userStats.equippedBg === bg.id;
-            
-            let actionBtn = '';
-            if (isEquipped) {
-                actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipBackground(null)">ZDEJMIJ</button>`;
-            } else if (isOwned) {
-                actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipBackground('${bg.id}')">ZAŁÓŻ</button>`;
-            } else {
-                actionBtn = `<button class="shop-btn shop-btn-buy" onclick="buyBackground('${bg.id}', ${bg.price})">${bg.price} 🪙</button>`;
-            }
+    let ownedArray = []; let equipVar = ''; let equipVal = null;
+    if (tab === 'backgrounds') { ownedArray = userStats.ownedBgs; equipVar = 'equippedBg'; equipVal = userStats[equipVar]; }
+    else if (tab === 'nicks') { ownedArray = userStats.ownedNicks; equipVar = 'equippedNick'; equipVal = userStats[equipVar]; }
+    else if (tab === 'helmets') { ownedArray = userStats.ownedHelmets; equipVar = 'equippedHelmet'; equipVal = userStats[equipVar]; }
+    else if (tab === 'emotes') { ownedArray = userStats.ownedEmotes; equipVar = 'equippedEmote'; equipVal = userStats[equipVar]; }
+    else if (tab === 'wins') { ownedArray = userStats.ownedWins; equipVar = 'equippedWin'; equipVal = userStats[equipVar]; }
 
-            container.innerHTML += `
-                <div class="shop-item-card ${bg.id}" style="border-left: none !important;">
-                    <div style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
-                        <div class="shop-item-title" style="color: #fff;">${bg.name}</div>
-                        <div style="font-size:10px; color:rgba(255,255,255,0.7); font-weight:700;">${bg.desc}</div>
-                    </div>
-                    <div>${actionBtn}</div>
+    if (!SHOP_DB[tab] || SHOP_DB[tab].length === 0) {
+        container.innerHTML = `<div class="text-dim text-center mt-20">Kategoria wkrótce dostępna!</div>`;
+        return;
+    }
+
+    if (tab !== 'backgrounds') {
+        let isDefaultEquipped = equipVal === 'default' || equipVal === null;
+        let defBtn = isDefaultEquipped 
+            ? `<button class="shop-btn shop-btn-equipped" onclick="equipShopItem('${tab}', 'default')">ZAŁOŻONE</button>` 
+            : `<button class="shop-btn shop-btn-equip" onclick="equipShopItem('${tab}', 'default')">ZAŁÓŻ</button>`;
+            
+        container.innerHTML += `
+            <div class="shop-item-card">
+                <div>
+                    <div class="shop-item-title" style="color: #fff;">Domyślne</div>
+                    <div style="font-size:10px; color:var(--text-dim); font-weight:700;">Standardowy wygląd gry</div>
                 </div>
-            `;
-        });
-    } else if (tab === 'titles') {
-        container.innerHTML = `
-            <div style="text-align:center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); margin-top: 20px;">
-                <div style="font-size: 30px; margin-bottom: 5px;">🚧</div>
-                <div style="font-size: 13px; color: var(--text-dim); font-weight: 700;">Kategoria w budowie... Oszczędzaj monety!</div>
+                <div>${defBtn}</div>
+            </div>`;
+    }
+
+    SHOP_DB[tab].forEach(item => {
+        const isOwned = ownedArray.includes(item.id);
+        const isEquipped = equipVal === item.id;
+        
+        let actionBtn = '';
+        if (isEquipped) {
+            let revertId = tab === 'backgrounds' ? null : 'default';
+            actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipShopItem('${tab}', '${revertId}')">ZAŁOŻONE</button>`;
+        } else if (isOwned) {
+            actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipShopItem('${tab}', '${item.id}')">ZAŁÓŻ</button>`;
+        } else {
+            actionBtn = `<button class="shop-btn shop-btn-buy" onclick="buyShopItem('${tab}', '${item.id}', ${item.price})">${item.price} 🪙</button>`;
+        }
+
+        let customStyleClass = tab === 'nicks' ? item.id : '';
+        let customBgClass = tab === 'backgrounds' ? item.id : '';
+
+        container.innerHTML += `
+            <div class="shop-item-card ${customBgClass}" style="border-left: none !important;">
+                <div style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                    <div class="shop-item-title ${customStyleClass}" style="color: #fff;">${item.name}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.7); font-weight:700;">${item.desc}</div>
+                </div>
+                <div>${actionBtn}</div>
             </div>
         `;
-    }
+    });
 }
 
-window.buyBackground = function(id, price) {
+window.buyShopItem = function(category, id, price) {
     if (userStats.coins >= price) {
         userStats.coins -= price;
-        userStats.ownedBgs.push(id);
-        userStats.equippedBg = id; // Automatycznie zakładamy po zakupie
+        if (category === 'backgrounds') { userStats.ownedBgs.push(id); userStats.equippedBg = id; }
+        else if (category === 'nicks') { userStats.ownedNicks.push(id); userStats.equippedNick = id; }
+        else if (category === 'helmets') { userStats.ownedHelmets.push(id); userStats.equippedHelmet = id; updateCounterDisplay(); }
+        else if (category === 'emotes') { userStats.ownedEmotes.push(id); userStats.equippedEmote = id; renderClashEmotePanel(); }
+        else if (category === 'wins') { userStats.ownedWins.push(id); userStats.equippedWin = id; }
+        
         saveStats();
-        switchShopTab('backgrounds');
+        switchShopTab(category);
         document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
-        showToast("Zakupiono nowe tło!", "success");
+        showToast("Zakupiono nowy przedmiot!", "success");
+        playSound('win');
     } else {
         showToast("Nie masz wystarczająco Monet!", "error");
         playSound('error');
     }
 }
 
-window.equipBackground = function(id) {
-    userStats.equippedBg = id;
+window.equipShopItem = function(category, id) {
+    if (category === 'backgrounds') userStats.equippedBg = id;
+    else if (category === 'nicks') userStats.equippedNick = id;
+    else if (category === 'helmets') { userStats.equippedHelmet = id; updateCounterDisplay(); }
+    else if (category === 'emotes') { userStats.equippedEmote = id; renderClashEmotePanel(); }
+    else if (category === 'wins') userStats.equippedWin = id;
+    
     saveStats();
-    switchShopTab('backgrounds');
-    showToast(id ? "Tło założone!" : "Tło zdjęte.", "normal");
+    switchShopTab(category);
+    showToast("Wyposażenie zmienione!", "normal");
 }
+
 
 // ----------------------------------------
 // GLOBALNE FUNKCJE DLA HTML-A (ZABEZPIECZENIE)
