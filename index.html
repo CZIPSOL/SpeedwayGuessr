@@ -146,73 +146,118 @@
         </div>
     </div>
 
-    <!-- CENTRUM DOWODZENIA: PROFIL GRACZA -->
-    <div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
-        <div class="stats-modal modal-sm">
-            <h2 class="text-accent mb-20" data-i18n="account">TWÓJ PROFIL</h2>
-
-
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="font-size: 14px; color: var(--text-dim); margin-bottom: 10px;">POWIĄZANE KONTA</h3>
+<!-- CENTRUM DOWODZENIA: PROFIL GRACZA (STEAM STYLE) -->
+<div id="profileOverlay" class="win-overlay" style="display: none; z-index: 10000;">
+    <div class="stats-modal modal-lg" style="max-height:85vh; overflow:hidden; display: flex; flex-direction: column; padding: 25px;">
+        
+        <div class="flex-between mb-15 pb-10" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <h2 class="text-white m-0 uppercase font-black" style="color: #3498db;">Profil Gracza 👤</h2>
+            <div style="font-size: 14px; font-weight: 900; color: #f1c40f; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 12px; border: 1px solid #f1c40f;">
+                Poziom <span id="profileLevelTop">1</span>
             </div>
-            <div class="setting-block google-block">
-                <!-- DISCORD -->
-                <button id="btnLinkDiscord" onclick="startDiscordLinking()" class="menu-btn" style="background-color: #5865F2; padding: 10px; width: 100%; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM
-                </button>
-                <!-- GOOGLE -->
-                <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google w-100" data-i18n="btnLoginGoogle">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
-                </button>
-                <div id="userInfoDisplayProfile" class="user-info-text text-green text-xs font-bold mt-10" style="display:none;"></div>
-            </div>
-
-            <!-- NOWOŚĆ: POZIOM, EXP I MONETY -->
-            <div style="background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; margin-bottom: 20px;">
-                <div class="flex-between mb-10">
-                    <div style="font-size: 16px; font-weight: 900; color: var(--accent);">Poziom <span id="profileLevel">1</span></div>
-                    <div style="font-size: 16px; font-weight: 900; color: #f1c40f;">🪙 <span id="profileCoins">0</span></div>
-                </div>
-                <div style="width: 100%; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; position: relative;">
-                    <div id="profileExpBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: 0.3s;"></div>
-                </div>
-                <div id="profileExpText" class="text-xs text-dim mt-5 text-right font-bold">0 / 100 EXP</div>
-            </div>
-
-            <!-- ZMIANA NICKU -->
-            <div class="setting-block mb-25 w-100">
-                <label class="text-dim text-xs uppercase font-bold mb-5">TWÓJ OBECNY NICK:</label>
-                <div class="flex-row gap-10 w-100">
-                    <input type="text" id="changeNickInput" class="text-center font-bold uppercase w-60" placeholder="Nowy nick..." maxlength="12">
-                    <button onclick="changeNickname()" class="btn-reset w-40 text-sm" id="btnChangeNick">ZMIEŃ</button>
-                </div>
-            </div>
-
-            <!-- WYBÓR KLUBU -->
-            <div class="setting-block mb-25 w-100">
-                <label class="text-dim text-xs uppercase font-bold mb-5">TWÓJ ULUBIONY KLUB:</label>
-                <button onclick="openClubSelectModal()" class="menu-btn btn-flat w-100" style="padding: 12px; font-size: 13px;">
-                    <span id="currentClubDisplay">WYBIERZ KLUB 🛡️</span>
-                </button>
-            </div>
-
-            <!-- STATYSTYKI -->
-            <h3 class="text-sm text-dim mb-10" data-i18n="stats">STATYSTYKI</h3>
-            <div class="stats-grid">
-                <div class="stat-box"><span id="profileStatPlayed" class="stat-num">0</span><span class="stat-label" data-i18n="statPlayed">Rozegrane</span></div>
-                <div class="stat-box"><span id="profileStatWon" class="stat-num">0</span><span class="stat-label" data-i18n="statWon">Wygrane</span></div>
-                <div class="stat-box"><span id="profileStatStreak" class="stat-num">0</span><span class="stat-label" data-i18n="statStreak">Akt. Seria</span></div>
-                <div class="stat-box"><span id="profileStatMax" class="stat-num">0</span><span class="stat-label" data-i18n="statMax">Najlepsza</span></div>
-            </div>
-            
-            <!-- OSIĄGNIĘCIA (PRZYCISK) -->
-            <button onclick="openAchievementsModal()" class="menu-btn mt-25" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: white; border: 1px solid rgba(255,255,255,0.2);">
-                <span style="font-size: 20px; margin-right: 10px;">🏆</span> MOJE OSIĄGNIĘCIA
-            </button>
-
-            <button onclick="closeProfile()" class="btn-close w-100 mt-20" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
+
+        <div class="shop-layout">
+            <!-- Zakładki -->
+            <div class="shop-sidebar">
+                <button class="settings-tab-btn active" onclick="switchProfileTab('overview')">
+                    <span style="font-size:16px;">📊</span> Podsumowanie
+                </button>
+                <button class="settings-tab-btn" onclick="switchProfileTab('edit')">
+                    <span style="font-size:16px;">✏️</span> Edytuj Profil
+                </button>
+            </div>
+
+            <!-- Zawartość Profilu -->
+            <div class="shop-content">
+                
+                <!-- ZAKŁADKA: PODSUMOWANIE -->
+                <div id="tab-profile-overview" class="settings-tab-panel active">
+                    <!-- STEAM STYLE HEADER -->
+                    <div style="display: flex; gap: 20px; align-items: center; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px;">
+                        <img id="profileAvatarOverview" src="" style="width: 80px; height: 80px; border-radius: 12px; border: 2px solid var(--accent); object-fit: cover; background: #222;">
+                        <div style="flex: 1; text-align: left;">
+                            <div id="profileNickOverview" style="font-size: 24px; font-weight: 900; color: #fff;">GRACZ</div>
+                            <div id="profileClubOverview" style="font-size: 12px; color: var(--text-dim); font-weight: 700; margin-bottom: 8px;">WYBIERZ KLUB 🛡️</div>
+                            
+                            <!-- Pasek EXP -->
+                            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative;">
+                                <div id="profileExpBarOverview" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: 0.3s;"></div>
+                            </div>
+                            <div id="profileExpTextOverview" class="text-xs text-dim mt-5 font-bold">0 / 100 EXP</div>
+                        </div>
+                    </div>
+
+                    <!-- STATYSTYKI -->
+                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px;">
+                        <div class="stat-box" style="padding: 10px;"><span id="profileStatPlayed" class="stat-num" style="font-size: 20px;">0</span><span class="stat-label">Rozegrane</span></div>
+                        <div class="stat-box" style="padding: 10px;"><span id="profileStatWon" class="stat-num" style="font-size: 20px;">0</span><span class="stat-label">Wygrane</span></div>
+                        <div class="stat-box" style="padding: 10px;"><span id="profileStatStreak" class="stat-num" style="font-size: 20px;">0</span><span class="stat-label">Akt. Seria</span></div>
+                        <div class="stat-box" style="padding: 10px;"><span id="profileStatMax" class="stat-num" style="font-size: 20px;">0</span><span class="stat-label">Najlepsza</span></div>
+                    </div>
+
+                    <!-- OSIĄGNIĘCIA -->
+                    <button onclick="openAchievementsModal()" class="menu-btn w-100" style="background: linear-gradient(135deg, #2c3e50, #3498db); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 10px; font-size: 14px;">
+                        <span style="font-size: 18px; margin-right: 10px;">🏆</span> MOJE OSIĄGNIĘCIA
+                    </button>
+                </div>
+
+                <!-- ZAKŁADKA: EDYCJA PROFILU -->
+                <div id="tab-profile-edit" class="settings-tab-panel" style="display: none; text-align: left;">
+                    
+                    <!-- AWATAR -->
+                    <div class="setting-block mb-15 w-100" style="align-items: flex-start; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label class="text-accent text-xs uppercase font-bold mb-10">Zdjęcie profilowe</label>
+                        <div style="display: flex; gap: 20px; align-items: center; width: 100%;">
+                            <div style="position: relative; width: 60px; height: 60px; flex-shrink: 0;">
+                                <img id="profileAvatarEdit" src="" style="width: 100%; height: 100%; border-radius: 12px; object-fit: cover; border: 2px solid #fff; background: #222;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label for="avatarUploadInput" class="btn-flat" style="display: inline-block; padding: 8px 15px; font-size: 11px; font-weight: 900; border-radius: 8px; cursor: pointer; border: 1px solid var(--accent); color: var(--accent);">WGRAJ AWATAR</label>
+                                <input type="file" id="avatarUploadInput" accept="image/jpeg, image/png" style="display: none;" onchange="handleAvatarUpload(event)">
+                                <div id="avatarUploadStatus" class="text-xs text-dim mt-5">Max. rozmiar dostosuje się automatycznie.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ZMIANA NICKU -->
+                    <div class="setting-block mb-15 w-100" style="align-items: flex-start; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label class="text-accent text-xs uppercase font-bold mb-5">Zmień pseudonim</label>
+                        <div class="flex-row gap-10 w-100">
+                            <input type="text" id="changeNickInput" class="font-bold uppercase w-100" placeholder="Nowy nick..." maxlength="12" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; font-size: 13px;">
+                            <button onclick="changeNickname()" class="btn-reset text-sm" id="btnChangeNick" style="padding: 10px 15px; white-space: nowrap;">ZAPISZ</button>
+                        </div>
+                    </div>
+
+                    <!-- WYBÓR KLUBU -->
+                    <div class="setting-block mb-15 w-100" style="align-items: flex-start; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label class="text-accent text-xs uppercase font-bold mb-5">Ulubiony klub</label>
+                        <button onclick="openClubSelectModal()" class="menu-btn btn-flat w-100" style="padding: 10px; font-size: 12px; border-style: dashed;">
+                            <span id="currentClubDisplay">WYBIERZ KLUB 🛡️</span>
+                        </button>
+                    </div>
+
+                    <!-- POWIĄZANE KONTA (DISCORD / GOOGLE) -->
+                    <div class="setting-block mb-10 w-100" style="align-items: flex-start; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label class="text-accent text-xs uppercase font-bold mb-10">Powiązane Konta</label>
+                        
+                        <button id="btnProfileLogin" onclick="signInWithGoogle()" class="btn-google w-100 mb-10" style="padding: 10px;">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="16" height="16" alt="G"> ZALOGUJ PRZEZ GOOGLE
+                        </button>
+                        <div id="userInfoDisplayProfile" class="user-info-text text-green text-xs font-bold mb-10 text-center w-100" style="display:none;"></div>
+
+                        <button id="btnLinkDiscord" onclick="startDiscordLinking()" class="menu-btn w-100" style="background-color: #5865F2; padding: 10px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <button onclick="closeProfile()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
     </div>
+</div>
 
     <!-- MODAL OSIĄGNIĘĆ (STEAM STYLE) -->
     <div id="achievementsOverlay" class="win-overlay" style="display: none; z-index: 10040;">
@@ -1562,7 +1607,7 @@
 
     <script src="db.js?v2.3"></script>
     <script src="events.js?v2.3"></script>
-    <script src="script.js?v2.95"></script>
+    <script src="script.js?v2.96"></script>
 
     
 </body>

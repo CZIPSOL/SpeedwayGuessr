@@ -766,16 +766,30 @@ async function syncStatsFromFirebase() {
     if (!auth.currentUser) return;
     try {
         const docRef = await db.collection('users').doc(auth.currentUser.uid).get();
-        if (docRef.exists && docRef.data().stats) {
-            let cloudStats = JSON.parse(docRef.data().stats);
-            // Bezpieczne wczytanie danych bez utraty wewnątrz przypisania:
-            userStats = { ...userStats, ...cloudStats };
+        if (docRef.exists) {
+            const data = docRef.data();
+            
+            // Scalenie statystyk
+            if (data.stats) {
+                let cloudStats = JSON.parse(data.stats);
+                userStats = { ...userStats, ...cloudStats };
+            }
+            
+            // Pobranie danych zapisanych luźno w Firebase (Root)
+            if (data.discordUsername) {
+                userStats.discordUsername = data.discordUsername;
+                userStats.discordLinked = true;
+            }
+            if (data.avatarUrl) {
+                userStats.avatarUrl = data.avatarUrl;
+            }
+
             ensureLeagueStats(userStats);
+            ensureProgressionStats();
             localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
             updateLeagueUI();
             updateDiscordButtonUI();
         }
-        // Dopiero tutaj, mając pewność chmurowych statystyk, ładujemy ranking
         syncLeagueScoreToFirebase();
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
 }
@@ -881,16 +895,16 @@ function updateDiscordButtonUI() {
     const btn = document.getElementById('btnLinkDiscord');
     if (!btn) return;
 
-    if (userStats.discordLinked && userStats.discordUsername) {
-        // Jeśli połączono: Zmień na zielony i zablokuj klikanie
+    if (userStats.discordUsername) {
+        // Jeśli konto połączone
         btn.innerHTML = `<span style="font-size: 18px;">✅</span> POŁĄCZONO: ${userStats.discordUsername}`;
         btn.style.background = "rgba(46, 204, 113, 0.15)"; 
         btn.style.border = "1px solid #2ecc71";
         btn.style.color = "#2ecc71";
         btn.style.cursor = "default";
-        btn.onclick = () => { showToast("Konto jest już połączone!", "normal"); };
+        btn.onclick = () => { showToast("Konto Discord jest już połączone!", "normal"); };
     } else {
-        // Jeśli nie połączono: Domyślny, fioletowy przycisk
+        // Jeśli konto nie połączone
         btn.innerHTML = `<span style="font-size: 18px;">👾</span> POŁĄCZ Z DISCORDEM`;
         btn.style.background = "#5865F2";
         btn.style.border = "none";
@@ -5704,6 +5718,7 @@ async function leaveClashRoom() {
 }
 
 async function closeRoomCleanup(options = {}) {
+    window.hasUpdatedLeague = false;
     window.lastRenderedClashStatus = null; // <--- DODAJ TO
     window.vsScreenTriggered = false; 
 
@@ -9553,9 +9568,134 @@ function renderProfileExpBar() {
 // Nadpisanie domyślnej funkcji Profilu, by rysowała też EXP
 const originalOpenProfile = openProfile;
 window.openProfile = function() {
-    originalOpenProfile();
-    renderProfileExpBar();
+    ensureProgressionStats(); // Wymusza stworzenie zmiennych poziomu i expa, jeśli ich nie ma
+
+    // Statystyki
+    document.getElementById('profileStatPlayed').innerText = userStats.played || 0; 
+    document.getElementById('profileStatWon').innerText = userStats.won || 0;
+    document.getElementById('profileStatStreak').innerText = userStats.currentStreak || 0; 
+    document.getElementById('profileStatMax').innerText = userStats.maxStreak || 0;
+    
+    // Dane gracza (Edycja)
+    document.getElementById('changeNickInput').value = playerNickname || "";
+    
+    // Klub
+    ensureClubStat(userStats);
+    const clubText = userStats.favoriteClub ? `KLUB: <b>${userStats.favoriteClub}</b>` : "WYBIERZ KLUB 🛡️";
+    document.getElementById('currentClubDisplay').innerHTML = clubText;
+    document.getElementById('profileClubOverview').innerHTML = userStats.favoriteClub ? userStats.favoriteClub : "Brak klubu";
+
+    // Awatar (Domyślny placeholder w Base64 jeśli brak zdjęcia)
+    const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
+    document.getElementById('profileAvatarOverview').src = userStats.avatarUrl || defAvatar;
+    document.getElementById('profileAvatarEdit').src = userStats.avatarUrl || defAvatar;
+
+    // Nick + Poziom z efektami ze sklepu
+    const pNick = playerNickname || "GRACZ";
+    document.getElementById('profileNickOverview').innerHTML = userStats.equippedNick && userStats.equippedNick !== 'default' 
+        ? `<span class="${userStats.equippedNick}">${pNick}</span>` 
+        : pNick;
+
+    const reqExp = getRequiredExp(userStats.level);
+    const pct = Math.min(100, Math.floor((userStats.exp / reqExp) * 100));
+    
+    document.getElementById('profileLevelTop').innerText = userStats.level;
+    document.getElementById('profileExpBarOverview').style.width = `${pct}%`;
+    document.getElementById('profileExpTextOverview').innerText = `${userStats.exp} / ${reqExp} EXP`;
+
+    // Reset zakładki na 'Podsumowanie'
+    switchProfileTab('overview');
+
+    const overlay = document.getElementById('profileOverlay');
+    overlay.style.display = 'flex'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
+};
+
+window.closeProfile = function() {
+    const overlay = document.getElementById('profileOverlay');
+    overlay.style.opacity = '0'; 
+    setTimeout(() => overlay.style.display = 'none', 300);
+};
+
+// Funkcja do przełączania zakładek w profilu
+window.switchProfileTab = function(tabId) {
+    const btns = document.querySelectorAll('#profileOverlay .settings-tab-btn');
+    btns.forEach(b => {
+        if(b.getAttribute('onclick').includes(tabId)) b.classList.add('active');
+        else b.classList.remove('active');
+    });
+
+    document.getElementById('tab-profile-overview').style.display = tabId === 'overview' ? 'block' : 'none';
+    document.getElementById('tab-profile-edit').style.display = tabId === 'edit' ? 'block' : 'none';
+};
+
+function compressImage(file, maxSize, callback) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = event => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+            } else {
+                if (height > maxSize) { width *= maxSize / height; height = maxSize; }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            callback(canvas.toDataURL('image/jpeg', 0.8)); // 80% quality JPEG
+        };
+    };
 }
+
+window.handleAvatarUpload = async function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!auth.currentUser || playerId.startsWith('guest_')) {
+        appAlert("Musisz być zalogowany przez Google, aby dodać własny awatar!", "Brak uprawnień");
+        return;
+    }
+
+    const statusText = document.getElementById('avatarUploadStatus');
+    statusText.innerText = "PRZETWARZANIE...";
+    statusText.style.color = "var(--yellow-neon)";
+
+    compressImage(file, 200, async (base64Image) => {
+        try {
+            statusText.innerText = "WERYFIKACJA AI (SIGHTENGINE)...";
+            const uploadFunc = functions.httpsCallable('uploadAvatar');
+            
+            const response = await uploadFunc({ image: base64Image });
+            
+            if (response.data.success) {
+                const newUrl = response.data.avatarUrl;
+                
+                userStats.avatarUrl = newUrl;
+                saveStats(); 
+                
+                // Aktualizujemy obie grafiki (w podsumowaniu i w edycji)
+                document.getElementById('profileAvatarOverview').src = newUrl;
+                document.getElementById('profileAvatarEdit').src = newUrl;
+                
+                statusText.innerText = "AWATAR ZAAKCEPTOWANY!";
+                statusText.style.color = "var(--green-neon)";
+                showToast("Awatar został pomyślnie zaktualizowany!", "success");
+            }
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "ODRZUCONO!";
+            statusText.style.color = "var(--red-neon)";
+            appAlert(error.message, "Odrzucono awatar");
+        }
+    });
+};
 
 
 // ==============================================
