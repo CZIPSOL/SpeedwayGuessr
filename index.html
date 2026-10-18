@@ -399,20 +399,20 @@
         <div class="stats-modal modal-lg" style="max-height:85vh; overflow:hidden; display: flex; flex-direction: column; padding: 25px;">
             
             <div class="flex-between mb-15 pb-10" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <h2 class="text-white m-0 uppercase font-black" style="color: #e67e22;">Wyzwania 📜</h2>
+                <h2 class="text-white m-0 uppercase font-black" style="color: #e67e22;" data-i18n="missionsTitle">Wyzwania 📜</h2>
                 <div style="font-size: 16px; font-weight: 900; color: #f1c40f; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 12px; border: 1px solid #f1c40f;">🪙 <span id="missionsCoinsDisplay">0</span></div>
             </div>
 
             <div class="shop-layout">
                 <!-- Zakładki -->
                 <div class="shop-sidebar">
-                    <button class="settings-tab-btn active" onclick="switchMissionTab('daily')">
+                    <button class="settings-tab-btn active" onclick="switchMissionTab('daily')" data-i18n="missionsDailyTab">
                         <span style="font-size:16px;">📅</span> Dzienne
                     </button>
-                    <button class="settings-tab-btn" onclick="switchMissionTab('weekly')">
+                    <button class="settings-tab-btn" onclick="switchMissionTab('weekly')" data-i18n="missionsWeeklyTab">
                         <span style="font-size:16px;">🗓️</span> Tygodniowe
                     </button>
-                    <button class="settings-tab-btn" onclick="switchMissionTab('monthly')">
+                    <button class="settings-tab-btn" onclick="switchMissionTab('monthly')" data-i18n="missionsMonthlyTab">
                         <span style="font-size:16px;">🏆</span> Miesięczne
                     </button>
                 </div>
@@ -423,7 +423,7 @@
                 </div>
             </div>
 
-            <button onclick="closeMissionsModal()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
+            <button onclick="closeMissionsModal()" class="btn-close w-100 mt-20 p-12 text-sm" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
@@ -432,26 +432,26 @@
         <div class="stats-modal modal-lg" style="max-height:85vh; overflow:hidden; display: flex; flex-direction: column; padding: 25px;">
             
             <div class="flex-between mb-15 pb-10" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                <h2 class="text-white m-0 uppercase font-black" style="color: #9b59b6;">Sklep 🛒</h2>
+                <h2 class="text-white m-0 uppercase font-black" style="color: #9b59b6;" data-i18n="shopTitle">Sklep 🛒</h2>
                 <div style="font-size: 16px; font-weight: 900; color: #f1c40f; background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 12px; border: 1px solid #f1c40f;">🪙 <span id="shopCoinsDisplay">0</span></div>
             </div>
 
             <div class="shop-layout">
                 <!-- Zakładki Sklepu -->
                 <div class="shop-sidebar">
-                    <button class="settings-tab-btn active" onclick="switchShopTab('backgrounds')">
+                    <button class="settings-tab-btn active" onclick="switchShopTab('backgrounds')" data-i18n="shopTabBackgrounds">
                         <span style="font-size:16px;">🎨</span> Tła
                     </button>
-                    <button class="settings-tab-btn" onclick="switchShopTab('nicks')">
+                    <button class="settings-tab-btn" onclick="switchShopTab('nicks')" data-i18n="shopTabNicks">
                         <span style="font-size:16px;">✨</span> Efekty Nicku
                     </button>
-                    <button class="settings-tab-btn" onclick="switchShopTab('helmets')">
+                    <button class="settings-tab-btn" onclick="switchShopTab('helmets')" data-i18n="shopTabHelmets">
                         <span style="font-size:16px;">🪖</span> Skórki Kasków
                     </button>
-                    <button class="settings-tab-btn" onclick="switchShopTab('emotes')">
+                    <button class="settings-tab-btn" onclick="switchShopTab('emotes')" data-i18n="shopTabEmotes">
                         <span style="font-size:16px;">🤬</span> Pakiety Emotek
                     </button>
-                    <button class="settings-tab-btn" onclick="switchShopTab('wins')">
+                    <button class="settings-tab-btn" onclick="switchShopTab('wins')" data-i18n="shopTabWins">
                         <span style="font-size:16px;">🎉</span> Efekty Wygranej
                     </button>
                 </div>
@@ -462,7 +462,7 @@
                 </div>
             </div>
 
-            <button onclick="closeShopModal()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
+            <button onclick="closeShopModal()" class="btn-close w-100 mt-20 p-12 text-sm" data-i18n="btnClose">ZAMKNIJ</button>
         </div>
     </div>
 
@@ -551,19 +551,19 @@
 
                 <div class="nav-item-modern hover-green" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" onmouseenter="loadDesktopRanking('timeattack')">
     <div class="nav-icon-box">⏱️</div>
-    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;">(NOWOŚĆ)</span></div>
+    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;" data-i18n="newBadge">(NOWOŚĆ)</span></div>
     <div class="nav-arrow">▶</div>
     </div>
 
     <div class="nav-item-modern hover-orange" onclick="openMissionsModal()">
                     <div class="nav-icon-box" style="border-color: #9b59b6; color: #9b59b6;">📜</div>
-                    <div class="nav-text-main" style="color: #9b59b6;">MISJE</div>
+                    <div class="nav-text-main" style="color: #9b59b6;" data-i18n="menuMissions">MISJE</div>
                     <div class="nav-arrow">▶</div>
                 </div>
                 
                 <div class="nav-item-modern hover-purple" onclick="openShopModal()">
                     <div class="nav-icon-box" style="border-color: #e67e22; color: #e67e22;">🛒</div>
-                    <div class="nav-text-main" style="color: #e67e22;">SKLEP</div>
+                    <div class="nav-text-main" style="color: #e67e22;" data-i18n="menuShop">SKLEP</div>
                     <div class="nav-arrow">▶</div>
                 </div>
 
@@ -631,8 +631,35 @@
     <!-- ============================================== -->
     <!-- ====== MENU MOBILNE (DOMYŚLNE) ====== -->
     <!-- ============================================== -->
-    <div id="mainMenuContainer" class="menu-container">
-        <div class="top-right-buttons">
+     <div id="mobileSplashScreen" class="mobile-splash-screen">
+        <div class="splash-badge" data-i18n="splashTag">BETA VER. 1.6.0</div>
+        
+        <h1 class="splash-title">
+            <span>SPEEDWAY</span>
+            <span>GUESSR</span>
+        </h1>
+        
+        <div class="splash-sub" data-i18n="splashBy">BY: CZIPSOL</div>
+        <p class="splash-desc" data-i18n="splashDesc">OFICJALNA GRA ŻUŻLOWA • WYBIERZ TRYB</p>
+        
+        <div class="splash-swipe-area" onclick="enterAppFromSplash()">
+            <div class="swipe-bars-anim">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="splash-swipe-text" data-i18n="splashSwipe">SWIPE / PRZEWIŃ ABY PRZEJŚĆ DALEJ</div>
+            <button class="splash-enter-btn" onclick="enterAppFromSplash(); event.stopPropagation();" data-i18n="splashEnter">
+                WEJDŹ DO GRY 🏁
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ====== MOBILNE / TABLETOWE MENU GŁÓWNE ======= -->
+    <!-- ============================================== -->
+    <div id="mainMenuContainer" class="mobile-main-wrapper">
+        <div class="top-nav-mobile-bar">
             <button onclick="openUpdates()" class="icon-btn position-relative" title="Aktualizacje">
                 📢<span id="updateBadgeGame" class="update-badge"></span>
             </button>
@@ -641,66 +668,99 @@
             <button onclick="openSettings()" class="icon-btn" title="Ustawienia">⚙️</button>
         </div>
 
-        <h1 class="game-title">Speedway Guessr</h1>
-        <p class="alpha-tag">BETA ver. 1.6.0</p>
-        <h2 class="menu-subtitle" data-i18n="subtitle">Edycja Żużlowa</h2>
-        
-        <!-- NOWA KARTA DAILY -->
-        <div class="daily-card">
-            <div class="daily-header">
-                <span class="daily-header-title">TWÓJ POSTĘP DAILY:</span>
-                <div id="lastGamesList" class="daily-tiles-container m-0"></div>
-            </div>
+        <div class="mobile-logo-box">
+            <h1 class="desktop-logo" style="margin-bottom: 5px;">
+                <i>SPEEDWAY</i><br>
+                <i>GUESSR</i>
+            </h1>
+            <span class="logo-sub">by: CZIPSOL</span>
+        </div>
 
-            <div class="daily-date-picker">
-                <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1)">◀</button>
-                <span id="dailyDayDisplay" class="daily-date-text">Daily 10.06.2026</span>
-                <div class="flex-row gap-5">
-                    <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1)">▶</button>
-                    <button class="icon-btn-small text-accent" onclick="openCalendar()" title="Kalendarz">📅</button>
+        <!-- KAFLOWY PANEL GŁÓWNY W STYLU DESKTOP -->
+        <nav class="desktop-nav-modern mobile-nav-grid">
+            <!-- DAILY GUESSR -->
+            <div class="nav-item-modern group w-100" onclick="toggleMobileDailyAccordion()">
+                <div class="nav-icon-box">📅</div>
+                <div class="nav-text-main">DAILY GUESSR</div>
+                <div class="nav-arrow">▼</div>
+            </div>
+            <div id="mobileDailySubmenu" class="mobile-sub-accordion">
+                <div class="daily-date-picker mb-10 mt-5">
+                    <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1); event.stopPropagation();">◀</button>
+                    <span id="dailyDayDisplay" class="daily-date-text">Daily 10.06.2026</span>
+                    <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1); event.stopPropagation();">▶</button>
+                </div>
+                <div class="flex-row gap-10">
+                    <button id="btnDailyMode" class="menu-btn btn-yellow flex-1" onclick="startDailyGame()">
+                        <span id="dailyBtnText">GRAJ DAILY</span>
+                    </button>
+                    <button class="menu-btn btn-flat" style="width: auto; padding: 12px 16px;" onclick="openCalendar()" title="Kalendarz">📅</button>
                 </div>
             </div>
 
-            <button id="btnDailyMode" class="menu-btn btn-yellow" onclick="startDailyGame()">
-                <span class="btn-icon">🏁</span>
-                <span id="dailyBtnText" class="btn-text">PRZEJRZYJ GRĘ</span>
-            </button>
-        </div>
+            <!-- ENDLESS GUESSR -->
+            <div class="nav-item-modern w-100" onclick="startEndlessGame()">
+                <div class="nav-icon-box" style="font-size: 26px; line-height: 1;">∞</div>
+                <div class="nav-text-main">ENDLESS GUESSR</div>
+                <div class="nav-arrow">▶</div>
+            </div>
 
-        <div class="menu-modes w-100 max-w-400">
-            <button class="menu-btn btn-yellow" onclick="startEndlessGame()">
-                <span class="btn-icon">🔄</span>
-                <span class="btn-text" data-i18n="btnEndless">Endless Guessr</span>
-            </button>
-            
-            <button class="menu-btn btn-clash mt-15" onclick="startClashGame()">
-                <span class="btn-icon text-shadow">⚔️</span>
-                <span class="btn-text text-shadow">SPEEDWAY CLASH</span>
-            </button>
+            <!-- SPEEDWAY CLASH -->
+            <div class="nav-item-modern hover-blue w-100" onclick="startClashGame()">
+                <div class="nav-icon-box">⚔️</div>
+                <div class="nav-text-main">SPEEDWAY CLASH</div>
+                <div class="nav-arrow">▶</div>
+            </div>
 
-            <button class="menu-btn btn-timeattack mt-15" id="btnTimeAttackMobile" onclick="openTimeAttackMenu()">
-                <span class="btn-icon text-shadow">⏱️</span>
-                <span class="btn-text text-shadow">TIME ATTACK</span>
-            </button>
-        </div>
-        <div class="menu-btn-half-group mt-15">
+            <!-- TIME ATTACK -->
+            <div class="nav-item-modern hover-green w-100" onclick="openTimeAttackMenu()">
+                <div class="nav-icon-box">⏱️</div>
+                <div class="nav-text-main" style="display:flex; align-items:baseline;">
+                    TIME ATTACK <span style="font-size: 11px; font-weight:700; color:#1dd1a1; margin-left:8px;" data-i18n="newBadge">(NOWOŚĆ)</span>
+                </div>
+                <div class="nav-arrow">▶</div>
+            </div>
+
+            <div class="menu-btn-half-group mt-10">
                 <button class="menu-btn-half btn-orange" onclick="openMissionsModal()">
-                    <span class="btn-icon text-shadow">📜</span>
-                    <span class="btn-text text-shadow">MISJE</span>
+                    <span class="btn-icon">📜</span>
+                    <span class="btn-text" data-i18n="menuMissions">MISJE</span>
                 </button>
                 <button class="menu-btn-half btn-purple" onclick="openShopModal()">
-                    <span class="btn-icon text-shadow">🛒</span>
-                    <span class="btn-text text-shadow">SKLEP</span>
+                    <span class="btn-icon">🛒</span>
+                    <span class="btn-text" data-i18n="menuShop">SKLEP</span>
                 </button>
             </div>
 
-        <div class="flex-row gap-10 mt-25 justify-center w-100 max-w-400 mx-auto">
+            <!-- PRZEŁĄCZNIKI SYSTEMOWE -->
+            <div class="nav-divider-modern"></div>
+
+            <div class="mobile-sys-row">
+                <div class="nav-item-modern secondary-style" onclick="openSettings()">
+                    <div class="nav-icon-box">⚙️</div>
+                    <div class="nav-text-secondary" data-i18n="dSettings">USTAWIENIA</div>
+                </div>
+                <div class="nav-item-modern secondary-style" onclick="openProfile()">
+                    <div class="nav-icon-box">👤</div>
+                    <div class="nav-text-secondary" data-i18n="dProfile">PROFIL</div>
+                </div>
+                <div class="nav-item-modern secondary-style" onclick="openUpdates()">
+                    <div class="nav-icon-box">📊</div>
+                    <div class="nav-text-secondary">NEWS</div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="flex-row gap-10 mt-20 justify-center w-100 max-w-400 mx-auto">
             <button onclick="openSuggestion()" class="utility-btn hint-hover">💡 Brak zawodnika?</button>
             <button onclick="openBugReport()" class="utility-btn bug-hover">🐛 Zgłoś Błąd</button>
         </div>
-        <a href="https://discord.gg/Ep9cBXgs99" target="_blank" class="menu-btn discord-btn" style="background-color: #5865F2; color: white;">
-            <span class="btn-icon">👾</span>
-            <span class="btn-text">DOŁĄCZ DO DISCORDA</span>
+
+        <a href="https://discord.gg/Ep9cBXgs99" target="_blank" class="menu-discord-btn mt-20 mb-10">
+            <svg viewBox="0 0 127.14 96.36" class="discord-svg">
+                <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.25,105.25,0,0,0,126.6,80.22h0C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53.01s5.02-12.69,11.43-12.69S54,46.12,53.88,53.01C53.88,60,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53.01s5.06-12.69,11.46-12.69S96.33,46.12,96.21,53.01C96.21,60,91.17,65.69,84.69,65.69Z"/>
+            </svg>
+            <span data-i18n="joinDiscord">DOŁĄCZ DO DISCORDA</span>
         </a>
     </div>
 
@@ -1623,19 +1683,140 @@
         <button onclick="window.location.reload()" class="btn-close" data-i18n="btnMenu">MENU GŁÓWNE</button>
     </div>
 
+
+    <!-- ============================================== -->
+    <!-- ====== POLITYKA PRYWATNOŚCI & REGULAMIN ====== -->
+    <!-- ============================================== -->
+    <div id="privacyPolicyOverlay" class="win-overlay" style="display: none; z-index: 10040;">
+        <div class="stats-modal policy-modal">
+            <div class="flex-between pb-10" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="display:flex; align-items:center; gap: 8px;">
+                    <span style="font-size: 22px;">🛡️</span>
+                    <h2 class="text-white m-0 font-black uppercase" style="font-size: 18px; color: var(--accent);">Polityka Prywatności (RODO / GDPR)</h2>
+                </div>
+                <button onclick="closePrivacyPolicy()" class="icon-btn-small" style="font-size: 16px;">✕</button>
+            </div>
+
+            <div class="policy-scroll-content">
+                <div class="policy-section">
+                    <h3>1. Administrator Danych Osobowych</h3>
+                    <p>Administratorem danych serwisu <b>Speedway Guessr</b> jest twórca gry (CZIPSOL). W sprawach związanych z ochroną danych osobowych oraz realizacją praw użytkowników można kontaktować się poprzez formularz kontaktowy lub adres: <b>kontakt@speedwayguessr.pl</b>.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>2. Podstawa Prawna i Zakres Przetwarzania (RODO / GDPR)</h3>
+                    <p>Dane użytkowników przetwarzane są zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 (RODO / GDPR):</p>
+                    <ul>
+                        <li><b>Art. 6 ust. 1 lit. a RODO (Zgoda):</b> Dobrowolne wprowadzenie pseudonimu (nicku), wybór ulubionego klubu lub opcjonalne logowanie przez konto Google (Firebase Authentication).</li>
+                        <li><b>Art. 6 ust. 1 lit. f RODO (Prawnie uzasadniony interes):</b> Zapewnienie stabilności działania platformy, obsługa tabeli wyników (leaderboard), przeciwdziałanie botom i oszustwom, diagnostyka błędów technicznych.</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>3. Pamięć Lokalna (LocalStorage) i Pliki Cookies</h3>
+                    <p>Gra wykorzystuje pamięć podręczną przeglądarki (<b>LocalStorage</b>) w celach ściśle technicznych i funkcjonalnych:</p>
+                    <ul>
+                        <li>Zapisywanie preferencji użytkownika (wybrany motyw jasny/ciemny, język gry, włączony/wyłączony dźwięk).</li>
+                        <li>Przechowywanie lokalnych postępów gry (odgadnięte zagadki Daily, stan serii zwycięstw, zebrane punkty EXP i monety).</li>
+                        <li>Serwis <b>nie stosuje komercyjnych plików śledzących</b> ani skryptów profilowania reklamowego osób trzecich.</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>4. Logowanie przez Google & Przechowywanie w Chmurze</h3>
+                    <p>Logowanie za pośrednictwem konta Google jest w pełni opcjonalne. Przetwarzamy wówczas wyłącznie publiczny identyfikator użytkownika oraz adres e-mail za pośrednictwem infrastruktury <b>Google Firebase</b> wyłącznie w celu synchronizacji Twoich rekordów i rangi w rankingu ogólnym i lidze Clash.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>5. Prawa Przysługujące Użytkownikowi (Prawa RODO)</h3>
+                    <p>Każdemu użytkownikowi z terenu Unii Europejskiej przysługują następujące prawa:</p>
+                    <ul>
+                        <li><b>Prawo dostępu do danych (art. 15 RODO):</b> Wgląd w zgromadzone statystyki i dane konta.</li>
+                        <li><b>Prawo do sprostowania (art. 16 RODO):</b> Możliwość edycji swojego pseudonimu w dowolnym momencie w zakładce Profil.</li>
+                        <li><b>Prawo do usunięcia danych („prawo do bycia zapomnianym”, art. 17 RODO):</b> Wyczyszczenie pamięci gry lub zgłoszenie żądania usunięcia wyników z bazy danych.</li>
+                        <li><b>Prawo do wniesienia skargi:</b> Prawo złożenia skargi do właściwego organu nadzorczego (w Polsce: Prezes Urzędu Ochrony Danych Osobowych - PUODO).</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>6. Okres Przechowywania Danych</h3>
+                    <p>Dane lokalne są przechowywane do momentu ich wyczyszczenia w ustawieniach przeglądarki przez użytkownika. Wyniki rankingowe przechowywane są przez czas funkcjonowania danego sezonu rankingowego.</p>
+                </div>
+            </div>
+
+            <button onclick="closePrivacyPolicy()" class="policy-accept-btn w-100">ZAMKNIJ I AKCEPTUJĘ</button>
+        </div>
+    </div>
+
+    <!-- REGULAMIN I WARUNKI KORZYSTANIA (ZGODNE Z DYREKTYWAMI UE I DSA) -->
+    <div id="termsOverlay" class="win-overlay" style="display: none; z-index: 10040;">
+        <div class="stats-modal policy-modal">
+            <div class="flex-between pb-10" style="border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div style="display:flex; align-items:center; gap: 8px;">
+                    <span style="font-size: 22px;">📜</span>
+                    <h2 class="text-white m-0 font-black uppercase" style="font-size: 18px; color: #3498db;">Regulamin Serwisu (DSA & Consumer Rights)</h2>
+                </div>
+                <button onclick="closeTerms()" class="icon-btn-small" style="font-size: 16px;">✕</button>
+            </div>
+
+            <div class="policy-scroll-content">
+                <div class="policy-section">
+                    <h3>1. Postanowienia Ogólne i Charakter Gry</h3>
+                    <p>Serwis <b>Speedway Guessr</b> jest darmową, niekomercyjną grą przeglądarkową o tematyce sportu żużlowego, stworzoną w celach rozrywkowych, edukacyjnych oraz popularyzacji wiedzy o dyscyplinie.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>2. Własność Intelektualna i Użycie Znaków Towarowych</h3>
+                    <p>Wszystkie nazwy zawodników, klubów żużlowych, logotypy, barwy oraz powiązane znaki towarowe należą do ich prawnych właścicieli. W serwisie zostały one wykorzystane w celach informacyjnych, encyklopedycznych i identyfikacyjnych w ramach dozwolonego użytku (Nominative Fair Use) zgodnie z prawem UE i prawem autorskim.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>3. Zasady Fair Play i Rankingów</h3>
+                    <p>W trosce o uczciwą rywalizację graczy:</p>
+                    <ul>
+                        <li>Zabrania się używania botów, automatycznych skryptów, rozszerzeń fałszujących wyniki lub prób manipulowania żądaniami do bazy danych.</li>
+                        <li>Zabrania się ustawiania pseudonimów o charakterze wulgarnym, obraźliwym, dyskryminującym lub naruszającym dobra osobiste innych osób.</li>
+                        <li>Administrator zastrzega sobie prawo do wyzerowania lub usunięcia podejrzanych wpisów z tabeli wyników.</li>
+                    </ul>
+                </div>
+
+                <div class="policy-section">
+                    <h3>4. Zgłoszenia Błędów i Treści (Mechanizm DSA)</h3>
+                    <p>Zgodnie z wymogami Aktu o Usługach Cyfrowych (Digital Services Act - DSA), użytkownicy mają do dyspozycji przejrzysty mechanizm zgłaszania niepoprawnych danych, literówek w biografiach żużlowców oraz uchybień technicznych za pomocą wbudowanego modułu „Kontakt (Zgłoś błąd)”. Zgłoszenia są rozpatrywane na bieżąco.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>5. Dostępność i Ograniczenie Odpowiedzialności</h3>
+                    <p>Gra jest dostarczana w formie „tak jak jest” (as is). Administrator dokłada starań w celu zapewnienia stabilności i ciągłości usługi, lecz nie ponosi odpowiedzialności za ewentualne przerwy techniczne, utratę lokalnie zapisanych serii wygranych w przypadku wyczyszczenia pamięci przeglądarki użytkownika ani za czynniki niezależne od platformy.</p>
+                </div>
+
+                <div class="policy-section">
+                    <h3>6. Zmiany Regulaminu i Prawo Właściwe</h3>
+                    <p>Wszelkie zmiany w regulaminie będą publikowane na niniejszej stronie. W sprawach nieuregulowanych zastosowanie mają przepisy prawa Rzeczypospolitej Polskiej oraz właściwe dyrektywy i rozporządzenia Unii Europejskiej.</p>
+                </div>
+            </div>
+
+            <button onclick="closeTerms()" class="policy-accept-btn w-100" style="background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; box-shadow: 0 4px 20px rgba(52, 152, 219, 0.35);">ZROZUMIAŁEM I AKCEPTUJĘ REGULAMIN</button>
+        </div>
+    </div>
 <!-- Stopka (Footer) -->
 <footer class="app-footer">
     <div class="footer-links">
-        <a href="#" onclick="showPrivacyPolicy(); return false;">Polityka Prywatności</a>
-        <span class="separator">•</span>
-        <a href="#" onclick="showTerms(); return false;">Regulamin</a>
-        <span class="separator">•</span>
-        <a href="#" onclick="openBugReport(); return false;">Kontakt (Zgłoś błąd)</a>
+        <button type="button" class="footer-btn-badge" onclick="showPrivacyPolicy()">
+            <span>🛡️</span> <span data-i18n="footerPrivacy">Polityka Prywatności</span>
+        </button>
+        <button type="button" class="footer-btn-badge" onclick="showTerms()">
+            <span>📜</span> <span data-i18n="footerTerms">Regulamin</span>
+        </button>
+        <button type="button" class="footer-btn-badge" onclick="openBugReport()">
+            <span>🚩</span> <span data-i18n="footerContact">Kontakt (Zgłoś błąd)</span>
+        </button>
     </div>
     <div class="footer-copy">
         &copy; 2026 Speedway Guessr by CZIPSOL. Wszelkie prawa zastrzeżone.<br>
         <a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--text-dim); text-decoration: none; font-size: 11px; margin-top: 5px; display: inline-block;">kontakt@speedwayguessr.pl</a>
     </div>
+</footer>
 
     
 </footer>
@@ -1645,8 +1826,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 
+    <script src="i18n.js?v1.0"></script>
     <script src="db.js?v2.3"></script>
     <script src="events.js?v2.3"></script>
+    <script src="changelog.js?v1.0"></script>
     <script src="script.js?v2.100"></script>
 
     

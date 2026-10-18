@@ -364,8 +364,7 @@ function saveClashCustomSettings() {
 // ==============================================
 // ====== LOSOWE TŁA (STADIONY) =================
 // ==============================================
-
-// Lista teł (podmień 'images/stadiony/' na taki folder, w jakim je masz)
+// ('images/stadiony/')
 const stadiumBackgrounds = [
     'url("images/stadiony/gorzow.png")',
     'url("images/stadiony/leszno.png")',
@@ -373,16 +372,28 @@ const stadiumBackgrounds = [
     'url("images/stadiony/wroclaw.png")',
     'url("images/stadiony/zg.png")',
     'url("images/stadiony/poznan.png")',
-    'url("images/stadiony/bydgoszcz.png")'
+    'url("images/stadiony/bydgoszcz.png")',
+    'url("images/stadiony/mureck.png")',
+    'url("images/stadiony/zarnovica.png")',
+    'url("images/stadiony/pockin.png")',
+    'url("images/stadiony/lublin.png")',
 ];
 
 function setRandomBackground() {
+    const activeTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('theme') || 'dark';
+    // W motywie jasnym nie forsujemy ciemnych stadionów z ciemnymi gradientami
+    if (activeTheme === 'light') {
+        document.body.style.removeProperty('background-image');
+        document.body.style.removeProperty('background-size');
+        document.body.style.removeProperty('background-position');
+        document.body.style.removeProperty('background-attachment');
+        document.body.style.removeProperty('background-repeat');
+        return;
+    }
+
     const randomIndex = Math.floor(Math.random() * stadiumBackgrounds.length);
     const bgUrl = stadiumBackgrounds[randomIndex];
-    
-    console.log("Ładowanie tła:", bgUrl); // To pokaże Ci w konsoli (F12), jaki plik próbuje wczytać!
 
-    // Ustawiamy właściwości bezpośrednio w stylu elementu body
     document.body.style.setProperty('background-image', `linear-gradient(rgba(10, 10, 12, 0.75), rgba(10, 10, 12, 0.95)), ${bgUrl}`, 'important');
     document.body.style.setProperty('background-size', 'cover', 'important');
     document.body.style.setProperty('background-position', 'center', 'important');
@@ -395,238 +406,7 @@ function setRandomBackground() {
 // ==============================================
 
 const CURRENT_GAME_VERSION = "Beta v1.3.2";
-
-const changelog = {
-    pl: [
-         {
-            version: "Beta v1.6.0", date: "24.08.2026",
-            changes: [
-                "🛒 <b>Sklep jest już otwarty!</b> Zdobywaj monety z misji i kupuj unikalne efekty Nicku, Tła dla swojego wiersza w rankingu, Emotki do Clasha, Efekty wygranej oraz Złote Kaski!",
-                "👤 <b>Przebudowa Profilu:</b> Całkowicie nowy, profesjonalny panel gracza podzielony na zakładki (Podsumowanie i Edycja) w eleganckim stylu.",
-                "📷 <b>Własne Awatary:</b> Zalogowani gracze mogą teraz wgrać własne zdjęcie profilowe! Awatar będzie widoczny na Twoim koncie oraz podczas pojedynków z innymi w trybie Clash.",
-                "👁️ <b>Profile Publiczne:</b> Od teraz po kliknięciu w dowolnego gracza w rankingu możesz podejrzeć jego profil, obejrzeć wybrany klub, poziom oraz awatar!"
-            ]
-        },
-        {
-            version: "Beta v1.5.0", date: "20.08.2026",
-            changes: [
-                "💬 <b>Emotki w Clashu:</b> Dodano możliwość wysyłania szybkich reakcji (emotek) podczas meczów ligowych i towarzyskich!",
-                "⚔️ <b>Historia pojedynków (H2H):</b> Na ekranie ładowania meczu (VS) pojawia się teraz bezpośredni bilans Twoich dotychczasowych starć z danym przeciwnikiem.",
-                "📜 <b>Misje, EXP i Monety:</b> Wprowadzono system zdobywania doświadczenia (poziomy konta) oraz waluty za wykonywanie codziennych wyzwań. Sklep jest obecnie w budowie 🚧.",
-                "🎲 <b>Modyfikatory Zasad:</b> Od teraz w ustawieniach meczu Towarzyskiego możesz włączyć szalone zasady urozmaicające grę: Fazę Veto, Kartę Joker, Kradzież Pól oraz Złoty Bieg!"
-            ]
-        },
-        {
-        version: "Beta v1.4.1", date: "19.08.2026",
-            changes: [
-                "🏍️ <b>Zakończenie testów Trybu Kariery:</b> Podjęliśmy decyzję o zamknięciu trybu Kariery (Speedway Legend). Na rynku istnieją inne, dedykowane menedżery żużlowe, a my postanowiliśmy skupić w 100% nasze siły na rozwoju unikalnego trybu multiplayer - <b>Speedway Clash</b>!",
-                "❤️ <b>Dziękujemy testerom:</b> Ogromne podziękowania dla każdego, kto wziął udział w fazie Open Beta, grał, zgłaszał błędy i dzielił się z nami cennymi pomysłami. Jesteście najlepsi!"
-            ]
-        },
-        {
-            version: "Beta v1.4.0", date: "12.08.2026",
-            changes: [
-                "🏍️ <b>Speedway Legend (Tryb Kariery) - OPEN BETA!</b> Wyczekiwany tryb kariery jest już oficjalnie otwarty dla wszystkich graczy! Stwórz swojego zawodnika, pnij się po ligowych szczeblach, bierz udział w losowych zdarzeniach, trenuj na minigrach i zostań legendą żużla.",
-                "🐛 <b>Faza Testów:</b> Ponieważ tryb kariery to ogromny projekt, wciąż znajduje się w fazie testów. Wszelkie błędy lub sugestie prosimy zgłaszać poprzez nasz Discord lub formularz 'Zgłoś błąd' w menu gry.",
-                "🛠️ <b>Poprawki:</b> Załatano krytyczne błędy powodujące zawieszanie gry w trakcie minigier treningowych (Refleks i Szybki Mechanik) oraz naprawiono logikę podliczania wyników w dwumeczach (Play-Offy)."
-            ]
-        },
-        {
-            version: "Beta v1.3.2", date: "02.08.2026",
-            changes: [
-                "⚙️ <b>Ustawienia pokoju w Clashu:</b> Dodano możliwość podglądu i konfiguracji ustawień pokoju dla meczu Towarzyskiego i Lokalnego. Host może dalej edytować wszystko, a dołączony gracz widzi ustawienia w trybie podglądu.",
-                "🧩 <b>Najważniejsze opcje:</b> Rozmiar planszy (3x3, 4x4, 5x5), czas na odpowiedź, liczba wymaganych narodowości w kolumnach oraz filtr klubów / lig."
-            ]
-        },
-        {
-            version: "Beta v1.3.1", date: "30.07.2026",
-            changes: [
-                "🛡️ <b>Wybierz swój klub:</b> Od teraz w Profilu możesz wybrać drużynę, której kibicujesz! Będzie ona widoczna obok Twojego nicku we wszystkich rankingach oraz podczas meczów na żywo w trybie Clash.",
-                "🏆 <b>Rozbudowa osiągnięć:</b> Pokaźna aktualizacja systemu osiągnięć! Dodano nowe wyzwania (m.in. za tryb Time Attack i Speedway Clash), a cała gablota zyskała nowy, profesjonalny wygląd (niczym na Steamie) z paskiem postępu i datami odblokowania."
-            ]
-        },
-        {
-            version: "Beta v1.3.0", date: "28.07.2026",
-            changes: [
-                "⏱️ <b>Nowy tryb gry - Time Attack!</b> Masz 120 sekund na odgadnięcie jak największej liczby żużlowców. Za każdą poprawną odpowiedź zyskujesz +15 sekund bonusu. Tryb posiada własny, globalny ranking najlepszych ekspertów!",
-                "🛡️ <b>Zabezpieczenia i Anti-Cheat:</b> Wprowadzono blokadę konsoli deweloperskiej (F12) oraz prawego przycisku myszy dla zwykłych graczy, aby zagwarantować uczciwą rywalizację w rankingach.",
-                "🐛 <b>Poprawki błędów:</b> Usprawniono 'inteligentne' generowanie flag narodowości w trybie Clash oraz załatano pomniejsze błędy interfejsu (UI) na mniejszych ekranach."
-            ]
-        },
-        {
-            version: "Beta v1.2.0", date: "23.07.2026",
-            changes: [
-                "👾 <b>Integracja Discord:</b> Otwieramy oficjalny serwer Discord! Dołącz do nas z poziomu menu gry, aby rozmawiać i szukać graczy do Clasha.",
-                "🏆 <b>Rangi na Discordzie:</b> Całkowita nowość! Połącz swoje konto w profilu gracza, a Twoja ranga z ligi Clash (Srebro, Diament itp.) będzie automatycznie aktualizować się na naszym serwerze Discord!",
-                "⚔️ <b>Zasady Clash (Brak Remisów):</b> Zmieniamy logikę gry. Jeśli plansza 3x3 się zapełni i nikt nie ułoży linii, nie ma już klasycznego remisu. Wygrywa gracz, który przejął więcej kratek (np. 5 do 4)!",
-                "👁️ <b>Podgląd Planszy:</b> Po emocjonującym meczu Clash możesz teraz kliknąć przycisk 'Podgląd Planszy', aby na spokojnie przeanalizować układ i strzały po obu stronach.",
-                "📱 <b>Udostępnianie Daily:</b> Znacznie ulepszono wygląd generowanego obrazka z wynikiem Daily. Na komputerach PC obrazek automatycznie kopiuje się do schowka (gotowy do wklejenia Ctrl+V)!"
-            ]
-        },
-        {
-            version: "Beta v1.0.0", date: "18.07.2026",
-            changes: [
-                "🚀 <b>Przechodzimy do fazy BETA!</b> Gra jest w pełni stabilna i gotowa na szersze testy przez graczy.",
-                "🛡️ <b>Anti-Cheat:</b> Uszczelniono system losowania graczy. Nie da się już 'podejrzeć' zawodnika w kodzie strony. 😎",
-                "⌨️ <b>Wygoda gry (QoL):</b> Dodano możliwość szybkiego zatwierdzania odpowiedzi klawiszem ENTER.",
-                "📱 <b>Mobile UI:</b> Ostatecznie załatano błąd, który powodował rozjeżdżanie się paska z historią klubów na ekranach telefonów. Dodano wyraźny poziomy scroll.",
-                "💾 <b>Autozapis:</b> Odtworzenie niedokończonej gry w trybie Daily przywraca teraz w pełni wygląd paska 'Drużyny'."
-            ]
-        },
-        {
-            version: "Alpha v1.2.0", date: "05.07.2026",
-            changes: [
-                "⏱️ <b>Klimat Clash:</b> Dodano efekt dźwiękowy bicia serca 🫀, gdy w trybie ligowym zostaje 10 sekund czasu na odpowiedź!",
-                "🔨 <b>System Banów:</b> Wprowadzono eskalujące kary czasowe (od 5 minut do nawet 7 dni!) za ucieczkę z meczu ligowego oraz wychodzenie z karty przeglądarki.",
-                "📱 <b>Mobile:</b> Ulepszono pasek przewijania historii klubów zawodnika na mniejszych ekranach telefonów."
-            ]
-        },
-        {
-            version: "Alpha v1.1.0", date: "20.06.2026",
-            changes: [
-                "💻 <b>Nowość:</b> Zupełnie nowe, profesjonalne menu główne dla graczy na komputerach (PC).",
-                "🏆 <b>Osiągnięcia:</b> Dodano w Profilu Gablotę Osiągnięć! Zdobądź m.in. 'Sokole Oko' czy rangę 'Legenda'.",
-                "🏟️ <b>Tło:</b> Dodano losowe zdjęcia polskich stadionów w tle gry.",
-                "💡 <b>Podpowiedzi:</b> Po 5 nieudanych próbach możesz odkryć długość imienia i nazwiska.",
-                "📱 <b>Mobile:</b> Naprawiono błędy z rozjeżdżającym się ekranem przy zawodnikach z długą historią klubów (tzw. 'Efekt Holty').",
-                "💾 <b>Zapis:</b> Dodano możliwość zapisu postępu w trybie Daily w trakcie gry oraz przycisk powrotu 🏠.",
-                "📢 <b>Changelog:</b> Zakładka z aktualizacjami (ta, którą właśnie czytasz!)."
-            ]
-        },
-        {
-            version: "Alpha v1.0.5", date: "18.06.2026",
-            changes: [
-                "⚔️ <b>Nowy Tryb: Speedway Clash!</b> Graj 1v1 ze znajomymi w systemie kółko i krzyżyk.",
-                "📈 <b>Rangi Ligowe:</b> Dodano system rang (od Brązu do Legendy) z punktacją ELO dla trybu Clash.",
-                "🐛 <b>Formularze:</b> Dodano możliwość zgłaszania błędów oraz brakujących zawodników bezpośrednio z menu.",
-                "🤝 <b>Gra Lokalna:</b> Możliwość grania w tryb Clash we dwójkę na jednym urządzeniu."
-            ]
-        },
-        {
-            version: "Alpha v1.0.0", date: "12.06.2026",
-            changes: [
-                "🏁 <b>Premiera wersji Alpha!</b> Uruchomienie trybów Daily Guessr i Endless Guessr.",
-                "📊 <b>System statystyk:</b> Integracja z Firebase (tworzenie profilu za pomocą konta Google).",
-                "🗓️ <b>Archiwum:</b> Możliwość rozgrywania archiwalnych gier z kalendarza w trybie Daily."
-            ]
-        }
-    ],
-    en: [
-        {
-            version: "Beta v1.6.0", date: "24.08.2026",
-            changes: [
-                "🛒 <b>The Shop is now open!</b> Earn coins from missions and purchase unique Nickname Effects, Leaderboard Backgrounds, Clash Emotes, Win Animations, and Golden Helmets!",
-                "👤 <b>Profile Overhaul:</b> A completely new, professional player panel split into tabs (Overview and Edit) with a sleek design.",
-                "📷 <b>Custom Avatars:</b> Logged-in players can now upload their own profile pictures! Your avatar will be displayed on your account and during 1v1 matches in Clash mode.",
-                "👁️ <b>Public Profiles:</b> You can now click on any player in the leaderboards to inspect their profile, including their favorite club, level, and avatar!"
-            ]
-        },
-        {
-            version: "Beta v1.5.0", date: "20.08.2026",
-            changes: [
-                "💬 <b>Clash Emotes:</b> Added the ability to send quick reactions (emotes) during league and friendly matches!",
-                "⚔️ <b>Head-to-Head (H2H):</b> The VS loading screen now displays your direct win/loss record against your current opponent.",
-                "📜 <b>Missions, EXP & Coins:</b> Introduced a progression system with account levels and currency earned by completing daily challenges. Shop is currently under construction 🚧.",
-                "🎲 <b>Rule Modifiers:</b> You can now enable crazy rules in Friendly match settings to spice up the game: Veto Phase, Joker Card, Cell Stealing, and Golden Heat!"
-            ]
-        },
-        {
-            version: "Beta v1.4.1", date: "19.08.2026",
-            changes: [
-                "🏍️ <b>End of Career Mode testing:</b> We have made the decision to close the Career mode (Speedway Legend). There are other dedicated speedway managers on the market, and we want to focus 100% of our efforts on developing our unique multiplayer mode - <b>Speedway Clash</b>!",
-                "❤️ <b>Thank you to all testers:</b> A massive thank you to everyone who participated in the Open Beta, played, reported bugs, and shared their valuable ideas with us. You are the best!"
-            ]
-        },
-       {
-            version: "Beta v1.4.0", date: "12.08.2026",
-            changes: [
-                "🏍️ <b>Speedway Legend (Career Mode) - OPEN BETA!</b> Our highly anticipated single-player career mode is now open to all players! Build your identity, climb the league ladders, manage relations, and become a speedway legend.",
-                "🐛 <b>Beta Phase:</b> Because this is a massive project, the career mode is still in beta testing. Please report any bugs or suggestions via our Discord or the 'Report Bug' form in the game menu.",
-                "🛠️ <b>Under the hood fixes:</b> Patched critical bugs causing the game to freeze during training minigames (Reflex and Quick Mechanic) and fixed aggregate score calculations in Play-Offs."
-            ]
-        },
-        {
-            version: "Beta v1.3.2", date: "02.08.2026",
-            changes: [
-                "⚙️ <b>Room settings in Clash:</b> Added room settings preview/configuration for Friendly and Local matches. The host can still edit everything, while the joined player can only view the settings.",
-                "🧩 <b>Key options:</b> Board size (3x3, 4x4, 5x5), answer time, required nationality columns, and club/league filters."
-            ]
-        },
-        {
-            version: "Beta v1.3.1", date: "30.07.2026",
-            changes: [
-                "🛡️ <b>Choose your club:</b> You can now select your favorite team in your Profile! It will be displayed next to your nickname in all leaderboards and during live Clash matches.",
-                "🏆 <b>Achievements expansion:</b> A massive update to the achievements system! Added new challenges (including Time Attack and Speedway Clash), and the entire showcase received a new, professional look (like on Steam) with a progress bar and unlock dates."
-            ]
-        },
-        {
-            version: "Beta v1.3.0", date: "28.07.2026",
-            changes: [
-                "⏱️ <b>New game mode - Time Attack!</b> You have 120 seconds to guess as many riders as possible. Each correct guess grants a +15 seconds bonus. This mode features its own global leaderboard!",
-                "🛡️ <b>Security & Anti-Cheat:</b> Added developer console (F12) and right-click locks for regular players to ensure fair play across all leaderboards.",
-                "🐛 <b>Bug fixes:</b> Improved the 'smart' generation of nationality flags in Clash mode and patched minor UI glitches on smaller screens."
-            ]
-        },
-        {
-            version: "Beta v1.2.0", date: "24.07.2026",
-            changes: [
-                "👾 <b>Discord Integration:</b> Our official Discord server is now open! Join us from the game menu to chat and find Clash opponents.",
-                "🏆 <b>Discord Roles:</b> Link your account in the player profile, and your Clash League rank (Silver, Diamond, etc.) will automatically sync with our Discord server!",
-                "⚔️ <b>Clash Rules (No Draws):</b> We changed the game logic. If the 3x3 board fills up with no line of 3, there's no more draw. The player with the most claimed cells wins (e.g. 5 to 4)!",
-                "👁️ <b>Board Preview:</b> After a thrilling Clash match, you can now click the 'Board Preview' button to analyze the final layout and guesses.",
-                "📱 <b>Daily Share:</b> Massively improved the generated Daily result image. On PCs, the image is automatically copied to your clipboard (ready for Ctrl+V)!"
-            ]
-        },
-        {
-            version: "Beta v1.0.0", date: "18.07.2026",
-            changes: [
-                "🚀 <b>Welcome to BETA!</b> The game is fully stable and ready for wider testing by players.",
-                "🛡️ <b>Anti-Cheat:</b> Secured the player drawing system. It is no longer possible to 'peek' at the rider in the site's code. 😎",
-                "⌨️ <b>QoL:</b> Added the ability to quickly submit answers using the ENTER key.",
-                "📱 <b>Mobile UI:</b> Fixed the bug causing the club history bar to stretch out of bounds on mobile screens. Added a visible horizontal scroll.",
-                "💾 <b>Auto-save:</b> Restoring an unfinished Daily game now fully repopulates the 'Teams' bar."
-            ]
-        },
-        {
-            version: "Alpha v1.2.0", date: "05.07.2026",
-            changes: [
-                "⏱️ <b>Clash Atmosphere:</b> Added a heartbeat sound effect 🫀 when there are 10 seconds left to answer in league mode!",
-                "🔨 <b>Ban System:</b> Introduced escalating time penalties (from 5 mins to 7 days!) for leaving a league match or switching browser tabs.",
-                "📱 <b>Mobile:</b> Improved the club history scrolling bar on smaller phone screens."
-            ]
-        },
-        {
-            version: "Alpha v1.1.0", date: "20.06.2026",
-            changes: [
-                "💻 <b>New:</b> Completely new, professional main menu for PC players.",
-                "🏆 <b>Achievements:</b> Added an Achievement Showcase in Profile! Earn titles like 'Eagle Eye' or 'Legend'.",
-                "🏟️ <b>Background:</b> Added random background pictures of Polish stadiums.",
-                "💡 <b>Hints:</b> After 5 failed attempts, you can reveal the length of the rider's name.",
-                "📱 <b>Mobile:</b> Fixed screen-stretching bugs for riders with a long club history.",
-                "💾 <b>Saves:</b> Added ability to save Daily progress mid-game and a 'Return Home' button 🏠.",
-                "📢 <b>Changelog:</b> Added an updates tab (the one you are reading right now!)."
-            ]
-        },
-        {
-            version: "Alpha v1.0.5", date: "18.06.2026",
-            changes: [
-                "⚔️ <b>New Mode: Speedway Clash!</b> Play 1v1 tic-tac-toe with friends.",
-                "📈 <b>League Ranks:</b> Added an ELO-based ranking system (from Bronze to Legend) for Clash.",
-                "🐛 <b>Forms:</b> You can now report bugs and missing riders directly from the menu.",
-                "🤝 <b>Local Play:</b> Play Clash locally with two players on one device."
-            ]
-        },
-        {
-            version: "Alpha v1.0.0", date: "12.06.2026",
-            changes: [
-                "🏁 <b>Alpha Premiere!</b> Daily Guessr and Endless Guessr modes are now live.",
-                "📊 <b>Statistics:</b> Firebase integration (create profile via Google Account).",
-                "🗓️ <b>Archive:</b> Play previous Daily games from the calendar."
-            ]
-        }
-    ]
-    // Możesz w przyszłości dodać sv: [...] i da: [...] dla Szwedów i Duńczyków
-};
+const changelog = window.changelog || { pl: [], en: [] };
 
 function checkUnseenUpdates() {
     const lastSeen = localStorage.getItem('speedwayLastSeenUpdate');
@@ -649,7 +429,7 @@ function renderUpdates() {
     listEl.innerHTML = '';
 
     // Sprawdzamy czy mamy tłumaczenie changelogu na obecny język, w innym wypadku bierzemy EN lub domyślnie PL
-    let currentChangelog = changelog[currentLang] || changelog['en'] || changelog['pl'];
+    let currentChangelog = (changelog[currentLang] || changelog['en'] || changelog['pl']) || [];
 
     currentChangelog.forEach((update, index) => {
         let isLatest = index === 0;
@@ -1434,296 +1214,37 @@ function getMiniClubBadge(clubName) {
 }
 
 
-// ==============================================
-// ====== SŁOWNIK I18N I TŁUMACZENIA ============
-// ==============================================
-
-// ==============================================
-// ====== SŁOWNIK I18N I TŁUMACZENIA ============
-// ==============================================
-
-const i18n = {
-    pl: {
-        account: "TWÓJ PROFIL", loginDesc: "Zaloguj się przez Google, aby zsynchronizować postęp!", btnLoginGoogle: "ZALOGUJ PRZEZ GOOGLE", orGuest: "LUB PODAJ NICK GOŚCIA", guestPlaceholder: "Wpisz nick (max 12 znaków)", btnSavePlay: "ZAPISZ I GRAJ", btnLogout: "WYLOGUJ SIĘ",
-        settingsTitle: "USTAWIENIA", sound: "Dźwięk:", soundOn: "Włączony 🔊", soundOff: "Wyłączony 🔇",
-        subtitle: "Edycja Żużlowa", lastGames: "Ostatnie gry:", btnDaily: "Graj Daily", btnReview: "Przejrzyj grę", btnEndless: "Endless Guessr", searchPlaceholder: "Wpisz imię/nazwisko zawodnika...", btnGuess: "ZGADNIJ",
-        teams: "Drużyny:", colName: "Zawodnik", colCountry: "Kraj", colYear: "Rok ur.", colGP: "Jeździ/ił w GP?", colDMP: "Medale DMP", colStatus: "Status", colClubs: "Historia Klubów",
-        stats: "STATYSTYKI", statPlayed: "Rozegrane", statWon: "Wygrane", statStreak: "Obecna Seria", statMax: "Najlepsza Seria", btnClose: "ZAMKNIJ", archive: "ARCHIWUM DAILY",
-        winTitle: "BRAWO!", winSub: "Odgadłeś zawodnika!", loseTitle: "KONIEC PRÓB", loseSub: "Niestety, nie udało Ci się odgadnąć.", btnShare: "UDOSTĘPNIJ 📋", btnPlayEndless: "GRAJ W TRYB ENDLESS", btnPlayAgain: "ZAGRAJ PONOWNIE", btnMenu: "MENU GŁÓWNE", 
-        theme: "Motyw:", themeLight: "Jasny", themeDark: "Ciemny", themeSystem: "System", lang: "Język:", modeDaily: "Tryb: Daily", modeEndless: "Tryb: Endless",
-        tabDaily: "DZIENNY", tabWeekly: "TYDZIEŃ", tabMonthly: "MIESIĄC", tabAllTime: "OGÓLNY", rankWonToday: "Wygrane", rankTotalWins: "Suma Wygranych", rankGuesses: "Próby",
-        months: ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"], weekdays: ["Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd"],
-        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Mecz Towarzyski", clashFriendlyDesc: "(Graj ze znajomym)", clashLobbyTitle: "🤝 Mecz Towarzyski", clashHost: "UTWÓRZ POKÓJ (HOST)", clashJoinCode: "KOD POKOJU...", clashJoinBtn: "DOŁĄCZ", clashYourCode: "Twój kod pokoju:", clashWaiting: "Oczekiwanie na przeciwnika...", clashReady: "JESTEM GOTÓW", clashTime: "Czas na odpowiedź:", clashSurrender: "PODDAJ SIĘ / WYJDŹ", clashClaim: "PRZEJMIJ POLE", clashConfirm: "POTWIERDŹ", clashCancel: "ANULUJ", clashSeries: "WYNIK SERII", clashRematch: "ZAGRAJ REWANŻ", clashQuit: "ZAKOŃCZ I WYJDŹ", clashRulesTitle: "Zasady gry: Speedway Clash ⚔️", clashRules1: "Gra toczy się na planszy 3x3 na zasadach 'Kółko i Krzyżyk'.", clashRules2: "Aby przejąć pole, kliknij w nie i podaj zawodnika, który reprezentował oba krzyżujące się kluby.", clashRules3: "Pamiętaj, że liczy się cała polska historia zawodnika (bez zagranicznych lig).", clashRules4: "Masz 2 minuty na odpowiedź! Jeśli czas minie lub podasz złą odpowiedź, tracisz turę.", clashRules5: "Wygrywa gracz, który jako pierwszy połączy 3 swoje pola w linii!", clashUnderstood: "ZROZUMIANO, WCHODZĘ DO GRY!", clashGuessPlaceholder: "Imię i nazwisko zawodnika...", clashWaitBtn: "OCZEKIWANIE...", clashWaitP2: "CZEKANIE NA DRUGIEGO GRACZA...",
-        dailyProgress: "TWÓJ POSTĘP DAILY:", missingRider: "💡 Brak zawodnika?", reportBug: "🚩 Zgłoś błąd", joinDiscord: "DOŁĄCZ DO DISCORDA",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "WYNIK:", whoAreWeLookingFor: "KOGO SZUKAMY?", taEmptyList: "Rozwiązani zawodnicy pojawią się tutaj.",
-        expertMode: "TRYB EKSPERCKI", games: "Gier", record: "Rekord", average: "Średnia", startGame: "ROZPOCZNIJ GRĘ ►", howToPlay: "JAK GRAĆ?", backToMenu: "🔙 POWRÓT DO MENU GŁÓWNEGO",
-        taRulesTitle: "Zasady gry: Time Attack ⏱️", taRulesDesc: "Podejmij wyzwanie i sprawdź, ilu żużlowców odgadniesz pod presją czasu!", taRule1Title: "Zegar Tyka", taRule1Desc: "Rozpoczynasz grę mając dokładnie 120 sekund. Zegar odlicza w dół bez przerwy.", taRule2Title: "Brak podpowiedzi", taRule2Desc: "W tym trybie nie zgadujesz metodą prób i błędów. Od razu widzisz kraj, rocznik, medale i całą karierę klubową.", taRule3Title: "Bonusy Czasowe", taRule3Desc: "Każdy poprawnie odgadnięty zawodnik dodaje +15 sekund do Twojego licznika. Gra kończy się, gdy czas spadnie do zera.", understoodBack: "ZROZUMIANO, WRACAM DO MENU!",
-        localGameTitle: "🖥️ Gra Lokalna", localGameDesc: "Wpiszcie swoje nicki, aby zagrać na jednym ekranie.", p1Red: "Gracz 1 (Czerwony)", p2Blue: "Gracz 2 (Niebieski)", startMatch: "ROZPOCZNIJ MECZ",
-        boardPreview: "PODGLĄD PLANSZY 👁️", searching: "Wyszukiwanie...", waitingForOpponentElo: "Czekamy na przeciwnika z podobnym ELO", cancel: "PRZERWIJ",
-        sugTitle: "ZGŁOŚ ZAWODNIKA", sugDesc: "Zauważyłeś brak żużlowca podczas gry? Podaj jego dane, a po weryfikacji dodam go do oficjalnej bazy! 🤝", sugName: "Imię i Nazwisko *", sugCountry: "Kraj pochodzenia", sugNotes: "Kluby / Uwagi (opcjonalnie)", send: "WYŚLIJ",
-        bugTitle: "ZGŁOŚ BŁĄD 🐛", bugDesc: "Coś poszło nie tak? Gra się zacięła? Opisz problem!", bugDescInput: "Opis problemu *", sendBug: "WYŚLIJ BŁĄD",
-        footerPrivacy: "Polityka Prywatności", footerTerms: "Regulamin", footerContact: "Kontakt", footerRights: "Wszelkie prawa zastrzeżone.",
-        linkedAccounts: "POWIĄZANE KONTA", linkDiscord: "POŁĄCZ Z DISCORDEM", yourNick: "TWÓJ OBECNY NICK:", change: "ZMIEŃ", yourClub: "TWÓJ ULUBIONY KLUB:", chooseClub: "WYBIERZ KLUB 🛡️", myAchievements: "MOJE OSIĄGNIĘCIA", playerAchievements: "OSIĄGNIĘCIA GRACZA", backToProfile: "WRÓĆ DO PROFILU",
-        removeSelection: "USUŃ WYBÓR", chooseYourClub: "WYBIERZ SWÓJ KLUB", chooseClubDesc: "Wybierz drużynę, której kibicujesz. Jej skrót będzie widoczny przy Twoim nicku w rankingach i podczas meczów w trybie Clash!",
-        updatesTitle: "NOWOŚCI W GRZE 📢", updatesDesc: "Sprawdź, co ostatnio zmieniliśmy!", understoodBtn: "ZROZUMIANO",
-        maintTitle: "PRZERWA TECHNICZNA", maintDesc: "Trwają prace konserwacyjne serwera.<br>Gra jest w tym momencie wyłączona.",
-        dToday: "DZISIEJSZA GRA ►", dArchive: "ARCHIWUM DAILY", dLeague: "MECZ LIGOWY ►", dFriendly: "MECZ TOWARZYSKI", dLocal: "GRA LOKALNA (1 PC)", dSettings: "USTAWIENIA", dProfile: "PROFIL",
-        clashRule1Title: "Cel Gry", clashRule2Title: "Przejmowanie Pól", clashRule3Title: "Zasady i Czas", clashRule4Title: "Dodatkowy Wymóg (Hardcore)", clashRule4Desc: "Czasami pod herbem klubu pojawi się flaga kraju. Zawodnik musi dodatkowo pochodzić z tego państwa!", leagueHistory: "Historia Ligowa",
-        loadingData: "Ładowanie danych...", noResults: "Brak wyników. Zagraj pierwszy!", selectModeMenu: "Wybierz tryb z menu po lewej...", taP1Name: "Gracz 1", taP2Name: "Gracz 2", defaultPlayer: "Gracz",
-        toastHintUsed: "Użyto podpowiedzi!", toastPlayerGuessed: "Ten zawodnik jest już na liście trafionych.", toastTimeEnd: "Koniec czasu! Zdobyto: {count} pkt. Wrócisz do menu za 5s...",
-        toastWaitTurn: "Czekaj na swoją kolej!", toastCellTaken: "To pole jest już zajęte!", toastPlayerNotExist: "Zawodnik nie istnieje lub został podany!", toastWrongCountry: "BŁĄD! Ta kolumna wymaga zawodnika z kraju:", toastMissedClubs: "Pudło! {name} nie jeździł w obu tych klubach.", toastTurn: "TWÓJ RUCH!", toastSavedClub: "Zapisano! Reprezentujesz:", toastRemovedClub: "Usunięto przynależność klubową", toastAchievement: "🏆 Osiągnięcie:", toastPPM: "⛔ Prawy przycisk myszy zablokowany!", toastConsole: "⛔ Dostęp do konsoli zablokowany!", toastTabSwitch: "⚠️ Wykryto zmianę karty! Tracisz turę.",
-        alertSurrenderConfirm: "Czy na pewno chcesz się poddać i odkryć zawodnika?", alertSurrenderTitle: "Poddajesz się?", alertSurrenderBtn: "TAK, PODDAJĘ SIĘ",
-        alertReturnConfirm: "Czy na pewno chcesz wrócić do menu? Zapiszemy Twój postęp w Daily, ale w trybie Endless stracisz tę grę.", alertReturnTitle: "Powrót do menu", alertReturnBtn: "WRÓĆ DO MENU",
-        alertNickLength: "Nick musi mieć minimum 3 znaki!", alertNickRules: "Ten nick narusza zasady. Wybierz inny.", alertNickTaken: "Ten nick jest już zajęty! Wymyśl inny.", alertNickSame: "To jest Twój obecny nick!",
-        alertClashLeave: "Wyjście zamknie aktualny pokój dla obu graczy.\nCzy na pewno chcesz wyjść?", alertClashLeaveTitle: "Opuścić mecz?", alertClashLeaveBtn: "WYJDŹ",
-        alertClashSurrender: "Poddasz mecz ligowy walkowerem.\nTy otrzymasz porażkę i ujemne ELO, a przeciwnik dostanie wygraną oraz nagrodę ELO.\nCzy na pewno chcesz poddać mecz?", alertClashSurrenderBtn: "PODDAJ MECZ",
-        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (TYDZIEŃ)", desktopRankMonthly: "LEADERBOARD (MIESIĄC)", desktopRankAllTime: "LEADERBOARD (OGÓLNY)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
-        colPos: "Poz.", colNick: "Nick", colRank: "Ranga", colElo: "ELO", colRecord: "Rekord", colSolved: "Rozwiązane", colTotalWins: "Suma Wygranych", colTries: "Próby", yes: "TAK", no: "NIE",
-        privacyTitle: "POLITYKA PRYWATNOŚCI", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Aplikacja zapisuje minimalne dane (Nick z Google, ID, statystyki) wymagane do obsługi trybu multiplayer i tabel rankingowych. Nie wysyłamy spamu. Ciasteczka lokalne przechowują Twój motyw i język.</div>",
-        termsTitle: "REGULAMIN", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Gra to darmowy, nieoficjalny projekt fanowski. Nazwy klubów są używane na prawach cytatu. Oszukiwanie, wulgaryzmy w nazwach graczy lub wychodzenie z meczów Clash może skutkować banem.</div>",
-        ach_title_first_try: "Sokole Oko", ach_desc_first_try: "Zgadnij zawodnika w 1. próbie.", ach_title_close_call: "O włos", ach_desc_close_call: "Zgadnij zawodnika w ostatniej, 10. próbie.", ach_title_no_hint_1: "Bystrzak", ach_desc_no_hint_1: "Wygraj grę bez użycia podpowiedzi.", ach_title_no_hint_5: "Chodząca Encyklopedia", ach_desc_no_hint_5: "Wygraj 5 gier z rzędu bez podpowiedzi.", ach_title_play_10: "Rozgrzewka", ach_desc_play_10: "Rozegraj łącznie 10 gier.", ach_title_play_50: "Maniak", ach_desc_play_50: "Rozegraj łącznie 50 gier.", ach_title_streak_3: "Gorąca Seria I", ach_desc_streak_3: "Osiągnij Win Streak równy 3.", ach_title_streak_7: "Gorąca Seria II", ach_desc_streak_7: "Osiągnij Win Streak równy 7.", ach_title_streak_15: "Gorąca Seria III", ach_desc_streak_15: "Osiągnij Win Streak równy 15.", ach_title_clash_1: "Pierwsza Krew", ach_desc_clash_1: "Wygraj swój pierwszy mecz w Speedway Clash.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Wygraj 10 meczów w Clashu.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Wygraj 50 meczów w Clashu.", ach_title_clash_flawless: "Bezbłędny Clash!", ach_desc_clash_flawless: "Wygraj mecz ligowy, nie oddając przeciwnikowi ani jednego pola.", ach_title_rank_silver: "Srebrny Lis", ach_desc_rank_silver: "Awansuj do rangi Srebro w lidze Clash.", ach_title_rank_gold: "Złoty Chłopak", ach_desc_rank_gold: "Awansuj do rangi Złoto w lidze Clash.", ach_title_rank_diamond: "Żużlowa Elita", ach_desc_rank_diamond: "Awansuj do rangi Diament w lidze Clash.", ach_title_clash_legend: "Żywa Legenda", ach_desc_clash_legend: "Osiągnij najwyższą rangę: Legenda.", ach_title_ta_10: "Time Attack Ekspert I", ach_desc_ta_10: "Odgadnij 10 zawodników w jednej grze Time Attack.", ach_title_ta_20: "Time Attack Ekspert II", ach_desc_ta_20: "Odgadnij 20 zawodników w jednej grze Time Attack.", ach_title_ta_30: "Time Attack Ekspert III", ach_desc_ta_30: "Odgadnij 30 zawodników w jednej grze Time Attack.", ach_title_ta_50: "Time Attack Ekspert IV", ach_desc_ta_50: "Odgadnij 50 zawodników w jednej grze Time Attack.", ach_title_ta_100: "Time Attack God", ach_desc_ta_100: "Odgadnij 100 zawodników w jednej grze Time Attack.", ach_title_easter_club: "Klubowe Barwy", ach_desc_easter_club: "Wybierz swój ulubiony klub w profilu gracza.", ach_title_easter_lang: "Poliglota", ach_desc_easter_lang: "Zmień język gry w Ustawieniach.", ach_title_easter_theme: "Dwa Oblicza", ach_desc_easter_theme: "Zmień motyw gry (Jasny/Ciemny)."
-    },
-    en: {
-        account: "YOUR PROFILE", loginDesc: "Log in with Google to sync progress and enter the leaderboard!", btnLoginGoogle: "LOGIN WITH GOOGLE", orGuest: "OR ENTER GUEST NICK", guestPlaceholder: "Enter nick (max 12 chars)", btnSavePlay: "SAVE & PLAY", btnLogout: "LOGOUT",
-        settingsTitle: "SETTINGS", sound: "Sound:", soundOn: "On 🔊", soundOff: "Off 🔇",
-        subtitle: "Speedway Edition", lastGames: "Recent Daily games:", btnDaily: "Play Daily", btnReview: "Review game", btnEndless: "Endless Guessr", searchPlaceholder: "Enter rider's name...", btnGuess: "GUESS",
-        teams: "Teams:", colName: "Rider", colCountry: "Country", colYear: "Born", colGP: "SGP?", colDMP: "Team Medals", colStatus: "Status", colClubs: "Clubs History",
-        stats: "STATISTICS", statPlayed: "Played", statWon: "Won", statStreak: "Current Streak", statMax: "Max Streak", btnClose: "CLOSE", archive: "DAILY ARCHIVE",
-        winTitle: "BRAVO!", winSub: "You guessed the rider!", loseTitle: "OUT OF TRIES", loseSub: "Unfortunately, you didn't guess the rider.", btnShare: "SHARE 📋", btnPlayEndless: "PLAY ENDLESS", btnPlayAgain: "PLAY AGAIN", btnMenu: "MAIN MENU", 
-        theme: "Theme:", themeLight: "Light", themeDark: "Dark", themeSystem: "Auto", lang: "Language:", modeDaily: "Mode: Daily", modeEndless: "Mode: Endless",
-        tabDaily: "DAILY", tabWeekly: "WEEK", tabMonthly: "MONTH", tabAllTime: "OVERALL", rankWonToday: "Wins", rankTotalWins: "Total Wins", rankGuesses: "Guesses",
-        months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Friendly Match", clashFriendlyDesc: "(Play with a friend)", clashLobbyTitle: "🤝 Friendly Match", clashHost: "CREATE ROOM (HOST)", clashJoinCode: "ROOM CODE...", clashJoinBtn: "JOIN", clashYourCode: "Your room code:", clashWaiting: "Waiting for opponent...", clashReady: "I'M READY", clashTime: "Time to answer:", clashSurrender: "SURRENDER / LEAVE", clashClaim: "CLAIM CELL", clashConfirm: "CONFIRM", clashCancel: "CANCEL", clashSeries: "SERIES SCORE", clashRematch: "PLAY REMATCH", clashQuit: "QUIT AND LEAVE", clashRulesTitle: "Rules: Speedway Clash ⚔️", clashRules1: "The game is played on a 3x3 grid like Tic-Tac-Toe.", clashRules2: "To claim a cell, click it and guess a rider who represented both intersecting clubs.", clashRules3: "Remember, only the Polish league history counts.", clashRules4: "You have 2 minutes to answer! Wrong guess or timeout means you lose your turn.", clashRules5: "Connect 3 cells in a line to win!", clashUnderstood: "UNDERSTOOD!", clashGuessPlaceholder: "Rider's name and surname...", clashWaitBtn: "WAITING...", clashWaitP2: "WAITING FOR OPPONENT...",
-        dailyProgress: "YOUR DAILY PROGRESS:", missingRider: "💡 Missing rider?", reportBug: "🚩 Report Bug", joinDiscord: "JOIN DISCORD",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "SCORE:", whoAreWeLookingFor: "WHO ARE WE LOOKING FOR?", taEmptyList: "Guessed riders will appear here.",
-        expertMode: "EXPERT MODE", games: "Games", record: "Record", average: "Average", startGame: "START GAME ►", howToPlay: "HOW TO PLAY?", backToMenu: "🔙 BACK TO MAIN MENU",
-        taRulesTitle: "Rules: Time Attack ⏱️", taRulesDesc: "Take the challenge and see how many riders you can guess under time pressure!", taRule1Title: "Clock is Ticking", taRule1Desc: "You start the game with exactly 120 seconds. The clock counts down continuously.", taRule2Title: "No hints", taRule2Desc: "You instantly see the country, year of birth, medals, and club history. You must recognize the rider immediately.", taRule3Title: "Time Bonuses", taRule3Desc: "Every correctly guessed rider adds +15 seconds to your timer. The game ends when the time runs out.", understoodBack: "UNDERSTOOD, BACK TO MENU!",
-        localGameTitle: "🖥️ Local Game", localGameDesc: "Enter your nicknames to play on a single screen.", p1Red: "Player 1 (Red)", p2Blue: "Player 2 (Blue)", startMatch: "START MATCH",
-        boardPreview: "BOARD PREVIEW 👁️", searching: "Searching...", waitingForOpponentElo: "Waiting for an opponent with similar ELO", cancel: "CANCEL",
-        sugTitle: "REPORT A RIDER", sugDesc: "Noticed a missing rider? Provide their details and we'll add them to the database! 🤝", sugName: "Full Name *", sugCountry: "Country", sugNotes: "Clubs / Notes (optional)", send: "SEND",
-        bugTitle: "REPORT A BUG 🐛", bugDesc: "Something went wrong? Describe the problem!", bugDescInput: "Problem description *", sendBug: "SEND BUG",
-        footerPrivacy: "Privacy Policy", footerTerms: "Terms of Service", footerContact: "Contact", footerRights: "All rights reserved.",
-        linkedAccounts: "LINKED ACCOUNTS", linkDiscord: "LINK DISCORD", yourNick: "YOUR CURRENT NICK:", change: "CHANGE", yourClub: "YOUR FAVORITE CLUB:", chooseClub: "CHOOSE CLUB 🛡️", myAchievements: "MY ACHIEVEMENTS", playerAchievements: "PLAYER ACHIEVEMENTS", backToProfile: "BACK TO PROFILE",
-        removeSelection: "REMOVE SELECTION", chooseYourClub: "CHOOSE YOUR CLUB", chooseClubDesc: "Select the team you support. Its badge will be visible next to your nick in leaderboards and Clash matches!",
-        updatesTitle: "GAME UPDATES 📢", updatesDesc: "Check out our latest changes!", understoodBtn: "UNDERSTOOD",
-        maintTitle: "MAINTENANCE BREAK", maintDesc: "Server maintenance in progress.<br>The game is temporarily disabled.",
-        dToday: "TODAY'S GAME ►", dArchive: "DAILY ARCHIVE", dLeague: "LEAGUE MATCH ►", dFriendly: "FRIENDLY MATCH", dLocal: "LOCAL PLAY (1 PC)", dSettings: "SETTINGS", dProfile: "PROFILE",
-        clashRule1Title: "Game Goal", clashRule2Title: "Claiming Cells", clashRule3Title: "Rules and Time", clashRule4Title: "Extra Requirement", clashRule4Desc: "Sometimes a country flag will appear under the club badge. The rider must also be from that country!", leagueHistory: "League History",
-        loadingData: "Loading data...", noResults: "No results. Be the first to play!", selectModeMenu: "Select a game mode from the menu...", taP1Name: "Player 1", taP2Name: "Player 2", defaultPlayer: "Player",
-        toastHintUsed: "Hint used!", toastPlayerGuessed: "This rider is already guessed.", toastTimeEnd: "Time's up! Score: {count} pts. Returning to menu in 5s...",
-        toastWaitTurn: "Wait for your turn!", toastCellTaken: "This cell is already taken!", toastPlayerNotExist: "Rider does not exist or was already picked!", toastWrongCountry: "ERROR! This column requires a rider from:", toastMissedClubs: "Miss! {name} hasn't ridden for both these clubs.", toastTurn: "YOUR TURN!", toastSavedClub: "Saved! You represent:", toastRemovedClub: "Club affiliation removed", toastAchievement: "🏆 Achievement:", toastPPM: "⛔ Right click disabled!", toastConsole: "⛔ Console access disabled!", toastTabSwitch: "⚠️ Tab switch detected! You lose your turn.",
-        alertSurrenderConfirm: "Are you sure you want to give up and reveal the rider?", alertSurrenderTitle: "Giving up?", alertSurrenderBtn: "YES, I GIVE UP",
-        alertReturnConfirm: "Are you sure you want to return to menu? Daily progress will be saved, but Endless progress will be lost.", alertReturnTitle: "Return to menu", alertReturnBtn: "RETURN TO MENU",
-        alertNickLength: "Nick must have at least 3 characters!", alertNickRules: "This nick violates the rules. Choose another.", alertNickTaken: "This nick is already taken! Choose another.", alertNickSame: "This is your current nick!",
-        alertClashLeave: "Leaving will close the room for both players.\nAre you sure you want to leave?", alertClashLeaveTitle: "Leave match?", alertClashLeaveBtn: "LEAVE",
-        alertClashSurrender: "You will forfeit the match.\nYou'll receive a loss and negative ELO.\nAre you sure you want to surrender?", alertClashSurrenderBtn: "SURRENDER",
-        desktopRankDaily: "LEADERBOARD (DAILY)", desktopRankWeekly: "LEADERBOARD (WEEK)", desktopRankMonthly: "LEADERBOARD (MONTH)", desktopRankAllTime: "LEADERBOARD (ALL-TIME)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
-        colPos: "Pos.", colNick: "Nick", colRank: "Rank", colElo: "ELO", colRecord: "Record", colSolved: "Solved", colTotalWins: "Total Wins", colTries: "Guesses", yes: "YES", no: "NO",
-        privacyTitle: "PRIVACY POLICY", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>We store minimal data (Google Nick, ID, stats) to provide multiplayer features and leaderboards. We don't send spam. Local cookies store your theme and language.</div>",
-        termsTitle: "TERMS OF SERVICE", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>The game is a free, unofficial fan project. Cheating, using vulgar nicknames, or leaving Clash matches on purpose will result in a ban.</div>",
-        ach_title_first_try: "Eagle Eye", ach_desc_first_try: "Guess the rider on the 1st try.", ach_title_close_call: "Close Call", ach_desc_close_call: "Guess the rider on the last, 10th try.", ach_title_no_hint_1: "Smarty Pants", ach_desc_no_hint_1: "Win a game without using a hint.", ach_title_no_hint_5: "Walking Encyclopedia", ach_desc_no_hint_5: "Win 5 games in a row without hints.", ach_title_play_10: "Warm-up", ach_desc_play_10: "Play 10 games in total.", ach_title_play_50: "Maniac", ach_desc_play_50: "Play 50 games in total.", ach_title_streak_3: "Hot Streak I", ach_desc_streak_3: "Achieve a Win Streak of 3.", ach_title_streak_7: "Hot Streak II", ach_desc_streak_7: "Achieve a Win Streak of 7.", ach_title_streak_15: "Hot Streak III", ach_desc_streak_15: "Achieve a Win Streak of 15.", ach_title_clash_1: "First Blood", ach_desc_clash_1: "Win your first Speedway Clash match.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Win 10 matches in Clash.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Win 50 matches in Clash.", ach_title_clash_flawless: "Flawless Clash!", ach_desc_clash_flawless: "Win a league match without giving your opponent a single cell.", ach_title_rank_silver: "Silver Fox", ach_desc_rank_silver: "Reach the Silver rank in Clash league.", ach_title_rank_gold: "Golden Boy", ach_desc_rank_gold: "Reach the Gold rank in Clash league.", ach_title_rank_diamond: "Speedway Elite", ach_desc_rank_diamond: "Reach the Diamond rank in Clash league.", ach_title_clash_legend: "Living Legend", ach_desc_clash_legend: "Reach the highest rank: Legend.", ach_title_ta_10: "Time Attack Expert I", ach_desc_ta_10: "Guess 10 riders in a single Time Attack game.", ach_title_ta_20: "Time Attack Expert II", ach_desc_ta_20: "Guess 20 riders in a single Time Attack game.", ach_title_ta_30: "Time Attack Expert III", ach_desc_ta_30: "Guess 30 riders in a single Time Attack game.", ach_title_ta_50: "Time Attack Expert IV", ach_desc_ta_50: "Guess 50 riders in a single Time Attack game.", ach_title_ta_100: "Time Attack God", ach_desc_ta_100: "Guess 100 riders in a single Time Attack game.", ach_title_easter_club: "Club Colors", ach_desc_easter_club: "Select your favorite club in your player profile.", ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Change the game language in Settings.", ach_title_easter_theme: "Two Faces", ach_desc_easter_theme: "Change the game theme (Light/Dark)."
-    },
-    sv: {
-        account: "DIN PROFIL", loginDesc: "Logga in med Google för att delta i rankningen!", btnLoginGoogle: "LOGGA IN MED GOOGLE", orGuest: "ELLER ANGE GÄSTNICK", guestPlaceholder: "Ange nick (max 12 teck)", btnSavePlay: "SPARA & SPELA", btnLogout: "LOGGA UT",
-        settingsTitle: "INSTÄLLNINGAR", sound: "Ljud:", soundOn: "På 🔊", soundOff: "Av 🔇",
-        subtitle: "Speedway Edition", lastGames: "Senaste Daily:", btnDaily: "Spela Daily", btnReview: "Granska spel", btnEndless: "Endless Guessr", searchPlaceholder: "Ange förarens namn...", btnGuess: "GISSA",
-        teams: "Klubbar:", colName: "Förare", colCountry: "Land", colYear: "Född", colGP: "SGP?", colDMP: "Lagmedaljer", colStatus: "Status", colClubs: "Klubbhistorik",
-        stats: "STATISTIK", statPlayed: "Spelade", statWon: "Vunna", statStreak: "Aktuell Svit", statMax: "Bästa Svit", btnClose: "STÄNG", archive: "DAILY ARKIV",
-        winTitle: "BRAVO!", winSub: "Du gissade föraren!", loseTitle: "INGA FÖRSÖK", loseSub: "Tyvärr, du gissade inte föraren.", btnShare: "DELA 📋", btnPlayEndless: "SPELA ENDLESS", btnPlayAgain: "SPELA IGEN", btnMenu: "HUVUDMENY", 
-        theme: "Tema:", themeLight: "Ljust", themeDark: "Mörkt", themeSystem: "System", lang: "Språk:", modeDaily: "Läge: Daily", modeEndless: "Läge: Endless",
-        tabDaily: "DAGLIG", tabWeekly: "VECKA", tabMonthly: "MÅNAD", tabAllTime: "ALLMÄN", rankWonToday: "Vinster", rankTotalWins: "Totala Vinster", rankGuesses: "Gissningar",
-        months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"], weekdays: ["Må", "Ti", "On", "To", "Fr", "Lö", "Sö"],
-        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Vänskapsmatch", clashFriendlyDesc: "(Spela med en vän)", clashLobbyTitle: "🤝 Vänskapsmatch", clashHost: "SKAPA RUM (HOST)", clashJoinCode: "RUMKOD...", clashJoinBtn: "GÅ MED", clashYourCode: "Din rumkod:", clashWaiting: "Väntar på motståndare...", clashReady: "JAG ÄR REDO", clashTime: "Tid att svara:", clashSurrender: "GE UPP / LÄMNA", clashClaim: "TA ÖVER RUTA", clashConfirm: "BEKRÄFTA", clashCancel: "AVBRYT", clashSeries: "SERIERESULTAT", clashRematch: "SPELA RETURMATCH", clashQuit: "AVSLUTA OCH LÄMNA", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spelet spelas på ett 3x3 rutnät som Luffarschack.", clashRules2: "För att ta över en ruta, klicka på den och gissa en förare som representerat båda klubbarna.", clashRules3: "Kom ihåg att endast den polska ligahistoriken räknas.", clashRules4: "Du har 2 minuter på dig att svara! Vid fel gissning förlorar du din tur.", clashRules5: "Anslut 3 rutor i rad för att vinna!", clashUnderstood: "FÖRSTÅTT, JAG SPELAR!", clashGuessPlaceholder: "Förarens för- och efternamn...", clashWaitBtn: "VÄNTAR...", clashWaitP2: "VÄNTAR PÅ MOTSTÅNDARE...",
-        dailyProgress: "DIN DAGLIGA FRAMSTEG:", missingRider: "💡 Saknad förare?", reportBug: "🚩 Rapportera Bugg", joinDiscord: "GÅ MED I DISCORD",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "POÄNG:", whoAreWeLookingFor: "VEM LETER VI EFTER?", taEmptyList: "Gissade förare visas här.",
-        expertMode: "EXPERT LÄGE", games: "Spel", record: "Rekord", average: "Snitt", startGame: "BÖRJA SPELA ►", howToPlay: "HUR SPELAR MAN?", backToMenu: "🔙 TILLBAKA TILL MENYN",
-        taRulesTitle: "Regler: Time Attack ⏱️", taRulesDesc: "Ta antagningen och se hur många förare du kan gissa under tidspress!", taRule1Title: "Klockan tickar", taRule1Desc: "Du börjar spelet med exakt 120 sekunder. Klockan räknar ner oavbrutet.", taRule2Title: "Inga tips", taRule2Desc: "Du ser direkt land, födelseår, medaljer och klubbhistorik.", taRule3Title: "Tidsbonusar", taRule3Desc: "Varje korrekt gissad förare lägger till +15 sekunder till din timer.", understoodBack: "FÖRSTÅTT, TILLBAKA!",
-        localGameTitle: "🖥️ Lokalt Spel", localGameDesc: "Ange era nicks för att spela på en skärm.", p1Red: "Spelare 1 (Röd)", p2Blue: "Spelare 2 (Blå)", startMatch: "BÖRJA MATCH",
-        boardPreview: "BRÄDENS FÖRHANDSGRANSKNING 👁️", searching: "Söker...", waitingForOpponentElo: "Väntar på en motståndare med liknande ELO", cancel: "AVBRYT",
-        sugTitle: "RAPPORTERA EN FÖRARE", sugDesc: "Märkte du en saknad förare? Ge oss detaljer! 🤝", sugName: "För- och efternamn *", sugCountry: "Land", sugNotes: "Klubbar / Anteckningar", send: "SKICKA",
-        bugTitle: "RAPPORTERA ETT FEL 🐛", bugDesc: "Gick något fel? Beskriv problemet!", bugDescInput: "Problembeskrivning *", sendBug: "SKICKA FEL",
-        footerPrivacy: "Integritetspolicy", footerTerms: "Användarvillkor", footerContact: "Kontakt", footerRights: "Alla rättigheter förbehållna.",
-        linkedAccounts: "LÄNKADE KONTON", linkDiscord: "LÄNKA DISCORD", yourNick: "DITT NUVARANDE NICK:", change: "ÄNDRA", yourClub: "DIN FAVORITKLUBB:", chooseClub: "VÄLJ KLUBB 🛡️", myAchievements: "MINA PRESTATIONER", playerAchievements: "SPELARPRESTATIONER", backToProfile: "TILLBAKA TILL PROFILEN",
-        removeSelection: "TA BORT VAL", chooseYourClub: "VÄLJ DIN KLUBB", chooseClubDesc: "Välj laget du stöder. Dess logotyp visas bredvid ditt nick!",
-        updatesTitle: "SPELUPPDATERINGAR 📢", updatesDesc: "Kolla in våra senaste ändringar!", understoodBtn: "FÖRSTÅTT",
-        maintTitle: "UNDERHÅLL", maintDesc: "Serverunderhåll pågår.<br>Spelet är tillfälligt inaktiverat.",
-        dToday: "DAGENS SPEL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAMATCH ►", dFriendly: "VÄNSKAPSMATCH", dLocal: "LOKALT SPIL (1 PC)", dSettings: "INSTÄLLNINGAR", dProfile: "PROFIL",
-        clashRule1Title: "Spelmål", clashRule2Title: "Överta rutor", clashRule3Title: "Regler och tid", clashRule4Title: "Extra Krav", clashRule4Desc: "Ibland visas en landsflagga under klubbloggan. Föraren måste också komma från det landet!", leagueHistory: "Ligahistorik",
-        loadingData: "Laddar data...", noResults: "Inga resultat. Var den första att spela!", selectModeMenu: "Välj ett spelläge från menyn...", taP1Name: "Spelare 1", taP2Name: "Spelare 2", defaultPlayer: "Spelare",
-        toastHintUsed: "Tips använt!", toastPlayerGuessed: "Denna förare är redan gissad.", toastTimeEnd: "Tiden är ute! Poäng: {count}. Tillbaka till menyn om 5s...",
-        toastWaitTurn: "Vänta på din tur!", toastCellTaken: "Denna ruta är redan tagen!", toastPlayerNotExist: "Föraren finns inte eller är redan vald!", toastWrongCountry: "FEL! Denna kolumn kräver en förare från:", toastMissedClubs: "Miss! {name} har inte kört för båda dessa klubbar.", toastTurn: "DIN TUR!", toastSavedClub: "Sparat! Du representerar:", toastRemovedClub: "Klubbtillhörighet borttagen", toastAchievement: "🏆 Prestation:", toastPPM: "⛔ Högerklick inaktiverat!", toastConsole: "⛔ Konsolåtkomst inaktiverat!", toastTabSwitch: "⚠️ Flikbyte upptäckt! Du förlorar din tur.",
-        alertSurrenderConfirm: "Är du säker på att du vill ge upp och avslöja föraren?", alertSurrenderTitle: "Ger du upp?", alertSurrenderBtn: "JA, JAG GER UPP",
-        alertReturnConfirm: "Är du säker på att du vill återvända till menyn? Daily-framsteg sparas, men Endless går förlorad.", alertReturnTitle: "Återvänd till menyn", alertReturnBtn: "TILL MENYN",
-        alertNickLength: "Nicket måste ha minst 3 tecken!", alertNickRules: "Detta nick bryter mot reglerna. Välj ett annat.", alertNickTaken: "Detta nick är redan upptaget!", alertNickSame: "Detta är ditt nuvarande nick!",
-        alertClashLeave: "Att lämna stänger rummet för båda spelarna.\nÄr du säker?", alertClashLeaveTitle: "Lämna match?", alertClashLeaveBtn: "LÄMNA",
-        alertClashSurrender: "Du kommer att förlora matchen på walkover.\nDu får en förlust och minus-ELO.\nÄr du säker?", alertClashSurrenderBtn: "GE UPP",
-        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (VECKA)", desktopRankMonthly: "LEADERBOARD (MÅNAD)", desktopRankAllTime: "LEADERBOARD (ALLMÄN)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
-        colPos: "Pos.", colNick: "Nick", colRank: "Rank", colElo: "ELO", colRecord: "Rekord", colSolved: "Lösta", colTotalWins: "Totala Vinster", colTries: "Gissningar", yes: "JA", no: "NEJ",
-        privacyTitle: "INTEGRITETSPOLICY", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Vi sparar minimala data för rankningar. Inget spam.</div>",
-        termsTitle: "ANVÄNDARVILLKOR", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Detta är ett inofficiellt fan-projekt. Fusk leder till ban.</div>",
-        ach_title_first_try: "Örnöga", ach_desc_first_try: "Gissa föraren på 1:a försöket.", ach_title_close_call: "Nära ögat", ach_desc_close_call: "Gissa föraren på sista, 10:e försöket.", ach_title_no_hint_1: "Smartskalle", ach_desc_no_hint_1: "Vinn ett spel utan att använda tips.", ach_title_no_hint_5: "Vandrande uppslagsverk", ach_desc_no_hint_5: "Vinn 5 spel i rad utan tips.", ach_title_play_10: "Uppvärmning", ach_desc_play_10: "Spela 10 spel totalt.", ach_title_play_50: "Galning", ach_desc_play_50: "Spela 50 spel totalt.", ach_title_streak_3: "Hett flow I", ach_desc_streak_3: "Uppnå en vinstsvit på 3.", ach_title_streak_7: "Hett flow II", ach_desc_streak_7: "Uppnå en vinstsvit på 7.", ach_title_streak_15: "Hett flow III", ach_desc_streak_15: "Uppnå en vinstsvit på 15.", ach_title_clash_1: "Första blodet", ach_desc_clash_1: "Vinn din första Speedway Clash-match.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Vinn 10 matcher i Clash.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Vinn 50 matcher i Clash.", ach_title_clash_flawless: "Felfri Clash!", ach_desc_clash_flawless: "Vinn en ligamatch utan att ge motståndaren en enda ruta.", ach_title_rank_silver: "Silverräven", ach_desc_rank_silver: "Nå Silver-rank i Clash-ligan.", ach_title_rank_gold: "Guldgossen", ach_desc_rank_gold: "Nå Guld-rank i Clash-ligan.", ach_title_rank_diamond: "Speedwayelit", ach_desc_rank_diamond: "Nå Diamant-rank i Clash-ligan.", ach_title_clash_legend: "Levande legend", ach_desc_clash_legend: "Nå högsta ranken: Legend.", ach_title_ta_10: "Time Attack Expert I", ach_desc_ta_10: "Gissa 10 förare i ett enda Time Attack-spel.", ach_title_ta_20: "Time Attack Expert II", ach_desc_ta_20: "Gissa 20 förare i ett enda Time Attack-spel.", ach_title_ta_30: "Time Attack Expert III", ach_desc_ta_30: "Gissa 30 förare i ett enda Time Attack-spel.", ach_title_ta_50: "Time Attack Expert IV", ach_desc_ta_50: "Gissa 50 förare i ett enda Time Attack-spel.", ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gissa 100 förare i ett enda Time Attack-spel.", ach_title_easter_club: "Klubbfärger", ach_desc_easter_club: "Välj din favoritklubb i din spelarprofil.", ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Byt spelspråk i Inställningar.", ach_title_easter_theme: "Två ansikten", ach_desc_easter_theme: "Byt speltema (Ljust/Mörkt)."
-    },
-    da: {
-        account: "DIN PROFIL", loginDesc: "Log ind med Google for at deltage i ranglisten!", btnLoginGoogle: "LOG IND MED GOOGLE", orGuest: "ELLER INDTAST GÆSTENICK", guestPlaceholder: "Indtast nick...", btnSavePlay: "GEM & SPIL", btnLogout: "LOG UD",
-        settingsTitle: "INDSTILLINGER", sound: "Lyd:", soundOn: "Til 🔊", soundOff: "Fra 🔇",
-        subtitle: "Speedway Edition", lastGames: "Seneste Daily:", btnDaily: "Spil Daily", btnReview: "Gennemse spil", btnEndless: "Endless Guessr", searchPlaceholder: "Indtast kørers navn...", btnGuess: "GÆT",
-        teams: "Hold:", colName: "Kører", colCountry: "Land", colYear: "Født", colGP: "SGP?", colDMP: "Holdmedaljer", colStatus: "Status", colClubs: "Klubhistorik",
-        stats: "STATISTIK", statPlayed: "Spillet", statWon: "Vundet", statStreak: "Nuværende Stime", statMax: "Bedste Stime", btnClose: "LUK", archive: "DAILY ARKIV",
-        winTitle: "BRAVO!", winSub: "Du gættede køreren!", loseTitle: "INGEN FORSØG", loseSub: "Desværre gættede du ikke køreren.", btnShare: "DEL 📋", btnPlayEndless: "SPIL ENDLESS", btnPlayAgain: "SPIL IGEN", btnMenu: "HOVEDMENU", 
-        theme: "Tema:", themeLight: "Lyst", themeDark: "Mørkt", themeSystem: "System", lang: "Sprog:", modeDaily: "Tilstand: Daily", modeEndless: "Tilstand: Endless",
-        tabDaily: "DAGLIG", tabWeekly: "UGE", tabMonthly: "MÅNED", tabAllTime: "GENEREL", rankWonToday: "Sejre", rankTotalWins: "Samlede Sejre", rankGuesses: "Gæt",
-        months: ["Januar", "Februar", "Marts", "April", "Maj", "Juni", "Juli", "August", "September", "Oktober", "November", "December"], weekdays: ["Ma", "Ti", "On", "To", "Fr", "Lø", "Sø"],
-        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Venskabskamp", clashFriendlyDesc: "(Spil med en ven)", clashLobbyTitle: "🤝 Venskabskamp", clashHost: "OPRET RUM (HOST)", clashJoinCode: "RUMKODE...", clashJoinBtn: "TILSLUT", clashYourCode: "Din rumkode:", clashWaiting: "Venter på modstander...", clashReady: "JEG ER KLAR", clashTime: "Tid til at svare:", clashSurrender: "GIV OP / FORLAD", clashClaim: "OVERTAG FELT", clashConfirm: "BEKRÆFT", clashCancel: "ANNULLER", clashSeries: "SERIERESULTAT", clashRematch: "SPIL REVANCHE", clashQuit: "AFSLUT OG FORLAD", clashRulesTitle: "Regler: Speedway Clash ⚔️", clashRules1: "Spillet spilles på et 3x3 gitter som Kryds og Bolle.", clashRules2: "For at overtage et felt skal du klikke på det og gætte en kører, der har repræsenteret begge klubber.", clashRules3: "Husk, at kun den polska ligahistorie tæller.", clashRules4: "Du har 2 minutter til at svare! Forkert gæt betyder, at du mister din tur.", clashRules5: "Forbind 3 felter på stribe for at vinde!", clashUnderstood: "FORSTÅET, JEG SPILLER!", clashGuessPlaceholder: "Kørerens for- og efternavn...", clashWaitBtn: "VENTER...", clashWaitP2: "VENTER PÅ MODSTANDER...",
-        dailyProgress: "DIT DAGLIGE FREMSKRIDT:", missingRider: "💡 Manglende kører?", reportBug: "🚩 Rapportér Bug", joinDiscord: "TILSLUT DISCORD",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "SCORE:", whoAreWeLookingFor: "HVEM LEDER VI EFTER?", taEmptyList: "Gættede kørere vises her.",
-        expertMode: "EKSPERT TILSTAND", games: "Spil", record: "Rekord", average: "Gns.", startGame: "START SPIL ►", howToPlay: "SÅDAN SPILLER DU", backToMenu: "🔙 TILBAGE TIL HOVEDMENU",
-        taRulesTitle: "Regler: Time Attack ⏱️", taRulesDesc: "Tag udfordringen op, og se, hvor mange kørere du kan gætte under tidspres!", taRule1Title: "Uret Tikker", taRule1Desc: "Du starter spillet med nøjagtig 120 sekunder. Uret tæller ned kontinuerligt.", taRule2Title: "Ingen hints", taRule2Desc: "Du ser straks land, fødselsår, medaljer og klubhistorie.", taRule3Title: "Tidsbonusser", taRule3Desc: "Hver korrekt gættet kører tilføjer +15 sekunder til din timer.", understoodBack: "FORSTÅET, TILBAGE!",
-        localGameTitle: "🖥️ Lokalt Spil", localGameDesc: "Indtast jeres nicks for at spille på én skærm.", p1Red: "Spiller 1 (Rød)", p2Blue: "Spiller 2 (Blå)", startMatch: "START KAMP",
-        boardPreview: "BRÆT PREVIEW 👁️", searching: "Søger...", waitingForOpponentElo: "Venter på en modstander med lignende ELO", cancel: "ANNULLER",
-        sugTitle: "RAPPORTER EN KØRER", sugDesc: "Bemærkede du en manglende kører? Giv os detaljer! 🤝", sugName: "Fulde navn *", sugCountry: "Land", sugNotes: "Klubber / Noter", send: "SEND",
-        bugTitle: "RAPPORTER EN FEJL 🐛", bugDesc: "Gik noget galt? Beskriv problemet!", bugDescInput: "Problembeskrivelse *", sendBug: "SEND FEJL",
-        footerPrivacy: "Privatlivspolitik", footerTerms: "Betingelser for brug", footerContact: "Kontakt", footerRights: "Alle rettigheder forbeholdes.",
-        linkedAccounts: "TILKNYTTEDE KONTI", linkDiscord: "TILKNYT DISCORD", yourNick: "DIT NUVÆRENDE NICK:", change: "ÆNDR", yourClub: "DIN FAVORITKLUB:", chooseClub: "VÆLG KLUB 🛡️", myAchievements: "MINE PRÆSTATIONER", playerAchievements: "SPILLERPRÆSTATIONER", backToProfile: "TILBAGE TIL PROFIL",
-        removeSelection: "FJERN VALG", chooseYourClub: "VÆLG DIN KLUB", chooseClubDesc: "Vælg det hold du støtter. Dets logo vil være synligt ved dit nick!",
-        updatesTitle: "SPILOPDATERINGER 📢", updatesDesc: "Tjek vores seneste ændringer!", understoodBtn: "FORSTÅET",
-        maintTitle: "VEDLIGEHOLDELSE", maintDesc: "Servervedligeholdelse i gang.<br>Spillet er midlertidigt deaktiveret.",
-        dToday: "DAGENS SPIL ►", dArchive: "DAILY ARKIV", dLeague: "LIGAKAMP ►", dFriendly: "VENSKABSKAMP", dLocal: "LOKALT SPIL (1 PC)", dSettings: "INDSTILLINGER", dProfile: "PROFIL",
-        clashRule1Title: "Spillets mål", clashRule2Title: "Overtagelse af felter", clashRule3Title: "Regler og tid", clashRule4Title: "Ekstra Krav", clashRule4Desc: "Nogle gange vises et landeflag under klublogoet. Køreren skal også være fra det land!", leagueHistory: "Ligahistorie",
-        loadingData: "Indlæser data...", noResults: "Ingen resultater. Vær den første til at spille!", selectModeMenu: "Vælg en spiltilstand fra menuen...", taP1Name: "Spiller 1", taP2Name: "Spiller 2", defaultPlayer: "Spiller",
-        toastHintUsed: "Tip brugt!", toastPlayerGuessed: "Denne kører er allerede gættet.", toastTimeEnd: "Tiden er gået! Score: {count}. Tilbage til menu om 5s...",
-        toastWaitTurn: "Vent på din tur!", toastCellTaken: "Dette felt er allerede taget!", toastPlayerNotExist: "Køreren findes ikke eller er allerede valgt!", toastWrongCountry: "FEJL! Denne kolonne kræver en kører fra:", toastMissedClubs: "Forbi! {name} har ikke kørt for begge disse klubber.", toastTurn: "DIN TUR!", toastSavedClub: "Gemt! Du repræsenterer:", toastRemovedClub: "Klubtilhørsforhold fjernet", toastAchievement: "🏆 Præstation:", toastPPM: "⛔ Højreklik deaktiveret!", toastConsole: "⛔ Konsoladgang deaktiveret!", toastTabSwitch: "⚠️ Fanebladsskift opdaget! Du mister din tur.",
-        alertSurrenderConfirm: "Er du sikker på, at du vil give op og afsløre køreren?", alertSurrenderTitle: "Giver du op?", alertSurrenderBtn: "JA, JEG GIVER OP",
-        alertReturnConfirm: "Er du sikker på, at du vil vende tilbage til menuen? Daily-fremskridt gemmes, men Endless går tabt.", alertReturnTitle: "Tilbage til menu", alertReturnBtn: "TIL MENU",
-        alertNickLength: "Nick skal have mindst 3 tegn!", alertNickRules: "Dette nick overtræder reglerne.", alertNickTaken: "Dette nick er allerede taget!", alertNickSame: "Dette er dit nuværende nick!",
-        alertClashLeave: "At forlade vil lukke rummet for begge spillere.\nEr du sikker på, at du vil forlade det?", alertClashLeaveTitle: "Forlad kamp?", alertClashLeaveBtn: "FORLAD",
-        alertClashSurrender: "Du vil tabe kampen på walkover.\nDu får et tab og minus-ELO.\nEr du sikker?", alertClashSurrenderBtn: "GIV OP",
-        desktopRankDaily: "LEADERBOARD (DAGLIG)", desktopRankWeekly: "LEADERBOARD (UGE)", desktopRankMonthly: "LEADERBOARD (MÅNED)", desktopRankAllTime: "LEADERBOARD (GENEREL)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
-        colPos: "Pos.", colNick: "Nick", colRank: "Rang", colElo: "ELO", colRecord: "Rekord", colSolved: "Løst", colTotalWins: "Samlede Sejre", colTries: "Gæt", yes: "JA", no: "NEJ",
-        privacyTitle: "PRIVATLIVSPOLITIK", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Vi gemmer kun minimale data til ranglister.</div>",
-        termsTitle: "BETINGELSER", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Dette er et uofficielt fan-projekt. Snyd medfører ban.</div>",
-        ach_title_first_try: "Ørneøje", ach_desc_first_try: "Gæt køreren i 1. forsøg.", ach_title_close_call: "Lige ved og næsten", ach_desc_close_call: "Gæt køreren i sidste, 10. forsøg.", ach_title_no_hint_1: "Kloge Åge", ach_desc_no_hint_1: "Vind et spil uden at bruge hints.", ach_title_no_hint_5: "Vandrende leksikon", ach_desc_no_hint_5: "Vind 5 spil i træk uden hints.", ach_title_play_10: "Opvarmning", ach_desc_play_10: "Spil 10 spil i alt.", ach_title_play_50: "Galskab", ach_desc_play_50: "Spil 50 spil i alt.", ach_title_streak_3: "Varm stime I", ach_desc_streak_3: "Opnå en sejrsstime på 3.", ach_title_streak_7: "Varm stime II", ach_desc_streak_7: "Opnå en sejrsstime på 7.", ach_title_streak_15: "Varm stime III", ach_desc_streak_15: "Opnå en sejrsstime på 15.", ach_title_clash_1: "Første blod", ach_desc_clash_1: "Vind din første Speedway Clash-kamp.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "Vind 10 kampe i Clash.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "Vind 50 kampe i Clash.", ach_title_clash_flawless: "Fejlfri Clash!", ach_desc_clash_flawless: "Vind en ligakamp uden at give modstanderen et eneste felt.", ach_title_rank_silver: "Sølvræv", ach_desc_rank_silver: "Nå Sølv-rang i Clash-ligaen.", ach_title_rank_gold: "Gulddreng", ach_desc_rank_gold: "Nå Guld-rang i Clash-ligaen.", ach_title_rank_diamond: "Speedway Elite", ach_desc_rank_diamond: "Nå Diamant-rang i Clash-ligaen.", ach_title_clash_legend: "Levende legende", ach_desc_clash_legend: "Nå den højeste rang: Legende.", ach_title_ta_10: "Time Attack Ekspert I", ach_desc_ta_10: "Gæt 10 kørere i et enkelt Time Attack-spil.", ach_title_ta_20: "Time Attack Ekspert II", ach_desc_ta_20: "Gæt 20 kørere i et enkelt Time Attack-spil.", ach_title_ta_30: "Time Attack Ekspert III", ach_desc_ta_30: "Gæt 30 kørere i et enkelt Time Attack-spil.", ach_title_ta_50: "Time Attack Ekspert IV", ach_desc_ta_50: "Gæt 50 kørere i et enkelt Time Attack-spil.", ach_title_ta_100: "Time Attack Gud", ach_desc_ta_100: "Gæt 100 kørere i et enkelt Time Attack-spil.", ach_title_easter_club: "Klubfarver", ach_desc_easter_club: "Vælg din favoritklubb i din spillerprofil.", ach_title_easter_lang: "Polyglot", ach_desc_easter_lang: "Skift sprog i indstillinger.", ach_title_easter_theme: "To ansigter", ach_desc_easter_theme: "Skift spillets tema (Lyst/Mørkt)."
-    },
-    de: {
-        account: "DEIN PROFIL", loginDesc: "Mit Google anmelden, um Fortschritte zu speichern!", btnLoginGoogle: "MIT GOOGLE ANMELDEN", orGuest: "ODER GAST-NICK EINGEBEN", guestPlaceholder: "Nick (max 12 Zeichen)", btnSavePlay: "SPEICHERN & SPIELEN", btnLogout: "ABMELDEN",
-        settingsTitle: "EINSTELLUNGEN", sound: "Ton:", soundOn: "An 🔊", soundOff: "Aus 🔇",
-        subtitle: "Speedway Edition", lastGames: "Letzte Daily-Spiele:", btnDaily: "Daily spielen", btnReview: "Spiel ansehen", btnEndless: "Endless Guessr", searchPlaceholder: "Fahrername eingeben...", btnGuess: "RATEN",
-        teams: "Teams:", colName: "Fahrer", colCountry: "Land", colYear: "Geb.", colGP: "SGP?", colDMP: "Medaillen", colStatus: "Status", colClubs: "Klubhistorie",
-        stats: "STATISTIKEN", statPlayed: "Gespielt", statWon: "Gewonnen", statStreak: "Aktuelle Serie", statMax: "Beste Serie", btnClose: "SCHLIESSEN", archive: "DAILY-ARCHIV",
-        winTitle: "BRAVO!", winSub: "Du hast den Fahrer erraten!", loseTitle: "KEINE VERSUCHE MEHR", loseSub: "Leider nicht erraten.", btnShare: "TEILEN 📋", btnPlayEndless: "ENDLESS SPIELEN", btnPlayAgain: "NOCHMAL SPIELEN", btnMenu: "HAUPTMENÜ", 
-        theme: "Design:", themeLight: "Hell", themeDark: "Dunkel", themeSystem: "System", lang: "Sprache:", modeDaily: "Modus: Daily", modeEndless: "Modus: Endless",
-        tabDaily: "TÄGLICH", tabWeekly: "WOCHE", tabMonthly: "MONAT", tabAllTime: "GESAMT", rankWonToday: "Siege", rankTotalWins: "Gesamtsiege", rankGuesses: "Versuche",
-        months: ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"], weekdays: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
-        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Freundschaftsspiel", clashFriendlyDesc: "(Mit Freund spielen)", clashLobbyTitle: "🤝 Freundschaftsspiel", clashHost: "RAUM ERSTELLEN (HOST)", clashJoinCode: "RAUMCODE...", clashJoinBtn: "BEITRETEN", clashYourCode: "Dein Raumcode:", clashWaiting: "Warte auf Gegner...", clashReady: "ICH BIN BEREIT", clashTime: "Antwortzeit:", clashSurrender: "AUFGEBEN / VERLASSEN", clashClaim: "FELD ÜBERNEHMEN", clashConfirm: "BESTÄTIGEN", clashCancel: "ABBRECHEN", clashSeries: "SERIENSTAND", clashRematch: "REVANCHE SPIELEN", clashQuit: "BEENDEN UND VERLASSEN", clashRulesTitle: "Regeln: Speedway Clash ⚔️", clashRules1: "Gespielt wird auf einem 3x3 Raster wie Tic-Tac-Toe.", clashRules2: "Klicke auf ein Feld und rate einen Fahrer, der für beide Klubs gefahren ist.", clashRules3: "Es zählt nur die polnische Ligahistorie.", clashRules4: "Du hast 2 Minuten Zeit! Falsche Antwort = Zugverlust.", clashRules5: "Verbinde 3 Felder in einer Reihe, um zu gewinnen!", clashUnderstood: "VERSTANDEN, ICH SPIELE!", clashGuessPlaceholder: "Vor- und Nachname des Fahrers...", clashWaitBtn: "WARTEN...", clashWaitP2: "WARTE AUF GEGNER...",
-        dailyProgress: "DEIN DAILY-FORTSCHRITT:", missingRider: "💡 Fehlender Fahrer?", reportBug: "🚩 Fehler melden", joinDiscord: "DISCORD BEITRETEN",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "PUNKTE:", whoAreWeLookingFor: "WEN SUCHEN WIR?", taEmptyList: "Erratene Fahrer erscheinen hier.",
-        expertMode: "EXPERTENMODUS", games: "Spiele", record: "Rekord", average: "Schnitt", startGame: "SPIEL STARTEN ►", howToPlay: "WIE WIRD GESPIELT?", backToMenu: "🔙 ZURÜCK ZUM HAUPTMENÜ",
-        taRulesTitle: "Regeln: Time Attack ⏱️", taRulesDesc: "Nimm die Herausforderung an und schau, wie viele Fahrer du unter Zeitdruck erraten kannst!", taRule1Title: "Die Uhr tickt", taRule1Desc: "Du startest mit exakt 120 Sekunden. Die Uhr läuft gnadenlos ab.", taRule2Title: "Keine Tipps", taRule2Desc: "Du siehst sofort Land, Geburtsjahr, Medaillen und die Klubhistorie.", taRule3Title: "Zeitboni", taRule3Desc: "Jeder richtig erratene Fahrer gibt +15 Sekunden.", understoodBack: "VERSTANDEN, ZURÜCK!",
-        localGameTitle: "🖥️ Lokales Spiel", localGameDesc: "Nicknames eingeben, um an einem Bildschirm zu spielen.", p1Red: "Spieler 1 (Rot)", p2Blue: "Spieler 2 (Blau)", startMatch: "MATCH STARTEN",
-        boardPreview: "BRETT-VORSCHAU 👁️", searching: "Suchen...", waitingForOpponentElo: "Warte auf Gegner mit ähnlicher ELO", cancel: "ABBRECHEN",
-        sugTitle: "FAHRER MELDEN", sugDesc: "Fehlt ein Fahrer? Gib uns seine Daten und wir fügen ihn hinzu! 🤝", sugName: "Vor- und Nachname *", sugCountry: "Land", sugNotes: "Klubs / Notizen", send: "SENDEN",
-        bugTitle: "FEHLER MELDEN 🐛", bugDesc: "Etwas ist schiefgelaufen? Beschreibe das Problem!", bugDescInput: "Problembeschreibung *", sendBug: "FEHLER SENDEN",
-        footerPrivacy: "Datenschutzerklärung", footerTerms: "Nutzungsbedingungen", footerContact: "Kontakt", footerRights: "Alle Rechte vorbehalten.",
-        linkedAccounts: "VERKNÜPFTE KONTEN", linkDiscord: "DISCORD VERKNÜPFEN", yourNick: "DEIN AKTUELLER NICK:", change: "ÄNDERN", yourClub: "DEIN LIEBLINGSKLUB:", chooseClub: "KLUB WÄHLEN 🛡️", myAchievements: "MEINE ERFOLGE", playerAchievements: "SPIELER-ERFOLGE", backToProfile: "ZURÜCK ZUM PROFIL",
-        removeSelection: "AUSWAHL ENTFERNEN", chooseYourClub: "WÄHLE DEINEN KLUB", chooseClubDesc: "Wähle das Team, das du unterstützt. Sein Logo wird neben deinem Nick angezeigt!",
-        updatesTitle: "SPIEL-UPDATES 📢", updatesDesc: "Sieh dir unsere neuesten Änderungen an!", understoodBtn: "VERSTANDEN",
-        maintTitle: "WARTUNGSARBEITEN", maintDesc: "Serverwartung im Gange.<br>Das Spiel ist vorübergehend deaktiviert.",
-        dToday: "HEUTIGES SPIEL ►", dArchive: "DAILY-ARCHIV", dLeague: "LIGASPIEL ►", dFriendly: "FREUNDSCHAFTSSPIEL", dLocal: "LOKALES SPIEL (1 PC)", dSettings: "EINSTELLUNGEN", dProfile: "PROFIL",
-        clashRule1Title: "Spielziel", clashRule2Title: "Felder übernehmen", clashRule3Title: "Regeln und Zeit", clashRule4Title: "Zusätzliche Bedingung", clashRule4Desc: "Manchmal erscheint eine Flagge unter dem Klub. Der Fahrer muss auch aus diesem Land kommen!", leagueHistory: "Liga-Historie",
-        loadingData: "Lade Daten...", noResults: "Keine Ergebnisse. Sei der Erste!", selectModeMenu: "Wähle einen Spielmodus...", taP1Name: "Spieler 1", taP2Name: "Spieler 2", defaultPlayer: "Spieler",
-        toastHintUsed: "Tipp benutzt!", toastPlayerGuessed: "Fahrer bereits erraten.", toastTimeEnd: "Zeit abgelaufen! Punkte: {count}. Zurück zum Menü...",
-        toastWaitTurn: "Warte, bis du dran bist!", toastCellTaken: "Feld ist schon besetzt!", toastPlayerNotExist: "Fahrer existiert nicht!", toastWrongCountry: "FEHLER! Land erforderlich:", toastMissedClubs: "Daneben! {name} ist nicht für beide Klubs gefahren.", toastTurn: "DU BIST DRAN!", toastSavedClub: "Gespeichert!", toastRemovedClub: "Klub entfernt", toastAchievement: "🏆 Erfolg:", toastPPM: "⛔ Rechtsklick deaktiviert!", toastConsole: "⛔ Konsole deaktiviert!", toastTabSwitch: "⚠️ Tab-Wechsel! Zug verloren.",
-        alertSurrenderConfirm: "Willst du wirklich aufgeben?", alertSurrenderTitle: "Aufgeben?", alertSurrenderBtn: "JA, ICH GEBE AUF",
-        alertReturnConfirm: "Zurück zum Menü? Endless-Fortschritt geht verloren.", alertReturnTitle: "Zurück zum Menü", alertReturnBtn: "ZUM MENÜ",
-        alertNickLength: "Nick muss min. 3 Zeichen haben!", alertNickRules: "Nick verstößt gegen Regeln.", alertNickTaken: "Nick ist vergeben!", alertNickSame: "Das ist dein aktueller Nick!",
-        alertClashLeave: "Raum wird für beide geschlossen. Verlassen?", alertClashLeaveTitle: "Spiel verlassen?", alertClashLeaveBtn: "VERLASSEN",
-        alertClashSurrender: "Du verlierst das Spiel und ELO. Aufgeben?", alertClashSurrenderBtn: "AUFGEBEN",
-        desktopRankDaily: "LEADERBOARD (TÄGLICH)", desktopRankWeekly: "LEADERBOARD (WOCHE)", desktopRankMonthly: "LEADERBOARD (MONAT)", desktopRankAllTime: "LEADERBOARD (GESAMT)", desktopRankClash: "LEADERBOARD (CLASH)", desktopRankTA: "LEADERBOARD (TIME ATTACK)",
-        colPos: "Pos.", colNick: "Nick", colRank: "Rang", colElo: "ELO", colRecord: "Rekord", colSolved: "Gelöst", colTotalWins: "Gesamtsiege", colTries: "Versuche", yes: "JA", no: "NEIN",
-        privacyTitle: "DATENSCHUTZERKLÄRUNG", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Wir speichern nur minimale Daten.</div>",
-        termsTitle: "NUTZUNGSBEDINGUNGEN", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Dies ist ein inoffizielles Fan-Projekt. Cheaten führt zum Ban.</div>",
-        ach_title_first_try: "Adlerauge", ach_desc_first_try: "Fahrer im 1. Versuch erraten.", ach_title_close_call: "Knappe Kiste", ach_desc_close_call: "Fahrer im 10. Versuch erraten.", ach_title_no_hint_1: "Schlaumeier", ach_desc_no_hint_1: "Ohne Tipps gewinnen.", ach_title_no_hint_5: "Wandelndes Lexikon", ach_desc_no_hint_5: "5 Siege in Folge ohne Tipps.", ach_title_play_10: "Aufwärmen", ach_desc_play_10: "10 Spiele spielen.", ach_title_play_50: "Maniac", ach_desc_play_50: "50 Spiele spielen.", ach_title_streak_3: "Heiße Serie I", ach_desc_streak_3: "3er Siegesserie.", ach_title_streak_7: "Heiße Serie II", ach_desc_streak_7: "7er Siegesserie.", ach_title_streak_15: "Heiße Serie III", ach_desc_streak_15: "15er Siegesserie.", ach_title_clash_1: "Erstes Blut", ach_desc_clash_1: "Erster Clash-Sieg.", ach_title_clash_10: "Gladiator", ach_desc_clash_10: "10 Clash-Siege.", ach_title_clash_50: "Dominator", ach_desc_clash_50: "50 Clash-Siege.", ach_title_clash_flawless: "Perfekter Clash!", ach_desc_clash_flawless: "Clash gewinnen, ohne ein Feld abzugeben.", ach_title_rank_silver: "Silberfuchs", ach_desc_rank_silver: "Silber-Rang erreichen.", ach_title_rank_gold: "Goldjunge", ach_desc_rank_gold: "Gold-Rang erreichen.", ach_title_rank_diamond: "Elite", ach_desc_rank_diamond: "Diamant-Rang erreichen.", ach_title_clash_legend: "Legende", ach_desc_clash_legend: "Höchsten Rang erreichen.", ach_title_ta_10: "Time Attack Experte I", ach_desc_ta_10: "10 Fahrer in Time Attack.", ach_title_ta_20: "Time Attack Experte II", ach_desc_ta_20: "20 Fahrer in Time Attack.", ach_title_ta_30: "Time Attack Experte III", ach_desc_ta_30: "30 Fahrer in Time Attack.", ach_title_ta_50: "Time Attack Experte IV", ach_desc_ta_50: "50 Fahrer in Time Attack.", ach_title_ta_100: "Time Attack Gott", ach_desc_ta_100: "100 Fahrer in Time Attack.", ach_title_easter_club: "Klubfarben", ach_desc_easter_club: "Lieblingsklub wählen.", ach_title_easter_lang: "Polyglott", ach_desc_easter_lang: "Sprache ändern.", ach_title_easter_theme: "Zwei Gesichter", ach_desc_easter_theme: "Design ändern."
-    },
-    ru: {
-        account: "ТВОЙ ПРОФИЛЬ", loginDesc: "Войдите через Google, чтобы сохранить прогресс!", btnLoginGoogle: "ВОЙТИ ЧЕРЕЗ GOOGLE", orGuest: "ИЛИ ВВЕДИТЕ ИМЯ ГОСТЯ", guestPlaceholder: "Имя (макс. 12 симв.)", btnSavePlay: "СОХРАНИТЬ И ИГРАТЬ", btnLogout: "ВЫЙТИ",
-        settingsTitle: "НАСТРОЙКИ", sound: "Звук:", soundOn: "Вкл 🔊", soundOff: "Выкл 🔇",
-        subtitle: "Спидвей Версия", lastGames: "Последние Daily:", btnDaily: "Играть Daily", btnReview: "Просмотр игры", btnEndless: "Endless Guessr", searchPlaceholder: "Введите имя гонщика...", btnGuess: "УГАДАТЬ",
-        teams: "Команды:", colName: "Гонщик", colCountry: "Страна", colYear: "Год", colGP: "SGP?", colDMP: "Медали DMP", colStatus: "Статус", colClubs: "История клубов",
-        stats: "СТАТИСТИКА", statPlayed: "Сыграно", statWon: "Побед", statStreak: "Текущая серия", statMax: "Лучшая серия", btnClose: "ЗАКРЫТЬ", archive: "АРХИВ DAILY",
-        winTitle: "БРАВО!", winSub: "Вы угадали гонщика!", loseTitle: "ПОПЫТКИ ЗАКОНЧИЛИСЬ", loseSub: "К сожалению, вы не угадали.", btnShare: "ПОДЕЛИТЬСЯ 📋", btnPlayEndless: "ИГРАТЬ ENDLESS", btnPlayAgain: "ИГРАТЬ СНОВА", btnMenu: "ГЛАВНОЕ МЕНЮ", 
-        theme: "Тема:", themeLight: "Светлая", themeDark: "Темная", themeSystem: "Авто", lang: "Язык:", modeDaily: "Режим: Daily", modeEndless: "Режим: Endless",
-        tabDaily: "ДЕНЬ", tabWeekly: "НЕДЕЛЯ", tabMonthly: "МЕСЯЦ", tabAllTime: "ЗА ВСЕ ВРЕМЯ", rankWonToday: "Победы", rankTotalWins: "Всего побед", rankGuesses: "Попытки",
-        months: ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"], weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
-        clashTitle: "⚔️ Speedway Clash", clashFriendly: "Товарищеский матч", clashFriendlyDesc: "(Играть с другом)", clashLobbyTitle: "🤝 Товарищеский матч", clashHost: "СОЗДАТЬ КОМНАТУ", clashJoinCode: "КОД КОМНАТЫ...", clashJoinBtn: "ВХОД", clashYourCode: "Ваш код комнаты:", clashWaiting: "Ожидание соперника...", clashReady: "Я ГОТОВ", clashTime: "Время на ответ:", clashSurrender: "СДАТЬСЯ / ВЫЙТИ", clashClaim: "ЗАХВАТИТЬ ПОЛЕ", clashConfirm: "ПОДТВЕРДИТЬ", clashCancel: "ОТМЕНА", clashSeries: "СЧЕТ СЕРИИ", clashRematch: "ИГРАТЬ РЕВАНШ", clashQuit: "ЗАКОНЧИТЬ И ВЫЙТИ", clashRulesTitle: "Правила: Speedway Clash ⚔️", clashRules1: "Игра идет на поле 3x3 (крестики-нолики).", clashRules2: "Чтобы захватить поле, угадайте гонщика, выступавшего за оба клуба.", clashRules3: "Учитывается только польская лига.", clashRules4: "У вас есть 2 минуты! Неверный ответ или конец времени = пропуск хода.", clashRules5: "Соедините 3 поля в ряд для победы!", clashUnderstood: "ПОНЯТНО, ИГРАТЬ!", clashGuessPlaceholder: "Имя гонщика...", clashWaitBtn: "ОЖИДАНИЕ...", clashWaitP2: "ОЖИДАНИЕ СОПЕРНИКА...",
-        dailyProgress: "ПРОГРЕСС DAILY:", missingRider: "💡 Нет гонщика?", reportBug: "🚩 Сообщить об ошибке", joinDiscord: "В DISCORD",
-        timeAttackTitle: "TIME ATTACK  ►", scoreLabel: "СЧЕТ:", whoAreWeLookingFor: "КОГО ИЩЕМ?", taEmptyList: "Угаданные появятся здесь.",
-        expertMode: "РЕЖИМ ЭКСПЕРТА", games: "Игры", record: "Рекорд", average: "В среднем", startGame: "НАЧАТЬ ИГРУ ►", howToPlay: "КАК ИГРАТЬ?", backToMenu: "🔙 В МЕНЮ",
-        taRulesTitle: "Правила: Time Attack ⏱️", taRulesDesc: "Узнайте, сколько гонщиков вы угадаете на время!", taRule1Title: "Часы тикают", taRule1Desc: "У вас есть 120 секунд.", taRule2Title: "Без подсказок", taRule2Desc: "Вы сразу видите страну, год, медали и клубы.", taRule3Title: "Бонусы времени", taRule3Desc: "Каждый гонщик дает +15 секунд.", understoodBack: "ПОНЯТНО, НАЗАД!",
-        localGameTitle: "🖥️ Локальная игра", localGameDesc: "Введите имена для игры на одном экране.", p1Red: "Игрок 1 (Красный)", p2Blue: "Игрок 2 (Синий)", startMatch: "НАЧАТЬ МАТЧ",
-        boardPreview: "ДОСКА 👁️", searching: "Поиск...", waitingForOpponentElo: "Ожидание соперника", cancel: "ОТМЕНА",
-        sugTitle: "СООБЩИТЬ О ГОНЩИКЕ", sugDesc: "Заметили отсутствие гонщика? Дайте знать! 🤝", sugName: "Имя *", sugCountry: "Страна", sugNotes: "Клубы", send: "ОТПРАВИТЬ",
-        bugTitle: "ОШИБКА 🐛", bugDesc: "Опишите проблему!", bugDescInput: "Описание *", sendBug: "ОТПРАВИТЬ",
-        footerPrivacy: "Конфиденциальность", footerTerms: "Правила", footerContact: "Контакт", footerRights: "Все права защищены.",
-        linkedAccounts: "АККАУНТЫ", linkDiscord: "ПРИВЯЗАТЬ DISCORD", yourNick: "ВАШ НИК:", change: "ИЗМЕНИТЬ", yourClub: "ВАШ КЛУБ:", chooseClub: "ВЫБРАТЬ КЛУБ 🛡️", myAchievements: "МОИ ДОСТИЖЕНИЯ", playerAchievements: "ДОСТИЖЕНИЯ ИГРОКА", backToProfile: "НАЗАД В ПРОФИЛЬ",
-        removeSelection: "УДАЛИТЬ", chooseYourClub: "ВЫБЕРИТЕ КЛУБ", chooseClubDesc: "Его логотип будет виден рядом с вашим ником!",
-        updatesTitle: "ОБНОВЛЕНИЯ 📢", updatesDesc: "Последние изменения!", understoodBtn: "ПОНЯТНО",
-        maintTitle: "ТЕХНИЧЕСКИЙ ПЕРЕРЫВ", maintDesc: "Сервер на обслуживании.<br>Игра недоступна.",
-        dToday: "СЕГОДНЯШНЯЯ ИГРА ►", dArchive: "АРХИВ DAILY", dLeague: "МАТЧ ЛИГИ ►", dFriendly: "ТОВАРИЩЕСКИЙ МАТЧ", dLocal: "ЛОКАЛЬНАЯ ИГРА", dSettings: "НАСТРОЙКИ", dProfile: "ПРОФИЛЬ",
-        clashRule1Title: "Цель", clashRule2Title: "Захват полей", clashRule3Title: "Правила", clashRule4Title: "Доп. Требование", clashRule4Desc: "Иногда под клубом будет флаг. Гонщик должен быть из этой страны!", leagueHistory: "История Лиги",
-        loadingData: "Загрузка...", noResults: "Нет результатов.", selectModeMenu: "Выберите режим в меню слева...", taP1Name: "Игрок 1", taP2Name: "Игрок 2", defaultPlayer: "Игрок",
-        toastHintUsed: "Подсказка использована!", toastPlayerGuessed: "Уже угадан.", toastTimeEnd: "Время вышло! Счет: {count}. Возврат в меню...",
-        toastWaitTurn: "Ждите своей очереди!", toastCellTaken: "Поле занято!", toastPlayerNotExist: "Гонщик не найден!", toastWrongCountry: "ОШИБКА! Нужен гонщик из:", toastMissedClubs: "Промах! {name} не выступал за оба клуба.", toastTurn: "ВАШ ХОД!", toastSavedClub: "Сохранено!", toastRemovedClub: "Клуб удален", toastAchievement: "🏆 Достижение:", toastPPM: "⛔ Правый клик заблокирован!", toastConsole: "⛔ Доступ к консоли заблокирован!", toastTabSwitch: "⚠️ Вы свернули вкладку! Пропуск хода.",
-        alertSurrenderConfirm: "Вы уверены, что хотите сдаться?", alertSurrenderTitle: "Сдаетесь?", alertSurrenderBtn: "СДАЮСЬ",
-        alertReturnConfirm: "Вернуться в меню? Прогресс Endless будет потерян.", alertReturnTitle: "В меню", alertReturnBtn: "В МЕНЮ",
-        alertNickLength: "Мин. 3 символа!", alertNickRules: "Ник нарушает правила.", alertNickTaken: "Ник занят!", alertNickSame: "Это ваш ник!",
-        alertClashLeave: "Выход закроет комнату.\nВы уверены?", alertClashLeaveTitle: "Покинуть матч?", alertClashLeaveBtn: "ВЫЙТИ",
-        alertClashSurrender: "Вы проиграете техническим поражением. Уверены?", alertClashSurrenderBtn: "СДАТЬСЯ",
-        desktopRankDaily: "ЛЕДЕРБОРД (ДЕНЬ)", desktopRankWeekly: "ЛЕДЕРБОРД (НЕДЕЛЯ)", desktopRankMonthly: "ЛЕДЕРБОРД (МЕСЯЦ)", desktopRankAllTime: "ЛЕДЕРБОРД (ВЕЧНЫЙ)", desktopRankClash: "ЛЕДЕРБОРД (CLASH)", desktopRankTA: "ЛЕДЕРБОРД (TIME ATTACK)",
-        colPos: "Поз.", colNick: "Имя", colRank: "Ранг", colElo: "ELO", colRecord: "Рекорд", colSolved: "Решено", colTotalWins: "Всего побед", colTries: "Попытки", yes: "ДА", no: "НЕТ",
-        privacyTitle: "КОНФИДЕНЦИАЛЬНОСТЬ", privacyContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Мы сохраняем минимум данных.</div>",
-        termsTitle: "ПРАВИЛА", termsContent: "<div style='text-align: left; font-size: 13px; color: var(--text-dim);'>Это фанатский проект. Читы ведут к бану.</div>",
-        ach_title_first_try: "Орлиный глаз", ach_desc_first_try: "Угадайте гонщика с 1 попытки.", ach_title_close_call: "На волоске", ach_desc_close_call: "Угадайте гонщика с 10 попытки.", ach_title_no_hint_1: "Умник", ach_desc_no_hint_1: "Выиграйте без подсказок.", ach_title_no_hint_5: "Энциклопедия", ach_desc_no_hint_5: "5 побед подряд без подсказок.", ach_title_play_10: "Разминка", ach_desc_play_10: "Сыграйте 10 игр.", ach_title_play_50: "Маньяк", ach_desc_play_50: "Сыграйте 50 игр.", ach_title_streak_3: "Серия I", ach_desc_streak_3: "Победная серия: 3.", ach_title_streak_7: "Серия II", ach_desc_streak_7: "Победная серия: 7.", ach_title_streak_15: "Серия III", ach_desc_streak_15: "Победная серия: 15.", ach_title_clash_1: "Первая кровь", ach_desc_clash_1: "Первая победа в Clash.", ach_title_clash_10: "Гладиатор", ach_desc_clash_10: "10 побед в Clash.", ach_title_clash_50: "Доминатор", ach_desc_clash_50: "50 побед в Clash.", ach_title_clash_flawless: "Безупречно!", ach_desc_clash_flawless: "Clash без потери полей.", ach_title_rank_silver: "Серебро", ach_desc_rank_silver: "Ранг Серебро.", ach_title_rank_gold: "Золото", ach_desc_rank_gold: "Ранг Золото.", ach_title_rank_diamond: "Элита", ach_desc_rank_diamond: "Ранг Бриллиант.", ach_title_clash_legend: "Легенда", ach_desc_clash_legend: "Ранг Легенда.", ach_title_ta_10: "TA Эксперт I", ach_desc_ta_10: "10 гонщиков в Time Attack.", ach_title_ta_20: "TA Эксперт II", ach_desc_ta_20: "20 гонщиков в Time Attack.", ach_title_ta_30: "TA Эксперт III", ach_desc_ta_30: "30 гонщиков в Time Attack.", ach_title_ta_50: "TA Эксперт IV", ach_desc_ta_50: "50 гонщиков в Time Attack.", ach_title_ta_100: "Бог Time Attack", ach_desc_ta_100: "100 гонщиков в Time Attack.", ach_title_easter_club: "Цвета клуба", ach_desc_easter_club: "Выберите клуб.", ach_title_easter_lang: "Полиглот", ach_desc_easter_lang: "Смените язык.", ach_title_easter_theme: "Два лица", ach_desc_easter_theme: "Смените тему."
-    }
-};
-
-let currentLang = localStorage.getItem('speedwayLang') || 'pl';
-
-function t(key, params = {}) {
-    let langObj = i18n[currentLang] || i18n['pl'];
-    let str = langObj[key] !== undefined ? langObj[key] : (i18n['pl'][key] !== undefined ? i18n['pl'][key] : key);
-    for (let p in params) {
-        str = str.replace(`{${p}}`, params[p]);
-    }
-    return str;
-}
-
-
 // Ensure function is available from inline onclick handlers in HTML
 try { window.setLang = setLang; } catch (e) {}
 
 // ==============================================
-// ====== USTAWIENIA NOWE TAKIE O ===============
+// ====== MOTYW & JĘZYK (ZAKTUALIZOWANE) ========
 // ==============================================
 
-// Aplikowanie fizycznego CSS w zależności od wyboru
 function applyTheme(themeName) {
     let actualTheme = themeName;
     if (themeName === 'system') {
         actualTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     }
     document.documentElement.setAttribute('data-theme', actualTheme);
-}
+    document.body.setAttribute('data-theme', actualTheme);
 
-function setTheme(themeName) { 
-    let oldTheme = localStorage.getItem('theme');
-    localStorage.setItem('theme', themeName); 
-    applyTheme(themeName);
-    
-    // Zaznaczanie aktywnego kafelka w Ustawieniach
+    // Ponowne przeliczenie tła pod kątem wybranego motywu
+    if (typeof setRandomBackground === 'function') {
+        setRandomBackground();
+    }
+
+    // Podświetlenie odpowiedniego kafelka w Ustawieniach
     document.querySelectorAll('.option-card').forEach(el => el.classList.remove('active'));
     const activeBtn = document.getElementById('theme-btn-' + themeName);
     if (activeBtn) activeBtn.classList.add('active');
-    
-    // Odblokowanie osiągnięcia, jeśli temat faktycznie się zmienił (zabezpieczenie na start)
+}
+
+function setTheme(themeName) {
+    let oldTheme = localStorage.getItem('theme');
+    localStorage.setItem('theme', themeName);
+    applyTheme(themeName);
+
     if (oldTheme && oldTheme !== themeName && typeof userStats !== 'undefined' && userStats.trackers) {
         ensureAchievementsStats();
         userStats.trackers.changedTheme = true;
@@ -1732,56 +1253,62 @@ function setTheme(themeName) {
     }
 }
 
-// Nasłuchiwacz: Jeśli zmienia się tryb w telefonie, a gracz ma wybrane "System", zmień natychmiast
-window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', e => {
-    if (localStorage.getItem('theme') === 'system') {
-        applyTheme('system');
-    }
-});
-
-// Musimy zaktualizować setLang, by podświetlało nowe karty z flagami
+// Zmiana języka z bezpiecznym wsparciem dla zewnętrznego pliku i18n.js
 function setLang(lang) {
-    try { console.log('setLang called:', lang); } catch (e) {}
-    
-    let oldLang = localStorage.getItem('speedwayLang');
-    currentLang = i18n[lang] ? lang : 'pl';
-    localStorage.setItem('speedwayLang', currentLang);
-    
-    // Nowa klasa flag
-    document.querySelectorAll('.flag-card').forEach(el => el.classList.remove('active'));
-    const flagEl = document.getElementById('flag-btn-' + currentLang); 
-    if(flagEl) flagEl.classList.add('active');
+    const dict = (window.i18n && window.i18n[lang]) ? window.i18n : (typeof i18n !== 'undefined' ? i18n : null);
+    if (!dict || !dict[lang]) {
+        console.warn("Brak słownika dla języka:", lang);
+        return;
+    }
 
-    const strings = i18n[currentLang] || i18n.pl;
-    const nodes = document.querySelectorAll('[data-i18n]');
-    let applied = 0; const missing = new Set();
-    nodes.forEach(el => {
+    let oldLang = localStorage.getItem('speedwayLang');
+    currentLang = lang;
+    window.currentLang = lang;
+    localStorage.setItem('speedwayLang', currentLang);
+
+    // Aktualizacja kafelków z flagami w Ustawieniach
+    document.querySelectorAll('.flag-card').forEach(el => el.classList.remove('active'));
+    const flagEl = document.getElementById('flag-btn-' + currentLang);
+    if (flagEl) flagEl.classList.add('active');
+
+    const strings = dict[currentLang] || dict['pl'];
+
+    // Podmiana tekstów we wszystkich węzłach z atrybutem data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (!key) return;
-        const val = strings[key];
-        if (val !== undefined) {
-            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = val;
-            else el.innerHTML = val;
-            applied++;
+        if (!key || strings[key] === undefined) return;
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.placeholder = strings[key];
         } else {
-            missing.add(key);
+            el.innerHTML = strings[key];
         }
     });
 
+    // Tooltipy
     document.querySelectorAll('[data-i18n-tip]').forEach(el => {
         const tipKey = el.getAttribute('data-i18n-tip');
         if (tipKey && strings[tipKey]) el.setAttribute('data-tip', strings[tipKey]);
     });
 
-    updateDailyMenu(); updateSoundBtn(); updateAuthUI(auth.currentUser);
-    if(document.getElementById('calendarOverlay').style.display === 'block') renderCalendar();
-    renderUpdates();
+    if (typeof updateDailyMenu === 'function') updateDailyMenu();
+    if (typeof updateSoundBtn === 'function') updateSoundBtn();
+    if (typeof updateAuthUI === 'function') updateAuthUI(auth.currentUser);
     
+    const calOverlay = document.getElementById('calendarOverlay');
+    if (calOverlay && calOverlay.style.display === 'block' && typeof renderCalendar === 'function') {
+        renderCalendar();
+    }
+    if (typeof renderUpdates === 'function') renderUpdates();
+
     const modeDisplay = document.getElementById('gameModeDisplay');
-    if (gameMode === 'daily') modeDisplay.innerText = `${i18n[currentLang].modeDaily} ${dailyNumberGlobal}`;
-    else modeDisplay.innerText = i18n[currentLang].modeEndless;
-    
-    // ODBLOKOWANIE OSIĄGNIĘCIA
+    if (modeDisplay) {
+        if (gameMode === 'daily') {
+            modeDisplay.innerText = `${strings.modeDaily || 'Tryb: Daily'} ${dailyNumberGlobal}`;
+        } else {
+            modeDisplay.innerText = strings.modeEndless || 'Tryb: Endless';
+        }
+    }
+
     if (oldLang && oldLang !== currentLang && typeof userStats !== 'undefined' && userStats.trackers) {
         ensureAchievementsStats();
         userStats.trackers.changedLang = true;
@@ -1789,6 +1316,7 @@ function setLang(lang) {
         saveStats();
     }
 }
+
 
 function toggleSound() { 
     soundEnabled = !soundEnabled; 
@@ -6187,19 +5715,41 @@ function showLegalModal(title, htmlContent) {
     setTimeout(() => overlay.style.opacity = '1', 10);
 }
 
+// ==============================================
+// ====== POLITYKA PRYWATNOŚCI & REGULAMIN ======
+// ==============================================
 function showPrivacyPolicy() {
-    showLegalModal(t('privacyTitle'), t('privacyContent'));
+    const overlay = document.getElementById('privacyPolicyOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+    }
+}
+
+function closePrivacyPolicy() {
+    const overlay = document.getElementById('privacyPolicyOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
 }
 
 function showTerms() {
-    showLegalModal(t('termsTitle'), t('termsContent'));
+    const overlay = document.getElementById('termsOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+    }
 }
 
-// Globalny eksport (żeby kliknięcie w footer zadziałało)
-try {
-    window.showPrivacyPolicy = showPrivacyPolicy;
-    window.showTerms = showTerms;
-} catch (e) {}
+function closeTerms() {
+    const overlay = document.getElementById('termsOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+    }
+}
+
 
 // ==============================================
 // ====== OBSŁUGA KLAWIATURY (ENTER) ============
@@ -6223,3180 +5773,43 @@ document.addEventListener('keydown', function(e) {
 
 //---------------------------
 
-
-
-
-
-
-
-
-
-
-
-// ==============================================
-// ====== KARIERA: COPERO MINIGAMES STYLE =======
-// ==============================================
-
-let cState = {
-    active: false,
-    name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
-    age: 15, maxAge: 47,
-    ovr: 40, ovrProgress: 0, 
-    club: null, league: null, 
-    contractYears: 0, 
-    stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, 
-    history: [],
-    leagues: {},
-    teamOVRs: {},
-    relations: { manager: 50, team: 50, fans: 50 },
-    season: {
-        active: false,
-        matchIndex: 0,
-        regularSeasonLength: 14,
-        playoffsGenerated: false,
-        finalsGenerated: false,
-        barazGenerated: false,
-        fullSchedule: [],
-        schedule: [],
-        matchResults: [],
-        table: [],
-        heats: 0, pts: 0, bon: 0,
-        trainedThisWeek: false,
-        eventRoundTriggered: 0
-    }
-};
-
-let activeLoanClub = null;
-let activeLoanLeague = null;
-let qteAnimFrame = null;
-
-const CAREER_CONSTANTS = {
-    "PGE Ekstraliga": { diff: 82, logo: "🏆" },
-    "Metalkas 2.E": { diff: 68, logo: "🥈" },
-    "KLŻ": { diff: 50, logo: "🥉" }
-};
-
-const CAREER_CLUB_COLORS = {
-    "motor lublin": "#ffcc00", "sparta wrocław": "#e32221", "apator toruń": "#235ac0", "stal gorzów wielkopolski": "#ffd700",
-    "włókniarz częstochowa": "#008000", "gkm grudziądz": "#0502b6", "falubaz zielona góra": "#007a33", "unia leszno": "#0055a5",
-    "polonia bydgoszcz": "#d32f2f", "ostrovia ostrów wielkopolski": "#747171", "wilki krosno": "#302e2e", "psż poznań": "#fbc02d",
-    "stal rzeszów": "#5394b9", "orzeł łódź": "#1e88e5", "row rybnik": "#006400", "polonia piła": "#06b606",
-    "kolejarz opole": "#a70606", "landshut devils": "#0d409e", "lokomotiv daugavpils": "#800000", "speedway kraków": "#e0e0e0",
-    "start gniezno": "#111111", "wybrzeże gdańsk": "#0906b9", "unia tarnów": "#0d47a1", "śląsk świętochłowice": "#0055a5",
-    "kolejarz rawicz": "#135e17"
-};
-
-function getCareerClubColor(clubName) {
-    let normalizedClub = (clubName || "").trim().toLowerCase();
-    if (CAREER_CLUB_COLORS[normalizedClub]) return CAREER_CLUB_COLORS[normalizedClub];
-    return "#444444";
-}
-
-function getContrastYIQ(hexcolor){
-    hexcolor = hexcolor.replace("#", "");
-    if (hexcolor.length === 3) hexcolor = hexcolor.split('').map(c => c+c).join('');
-    var r = parseInt(hexcolor.substr(0,2),16);
-    var g = parseInt(hexcolor.substr(2,2),16);
-    var b = parseInt(hexcolor.substr(4,2),16);
-    var yiq = ((r*299)+(g*587)+(b*114))/1000;
-    return (yiq >= 128) ? '#111111' : '#ffffff';
-}
-
-function getCareerLastClubInfo() {
-    if (cState.history && cState.history.length > 0) {
-        const lastEntry = cState.history[cState.history.length - 1];
-        return { club: lastEntry.club, league: lastEntry.league || cState.league };
-    }
-    return { club: cState.club, league: cState.league };
-}
-
-// ==========================================
-// ====== ZAPISYWANIE I WCZYTYWANIE =========
-// ==========================================
-
-function saveCareer() {
-    localStorage.setItem('speedwayCareerSave_v4', JSON.stringify(cState));
-}
-
-function loadCareer() {
-    let saved = localStorage.getItem('speedwayCareerSave_v4');
-    if (saved) {
-        cState = JSON.parse(saved);
-        
-        // --- ZABEZPIECZENIE (Kompatybilność dla starych zapisów) ---
-        if (!cState.attributes) {
-            cState.attributes = { 
-                media: Math.floor(Math.random() * 30) + 40,
-                prof: Math.floor(Math.random() * 40) + 40,
-                injRisk: Math.floor(Math.random() * 30) + 10
-            };
-        }
-        if (cState.season && typeof cState.season.injuryRounds === 'undefined') {
-            cState.season.injuryRounds = 0;
-            cState.season.lastMatches = [];
-        }
-        // -----------------------------------------------------------
-
-        if (cState.season && cState.season.active && !cState.season.fullSchedule) {
-            startNewSeason();
-            appAlert("Zaktualizowano system terminarza ligowego. Twój obecny sezon musiał zostać zresetowany do pierwszej kolejki (Twoje statystyki OVR pozostają bez zmian).", "Aktualizacja gry");
-            return;
-        }
-        
-        document.getElementById('careerSetup').style.display = 'none';
-        document.getElementById('careerMainPanel').style.display = 'flex'; 
-        updateLeftPanelUI();
-        renderTimeline();
-        
-        if (cState.season.active) {
-            renderCareerHub();
-        } else if (cState.club === null && cState.age === 16) {
-            generateAcademyOffers();
-        } else if (cState.contractYears <= 0) {
-            generateTransferWindow();
-        } else {
-            startNewSeason();
-        }
-    } else {
-        appAlert("Brak zapisanego stanu gry!", "Błąd");
-    }
-}
-
-// ==========================================
-// ====== MENU GŁÓWNE KARIERY ===============
-// ==========================================
-
-// ==========================================
-// ====== MENU GŁÓWNE KARIERY ===============
-// ==========================================
-
-async function openCareerMode() {
-    // Sprawdzamy czy użytkownik widział już komunikat o Open Becie
-    if (!localStorage.getItem('speedwayCareerBetaWarningSeen')) {
-        await appAlert("Tryb Kariery (Speedway Legend) wszedł w fazę OPEN BETA! 🚀\n\nJako że gra jest wciąż w fazie testów, możesz natrafić na drobne błędy. Wszelkie problemy oraz sugestie prosimy zgłaszać poprzez formularz 'Zgłoś błąd' w menu głównym gry lub bezpośrednio na naszym serwerze Discord.\n\nBaw się dobrze!", "OPEN BETA");
-        localStorage.setItem('speedwayCareerBetaWarningSeen', 'true');
-    }
-
-    document.getElementById('mainMenuContainer').style.display = 'none';
-    const desktopMenu = document.getElementById('desktopMainMenu');
-    if (desktopMenu) desktopMenu.style.display = 'none';
-    document.getElementById('careerContainer').style.display = 'grid';
-    
-    document.getElementById('careerSetup').style.display = 'block';
-    document.getElementById('careerMainPanel').style.display = 'none';
-    document.getElementById('careerRetirement').style.display = 'none';
-    document.getElementById('timelineHeader').style.display = 'none';
-    document.getElementById('timelineEmpty').style.display = 'block';
-    document.getElementById('timelineList').innerHTML = '';
-
-    const setupDiv = document.getElementById('careerSetup');
-    let hasSave = localStorage.getItem('speedwayCareerSave_v4') !== null;
-    
-    setupDiv.innerHTML = `
-        <h2 class="text-white font-black text-center mb-20" style="font-size: 32px; letter-spacing: 2px;">SPEEDWAY LEGEND</h2>
-        ${hasSave ? `<button onclick="loadCareer()" class="btn-green w-100 mb-15 p-15" style="border-radius:14px; font-size:16px; font-weight:900;">KONTYNUUJ KARIERĘ</button>` : ''}
-        <button onclick="showCareerCreator()" class="btn-yellow w-100 mb-20 p-15" style="border-radius:14px; font-size:16px; font-weight:900;">ROZPOCZNIJ NOWĄ GRĘ</button>
-    `;
-}
-
-function showCareerCreator() {
-    if(localStorage.getItem('speedwayCareerSave_v4') !== null) {
-        if(!confirm("Rozpoczęcie nowej gry nadpisze twój obecny zapis. Czy na pewno?")) return;
-    }
-
-    cState = { 
-        active: true, name: "KOWALSKI", num: 99, nat: "Polska", flagCode: "pl", 
-        age: 15, maxAge: 47, ovr: 40, ovrProgress: 0,
-        club: null, league: null, contractYears: 0,
-        stats: { heats: 0, pts: 0, bon: 0, dmpGold: 0, dmpSilver: 0, dmpBronze: 0, ims: 0 }, history: [],
-        relations: { manager: 50, team: 50, fans: 50 },
-        // NOWE ATRYBUTY:
-        attributes: { 
-            media: Math.floor(Math.random() * 30) + 40, // 40-70 Medialność
-            prof: Math.floor(Math.random() * 40) + 40,  // 40-80 Profesjonalizm
-            injRisk: Math.floor(Math.random() * 30) + 10 // 10-40 Ryzyko kontuzji
-        },
-        season: { active: false, matchIndex: 0, regularSeasonLength: 14, playoffsGenerated: false, finalsGenerated: false, barazGenerated: false, fullSchedule: [], schedule: [], matchResults: [], table: [], heats: 0, pts: 0, bon: 0, trainedThisWeek: false, lastMatches: [], injuryRounds: 0 },
-        leagues: {
-            "PGE Ekstraliga": ["Motor Lublin", "Sparta Wrocław", "Apator Toruń", "Stal Gorzów Wielkopolski", "Włókniarz Częstochowa", "GKM Grudziądz", "Falubaz Zielona Góra", "Unia Leszno"],
-            "Metalkas 2.E": ["Polonia Bydgoszcz", "Ostrovia Ostrów Wielkopolski", "Wilki Krosno", "PSŻ Poznań", "Stal Rzeszów", "Orzeł Łódź", "ROW Rybnik", "Polonia Piła"],
-            "KLŻ": ["Kolejarz Opole", "Landshut Devils", "Lokomotiv Daugavpils", "Speedway Kraków", "Start Gniezno", "Wybrzeże Gdańsk", "Unia Tarnów", "Śląsk Świętochłowice", "Kolejarz Rawicz"]
-        },
-        teamOVRs: {}
-    };
-
-    const flags = [
-        {name: "Polska", code: "pl"}, {name: "Dania", code: "dk"}, {name: "Australia", code: "au"},
-        {name: "W. Brytania", code: "gb"}, {name: "Szwecja", code: "se"}, {name: "Łotwa", code: "lv"},
-        {name: "Czechy", code: "cz"}, {name: "Niemcy", code: "de"}, {name: "Francja", code: "fr"},
-        {name: "Ukraina", code: "ua"}, {name: "Rosja", code: "ru"}, {name: "Chorwacja", code: "hr"},
-        {name: "Włochy", code: "it"}, {name: "USA", code: "us"}, {name: "Węgry", code: "hu"},
-        {name: "N. Zelandia", code: "nz"}, {name: "Słowacja", code: "sk"}, {name: "Słowenia", code: "si"},
-        {name: "Norwegia", code: "no"}, {name: "Finlandia", code: "fi"}
-    ];
-
-    let flagsHtml = flags.map((f, i) => `
-        <div class="flag-card ${i===0?'active':''}" onclick="selectCareerNat('${f.name}', '${f.code}', this)">
-            <img src="https://flagcdn.com/w40/${f.code}.png">
-            <span class="ml-5 text-white font-bold text-xs" style="font-size:9px;">${f.name}</span>
-        </div>
-    `).join('');
-
-    const setupDiv = document.getElementById('careerSetup');
-    
-    setupDiv.innerHTML = `
-        <h3 class="text-white font-black text-center mb-10 text-xl" style="font-size: 28px;">Zbuduj tożsamość</h3>
-        <div class="kevlar-display mx-auto mb-20 mt-15">
-            <div class="kevlar-collar"></div>
-            <div class="kevlar-body">
-                <span id="kevlarNamePreview" class="kevlar-name">KOWALSKI</span>
-                <span id="kevlarNumPreview" class="kevlar-number">99</span>
-            </div>
-        </div>
-        <div class="flex-row gap-10 mb-15">
-            <div class="form-group-clash flex-1 m-0 text-left">
-                <label>NAZWISKO</label>
-                <input type="text" id="careerNameInput" placeholder="Kowalski" maxlength="12" oninput="updateKevlarPreview()" style="background: rgba(0,0,0,0.5);">
-            </div>
-            <div class="form-group-clash m-0 text-left" style="width: 100px;">
-                <label>NR</label>
-                <input type="number" id="careerNumInput" placeholder="99" max="999" min="1" oninput="updateKevlarPreview()" style="background: rgba(0,0,0,0.5);">
-            </div>
-        </div>
-        <div class="form-group-clash text-left m-0 mb-15">
-            <label>NARODOWOŚĆ</label>
-            <div class="flags-grid" style="grid-template-columns: repeat(4, 1fr); max-height: 160px; overflow-y: auto; padding-right:5px;">
-                ${flagsHtml}
-            </div>
-        </div>
-        <button onclick="startCareerAcademy()" class="btn-white-solid w-100 mt-20 p-15">Wejdź w żużlowy świat</button>
-    `;
-}
-
-function exitCareerMode() {
-    window.location.reload(); 
-}
-
-function updateKevlarPreview() {
-    let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase() || "KOWALSKI";
-    let numVal = document.getElementById('careerNumInput').value || "99";
-    document.getElementById('kevlarNamePreview').innerText = nameVal;
-    document.getElementById('kevlarNumPreview').innerText = numVal;
-}
-
-function selectCareerNat(name, code, el) {
-    cState.nat = name; 
-    cState.flagCode = code;
-    document.querySelectorAll('#careerSetup .flag-card').forEach(f => f.classList.remove('active'));
-    el.classList.add('active');
-}
-
-function startCareerAcademy() {
-    let nameVal = document.getElementById('careerNameInput').value.trim().toUpperCase();
-    if(nameVal) cState.name = nameVal;
-    cState.num = document.getElementById('careerNumInput').value || 99;
-    cState.ovr = Math.floor(Math.random() * 21) + 40; 
-    
-    // Inicjalizacja siły drużyn
-    cState.leagues["PGE Ekstraliga"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 75); 
-    cState.leagues["Metalkas 2.E"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 60);  
-    cState.leagues["KLŻ"].forEach(c => cState.teamOVRs[c] = Math.floor(Math.random() * 15) + 45);         
-
-    document.getElementById('careerSetup').style.display = 'none';
-    document.getElementById('careerMainPanel').style.display = 'flex'; 
-    cState.age = 16;
-    saveCareer();
-    updateLeftPanelUI();
-    generateAcademyOffers(); 
-}
-
-function generateAcademyOffers() {
-    const area = document.getElementById('careerActionArea');
-    if (!area) return;
-
-    const academyPools = [
-        {
-            league: "KLŻ",
-            club: cState.leagues["KLŻ"][Math.floor(Math.random() * cState.leagues["KLŻ"].length)],
-            years: 2,
-            type: "academy",
-            label: "Start od podstaw",
-            bonus: "Więcej jazdy w słabszej lidze",
-            risk: "Niższa presja, wolniejszy start"
-        },
-        {
-            league: "Metalkas 2.E",
-            club: cState.leagues["Metalkas 2.E"][Math.floor(Math.random() * cState.leagues["Metalkas 2.E"].length)],
-            years: 2,
-            type: "academy",
-            label: "Rozsądny rozwój",
-            bonus: "Dobry balans między szansami a presją",
-            risk: "Mniej pewnych biegów niż w KLŻ"
-        },
-        {
-            league: "PGE Ekstraliga",
-            club: cState.leagues["PGE Ekstraliga"][Math.floor(Math.random() * cState.leagues["PGE Ekstraliga"].length)],
-            years: 1,
-            type: "academy",
-            label: "Skok do elity",
-            bonus: "Szybki rozwój przy dobrej formie",
-            risk: "Duże ryzyko ławki i słabszych wyników"
-        }
-    ];
-
-    cState.pendingOffers = academyPools;
-
-    area.innerHTML = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Akademia startowa</h3>
-        <p class="text-xs text-dim mb-15">Wybierz ścieżkę kariery. Miejsce startu wpłynie na tempo rozwoju i liczbę okazji do jazdy.</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="signContract(0)">
-                <span class="copero-card-title">${academyPools[0].label}</span>
-                <span class="copero-card-club">${academyPools[0].club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[academyPools[0].league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${academyPools[0].league}<br><b style="color:var(--accent)">${academyPools[0].bonus}</b><br><span class="text-dim">${academyPools[0].risk}</span></span>
-            </div>
-            <div class="copero-card" onclick="signContract(1)">
-                <span class="copero-card-title">${academyPools[1].label}</span>
-                <span class="copero-card-club">${academyPools[1].club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[academyPools[1].league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${academyPools[1].league}<br><b style="color:var(--accent)">${academyPools[1].bonus}</b><br><span class="text-dim">${academyPools[1].risk}</span></span>
-            </div>
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; max-width: 250px; margin: 0 auto;" onclick="signContract(2)">
-                <span class="copero-card-title">${academyPools[2].label}</span>
-                <span class="copero-card-club">${academyPools[2].club}</span>
-                <div class="copero-card-img">${CAREER_CONSTANTS[academyPools[2].league].logo}</div>
-                <span class="copero-card-bot" style="margin-top:5px;">${academyPools[2].league}<br><b style="color:var(--accent)">${academyPools[2].bonus}</b><br><span class="text-dim">${academyPools[2].risk}</span></span>
-            </div>
-        </div>
-    `;
-}
-
-// ==========================================
-// ====== INTERFEJS GRACZA (LEFT PANEL) =====
-// ==========================================
-
-function updateLeftPanelUI() {
-    const progBar = document.getElementById('cOvrProgress');
-    if (progBar) progBar.style.width = (cState.ovrProgress || 0) + '%';
-
-    document.getElementById('cOvr').innerText = cState.ovr;
-    document.getElementById('cFlag').src = `https://flagcdn.com/w40/${cState.flagCode}.png`;
-    
-    let lastName = cState.name;
-    if (lastName.length > 12) lastName = lastName.substring(0, 10) + "...";
-    document.getElementById('cNumLabel').innerText = cState.num; 
-    
-    let contractText = cState.contractYears > 0 ? `Kontrakt: ${cState.contractYears} ${cState.contractYears === 1 ? 'rok' : 'lata'}` : "Brak kontraktu";
-    document.getElementById('cCurrentClub').innerHTML = `${cState.club ? cState.club : "Wolny agent"}<br><span style="font-size:10px; color:var(--text-dim); font-weight:bold; text-transform:none; letter-spacing:1px;">${contractText}</span>`;
-    
-    document.getElementById('cAge').innerText = cState.age;
-
-    let totalHeats = cState.stats.heats + (cState.season.active ? cState.season.heats : 0);
-    let totalPts = cState.stats.pts + (cState.season.active ? cState.season.pts : 0);
-    let totalBon = cState.stats.bon + (cState.season.active ? cState.season.bon : 0);
-
-    document.getElementById('cHeats').innerText = totalHeats;
-    document.getElementById('cPts').innerText = `${totalPts}`; 
-    let avg = totalHeats > 0 ? ((totalPts + totalBon) / totalHeats).toFixed(2) : "0.00";
-    document.getElementById('cAvg').innerText = avg;
-
-    const tBox = document.getElementById('cTrophiesDisplay');
-    // USUNIĘTO cState.stats.ims
-    let totalMedals = cState.stats.dmpGold + cState.stats.dmpSilver + cState.stats.dmpBronze;
-    
-    if (totalMedals === 0) {
-        tBox.innerText = "🏆 BRAK TROFEÓW";
-    } else {
-        let tHtml = "";
-        for(let i=0; i<cState.stats.dmpGold; i++) tHtml += "🥇 ";
-        for(let i=0; i<cState.stats.dmpSilver; i++) tHtml += "🥈 ";
-        for(let i=0; i<cState.stats.dmpBronze; i++) tHtml += "🥉 ";
-        tBox.innerHTML = tHtml;
-    }
-}
-
-function drawRelationBar(name, value, color) {
-    return `
-        <div style="margin-bottom: 8px;">
-            <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:bold; color:var(--text-dim); margin-bottom:2px;">
-                <span>${name}</span><span>${value}%</span>
-            </div>
-            <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
-                <div style="width:${value}%; height:100%; background:${color}; transition:0.3s;"></div>
-            </div>
-        </div>
-    `;
-}
-
-// ==========================================
-// ====== KOŁO FORTUNY (EVENTY) =============
-// ==========================================
-
-function resolveRandomEvent(succOVR, failOVR, chance, isMidSeason = false) {
-    const overlay = document.getElementById('careerEventOverlay');
-    const title = document.getElementById('eventAnimTitle');
-    const wheel = document.getElementById('careerWheelInner');
-
-    if (!overlay || !title || !wheel) {
-        let isSuccess = Math.random() < chance;
-        if(isMidSeason) {
-            cState.ovr = Math.max(30, Math.min(99, cState.ovr + (isSuccess ? succOVR : failOVR)));
-            saveCareer(); updateLeftPanelUI(); renderCareerHub();
-        } else {
-            cState.ovr = Math.max(30, Math.min(99, cState.ovr + (isSuccess ? succOVR : failOVR)));
-            startNewSeason();
-        }
-        return;
-    }
-    
-    title.innerText = "LOSOWANIE...";
-    title.className = "text-white font-black uppercase mb-10";
-    
-    const pct = Math.round(chance * 100);
-    wheel.style.background = `conic-gradient(#00ff66 0% ${pct}%, #ff3333 ${pct}% 100%)`;
-    wheel.style.transition = 'none';
-    wheel.style.transform = `rotate(0deg)`;
-    
-    overlay.style.display = 'flex'; 
-    setTimeout(() => overlay.style.opacity = '1', 10);
-    
-    let isSuccess = Math.random() < chance;
-
-    setTimeout(() => {
-        let targetAngle = 0;
-        if (isSuccess) {
-            let zoneSizeDeg = pct * 3.6;
-            let randomTheta = 5 + Math.random() * (zoneSizeDeg - 10);
-            targetAngle = 360 - randomTheta;
-        } else {
-            let greenZoneSizeDeg = pct * 3.6;
-            let randomTheta = greenZoneSizeDeg + 5 + Math.random() * (360 - greenZoneSizeDeg - 10);
-            targetAngle = 360 - randomTheta;
-        }
-        let totalRotation = (5 * 360) + targetAngle;
-
-        wheel.style.transition = 'transform 3s cubic-bezier(0.1, 0.8, 0.2, 1)';
-        wheel.style.transform = `rotate(${totalRotation}deg)`;
-        playSound('flip');
-    }, 100);
-
-    setTimeout(() => {
-        if(isSuccess) {
-            title.innerText = "SUKCES! 🟩";
-            title.className = "text-green font-black uppercase mb-10 event-success-text";
-            playSound('win');
-        } else {
-            title.innerText = "PORAŻKA! 🟥";
-            title.className = "text-red font-black uppercase mb-10 event-fail-text";
-            playSound('error');
-        }
-        
-        setTimeout(() => {
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-            
-            let finalOvrChange = isSuccess ? succOVR : failOVR;
-            cState.ovr = Math.max(30, Math.min(99, cState.ovr + finalOvrChange));
-            saveCareer();
-            updateLeftPanelUI();
-            
-            if(isMidSeason) {
-                showToast(`Wydarzenie zakończone. Zmiana OVR: ${finalOvrChange}`, "normal");
-                renderCareerHub();
-            } else {
-                startNewSeason();
-            }
-        }, 2000);
-        
-    }, 3200); 
-}
-
-function showMidSeasonEventWindow() {
-    const area = document.getElementById('careerActionArea');
-    const events = window.CAREER_CUSTOM_EVENTS || [];
-    
-    if (!events.length) {
-        area.innerHTML = `<div class="text-center text-dim font-bold p-15">Brak eventów do wyświetlenia.</div>`;
-        return;
-    }
-
-    let ev = events[Math.floor(Math.random() * events.length)];
-    let chanceInfo = ev.opt1.chance ? ` <span style="color:var(--accent); font-size:10px;"><br>(${ev.opt1.chance}% szansy na +OVR)</span>` : '';
-
-    area.innerHTML = `
-        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wydarzenie!</h3>
-        ${ev.dilemma ? `<div class="text-xs font-black uppercase tracking-wide text-red mb-10">Dylemat</div>` : ''}
-        <h4 class="text-white font-black m-0 mb-5">${ev.title}</h4>
-        <p class="text-xs text-dim mb-15">${ev.desc}</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="${ev.opt1.fn}">
-                <span class="copero-card-club mb-5" style="line-height:1.2;">${ev.opt1.title}${chanceInfo}</span>
-                <div class="copero-card-img" style="border-radius:12px;">${ev.img}</div>
-                <span class="text-green font-bold text-xs">${ev.opt1.bot1}</span>
-                <span class="text-red font-bold text-xs">${ev.opt1.bot2}</span>
-            </div>
-            <div class="copero-card stay-card" onclick="${ev.opt2.fn}">
-                <span class="copero-card-club mb-10">${ev.opt2.title}</span>
-                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">🤔</div>
-                <span class="text-white font-bold text-xs">${ev.opt2.bot1}</span>
-                <span class="text-dim font-bold text-xs">${ev.opt2.bot2}</span>
-            </div>
-        </div>
-    `;
-}
-
-function resolveMidSeasonEventWithWheel(succOVR, failOVR, chance, relT, relM, relF = 0, prof = 0, media = 0, injRisk = 0) {
-    cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
-    cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
-    cState.relations.fans = Math.max(0, Math.min(100, cState.relations.fans + relF));
-
-    cState.attributes.prof = Math.max(0, Math.min(100, cState.attributes.prof + prof));
-    cState.attributes.media = Math.max(0, Math.min(100, cState.attributes.media + media));
-    cState.attributes.injRisk = Math.max(0, Math.min(100, cState.attributes.injRisk + injRisk));
-    
-    resolveRandomEvent(succOVR, failOVR, chance, true);
-}
-
-function safeMidSeasonEvent(relT, relM, relF = 0, prof = 0, media = 0, injRisk = 0) {
-    cState.relations.team = Math.max(0, Math.min(100, cState.relations.team + relT));
-    cState.relations.manager = Math.max(0, Math.min(100, cState.relations.manager + relM));
-    cState.relations.fans = Math.max(0, Math.min(100, cState.relations.fans + relF));
-
-    cState.attributes.prof = Math.max(0, Math.min(100, cState.attributes.prof + prof));
-    cState.attributes.media = Math.max(0, Math.min(100, cState.attributes.media + media));
-    cState.attributes.injRisk = Math.max(0, Math.min(100, cState.attributes.injRisk + injRisk));
-    
-    saveCareer();
-    updateLeftPanelUI();
-    showToast("Zdarzenie zakończone. Zaktualizowano atrybuty i relacje.", "normal");
-    renderCareerHub();
-}
-
-
-function resolveMidSeasonEvent() {
-    showMidSeasonEventWindow();
-}
-
-function triggerMatchOrEvent() {
-    const s = cState.season;
-    if (!s || !s.active) {
-        renderCareerHub();
-        return;
-    }
-
-    const round = s.matchIndex + 1;
-    const customEventRound = round === 3 || round === 7 || round === 11;
-    const eventAlreadyShown = s.eventRoundTriggered === round;
-    const randomEvent = Math.random() < 0.22;
-
-    if (!eventAlreadyShown && (customEventRound || randomEvent)) {
-        s.eventRoundTriggered = round;
-        saveCareer();
-        showMidSeasonEventWindow();
-        showToast("W trakcie sezonu pojawiło się dodatkowe wydarzenie.", "normal");
-        return;
-    }
-
-    playSingleMatch();
-}
-
-
-// ==========================================
-// ====== OBSŁUGA KALENDARZA LIGOWEGO =======
-// ==========================================
-
-function getMatchDateString(round, leagueName) {
-    let baseDate = new Date(2026, 3, 3); // 3 Kwietnia 2026 (Piątek)
-    let weeksToAdd = round - 1;
-    let dayOffset = 0; 
-    
-    // Pseudolosowość na podstawie numeru kolejki (50/50 na dzień 1 lub dzień 2)
-    let isDay1 = (round * 7 + 3) % 2 === 0;
-
-    if (leagueName === "PGE Ekstraliga") {
-        dayOffset = isDay1 ? 0 : 2; // Pt lub Nd
-    } else {
-        dayOffset = isDay1 ? 1 : 2; // Sb lub Nd (dla M2E i KLŻ)
-    } 
-    
-    let d = new Date(baseDate.getTime() + (weeksToAdd * 7 + dayOffset) * 86400000);
-    let dayName = d.getDay() === 5 ? ' (Pt)' : d.getDay() === 6 ? ' (Sb)' : ' (Nd)';
-    return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' }) + dayName;
-}
-
-function generateFullSchedule(teamsArray) {
-    let teams = [...teamsArray];
-    let n = teams.length;
-    
-    if (n % 2 !== 0) {
-        teams.push("PAUZA");
-        n++;
-    }
-
-    let schedule = [];
-    
-    // Metoda wielokąta (Berger tables) - optymalne rozłożenie Dom/Wyjazd
-    for (let round = 0; round < n - 1; round++) {
-        let roundMatches = [];
-        for (let i = 0; i < n / 2; i++) {
-            let home = teams[i];
-            let away = teams[n - 1 - i];
-
-            // Drużyna indeks 0 musi zamieniać strony toru, reszta rotuje
-            if (i === 0) {
-                if (round % 2 !== 0) { let t = home; home = away; away = t; }
-            } else {
-                if (round % 2 === 0) { let t = home; home = away; away = t; }
-            }
-
-            if (home !== "PAUZA" && away !== "PAUZA") {
-                roundMatches.push({ home, away, type: "Zasadnicza" });
-            }
-        }
-        schedule.push(roundMatches);
-        // Rotacja: drugi element na koniec
-        teams.splice(1, 0, teams.pop());
-    }
-
-    // Runda rewanżowa (druga połowa sezonu)
-    let secondHalf = [];
-    for (let round = 0; round < n - 1; round++) {
-        let roundMatches = schedule[round].map(m => ({
-            home: m.away,
-            away: m.home,
-            type: "Zasadnicza (Rewanż)"
-        }));
-        secondHalf.push(roundMatches);
-    }
-
-    return schedule.concat(secondHalf);
-}
-
-function updateTableWithMatch(table, homeClub, awayClub, homeScore, awayScore, fullSchedule, currentRoundIdx) {
-    let hRow = table.find(t => t.name === homeClub);
-    let aRow = table.find(t => t.name === awayClub);
-    if(!hRow || !aRow) return;
-
-    hRow.m = (hRow.m || 0) + 1;
-    hRow.matchesPlayed = (hRow.matchesPlayed || 0) + 1;
-    aRow.m = (aRow.m || 0) + 1;
-    aRow.matchesPlayed = (aRow.matchesPlayed || 0) + 1;
-    
-    let hDiff = homeScore - awayScore;
-    hRow.diff = (hRow.diff || 0) + hDiff;
-    aRow.diff = (aRow.diff || 0) - hDiff;
-    
-    if (homeScore > awayScore) {
-        hRow.w = (hRow.w || 0) + 1; hRow.pts = (hRow.pts || 0) + 2; aRow.p = (aRow.p || 0) + 1;
-    } else if (homeScore < awayScore) {
-        aRow.w = (aRow.w || 0) + 1; aRow.pts = (aRow.pts || 0) + 2; hRow.p = (hRow.p || 0) + 1;
-    } else {
-        hRow.r = (hRow.r || 0) + 1; hRow.pts = (hRow.pts || 0) + 1;
-        aRow.r = (aRow.r || 0) + 1; aRow.pts = (aRow.pts || 0) + 1;
-    }
-    
-    // Szukanie pierwszego meczu żeby przydzielić bonus za dwumecz
-    let firstLegMatch = null;
-    for (let i = 0; i < currentRoundIdx; i++) {
-        let prevRound = fullSchedule[i];
-        if (!prevRound) continue;
-        let match = prevRound.find(m => (m.home === awayClub && m.away === homeClub) || (m.home === homeClub && m.away === awayClub));
-        if (match && match.homeScore !== undefined) {
-            firstLegMatch = match; 
-            break;
-        }
-    }
-
-    if (firstLegMatch) {
-        let agg1 = homeClub === firstLegMatch.home ? firstLegMatch.homeScore : firstLegMatch.awayScore;
-        let agg2 = awayClub === firstLegMatch.home ? firstLegMatch.homeScore : firstLegMatch.awayScore;
-        
-        let aggHome = homeScore + agg1;
-        let aggAway = awayScore + agg2;
-        
-        if (aggHome > aggAway) {
-            hRow.b = (hRow.b || 0) + 1; hRow.pts = (hRow.pts || 0) + 1;
-        } else if (aggAway > aggHome) {
-            aRow.b = (aRow.b || 0) + 1; aRow.pts = (aRow.pts || 0) + 1;
-        }
-    }
-}
-
-function startNewSeason() {
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-
-    let fullSchedule = generateFullSchedule(cState.leagues[playingLeague]);
-    let regularLength = fullSchedule.length;
-    
-    let playerSchedule = [];
-    fullSchedule.forEach((roundMatches, rIdx) => {
-        let myMatch = roundMatches.find(m => m.home === playingClub || m.away === playingClub);
-        if (myMatch) {
-            let isHome = myMatch.home === playingClub;
-            playerSchedule.push({
-                opp: isHome ? myMatch.away : myMatch.home,
-                isHome: isHome,
-                type: "Zasadnicza",
-                leg: rIdx < (fullSchedule.length / 2) ? 1 : 2
-            });
-        } else {
-            playerSchedule.push({
-                opp: "PAUZA",
-                isHome: true,
-                type: "Zasadnicza",
-                leg: rIdx < (fullSchedule.length / 2) ? 1 : 2
-            });
-        }
-    });
-
-    cState.season = {
-        active: true,
-        matchIndex: 0,
-        regularSeasonLength: regularLength,
-        playoffsGenerated: false,
-        finalsGenerated: false,
-        barazGenerated: false,
-        fullSchedule: fullSchedule,
-        schedule: playerSchedule,
-        matchResults: [],
-        table: generateSeasonTable(playingLeague, playingClub, 0, 0),
-        heats: 0, pts: 0, bon: 0,
-        trainedThisWeek: false,
-        eventRoundTriggered: 0,
-        currentMatchScore: { me: 0, opp: 0 }
-    };
-    
-    cState.relations.manager = Math.max(10, cState.relations.manager - 10);
-    cState.relations.team = Math.max(10, cState.relations.team - 5);
-    
-    saveCareer();
-    renderCareerHub();
-}
-
-function simulateBotMatchesForCurrentRound(playerMatchScore, opponentMatchScore, isPlayerPauza) {
-    let s = cState.season;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-
-    if (s.matchIndex < s.regularSeasonLength) {
-        let roundIdx = s.matchIndex;
-        let roundMatches = s.fullSchedule[roundIdx];
-        
-        if (roundMatches) {
-            roundMatches.forEach(match => {
-                let homeClub = match.home;
-                let awayClub = match.away;
-                
-                if (homeClub === playingClub || awayClub === playingClub) {
-                    if (!isPlayerPauza) {
-                        let homeScore = homeClub === playingClub ? playerMatchScore : opponentMatchScore;
-                        let awayScore = awayClub === playingClub ? playerMatchScore : opponentMatchScore;
-                        
-                        match.homeScore = homeScore;
-                        match.awayScore = awayScore;
-                        
-                        updateTableWithMatch(s.table, homeClub, awayClub, homeScore, awayScore, s.fullSchedule, roundIdx);
-                    }
-                } else {
-                    let homePower = cState.teamOVRs[homeClub] || 50;
-                    let awayPower = cState.teamOVRs[awayClub] || 50;
-                    
-                    homePower += 8; // Atut własnego toru
-                    
-                    let advantage = (homePower - awayPower) / 30 + (Math.random() * 0.35 - 0.175);
-                    advantage = Math.max(-1.1, Math.min(1.1, advantage));
-                    
-                    let homeScore = Math.round(45 + advantage * 14);
-                    homeScore = Math.max(0, Math.min(90, homeScore));
-                    let awayScore = 90 - homeScore;
-                    
-                    if (Math.random() < 0.06) {
-                        let cut = Math.random() < 0.5 ? 5 : 1;
-                        if (homeScore >= awayScore) homeScore = Math.max(0, homeScore - cut);
-                        else awayScore = Math.max(0, awayScore - cut);
-                    }
-                    
-                    match.homeScore = homeScore;
-                    match.awayScore = awayScore;
-                    
-                    updateTableWithMatch(s.table, homeClub, awayClub, homeScore, awayScore, s.fullSchedule, roundIdx);
-                }
-            });
-            
-            s.table.sort((a,b) => {
-                if ((b.pts || 0) !== (a.pts || 0)) return (b.pts || 0) - (a.pts || 0);
-                if ((b.b || 0) !== (a.b || 0)) return (b.b || 0) - (a.b || 0);
-                return (b.diff || 0) - (a.diff || 0);
-            }).forEach((t, i) => t.pos = i + 1);
-        }
-    }
-}
-
-
-window.skipPauseRound = function() {
-    let s = cState.season;
-    
-    simulateBotMatchesForCurrentRound(0, 0, true);
-    
-    s.matchResults.push("-");
-    s.currentMatchScore = { me: 0, opp: 0 };
-    s.matchIndex += 1;
-    s.trainedThisWeek = false;
-    
-    saveCareer();
-    renderCareerHub();
-}
-
-function renderCareerHub() {
-    const area = document.getElementById('careerActionArea');
-    let s = cState.season;
-    if (!s.active) { startNewSeason(); return; }
-
-    renderCareerSeasonTable();
-    renderTimeline();
-
-    let totalMatches = s.schedule.length;
-    let currentRound = s.matchIndex + 1;
-    let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : "0.00";
-    
-    let recentHeats = 0; let recentPts = 0;
-    if (s.lastMatches && s.lastMatches.length > 0) {
-        s.lastMatches.forEach(m => { recentHeats += m.h; recentPts += m.p + m.b; });
-    }
-    let currentForm = recentHeats > 0 ? (recentPts / recentHeats).toFixed(2) : avg;
-    if (currentForm === "0.00" && s.matchIndex === 0) currentForm = (cState.ovr / 40).toFixed(2); 
-
-    if (s.matchIndex === s.regularSeasonLength && !s.playoffsGenerated) { generatePlayoffs(); return; }
-    if (s.matchIndex === s.regularSeasonLength + 2 && !s.finalsGenerated) { generateFinals(); return; }
-    if (s.matchIndex === s.regularSeasonLength + 4 && !s.barazGenerated) { generateBaraz(); return; }
-
-    if (s.matchIndex >= totalMatches && s.playoffsGenerated && s.finalsGenerated && s.barazGenerated) {
-        area.innerHTML = `
-            <div class="copero-card stay-card" style="grid-column: 1 / -1; width: 100%; margin: 0 auto; background: rgba(241,196,15,0.1); border-color: var(--accent);" onclick="endOfSeason()">
-                <span class="copero-card-title text-accent">SEZON ZAKOŃCZONY</span>
-                <span class="copero-card-club">PODSUMUJ WYNIKI</span>
-                <div class="copero-card-img text-accent" style="background:transparent; border:none; font-size:40px;">📊</div>
-            </div>
-        `;
-        return;
-    }
-
-    if (s.injuryRounds > 0) {
-        area.innerHTML = `
-            <div style="background:rgba(255,51,51,0.1); border-radius:16px; padding:20px; border:1px solid var(--red-neon); text-align:center;">
-                <div style="font-size:40px; margin-bottom:10px;">🚑</div>
-                <div style="font-size:20px; font-weight:900; margin-bottom:10px; color: var(--red-neon);">KONTUZJA</div>
-                <p style="font-size:12px; color:var(--text-dim); margin-bottom:15px;">Przechodzisz rehabilitację. Opuścisz jeszcze ${s.injuryRounds} mecz(e).</p>
-                <button onclick="skipInjuryRound()" class="hub-action-btn" style="padding:12px 30px; border-radius:10px; background:var(--red-neon); color:#fff; font-weight:900; border:none; text-transform:uppercase; font-size:12px;">Kuruj się (Pomiń mecz)</button>
-            </div>
-        `;
-        return;
-    }
-
-    let nextMatch = s.schedule[s.matchIndex];
-    if (nextMatch.opp === "PAUZA") {
-        area.innerHTML = `
-            <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
-                <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
-                <div style="font-size:20px; font-weight:900; margin-bottom:15px; color: var(--accent);">PAUZA W TEJ KOLEJCE</div>
-                <button onclick="skipPauseRound()" class="hub-action-btn" style="padding:12px 30px; border-radius:10px; background:var(--accent); color:#000; font-weight:900; border:none; text-transform:uppercase; font-size:12px;">Pomiń Kolejkę</button>
-            </div>
-        `;
-        return;
-    }
-
-    if (s.nextMatchDetermined !== s.matchIndex) {
-        let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-        let lData = CAREER_CONSTANTS[playingLeague];
-        
-        let benched = false;
-        let formNum = parseFloat(currentForm);
-        
-        if (formNum >= 1.70) benched = false; 
-        else if (formNum < 1.20 && cState.relations.manager < 50) benched = Math.random() < 0.6; 
-        else if (cState.relations.manager < 30 && cState.attributes.prof < 40) benched = Math.random() < 0.8; 
-        else if (formNum < 0.8) benched = true; 
-        
-        let moraleMod = 0;
-        if (cState.relations.team > 80) moraleMod = 4;
-        if (cState.relations.team < 30) moraleMod = -4;
-
-        let trackComfort = nextMatch.isHome ? 8 : -10;
-        let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
-        if (benched) matchEffOvr -= 15; 
-        
-        let ratio = matchEffOvr / lData.diff;
-        let heatsInMatch = 0;
-        
-        if (benched) heatsInMatch = Math.random() < 0.3 ? 1 : 0;
-        else if (cState.age <= 21) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
-        else if (ratio > 1.15 || formNum > 2.0) heatsInMatch = Math.floor(Math.random() * 2) + 5; 
-        else if (ratio > 0.95 || formNum > 1.6) heatsInMatch = Math.floor(Math.random() * 2) + 4; 
-        else if (ratio > 0.80) heatsInMatch = Math.floor(Math.random() * 2) + 3; 
-        else heatsInMatch = Math.floor(Math.random() * 2) + 2; 
-
-        if (cState.relations.manager > 80 && ratio > 1.0 && Math.random() < 0.5) heatsInMatch += 1;
-        if (heatsInMatch > 7) heatsInMatch = 7;
-
-        s.nextMatchBenched = benched;
-        s.nextMatchHeats = heatsInMatch;
-        s.nextMatchDetermined = s.matchIndex;
-        saveCareer();
-    }
-    
-    let isHome = nextMatch.isHome;
-    let oppColor = getCareerClubColor(nextMatch.opp);
-    
-    let trainBtnOpacity = s.trainedThisWeek ? "0.3" : "1";
-    let trainBtnCursor = s.trainedThisWeek ? "not-allowed" : "pointer";
-    let trainBtnClick = s.trainedThisWeek ? "" : "startTrainingQTE()";
-
-    area.innerHTML = `
-        <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-            <div style="flex:1; min-width: 150px; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
-                <div style="font-size:10px; color:var(--text-dim); font-weight:900; margin-bottom:10px;">RELACJE</div>
-                ${drawRelationBar("Menedżer", cState.relations.manager, "#3498db")}
-                ${drawRelationBar("Drużyna", cState.relations.team, "#2ecc71")}
-                ${drawRelationBar("Kibice", cState.relations.fans, "#e74c3c")}
-            </div>
-            
-            <div style="flex:1; min-width: 150px; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05);">
-                <div style="font-size:10px; color:var(--text-dim); font-weight:900; margin-bottom:10px;">CECHY ZAWODNIKA</div>
-                ${drawRelationBar("Profesjonalizm", cState.attributes.prof, "#9b59b6")}
-                ${drawRelationBar("Medialność", cState.attributes.media, "#f1c40f")}
-                ${drawRelationBar("Podatność na urazy", cState.attributes.injRisk, "#e67e22")}
-            </div>
-
-            <div style="flex:1; min-width: 100%; background:rgba(0,0,0,0.4); border-radius:12px; padding:15px; border:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-around; align-items:center;">
-                <div style="text-align:center;">
-                    <div style="font-size:10px; color:var(--text-dim); font-weight:900;">ŚR. SEZONU</div>
-                    <div style="font-size:26px; font-weight:900; color:#fff;">${avg}</div>
-                </div>
-                <div style="width:1px; height:40px; background:rgba(255,255,255,0.1);"></div>
-                <div style="text-align:center;">
-                    <div style="font-size:10px; color:var(--text-dim); font-weight:900;">AKTUALNA FORMA</div>
-                    <div style="font-size:26px; font-weight:900; color:${parseFloat(currentForm) > 1.8 ? 'var(--green-neon)' : (parseFloat(currentForm) < 1.2 ? 'var(--red-neon)' : 'var(--accent)')};">${currentForm}</div>
-                </div>
-            </div>
-        </div>
-
-        <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:20px; border:1px solid rgba(255,255,255,0.1); text-align:center; position:relative;">
-            <button onclick="showCareerCalendar()" class="icon-btn-small" style="position:absolute; top:15px; right:15px;" title="Kalendarz">📅</button>
-            <div style="font-size:10px; font-weight:900; color:var(--accent); text-transform:uppercase; margin-bottom:5px;">Faza: ${nextMatch.type}</div>
-            <div style="font-size:12px; font-weight:900; color:var(--text-dim); text-transform:uppercase; margin-bottom:5px;">Mecz ${currentRound} z ${totalMatches}</div>
-            <div style="font-size:20px; font-weight:900; margin-bottom:10px;">vs <span style="color:${oppColor};">${nextMatch.opp}</span> <span style="font-size:12px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; padding:2px 6px; border-radius:4px;">${isHome?'DOM':'WYJAZD'}</span></div>
-            
-            <div style="font-size:11px; font-weight:900; margin-bottom: 20px; padding: 6px 12px; border: 1px dashed ${s.nextMatchBenched ? 'var(--red-neon)' : 'var(--green-neon)'}; border-radius: 8px; display: inline-block; color: ${s.nextMatchBenched ? 'var(--red-neon)' : 'var(--green-neon)'}; text-transform: uppercase;">
-                ${s.nextMatchBenched ? '❌ ODSUNIĘTY OD SKŁADU LUB REZERWA' : `✅ W PRZEWIDYWANYM SKŁADZIE`}
-            </div>
-
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button onclick="${trainBtnClick}" class="hub-action-btn" style="opacity:${trainBtnOpacity}; cursor:${trainBtnCursor}; flex:1; padding:12px; border-radius:10px; background:rgba(52, 152, 219, 0.2); color:#3498db; font-weight:900; border:1px solid #3498db; text-transform:uppercase; font-size:12px;">🏋️ Trening</button>
-                <button onclick="triggerMatchOrEvent()" class="hub-action-btn" style="flex:2; padding:12px; border-radius:10px; background:var(--accent); color:#000; font-weight:900; border:none; text-transform:uppercase; font-size:12px; box-shadow: 0 5px 15px rgba(241,196,15,0.3);">🏁 Jedź Mecz</button>
-            </div>
-        </div>
-    `;
-}
-
-// Obsługa pomijania meczu z powodu kontuzji
-window.skipInjuryRound = function() {
-    let s = cState.season;
-    s.injuryRounds--;
-    simulateBotMatchesForCurrentRound(0, 0, true);
-    s.matchResults.push("🚑");
-    s.currentMatchScore = { me: 0, opp: 0 };
-    s.matchIndex += 1;
-    s.trainedThisWeek = false;
-    saveCareer();
-    renderCareerHub();
-}
-
-function renderCareerSeasonTable() {
-    const tableBody = document.getElementById('careerSeasonTableBody');
-    const meta = document.getElementById('careerSeasonMeta');
-    if (!tableBody || !meta) return;
-
-    const s = cState.season;
-    const playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-
-    if (!s || !s.active || !s.table || s.table.length === 0) {
-        meta.innerText = 'Brak aktywnego sezonu';
-        tableBody.innerHTML = '<div class="text-dim text-xs font-bold">Tabela pojawi się po rozpoczęciu sezonu.</div>';
-        return;
-    }
-
-    const totalMatches = s.schedule.length;
-    const currentRound = Math.min(s.matchIndex + 1, totalMatches);
-    const myRow = s.table.find(t => t.isMe);
-    const myPos = myRow ? myRow.pos : '-';
-    meta.innerText = `Runda ${currentRound}/${totalMatches} | Twoja pozycja: ${myPos}`;
-
-    tableBody.innerHTML = `
-        <div class="career-season-row" style="font-size:10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 900; background: transparent; border: none; padding: 0 12px 4px 12px;">
-            <div class="career-season-col-pos">#</div>
-            <div class="career-season-col-name">Zespół</div>
-            <div class="career-season-col-matches">M</div>
-            <div class="career-season-col-points">B</div>
-            <div class="career-season-col-points">W</div>
-            <div class="career-season-col-points">R</div>
-            <div class="career-season-col-points">P</div>
-            <div class="career-season-col-points">+/-</div>
-            <div class="career-season-col-points">PKT</div>
-        </div>
-    `;
-
-    s.table.forEach((row) => {
-        const clubColor = getCareerClubColor(row.name);
-        const isPlayer = row.isMe;
-        tableBody.innerHTML += `
-            <div class="career-season-row ${isPlayer ? 'active' : ''}">
-                <div class="career-season-col-pos" style="color:${row.pos === 1 ? '#f1c40f' : row.pos >= s.table.length - 1 ? '#ff3333' : '#fff'};">${row.pos}</div>
-                <div class="career-season-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayer ? '#fff' : '#d8d8d8'};">${row.name}</div>
-                <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matchesPlayed || 0}</div>
-                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.b || 0}</div>
-                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.w || 0}</div>
-                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.r || 0}</div>
-                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.p || 0}</div>
-                <div class="career-season-col-points" style="color: ${((row.diff || 0) >= 0) ? 'var(--green-neon)' : 'var(--red-neon)'}; font-weight: 900;">${(row.diff || 0) >= 0 ? '+' : ''}${row.diff || 0}</div>
-                <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.pts}</div>
-            </div>
-        `;
-    });
-}
-
-// ==========================================
-// ====== LOGIKA FAZY PUCHAROWEJ (PLAY-OFF) =
-// ==========================================
-
-function updatePlayerScheduleFromFull(roundIdx) {
-    let s = cState.season;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-    let roundMatches = s.fullSchedule[roundIdx];
-    
-    if (!roundMatches) return;
-
-    let myMatch = roundMatches.find(m => m.home === playingClub || m.away === playingClub);
-    if (myMatch) {
-        let isHome = myMatch.home === playingClub;
-        s.schedule[roundIdx] = {
-            opp: isHome ? myMatch.away : myMatch.home,
-            isHome: isHome,
-            type: myMatch.type,
-            leg: myMatch.type.includes("Rewanż") || myMatch.type.includes("Rew.") ? 2 : 1
-        };
-    } else {
-        s.schedule[roundIdx] = { opp: "PAUZA", isHome: true, type: "PAUZA", leg: 1 };
-    }
-}
-
-function getAggWinner(leg1, leg2, highSeedName, lowSeedName) {
-    let highScore = 0; let lowScore = 0;
-    if (leg1 && leg1.homeScore !== undefined) {
-        lowScore += leg1.homeScore;
-        highScore += leg1.awayScore;
-    }
-    if (leg2 && leg2.homeScore !== undefined) {
-        highScore += leg2.homeScore;
-        lowScore += leg2.awayScore;
-    }
-    if (highScore > lowScore) return highSeedName;
-    if (lowScore > highScore) return lowSeedName;
-    return highSeedName; // W żużlu remis w dwumeczu wygrywa drużyna wyżej po rundzie zasadniczej
-}
-
-function generatePlayoffs() {
-    let s = cState.season;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let table = s.table; 
-    
-    let round1 = [];
-    let round2 = [];
-
-    // TOP 4: 1. vs 4. oraz 2. vs 3. (Wyżej w tabeli jadą pierwszy mecz na wyjeździe!)
-    let t1 = table[0].name, t2 = table[1].name, t3 = table[2].name, t4 = table[3].name;
-    round1.push({home: t4, away: t1, type: "Półfinał"});
-    round1.push({home: t3, away: t2, type: "Półfinał"});
-    round2.push({home: t1, away: t4, type: "Półfinał (Rewanż)"});
-    round2.push({home: t2, away: t3, type: "Półfinał (Rewanż)"});
-
-    if (playingLeague !== "KLŻ") {
-        // BOTTOM 4: 5. vs 8. oraz 6. vs 7. (Wyżej w tabeli na wyjeździe!)
-        let t5 = table[4].name, t6 = table[5].name, t7 = table[6].name, t8 = table[7].name;
-        round1.push({home: t8, away: t5, type: "O utrzymanie (Mecz 1)"});
-        round1.push({home: t7, away: t6, type: "O utrzymanie (Mecz 1)"});
-        round2.push({home: t5, away: t8, type: "O utrzymanie (Rewanż)"});
-        round2.push({home: t6, away: t7, type: "O utrzymanie (Rewanż)"});
-    }
-
-    s.fullSchedule.push(round1);
-    s.fullSchedule.push(round2);
-
-    updatePlayerScheduleFromFull(s.regularSeasonLength);
-    updatePlayerScheduleFromFull(s.regularSeasonLength + 1);
-
-    s.playoffsGenerated = true;
-    s.finalsGenerated = false;
-    s.barazGenerated = false;
-    
-    // Dla KLŻ (powyżej 4 miejsca) omijamy dół drabinki i od razu zamykamy generatory
-    let myTeamData = table.find(t => t.isMe);
-    if (playingLeague === "KLŻ" && myTeamData && myTeamData.pos > 4) {
-        s.finalsGenerated = true;
-        s.barazGenerated = true;
-    }
-
-    saveCareer();
-    renderCareerHub();
-    appAlert("Runda zasadnicza zakończona! Zaczynamy decydującą fazę pucharową.", "Faza Finałowa");
-}
-
-function generateFinals() {
-    let s = cState.season;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let table = s.table; 
-
-    let r1 = s.fullSchedule[s.regularSeasonLength];
-    let r2 = s.fullSchedule[s.regularSeasonLength + 1];
-    
-    let round1 = []; let round2 = [];
-
-    // TOP 4 Finały
-    let t1 = table[0].name, t2 = table[1].name, t3 = table[2].name, t4 = table[3].name;
-    let sf1_leg1 = r1.find(m => m.home === t4 && m.away === t1);
-    let sf1_leg2 = r2.find(m => m.home === t1 && m.away === t4);
-    let sf1_winner = getAggWinner(sf1_leg1, sf1_leg2, t1, t4);
-    let sf1_loser = sf1_winner === t1 ? t4 : t1;
-
-    let sf2_leg1 = r1.find(m => m.home === t3 && m.away === t2);
-    let sf2_leg2 = r2.find(m => m.home === t2 && m.away === t3);
-    let sf2_winner = getAggWinner(sf2_leg1, sf2_leg2, t2, t3);
-    let sf2_loser = sf2_winner === t2 ? t3 : t2;
-
-    let f_highSeed = table.find(t => t.name === sf1_winner).pos < table.find(t => t.name === sf2_winner).pos ? sf1_winner : sf2_winner;
-    let f_lowSeed = f_highSeed === sf1_winner ? sf2_winner : sf1_winner;
-    let matchType1 = playingLeague === "KLŻ" ? "Finał (o Awans)" : "Finał";
-    round1.push({home: f_lowSeed, away: f_highSeed, type: matchType1});
-    round2.push({home: f_highSeed, away: f_lowSeed, type: matchType1 + " (Rewanż)"});
-
-    s.semiLosers = [sf1_loser, sf2_loser]; // Zapisujemy żeby przydzielić pozycje w niższych ligach
-
-    if (playingLeague === "PGE Ekstraliga") {
-        let t_highSeed = table.find(t => t.name === sf1_loser).pos < table.find(t => t.name === sf2_loser).pos ? sf1_loser : sf2_loser;
-        let t_lowSeed = t_highSeed === sf1_loser ? sf2_loser : sf1_loser;
-        round1.push({home: t_lowSeed, away: t_highSeed, type: "Mecz o 3. miejsce"});
-        round2.push({home: t_highSeed, away: t_lowSeed, type: "Mecz o 3. msc (Rewanż)"});
-    }
-
-    // BOTTOM 4 Finały Otrzymania
-    if (playingLeague !== "KLŻ") {
-        let t5 = table[4].name, t6 = table[5].name, t7 = table[6].name, t8 = table[7].name;
-        
-        let u1_leg1 = r1.find(m => m.home === t8 && m.away === t5);
-        let u1_leg2 = r2.find(m => m.home === t5 && m.away === t8);
-        let u1_winner = getAggWinner(u1_leg1, u1_leg2, t5, t8);
-        let u1_loser = u1_winner === t5 ? t8 : t5;
-
-        let u2_leg1 = r1.find(m => m.home === t7 && m.away === t6);
-        let u2_leg2 = r2.find(m => m.home === t6 && m.away === t7);
-        let u2_winner = getAggWinner(u2_leg1, u2_leg2, t6, t7);
-        let u2_loser = u2_winner === t6 ? t7 : t6;
-
-        s.playdownWinners = [u1_winner, u2_winner]; // Dla przypisania miejsc w M2E
-
-        if (playingLeague === "PGE Ekstraliga") {
-            let f5_highSeed = table.find(t => t.name === u1_winner).pos < table.find(t => t.name === u2_winner).pos ? u1_winner : u2_winner;
-            let f5_lowSeed = f5_highSeed === u1_winner ? u2_winner : u1_winner;
-            round1.push({home: f5_lowSeed, away: f5_highSeed, type: "Mecz o 5. miejsce"});
-            round2.push({home: f5_highSeed, away: f5_lowSeed, type: "Mecz o 5. msc (Rewanż)"});
-        }
-
-        let f7_highSeed = table.find(t => t.name === u1_loser).pos < table.find(t => t.name === u2_loser).pos ? u1_loser : u2_loser;
-        let f7_lowSeed = f7_highSeed === u1_loser ? u2_loser : u1_loser;
-        round1.push({home: f7_lowSeed, away: f7_highSeed, type: "Baraż o utrzymanie"});
-        round2.push({home: f7_highSeed, away: f7_lowSeed, type: "Baraż o utrzymanie (Rew.)"});
-    }
-
-    s.fullSchedule.push(round1);
-    s.fullSchedule.push(round2);
-
-    updatePlayerScheduleFromFull(s.regularSeasonLength + 2);
-    updatePlayerScheduleFromFull(s.regularSeasonLength + 3);
-
-    s.finalsGenerated = true;
-    s.barazGenerated = false;
-
-    let myTeamData = table.find(t => t.isMe);
-    if (playingLeague === "KLŻ" && myTeamData && myTeamData.pos > 4) {
-        s.barazGenerated = true;
-    }
-
-    saveCareer();
-    renderCareerHub();
-}
-
-function assignFinalPositions() {
-    let s = cState.season;
-    let table = s.table;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let r1 = s.fullSchedule[s.regularSeasonLength + 2];
-    let r2 = s.fullSchedule[s.regularSeasonLength + 3];
-
-    if (r1 && r2) {
-        r1.forEach(m1 => {
-            let m2 = r2.find(m => m.home === m1.away && m.away === m1.home);
-            if (!m2) return;
-            let winner = getAggWinner(m1, m2, m1.away, m1.home);
-            let loser = winner === m1.away ? m1.home : m1.away;
-            
-            let wRow = table.find(t => t.name === winner);
-            let lRow = table.find(t => t.name === loser);
-            if (!wRow || !lRow) return;
-
-            if (m1.type.includes("Finał")) { wRow.pos = 1; lRow.pos = 2; }
-            else if (m1.type.includes("3. miejsce")) { wRow.pos = 3; lRow.pos = 4; }
-            else if (m1.type.includes("5. miejsce")) { wRow.pos = 5; lRow.pos = 6; }
-            else if (m1.type.includes("utrzymanie")) { wRow.pos = 7; lRow.pos = 8; }
-        });
-    }
-
-    // Automatyczne przydzielenie miejsc 3-4 i 5-6 dla niższych lig
-    if (s.semiLosers && playingLeague !== "PGE Ekstraliga") {
-        let loser1 = table.find(t => t.name === s.semiLosers[0]);
-        let loser2 = table.find(t => t.name === s.semiLosers[1]);
-        if (loser1 && loser2) {
-            if (loser1.pos < loser2.pos) { loser1.pos = 3; loser2.pos = 4; }
-            else { loser1.pos = 4; loser2.pos = 3; }
-        }
-    }
-
-    if (s.playdownWinners && playingLeague !== "PGE Ekstraliga") {
-        let w1 = table.find(t => t.name === s.playdownWinners[0]);
-        let w2 = table.find(t => t.name === s.playdownWinners[1]);
-        if (w1 && w2) {
-            if (w1.pos < w2.pos) { w1.pos = 5; w2.pos = 6; }
-            else { w1.pos = 6; w2.pos = 5; }
-        }
-    }
-
-    table.sort((a,b) => a.pos - b.pos);
-}
-
-function generateBaraz() {
-    let s = cState.season;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let table = s.table; 
-
-    let r1 = s.fullSchedule[s.regularSeasonLength + 2];
-    let r2 = s.fullSchedule[s.regularSeasonLength + 3];
-
-    let barazMatch1 = r1 ? r1.find(m => m.type.includes("Baraż o utrzymanie")) : null;
-    let barazMatch2 = r2 ? r2.find(m => m.type.includes("Baraż o utrzymanie")) : null;
-
-    let winner7th = null;
-    if (barazMatch1 && barazMatch2) {
-        winner7th = getAggWinner(barazMatch1, barazMatch2, barazMatch1.away, barazMatch1.home); // away is highSeed
-    }
-
-    let finalMatch1 = r1 ? r1.find(m => m.type === "Finał" || m.type === "Finał (o Awans)") : null;
-    let finalMatch2 = r2 ? r2.find(m => m.type === "Finał (Rewanż)" || m.type === "Finał (o Awans) (Rewanż)") : null;
-
-    let loserFinal = null;
-    if (finalMatch1 && finalMatch2) {
-        let winnerFinal = getAggWinner(finalMatch1, finalMatch2, finalMatch1.away, finalMatch1.home);
-        loserFinal = winnerFinal === finalMatch1.away ? finalMatch1.home : finalMatch1.away;
-    }
-
-    let myTeamData = table.find(t => t.isMe);
-    let needsBaraz = false;
-    let oppName = "Nieznany Rywal";
-
-    if (myTeamData && playingLeague === "PGE Ekstraliga" && myTeamData.name === winner7th) {
-        needsBaraz = true;
-        oppName = cState.leagues["Metalkas 2.E"][1]; // 2. miejsce M2.E
-    } else if (myTeamData && playingLeague === "Metalkas 2.E" && myTeamData.name === loserFinal) {
-        needsBaraz = true;
-        oppName = "7. drużyna PGE Ekstraligi";
-    }
-
-    if (needsBaraz) {
-        // Tylko gracz jedzie baraż, bo to inter-ligowe spotkanie, którego nie da się łatwo zapisać w 1 tabeli
-        s.fullSchedule.push([{home: myTeamData.name, away: oppName, type: "Baraż o Ekstraligę"}]);
-        s.fullSchedule.push([{home: oppName, away: myTeamData.name, type: "Baraż o Ekstraligę (Rew.)"}]);
-        
-        updatePlayerScheduleFromFull(s.regularSeasonLength + 4);
-        updatePlayerScheduleFromFull(s.regularSeasonLength + 5);
-        
-        appAlert("Twój zespół walczy w Wielkim Barażu o prawo jazdy w PGE Ekstralidze!", "Baraże");
-    }
-
-    s.barazGenerated = true;
-    saveCareer();
-    renderCareerHub();
-}
-
-function showMidSeasonEventWindow() {
-    const area = document.getElementById('careerActionArea');
-    const events = window.CAREER_CUSTOM_EVENTS || [];
-    
-    if (!events.length) {
-        area.innerHTML = `<div class="text-center text-dim font-bold p-15">Brak eventów do wyświetlenia.</div>`;
-        return;
-    }
-
-    let ev = events[Math.floor(Math.random() * events.length)];
-    let chanceInfo = ev.opt1.chance ? ` <span style="color:var(--accent); font-size:10px;"><br>(${ev.opt1.chance}% szansy na +OVR)</span>` : '';
-
-    area.innerHTML = `
-        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wydarzenie!</h3>
-        ${ev.dilemma ? `<div class="text-xs font-black uppercase tracking-wide text-red mb-10">Dylemat</div>` : ''}
-        <h4 class="text-white font-black m-0 mb-5">${ev.title}</h4>
-        <p class="text-xs text-dim mb-15">${ev.desc}</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="${ev.opt1.fn}">
-                <span class="copero-card-club mb-5" style="line-height:1.2;">${ev.opt1.title}${chanceInfo}</span>
-                <div class="copero-card-img" style="border-radius:12px;">${ev.img}</div>
-                <span class="text-green font-bold text-xs">${ev.opt1.bot1}</span>
-                <span class="text-red font-bold text-xs">${ev.opt1.bot2}</span>
-            </div>
-            <div class="copero-card stay-card" onclick="${ev.opt2.fn}">
-                <span class="copero-card-club mb-10">${ev.opt2.title}</span>
-                <div class="copero-card-img" style="border-radius:12px; background: transparent; border: 1px dashed rgba(255,255,255,0.2);">🤔</div>
-                <span class="text-white font-bold text-xs">${ev.opt2.bot1}</span>
-                <span class="text-dim font-bold text-xs">Brak ryzyka OVR</span>
-            </div>
-        </div>
-    `;
-}
-
-function assignFinalPositions() {
-    let s = cState.season;
-    let table = s.table;
-    let r1 = s.fullSchedule[s.regularSeasonLength + 2];
-    let r2 = s.fullSchedule[s.regularSeasonLength + 3];
-
-    if (r1 && r2) {
-        r1.forEach(m1 => {
-            let m2 = r2.find(m => m.home === m1.away && m.away === m1.home);
-            if (!m2) return;
-            let winner = getAggWinner(m1, m2, m1.away, m1.home);
-            let loser = winner === m1.away ? m1.home : m1.away;
-            
-            let wRow = table.find(t => t.name === winner);
-            let lRow = table.find(t => t.name === loser);
-            if (!wRow || !lRow) return;
-
-            if (m1.type.includes("Finał")) { wRow.pos = 1; lRow.pos = 2; }
-            else if (m1.type.includes("3. miejsce")) { wRow.pos = 3; lRow.pos = 4; }
-            else if (m1.type.includes("5. miejsce")) { wRow.pos = 5; lRow.pos = 6; }
-            else if (m1.type.includes("utrzymanie")) { wRow.pos = 7; lRow.pos = 8; }
-        });
-    }
-    table.sort((a,b) => a.pos - b.pos);
-}
-
-function endOfSeason() {
-    let s = cState.season;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-
-    assignFinalPositions();
-
-    cState.stats.heats += s.heats; 
-    cState.stats.pts += s.pts;
-    cState.stats.bon += s.bon;
-    
-    let officialAvg = s.heats > 0 ? ((s.pts + s.bon) / s.heats) : 0.0;
-    if (officialAvg > 3.00) officialAvg = 3.00;
-
-    let finalPos = 4;
-    let myTeamData = s.table.find(t => t.isMe);
-    if (myTeamData) finalPos = myTeamData.pos;
-
-    let wonBarazOEkstralige = false;
-    let playedBarazOEkstralige = false;
-    let lastMatch = s.schedule[s.schedule.length - 1]; 
-
-    if (lastMatch && lastMatch.type.includes("Baraż o Ekstraligę")) {
-        playedBarazOEkstralige = true;
-        let m1Res = s.matchResults[s.schedule.length - 2];
-        let m2Res = s.matchResults[s.schedule.length - 1];
-        if (m1Res && m2Res && m1Res !== "-" && m2Res !== "-") {
-            let m1 = m1Res.split(':').map(Number);
-            let m2 = m2Res.split(':').map(Number);
-            let myAgg = m1[0] + m2[0];
-            let oppAgg = m1[1] + m2[1];
-            if (myAgg > oppAgg) wonBarazOEkstralige = true;
-            else if (myAgg === oppAgg && playingLeague === "PGE Ekstraliga") wonBarazOEkstralige = true; 
-        }
-    }
-
-    let ageGrowth = 0;
-    let prof = cState.attributes.prof;
-    let primeEnd = prof > 75 ? 34 : (prof < 40 ? 29 : 32); 
-
-    if (cState.age <= 21) ageGrowth = Math.floor(Math.random() * 2) + 2; 
-    else if (cState.age <= 24) ageGrowth = Math.random() < 0.8 ? 1 : 0;
-    else if (cState.age <= primeEnd) ageGrowth = Math.random() < 0.3 ? 1 : 0; 
-    else if (cState.age <= primeEnd + 4) ageGrowth = -Math.floor(Math.random() * 2) - 1; 
-    else ageGrowth = -Math.floor(Math.random() * 3) - 1; 
-
-    let perfGrowth = 0;
-    if (officialAvg >= 2.40) perfGrowth = cState.age <= 23 ? 3 : 2;
-    else if (officialAvg >= 2.00) perfGrowth = 1;
-    else if (officialAvg >= 1.60) perfGrowth = 0;
-    else if (officialAvg >= 1.20) perfGrowth = -1;
-    else perfGrowth = -2;
-
-    let totalGrowth = ageGrowth + perfGrowth;
-    if (cState.ovr > 95 && totalGrowth > 0) totalGrowth -= 2; 
-    else if (cState.ovr > 90 && totalGrowth > 0) totalGrowth -= 1;
-    if (cState.age <= 21 && totalGrowth < 0) totalGrowth = 0; 
-    
-    cState.ovr = Math.max(30, Math.min(99, cState.ovr + totalGrowth));
-
-    for (let club in cState.teamOVRs) {
-        let change = Math.floor(Math.random() * 3) - 1;
-        if (Math.random() < 0.02) change += 4;
-        else if (Math.random() > 0.98) change -= 4;
-        cState.teamOVRs[club] = Math.max(35, Math.min(95, cState.teamOVRs[club] + change));
-    }
-
-    let gotDMP = false;
-    let medalColor = null;
-    let promoted = false;
-    let relegated = false;
-
-    if (playingLeague === "PGE Ekstraliga") {
-        if (finalPos === 1) { gotDMP = true; medalColor = "ZŁOTO"; cState.stats.dmpGold++; }
-        else if (finalPos === 2) { gotDMP = true; medalColor = "SREBRO"; cState.stats.dmpSilver++; }
-        else if (finalPos === 3) { gotDMP = true; medalColor = "BRĄZ"; cState.stats.dmpBronze++; }
-        else if (finalPos === 8) relegated = true;
-        if (playedBarazOEkstralige && !wonBarazOEkstralige) relegated = true; 
-    } 
-    else if (playingLeague === "Metalkas 2.E") {
-        if (finalPos === 1) promoted = true;
-        else if (finalPos === 8) relegated = true;
-        if (playedBarazOEkstralige && wonBarazOEkstralige) promoted = true;
-    } 
-    else if (playingLeague === "KLŻ") {
-        if (finalPos === 1) promoted = true;
-    }
-
-    function moveClubBetweenLeagues(club, fromLeague, toLeague, ovrDelta) {
-        const fromList = cState.leagues[fromLeague];
-        const toList = cState.leagues[toLeague];
-        const fromIndex = fromList.indexOf(club);
-        if (fromIndex === -1 || toList.includes(club)) return;
-        fromList.splice(fromIndex, 1);
-        toList.push(club);
-        cState.teamOVRs[club] = Math.max(35, Math.min(95, (cState.teamOVRs[club] || 50) + ovrDelta));
-    }
-
-    let pgeTable = playingLeague === "PGE Ekstraliga" ? s.table : generateSeasonTable("PGE Ekstraliga", null, 0, 0);
-    let e2Table = playingLeague === "Metalkas 2.E" ? s.table : generateSeasonTable("Metalkas 2.E", null, 0, 0);
-    let klzTable = playingLeague === "KLŻ" ? s.table : generateSeasonTable("KLŻ", null, 0, 0);
-
-    let pge8th = pgeTable.find(t => t.pos === 8).name;
-    let pge7th = pgeTable.find(t => t.pos === 7).name;
-    let e2_1st = e2Table.find(t => t.pos === 1).name;
-    let e2_2nd = e2Table.find(t => t.pos === 2).name;
-    let e2_8th = e2Table.find(t => t.pos === 8).name;
-    let klz_1st = klzTable.find(t => t.pos === 1).name;
-
-    let pgeDrops = [pge8th];
-    let e2Promotes = [e2_1st];
-
-    let barazWinnerWasM2E = false; 
-    if (playedBarazOEkstralige) {
-        if (playingLeague === "PGE Ekstraliga" && !wonBarazOEkstralige) barazWinnerWasM2E = true;
-        if (playingLeague === "Metalkas 2.E" && wonBarazOEkstralige) barazWinnerWasM2E = true;
-    }
-
-    if (barazWinnerWasM2E) {
-        pgeDrops.push(pge7th);
-        e2Promotes.push(e2_2nd);
-    }
-
-    let e2Drops = [e2_8th];
-    let klzPromotes = [klz_1st];
-
-    pgeDrops.forEach(team => moveClubBetweenLeagues(team, "PGE Ekstraliga", "Metalkas 2.E", -2));
-    e2Promotes.forEach(team => moveClubBetweenLeagues(team, "Metalkas 2.E", "PGE Ekstraliga", 3));
-    e2Drops.forEach(team => moveClubBetweenLeagues(team, "Metalkas 2.E", "KLŻ", -2));
-    klzPromotes.forEach(team => moveClubBetweenLeagues(team, "KLŻ", "Metalkas 2.E", 3));
-
-    if (!activeLoanLeague) {
-        for (let l in cState.leagues) {
-            if (cState.leagues[l].includes(cState.club)) cState.league = l;
-        }
-    }
-
-    let displayClubName = activeLoanLeague ? `${playingClub}` : cState.club;
-
-    cState.history.push({
-        age: cState.age, club: displayClubName, league: playingLeague, ovr: cState.ovr, 
-        mec: s.schedule.length, bie: s.heats, pkt: s.pts, bon: s.bon, avg: officialAvg.toFixed(2),
-        loan: activeLoanLeague !== null,
-        dmp: gotDMP ? medalColor : null, table: s.table // USUNIĘTO IMS
-    });
-
-    cState.age++;
-    if (!activeLoanLeague) cState.contractYears--;
-
-    activeLoanClub = null; activeLoanLeague = null;
-    cState.season.active = false;
-
-    updateLeftPanelUI();
-    renderTimeline();
-    saveCareer();
-
-    const proceedToNextStage = () => {
-        if (cState.age > cState.maxAge) {
-            showCareerEnd();
-        } else {
-            let nextFormRatio = cState.ovr / CAREER_CONSTANTS[cState.league].diff;
-            if (cState.contractYears > 0 && nextFormRatio < 0.60 && cState.league !== "KLŻ" && cState.ovr < 75) {
-                showLoanWindow();
-            } else if (cState.contractYears <= 0) {
-                generateTransferWindow();
-            } else {
-                startNewSeason();
-            }
-        }
-    };
-
-    if (gotDMP || promoted || relegated) {
-        showTeamAchievement(playingClub, gotDMP, medalColor, promoted, relegated, proceedToNextStage);
-    } else {
-        proceedToNextStage();
-    }
-}
-
-function renderTimeline() {
-    const list = document.getElementById('timelineList');
-    const header = document.getElementById('timelineHeader');
-    const empty = document.getElementById('timelineEmpty');
-    
-    if (!list || !header || !empty) return;
-
-    if (!cState.history || cState.history.length === 0) {
-        list.innerHTML = '';
-        header.style.display = 'none';
-        empty.style.display = 'block';
-        return;
-    }
-
-    header.style.display = 'flex';
-    empty.style.display = 'none';
-    list.innerHTML = '';
-
-    cState.history.forEach(h => {
-        let badges = "";
-        if (h.dmp === "ZŁOTO") badges += "🥇";
-        else if (h.dmp === "SREBRO") badges += "🥈";
-        else if (h.dmp === "BRĄZ") badges += "🥉";
-        // USUNIĘTO IMS
-
-        let loanTag = h.loan ? `<span style="font-size:9px; color:var(--text-dim);">(W)</span>` : "";
-
-        list.innerHTML += `
-            <div class="timeline-row">
-                <div class="t-age">${h.age}</div>
-                <div class="t-club">${h.club} ${loanTag} <span style="font-size:10px;">${badges}</span></div>
-                <div class="t-ovr">${h.ovr}</div>
-                <div class="t-mec">${h.mec || 0}</div>
-                <div class="t-bie">${h.bie || 0}</div>
-                <div class="t-pkt">${h.pkt || 0}</div>
-                <div class="t-avg">${h.avg || "0.00"}</div>
-            </div>
-        `;
-    });
-
-    const containerBox = document.getElementById('timelineContainerBox');
-    if (containerBox) {
-        containerBox.scrollTop = containerBox.scrollHeight;
-    }
-}
-
-function shareCareerResult() {
-    // Usunięto IMS ze stringa
-    let text = `🏁 SPEEDWAY GUESSR: KARIERA\n👤 ${cState.name} #${cState.num}\n📊 OVR: ${cState.ovr} | OŚ: ${cState.history.length} sez.\n🏆 Złoto: ${cState.stats.dmpGold} | Srebro: ${cState.stats.dmpSilver} | Brąz: ${cState.stats.dmpBronze}\n📈 Punkty w karierze: ${cState.stats.pts}\n👉 Zagraj: speedwayguessr.pl`;
-    
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast("Skopiowano podsumowanie do schowka!", "success");
-        }).catch(() => {
-            appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
-        });
-    } else {
-        appAlert("Twój wynik:\n\n" + text, "Podsumowanie");
-    }
-}
-
-// ==========================================
-// ====== OBSŁUGA KALENDARZA LIGOWEGO =======
-// ==========================================
-
-window.showCareerCalendar = function() {
-    let s = cState.season;
-    let overlay = document.getElementById('careerCalendarOverlay');
-    
-    // ZABEZPIECZENIE: Jeżeli w HTML nie ma kalendarza, tworzymy go na żywo!
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'careerCalendarOverlay';
-        overlay.className = 'win-overlay';
-        overlay.style.cssText = 'display: none; z-index: 10020;';
-        overlay.innerHTML = `
-            <div class="stats-modal modal-lg" style="max-width: 700px; padding: 25px;">
-                <h2 class="text-accent mb-5 font-black uppercase" id="calendarOverlayTitle">KALENDARZ MECZÓW</h2>
-                <p class="text-dim text-xs mb-20 font-bold" id="calendarOverlaySub">Sezon X</p>
-                <div style="display: flex; gap: 15px; height: 350px;">
-                    <div style="width: 35%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow-y: auto; padding: 5px;" id="calendarRoundsList"></div>
-                    <div style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; overflow-y: auto;" id="calendarMatchesList"></div>
-                </div>
-                <button onclick="closeCalendarOverlay()" class="btn-close w-100 mt-20 p-12 text-sm">ZAMKNIJ</button>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-    
-    document.getElementById('calendarOverlaySub').innerText = `Sezon ${2026 + cState.history.length}`;
-    
-    renderCalendarRoundsList(s.matchIndex);
-    
-    overlay.style.display = 'block'; 
-    setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-window.renderCalendarRoundsList = function(selectedRoundIdx) {
-    let s = cState.season;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    const roundsList = document.getElementById('calendarRoundsList');
-    roundsList.innerHTML = '';
-    
-    s.schedule.forEach((match, idx) => {
-        let isPast = idx < s.matchIndex;
-        let isCurrent = idx === s.matchIndex;
-        let isSelected = idx === selectedRoundIdx;
-        
-        let bgClass = isSelected ? "background: rgba(241, 196, 15, 0.2);" : (isCurrent ? "background: rgba(255,255,255,0.1);" : "");
-        let color = isSelected ? "var(--accent)" : (isPast ? "rgba(255,255,255,0.5)" : "#fff");
-        
-        let dateStr = getMatchDateString(idx + 1, playingLeague);
-        
-        roundsList.innerHTML += `
-            <div onclick="renderCalendarMatchesList(${idx})" style="cursor: pointer; padding: 10px; margin-bottom: 5px; border-radius: 8px; ${bgClass} color: ${color}; font-size: 11px; font-weight: 700; border: 1px solid ${isSelected ? 'var(--accent)' : 'transparent'};">
-                <div style="font-weight: 900; font-size: 12px;">Runda ${idx + 1}</div>
-                <div style="font-size: 9px; opacity: 0.8;">${dateStr}</div>
-                <div style="font-size: 10px; margin-top: 3px;">${match.type}</div>
-            </div>
-        `;
-    });
-    
-    renderCalendarMatchesList(selectedRoundIdx);
-}
-
-window.renderCalendarMatchesList = function(roundIdx) {
-    const roundsListDivs = document.getElementById('calendarRoundsList').children;
-    for (let i = 0; i < roundsListDivs.length; i++) {
-        let isSelected = i === roundIdx;
-        roundsListDivs[i].style.background = isSelected ? "rgba(241, 196, 15, 0.2)" : (i === cState.season.matchIndex ? "rgba(255,255,255,0.1)" : "");
-        roundsListDivs[i].style.color = isSelected ? "var(--accent)" : (i < cState.season.matchIndex ? "rgba(255,255,255,0.5)" : "#fff");
-        roundsListDivs[i].style.border = isSelected ? "1px solid var(--accent)" : "1px solid transparent";
-    }
-
-    let s = cState.season;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-    const matchesList = document.getElementById('calendarMatchesList');
-    matchesList.innerHTML = `<h3 style="margin-top: 0; color: var(--accent); font-size: 14px; text-transform: uppercase;">Mecze Rundy ${roundIdx + 1}</h3>`;
-    
-    if (s.fullSchedule && s.fullSchedule[roundIdx]) {
-        let roundMatches = s.fullSchedule[roundIdx];
-        roundMatches.forEach(m => {
-            let isMyMatch = m.home === playingClub || m.away === playingClub;
-            let homeScore = m.homeScore !== undefined ? m.homeScore : "-";
-            let awayScore = m.awayScore !== undefined ? m.awayScore : "-";
-            
-            if (isMyMatch && roundIdx < s.matchIndex) {
-                let res = s.matchResults[roundIdx];
-                if (res && res !== "-") {
-                    let pts = res.split(":");
-                    homeScore = m.home === playingClub ? pts[0] : pts[1];
-                    awayScore = m.home === playingClub ? pts[1] : pts[0];
-                } else if (res === "-") {
-                    homeScore = "-"; awayScore = "-";
-                }
-            }
-            
-            let matchBg = isMyMatch ? "background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);" : "background: rgba(0,0,0,0.2);";
-            let homeColor = m.home === playingClub ? 'var(--accent)' : '#fff';
-            let awayColor = m.away === playingClub ? 'var(--accent)' : '#fff';
-            
-            matchesList.innerHTML += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; ${matchBg}">
-                    <div style="flex: 1; text-align: right; font-weight: ${m.home===playingClub?'900':'600'}; color: ${homeColor}; font-size: 12px;">${m.home}</div>
-                    <div style="width: 50px; text-align: center; font-weight: 900; font-size: 14px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 6px; margin: 0 10px;">
-                        ${homeScore}:${awayScore}
-                    </div>
-                    <div style="flex: 1; text-align: left; font-weight: ${m.away===playingClub?'900':'600'}; color: ${awayColor}; font-size: 12px;">${m.away}</div>
-                </div>
-            `;
-        });
-    } else {
-        let myMatch = s.schedule[roundIdx];
-        if (myMatch) {
-            let isHome = myMatch.isHome;
-            let homeTeam = isHome ? playingClub : myMatch.opp;
-            let awayTeam = isHome ? myMatch.opp : playingClub;
-            
-            let homeScore = "-";
-            let awayScore = "-";
-            if (roundIdx < s.matchIndex) {
-                let res = s.matchResults[roundIdx];
-                if (res && res !== "-") {
-                    let pts = res.split(":");
-                    homeScore = isHome ? pts[0] : pts[1];
-                    awayScore = isHome ? pts[1] : pts[0];
-                }
-            }
-            
-            matchesList.innerHTML += `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2);">
-                    <div style="flex: 1; text-align: right; font-weight: ${isHome?'900':'600'}; color: ${isHome?'var(--accent)':'#fff'}; font-size: 12px;">${homeTeam}</div>
-                    <div style="width: 50px; text-align: center; font-weight: 900; font-size: 14px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 6px; margin: 0 10px;">
-                        ${homeScore}:${awayScore}
-                    </div>
-                    <div style="flex: 1; text-align: left; font-weight: ${!isHome?'900':'600'}; color: ${!isHome?'var(--accent)':'#fff'}; font-size: 12px;">${awayTeam}</div>
-                </div>
-            `;
-        }
-    }
-}
-
-window.closeCalendarOverlay = function() {
-    const overlay = document.getElementById('careerCalendarOverlay');
-    if(overlay) {
-        overlay.style.opacity = '0'; 
-        setTimeout(() => overlay.style.display = 'none', 300);
-    }
-}
-
-// ==========================================
-// ====== CENTRUM MINIGIER (TRENING) ========
-// ==========================================
-
-let activeMinigameData = null;
-
-function clearActiveMinigame() {
-    if (activeMinigameData) {
-        clearInterval(activeMinigameData.interval);
-        clearTimeout(activeMinigameData.timeout);
-        if(activeMinigameData.cleanup) activeMinigameData.cleanup();
-        activeMinigameData = null;
-    }
-}
-
-function startTrainingQTE() {
-    if (cState.season.trainedThisWeek) return;
-    
-    // Losowanie minigry i przejście do ekranu How To Play
-    let roll = Math.random();
-    if (roll < 0.25) showTrainingHTP('reflex');
-    else if (roll < 0.50) showTrainingHTP('start');
-    else if (roll < 0.75) showTrainingHTP('slide');
-    else showTrainingHTP('mechanic');
-}
-
-function showTrainingHTP(type) {
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
-        document.body.appendChild(simDiv);
-    }
-
-    let title = "";
-    let desc = "";
-    let icon = "";
-    let nextFn = null;
-
-    if (type === 'reflex') {
-        title = "TRENING REFLEKSU";
-        icon = "⚡";
-        desc = "Reaguj na pojawiające się sekwencje!<br><br>Wciskaj podane litery (<b>Q, W, E, A, S, D, SPACJA, SHIFT</b>), ich kombinacje (np. W + SHIFT), lub wykonuj przeciągnięcia myszką, trzymając <b>Lewy Przycisk Myszy (LPM)</b>.<br><br><span style='color:var(--yellow-neon); font-weight: 900;'>UWAGA: Kafelki potrafią nagle zmienić polecenie, zachowaj czujność!</span>";
-        nextFn = startMinigameReflex;
-    } else if (type === 'start') {
-        title = "MOMENT STARTOWY";
-        icon = "🚦";
-        desc = "Wciśnij i <b>trzymaj SPACJĘ</b> (sprzęgło). Utrzymuj obroty silnika w zielonej strefie, <b style='color:#fff'>przytrzymując lub puszczając W</b>.<br><br>Gdy zapali się zielone światło – bądź gotów. Gdy światło zgaśnie i <b>taśma pójdzie w górę</b> – jak najszybciej <b>puść SPACJĘ</b>!<br><br><span style='color:var(--red-neon); font-weight: 900;'>UWAGA: Czas reakcji poniżej 0.150s traktowany jest jako falstart i dotknięcie taśmy!</span>";
-        nextFn = startMinigameStart;
-    } else if (type === 'slide') {
-        title = "KONTROLOWANY ŚLIZG";
-        icon = "🔄";
-        desc = "Złap idealny balans podczas wchodzenia w łuk.<br><br>Używaj klawiszy <b>A (w lewo)</b> i <b>D (w prawo)</b>, aby korygować uślizg koła i utrzymać kursor wewnątrz bezpiecznej zielonej strefy przez 10 sekund.";
-        nextFn = startMinigameSlide;
-    } else if (type === 'mechanic') {
-        title = "SZYBKI MECHANIK";
-        icon = "⚙️";
-        desc = "Liczy się ułamek sekundy! Otrzymasz zadanie założenia konkretnej zębatki (np. \"ZAŁÓŻ: 14 zębów\").<br><br>Odszukaj odpowiednią zębatkę, a następnie kliknij i <b>przeciągnij ją</b> na sprzęgło (kółko na środku).";
-        nextFn = startMinigameMechanic;
-    }
-
-    simDiv.innerHTML = `
-        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; display: flex; flex-direction: column; align-items: center; user-select: none;">
-            <div style="font-size: 60px; margin-bottom: 10px; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));">${icon}</div>
-            <h2 style="color:var(--accent); font-weight:900; margin-bottom:20px; font-size:28px; text-transform:uppercase;">${title}</h2>
-            
-            <p style="color:var(--text-main); font-size:14px; font-weight:600; margin-bottom:30px; line-height: 1.6; text-align: left; background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                ${desc}
-            </p>
-            
-            <button id="btnStartMinigameHTP" class="btn-reset w-100 p-15 text-lg" style="box-shadow: 0 5px 15px rgba(241,196,15,0.3);">ZROZUMIANO - START TRENINGU</button>
-        </div>
-    `;
-    
-    simDiv.style.display = 'flex';
-    simDiv.oncontextmenu = (e) => e.preventDefault(); 
-    
-    document.getElementById('btnStartMinigameHTP').onclick = () => {
-        simDiv.innerHTML = ''; 
-        nextFn();
-    };
-}
-
-function finishTraining(successType) {
-    clearActiveMinigame();
-    const simDiv = document.getElementById('simOverlay');
-    cState.season.trainedThisWeek = true;
-    
-    let resultHTML = "";
-    if (successType === 'perfect') {
-        resultHTML = "<div style='color:#00ff66; font-size:28px; font-weight:900; margin-bottom:20px;'>PERFEKT! 🔥 +25% OVR</div>";
-        cState.ovrProgress += 25;
-        cState.relations.manager = Math.min(100, cState.relations.manager + 5);
-    } else if (successType === 'good') {
-        resultHTML = "<div style='color:#2ecc71; font-size:28px; font-weight:900; margin-bottom:20px;'>DOBRZE! 🟢 +10% OVR</div>";
-        cState.ovrProgress += 10;
-    } else {
-        resultHTML = "<div style='color:#e74c3c; font-size:28px; font-weight:900; margin-bottom:20px;'>SŁABO! 🔴 Zmarnowany sprzęt...</div>";
-        cState.relations.manager = Math.max(0, cState.relations.manager - 10);
-    }
-    
-    simDiv.innerHTML = `
-        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:20px; font-size:36px;">KONIEC TRENINGU</h2>
-            ${resultHTML}
-        </div>
-    `;
-    
-    if (cState.ovrProgress >= 100) {
-        cState.ovrProgress -= 100;
-        cState.ovr = Math.min(99, cState.ovr + 1);
-        setTimeout(() => appAlert("Level UP! OVR rośnie o +1 dzięki treningom!", "Awans"), 1000);
-    }
-    
-    updateLeftPanelUI();
-    saveCareer();
-    
-    setTimeout(() => {
-        simDiv.style.display = 'none';
-        renderCareerHub();
-    }, 2500);
-}
-
-function initSimDiv(content) {
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
-        document.body.appendChild(simDiv);
-    }
-    simDiv.innerHTML = content;
-    simDiv.style.display = 'flex';
-    simDiv.oncontextmenu = (e) => e.preventDefault(); // Blokada menu pod PPM
-    return simDiv;
-}
-
-// ------------------------------------------
-// MINIGRA 1: REFLEKS I QTE
-// ------------------------------------------
-function startMinigameReflex() {
-    const html = `
-        <div style="background: var(--card-bg); padding: 40px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:10px; font-size:32px;">TRENING REFLEKSU</h2>
-            <p style="color:var(--text-dim); font-size:14px; font-weight:700; margin-bottom:30px;">
-                Wciskaj podane litery, kombinacje lub przeciągaj myszką!<br>
-                <span style="color:var(--accent);">Wskazówka:</span> Do Swipe'ów przytrzymaj <b>LEWY</b> Przycisk Myszy (LPM).
-            </p>
-            <div id="qteKeyDisplay" style="font-size:40px; font-weight:900; color:#fff; background:rgba(255,255,255,0.1); width:100%; max-width:350px; height:160px; display:flex; justify-content:center; align-items:center; border-radius:20px; border:4px solid var(--accent); margin: 0 auto 30px; letter-spacing:2px;">?</div>
-            <div style="width:100%; height:12px; background:rgba(255,255,255,0.1); border-radius:6px; overflow:hidden;">
-                <div id="qteTimeBar" style="width:100%; height:100%; background:#e74c3c;"></div>
-            </div>
-            <div id="qteProgress" style="margin-top:20px; font-size:18px; color:var(--text-dim); font-weight:900;">Runda 1/5</div>
-        </div>
-    `;
-    let simDiv = initSimDiv(html);
-    
-    let state = {
-        rounds: 0, successes: 0, type: '', expKeys: [], pressKeys: [], expSwipe: '',
-        timer: null, changeTimer: null, startX: 0, startY: 0
-    };
-    activeMinigameData = { state, cleanup: () => {
-        document.removeEventListener('keydown', onKeyDown);
-        document.removeEventListener('keyup', onKeyUp);
-        simDiv.removeEventListener('mousedown', onSwipeStart);
-        simDiv.removeEventListener('touchstart', onSwipeStart);
-    }};
-
-    function setupTask(isChange = false) {
-        const display = document.getElementById('qteKeyDisplay');
-        if (!display) return;
-        
-        state.pressKeys = [];
-        let roll = Math.random();
-        
-        if (roll < 0.4) {
-            state.type = 'single';
-            const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
-            state.expKeys = [keys[Math.floor(Math.random() * keys.length)]];
-            display.innerText = state.expKeys[0];
-        } else if (roll < 0.7) {
-            state.type = 'combo';
-            const keys = ['Q', 'W', 'E', 'A', 'S', 'D', 'SPACE', 'SHIFT'];
-            let k1 = keys[Math.floor(Math.random() * keys.length)];
-            let k2 = keys[Math.floor(Math.random() * keys.length)];
-            while(k1 === k2) k2 = keys[Math.floor(Math.random() * keys.length)];
-            state.expKeys = [k1, k2];
-            display.innerText = `${k1} + ${k2}`;
-        } else {
-            state.type = 'swipe';
-            const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-            const emojis = {'UP': 'LPM + ⬆️', 'DOWN': 'LPM + ⬇️', 'LEFT': 'LPM + ⬅️', 'RIGHT': 'LPM + ➡️'};
-            state.expSwipe = dirs[Math.floor(Math.random() * dirs.length)];
-            display.innerText = emojis[state.expSwipe];
-        }
-
-        if (isChange) {
-            display.style.animation = 'none'; display.offsetHeight; 
-            display.style.animation = 'pulse 0.3s ease';
-            display.style.color = 'var(--yellow-neon)';
-            setTimeout(() => { if(document.getElementById('qteKeyDisplay')) document.getElementById('qteKeyDisplay').style.color = '#fff'; }, 300);
-            playSound('flip');
-        }
-    }
-
-    function nextRound() {
-        state.rounds++;
-        if (state.rounds > 5) {
-            finishTraining(state.successes === 5 ? 'perfect' : (state.successes >= 3 ? 'good' : 'bad'));
-            return;
-        }
-        
-        const progEl = document.getElementById('qteProgress');
-        if (progEl) progEl.innerText = `Runda ${state.rounds}/5`;
-        
-        const display = document.getElementById('qteKeyDisplay');
-        if (display) {
-            display.style.borderColor = "var(--accent)"; 
-            display.style.color = "#fff";
-        }
-        
-        setupTask();
-        const timeBar = document.getElementById('qteTimeBar');
-        if (timeBar) {
-            timeBar.style.transition = 'none'; timeBar.style.width = '100%';
-            
-            let reactionTime = Math.max(420, Math.floor((1200 - (cState.ovr * 5)) * 0.65)) + 1500; 
-            
-            setTimeout(() => { 
-                if(document.getElementById('qteTimeBar')) {
-                    document.getElementById('qteTimeBar').style.transition = `width ${reactionTime}ms linear`; 
-                    document.getElementById('qteTimeBar').style.width = '0%'; 
-                }
-            }, 50);
-            
-            if (Math.random() < 0.25) {
-                state.changeTimer = setTimeout(() => setupTask(true), reactionTime * 0.4);
-            }
-            
-            state.timer = setTimeout(failRound, reactionTime);
-        }
-    }
-
-    function winRound() {
-        clearTimeout(state.timer); clearTimeout(state.changeTimer);
-        const display = document.getElementById('qteKeyDisplay');
-        if (display) {
-            playSound('guess'); state.successes++;
-            display.innerText = "✅"; display.style.borderColor = "var(--green-neon)"; display.style.color = "var(--green-neon)";
-        }
-        state.type = ''; setTimeout(nextRound, 1000);
-    }
-
-    function failRound() {
-        clearTimeout(state.timer); clearTimeout(state.changeTimer);
-        const display = document.getElementById('qteKeyDisplay');
-        if (display) {
-            playSound('error');
-            display.innerText = "❌"; display.style.borderColor = "var(--red-neon)"; display.style.color = "var(--red-neon)";
-        }
-        state.type = ''; setTimeout(nextRound, 1000);
-    }
-
-    const onSwipeStart = (e) => {
-        if (state.type !== 'swipe') return;
-        if (e.type === 'touchstart') { state.startX = e.touches[0].clientX; state.startY = e.touches[0].clientY; } 
-        else { if (e.button !== 0) return; e.preventDefault(); state.startX = e.clientX; state.startY = e.clientY; }
-        document.addEventListener('mouseup', onSwipeEnd); document.addEventListener('touchend', onSwipeEnd);
-    };
-
-    const onSwipeEnd = (e) => {
-        document.removeEventListener('mouseup', onSwipeEnd); document.removeEventListener('touchend', onSwipeEnd);
-        if (state.type !== 'swipe') return;
-        let endX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
-        let endY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-        let dx = endX - state.startX; let dy = endY - state.startY;
-        
-        if (Math.abs(dx) > 40 || Math.abs(dy) > 40) {
-            let dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'RIGHT' : 'LEFT') : (dy > 0 ? 'DOWN' : 'UP');
-            if (dir === state.expSwipe) winRound(); else failRound();
-        }
-    };
-
-    const onKeyDown = (e) => {
-        if (state.type === 'swipe' || e.repeat) return;
-        let key = e.key.toUpperCase(); if (key === ' ') key = 'SPACE';
-        if (!['Q','W','E','A','S','D','SPACE','SHIFT'].includes(key)) return;
-        
-        if (state.type === 'single') {
-            if (state.expKeys.includes(key)) winRound(); else failRound();
-        } else if (state.type === 'combo') {
-            if (!state.pressKeys.includes(key)) state.pressKeys.push(key);
-            let allPressed = state.expKeys.every(k => state.pressKeys.includes(k));
-            let onlyExpPressed = state.pressKeys.every(k => state.expKeys.includes(k));
-            if (allPressed && onlyExpPressed) winRound();
-            else if (state.pressKeys.length >= state.expKeys.length && !allPressed) failRound();
-        }
-    };
-
-    const onKeyUp = (e) => {
-        if (state.type !== 'combo') return;
-        let key = e.key.toUpperCase(); if (key === ' ') key = 'SPACE';
-        state.pressKeys = state.pressKeys.filter(k => k !== key);
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-    simDiv.addEventListener('mousedown', onSwipeStart);
-    simDiv.addEventListener('touchstart', onSwipeStart, {passive: false});
-
-    setTimeout(nextRound, 1000);
-}
-
-// ------------------------------------------
-// MINIGRA 2: START SPOD TAŚMY
-// ------------------------------------------
-function startMinigameStart() {
-    const html = `
-        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">MOMENT STARTOWY</h2>
-            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Trzymaj <b style="color:#fff">SPACJĘ</b> (Sprzęgło) by rozpocząć. Utrzymuj obroty na zielonym polu, <b style="color:#fff">trzymając lub puszczając W</b>. Gdy zapali się zielone światło – uważaj. Gdy zgaśnie i taśma pójdzie w górę – puść SPACJĘ!</p>
-            
-            <div style="position:relative; width:100%; height:200px; background:#222; border-radius:12px; border:2px solid #444; overflow:hidden; margin-bottom:20px;">
-                <div id="mgLight" style="position:absolute; top:20px; left:50%; transform:translateX(-50%); width:40px; height:40px; border-radius:50%; background:#111; border:2px solid #000; box-shadow: inset 0 0 10px #000;"></div>
-                <div id="mgTape" style="position:absolute; bottom:50px; left:0; width:100%; height:10px; background:repeating-linear-gradient(45deg, #fff, #fff 10px, #ff3333 10px, #ff3333 20px); transition: bottom 0.1s; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"></div>
-                <div style="position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size: 80px;">🏍️</div>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="font-size:12px; font-weight:900; color:var(--text-dim);">OBROTY (W)</div>
-                <div id="mgRpmStatus" style="font-size:12px; font-weight:900; color:var(--red-neon);">ZA NISKIE!</div>
-            </div>
-            <div style="width:100%; height:20px; background:#111; border-radius:10px; border:1px solid #333; position:relative; overflow:hidden;">
-                <div style="position:absolute; left:35%; width:30%; height:100%; background:rgba(0,255,102,0.3); border-left:2px solid #00ff66; border-right:2px solid #00ff66; z-index:1;"></div>
-                <div id="mgRpmBar" style="position:absolute; left:0; top:0; height:100%; width:10%; background:#fff; z-index:2; transition: width 0.1s;"></div>
-            </div>
-        </div>
-    `;
-    let simDiv = initSimDiv(html);
-
-    let state = {
-        phase: 'wait', // wait, holding, ready (green light), gone
-        rpm: 0,
-        tapeTime: 0,
-        releaseTime: 0,
-        rpmInterval: null,
-        wHeld: false
-    };
-    
-    activeMinigameData = { state, cleanup: () => {
-        document.removeEventListener('keydown', onKD);
-        document.removeEventListener('keyup', onKU);
-    }};
-
-    const light = document.getElementById('mgLight');
-    const tape = document.getElementById('mgTape');
-    const rpmBar = document.getElementById('mgRpmBar');
-    const rpmStat = document.getElementById('mgRpmStatus');
-
-    function loop() {
-        if(state.phase === 'finished') return;
-        
-        if(state.phase === 'holding' || state.phase === 'ready') {
-            
-            if (state.wHeld) {
-                state.rpm += 4; // Gaz rośnie po wciśnięciu
-            } else {
-                state.rpm -= 3; // Gaz spada po puszczeniu
-            }
-
-            if(state.rpm < 0) state.rpm = 0;
-            if(state.rpm > 100) state.rpm = 100;
-
-            rpmBar.style.width = state.rpm + '%';
-            
-            if(state.rpm >= 35 && state.rpm <= 65) {
-                rpmBar.style.background = '#00ff66'; rpmStat.innerText = "IDEALNIE"; rpmStat.style.color = '#00ff66';
-            } else if (state.rpm > 65) {
-                rpmBar.style.background = '#ff3333'; rpmStat.innerText = "ZA WYSOKIE!"; rpmStat.style.color = '#ff3333';
-            } else {
-                rpmBar.style.background = '#ffcc00'; rpmStat.innerText = "ZA NISKIE!"; rpmStat.style.color = '#ffcc00';
-            }
-        }
-    }
-
-    state.rpmInterval = setInterval(loop, 50);
-
-    const onKD = (e) => {
-        if(e.repeat) return;
-        let key = e.key.toUpperCase();
-        if (key === ' ' || key === 'SPACE') {
-            if(state.phase === 'wait') {
-                state.phase = 'holding';
-                // Za 2-3 sekundy zapal zielone światło
-                setTimeout(() => {
-                    if(state.phase === 'holding') {
-                        state.phase = 'ready';
-                        light.style.background = '#00ff66';
-                        light.style.boxShadow = '0 0 20px #00ff66';
-                        playSound('guess'); // pyk
-                        
-                        // Za 1-3 sekundy taśma w górę
-                        setTimeout(() => {
-                            if(state.phase === 'ready') {
-                                state.phase = 'gone';
-                                state.tapeTime = Date.now();
-                                light.style.background = '#111';
-                                light.style.boxShadow = 'inset 0 0 10px #000';
-                                tape.style.bottom = '250px';
-                                playSound('win'); // bum!
-                            }
-                        }, 1000 + Math.random() * 2000);
-                    }
-                }, 1000 + Math.random() * 1500);
-            }
-        }
-        if (key === 'W') {
-            state.wHeld = true;
-        }
-    };
-
-    const onKU = (e) => {
-        let key = e.key.toUpperCase();
-        if (key === ' ' || key === 'SPACE') {
-            if(state.phase === 'holding' || state.phase === 'ready') {
-                // Falstart
-                state.phase = 'finished';
-                tape.style.bottom = '250px'; // wplątany
-                appAlert("Wjechałeś w taśmę! (Falstart)", "Wykluczenie");
-                finishTraining('bad');
-            } else if (state.phase === 'gone') {
-                state.phase = 'finished';
-                state.releaseTime = Date.now();
-                let reactMs = state.releaseTime - state.tapeTime;
-                
-                let rpmWasGood = (state.rpm >= 35 && state.rpm <= 65);
-                let msg = `Czas reakcji: ${(reactMs/1000).toFixed(3)}s\nObroty: ${rpmWasGood ? "Dobre" : "Złe"}\n\n`;
-                
-                if (!rpmWasGood) {
-                    appAlert(msg + "Słabe panowanie nad sprzęgłem sprawiło, że zostałeś na starcie.", "Słabo");
-                    finishTraining('bad');
-                } else if (reactMs < 150) {
-                    appAlert(msg + "Dotknąłeś taśmy! Zbyt wczesny start (poniżej 0.150s uważa się za wstrzelenie).", "Wykluczenie");
-                    finishTraining('bad');
-                } else if (reactMs <= 250) {
-                    appAlert(msg + "Atomowy start! Wygrywasz dojazd do łuku.", "Perfekt");
-                    finishTraining('perfect');
-                } else if (reactMs <= 450) {
-                    appAlert(msg + "Dobry start, jedziesz w kontakcie.", "Dobrze");
-                    finishTraining('good');
-                } else {
-                    appAlert(msg + "Zostałeś na starcie. Słaby refleks.", "Słabo");
-                    finishTraining('bad');
-                }
-            }
-        }
-        if (key === 'W') {
-            state.wHeld = false;
-        }
-    };
-
-    document.addEventListener('keydown', onKD);
-    document.addEventListener('keyup', onKU);
-}
-
-// ------------------------------------------
-// MINIGRA 3: KONTROLOWANY ŚLIZG
-// ------------------------------------------
-function startMinigameSlide() {
-    const html = `
-        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">KONTROLOWANY ŚLIZG</h2>
-            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Używaj klawiszy <b style="color:#fff">A</b> i <b style="color:#fff">D</b> aby balansować i utrzymać się w bezpiecznej (zielonej) strefie przez 10 sekund!</p>
-            
-            <div style="font-size: 80px; margin-bottom:20px; transition: transform 0.1s;" id="mgSlideRider">🏍️</div>
-
-            <div style="width:100%; height:30px; background:#111; border-radius:15px; border:2px solid #333; position:relative; overflow:hidden; margin-bottom: 20px;">
-                <div style="position:absolute; left:25%; width:50%; height:100%; background:rgba(0,255,102,0.15); border-left:2px dashed rgba(0,255,102,0.5); border-right:2px dashed rgba(0,255,102,0.5); z-index:1;"></div>
-                <div id="mgSlideCursor" style="position:absolute; top:-5px; left:50%; width:10px; height:40px; background:#fff; z-index:2; transform:translateX(-50%); box-shadow: 0 0 10px #fff; border-radius:5px;"></div>
-            </div>
-
-            <div style="font-size:18px; font-weight:900; color:var(--accent);" id="mgSlideTimer">10.0s</div>
-        </div>
-    `;
-    let simDiv = initSimDiv(html);
-
-    let state = {
-        pos: 50, vel: 0, timeLeft: 10.0,
-        interval: null
-    };
-
-    activeMinigameData = { state, cleanup: () => {
-        document.removeEventListener('keydown', onKD);
-    }};
-
-    const cursor = document.getElementById('mgSlideCursor');
-    const rider = document.getElementById('mgSlideRider');
-    const timerText = document.getElementById('mgSlideTimer');
-
-    function loop() {
-        state.vel += (Math.random() - 0.5) * 2.5; // Losowy wiatr/dziury
-        state.pos += state.vel;
-
-        if(state.pos < 0 || state.pos > 100) {
-            clearInterval(state.interval);
-            rider.style.transform = `rotate(${state.pos < 0 ? -90 : 90}deg)`;
-            appAlert("Upadek! Straciłeś panowanie nad motocyklem.", "Kraksa");
-            finishTraining('bad');
-            return;
-        }
-
-        cursor.style.left = `${state.pos}%`;
-        rider.style.transform = `rotate(${(state.pos - 50) * 1.5}deg)`;
-
-        state.timeLeft -= 0.05;
-        timerText.innerText = Math.max(0, state.timeLeft).toFixed(1) + "s";
-
-        if(state.timeLeft <= 0) {
-            clearInterval(state.interval);
-            appAlert("Świetny balans! Przejechałeś łuk płynnie.", "Perfekt");
-            finishTraining('perfect');
-        }
-    }
-
-    state.interval = setInterval(loop, 50);
-
-    const onKD = (e) => {
-        if(e.repeat) return;
-        let key = e.key.toUpperCase();
-        if(key === 'A') state.vel -= 3;
-        if(key === 'D') state.vel += 3;
-    };
-    document.addEventListener('keydown', onKD);
-}
-
-// ------------------------------------------
-// MINIGRA 4: SZYBKI MECHANIK
-// ------------------------------------------
-function startMinigameMechanic() {
-    const html = `
-        <div style="background: var(--card-bg); padding: 30px; border-radius: 24px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); width: 90%; max-width: 600px; user-select: none; position: relative;">
-            <h2 style="color:#3498db; font-weight:900; margin-bottom:5px; font-size:28px;">WYMIANA ZĘBATEK</h2>
-            <p style="color:var(--text-dim); font-size:12px; font-weight:700; margin-bottom:20px;">Przeciągnij odpowiednią zębatkę na sprzęgło (kółko na środku)!</p>
-            
-            <div id="mgMechTargetText" style="font-size:24px; font-weight:900; color:var(--accent); margin-bottom:15px; text-transform:uppercase;">ZAŁÓŻ: <span id="mgTargetZeb"></span>z</div>
-
-            <div id="mgDropzone" style="width: 100px; height: 100px; border: 4px dashed var(--text-dim); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: rgba(0,0,0,0.3); transition: 0.2s;">⚙️</div>
-
-            <div id="mgMechItems" style="display:flex; justify-content:center; gap:15px; margin-bottom:20px; min-height: 60px; position:relative;"></div>
-
-            <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden;">
-                <div id="mgMechTimeBar" style="width: 100%; height: 100%; background: #e74c3c;"></div>
-            </div>
-            
-            <div id="mgMechProgress" style="margin-top: 15px; font-size: 14px; color: var(--text-dim); font-weight: 900;">Runda 1/5</div>
-        </div>
-    `;
-    let simDiv = initSimDiv(html);
-
-    let state = {
-        rounds: 0, successes: 0, target: 0, timer: null,
-        draggedEl: null, dragOffsetX: 0, dragOffsetY: 0
-    };
-
-    activeMinigameData = { state, cleanup: () => {
-        document.removeEventListener('pointermove', onPointerMove);
-        document.removeEventListener('pointerup', onPointerUp);
-    }};
-
-    const dropzone = document.getElementById('mgDropzone');
-
-    function nextRound() {
-        state.rounds++;
-        if(state.rounds > 5) {
-            finishTraining(state.successes === 5 ? 'perfect' : (state.successes >= 3 ? 'good' : 'bad'));
-            return;
-        }
-
-        const progEl = document.getElementById('mgMechProgress');
-        if (progEl) progEl.innerText = `Runda ${state.rounds}/5`;
-        
-        let sizes = [13, 14, 15, 16, 55, 56, 57, 58, 59, 60].sort(() => 0.5 - Math.random()).slice(0, 4);
-        state.target = sizes[Math.floor(Math.random() * 4)];
-        
-        const targetZeb = document.getElementById('mgTargetZeb');
-        if (targetZeb) targetZeb.innerText = state.target;
-        
-        const txtTarget = document.getElementById('mgMechTargetText');
-        if (txtTarget) {
-            txtTarget.style.color = "var(--accent)";
-            txtTarget.innerText = `ZAŁÓŻ: ${state.target} zębów`;
-        }
-        
-        if (dropzone) dropzone.style.borderColor = "var(--text-dim)";
-        
-        const container = document.getElementById('mgMechItems');
-        if (container) {
-            container.innerHTML = '';
-            sizes.forEach(size => {
-                let el = document.createElement('div');
-                el.className = 'gear-item';
-                el.style.cssText = 'width:50px; height:50px; border-radius:50%; background:var(--card-bg); border:2px solid #ccc; display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; cursor:grab; touch-action:none; z-index:100; font-size:16px;';
-                el.innerText = `${size}`;
-                el.dataset.size = size;
-                
-                el.addEventListener('pointerdown', (e) => {
-                    state.draggedEl = el;
-                    el.style.position = 'absolute';
-                    el.style.cursor = 'grabbing';
-                    let rect = el.getBoundingClientRect();
-                    state.dragOffsetX = e.clientX - rect.left;
-                    state.dragOffsetY = e.clientY - rect.top;
-                    
-                    let containerRect = container.getBoundingClientRect();
-                    el.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
-                    el.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
-                });
-                
-                container.appendChild(el);
-            });
-        }
-
-        const timeBar = document.getElementById('mgMechTimeBar');
-        if (timeBar) {
-            timeBar.style.transition = 'none'; timeBar.style.width = '100%';
-            
-            let time = 3500; 
-            setTimeout(() => { 
-                if(document.getElementById('mgMechTimeBar')) {
-                    document.getElementById('mgMechTimeBar').style.transition = `width ${time}ms linear`; 
-                    document.getElementById('mgMechTimeBar').style.width = '0%'; 
-                }
-            }, 50);
-            
-            state.timer = setTimeout(() => {
-                playSound('error');
-                const txt = document.getElementById('mgMechTargetText');
-                if (txt) {
-                    txt.innerText = "ZBYT WOLNO!";
-                    txt.style.color = "var(--red-neon)";
-                }
-                setTimeout(nextRound, 800);
-            }, time);
-        }
-    }
-
-    const onPointerMove = (e) => {
-        if (!state.draggedEl) return;
-        const container = document.getElementById('mgMechItems');
-        if(!container || !dropzone) return;
-        
-        const containerRect = container.getBoundingClientRect();
-        state.draggedEl.style.left = (e.clientX - containerRect.left - state.dragOffsetX) + 'px';
-        state.draggedEl.style.top = (e.clientY - containerRect.top - state.dragOffsetY) + 'px';
-        
-        const dropRect = dropzone.getBoundingClientRect();
-        if (e.clientX > dropRect.left && e.clientX < dropRect.right && e.clientY > dropRect.top && e.clientY < dropRect.bottom) {
-            dropzone.style.borderColor = "var(--accent)";
-            dropzone.style.background = "rgba(241,196,15,0.2)";
-        } else {
-            dropzone.style.borderColor = "var(--text-dim)";
-            dropzone.style.background = "rgba(0,0,0,0.3)";
-        }
-    };
-
-    const onPointerUp = (e) => {
-        if (!state.draggedEl) return;
-        if (!dropzone) return;
-
-        const dropRect = dropzone.getBoundingClientRect();
-        const size = parseInt(state.draggedEl.dataset.size);
-        
-        if (e.clientX > dropRect.left && e.clientX < dropRect.right && e.clientY > dropRect.top && e.clientY < dropRect.bottom) {
-            clearTimeout(state.timer);
-            const txt = document.getElementById('mgMechTargetText');
-
-            if (size === state.target) {
-                playSound('guess');
-                state.successes++;
-                if(txt) { txt.innerText = "DOBRZE!"; txt.style.color = "var(--green-neon)"; }
-                dropzone.style.borderColor = "var(--green-neon)";
-            } else {
-                playSound('error');
-                if(txt) { txt.innerText = "ZŁA ZĘBATKA!"; txt.style.color = "var(--red-neon)"; }
-                dropzone.style.borderColor = "var(--red-neon)";
-            }
-            state.draggedEl.style.display = 'none';
-            state.draggedEl = null;
-            setTimeout(nextRound, 800);
-        } else {
-            state.draggedEl.style.position = 'static';
-            state.draggedEl.style.cursor = 'grab';
-            state.draggedEl = null;
-            dropzone.style.borderColor = "var(--text-dim)";
-            dropzone.style.background = "rgba(0,0,0,0.3)";
-        }
-    };
-
-    document.addEventListener('pointermove', onPointerMove);
-    document.addEventListener('pointerup', onPointerUp);
-
-    nextRound();
-}
-
-// ==========================================
-// ====== DECYZJE TAKTYCZNE W BIEGU =========
-// ==========================================
-
-// ==========================================
-// ====== DECYZJE TAKTYCZNE W BIEGU =========
-// ==========================================
-
-function promptHeatDecision(ovr, form, prof) {
-    return new Promise(resolve => {
-        const box = document.getElementById('simDecisionBox');
-        if(!box) {
-            resolve({ type: 'follow', chance: 90 });
-            return;
-        }
-        
-        box.style.display = 'flex';
-        
-        // Zestaw bardziej realistycznych sytuacji
-        const situations = [
-            {
-                text: "Rywale zamknęli Cię po starcie w 'kanapce'. Jesteś trzeci.",
-                fol: { n: "Siedź na kole", b: 80, desc: "Czekasz na błąd" },
-                mid: { n: "Rozpychaj się", b: 40, desc: "Agresywnie wchodzisz między nich" },
-                out: { n: "Wyjazd na dużą", b: 50, desc: "Szukasz prędkości po zewn." },
-                cut: { n: "Ostre nożyce", b: 35, desc: "Schodzisz do krawężnika" }
-            },
-            {
-                text: "Prowadzisz, ale tor jest wyjątkowo śliski po opadach deszczu.",
-                fol: { n: "Trzymaj krawężnik", b: 85, desc: "Najbezpieczniejsza ścieżka" },
-                mid: { n: "Płynna jazda", b: 65, desc: "Szukasz przyczepności" },
-                out: { n: "Atak szerzej", b: 30, desc: "Bardzo wysokie ryzyko upadku!" },
-                cut: { n: "Asekuracja", b: 70, desc: "Pilnujesz wewnętrznej" }
-            },
-            {
-                text: "Jedziesz drugi. Lider zostawia mnóstwo miejsca pod bandą.",
-                fol: { n: "Jedź jego śladem", b: 75, desc: "Nie ryzykujesz" },
-                mid: { n: "Atak środkiem", b: 50, desc: "Próbujesz go wyprzedzić" },
-                out: { n: "Napędź się pod bandą", b: 75, desc: "Idealna okazja na atak!" },
-                cut: { n: "Pikuj w krawężnik", b: 40, desc: "Niespodziewany atak z dołu" }
-            },
-            {
-                text: "Zostałeś na starcie... Musisz gonić z czwartej pozycji!",
-                fol: { n: "Czekaj z tyłu", b: 90, desc: "Może komuś zdefektuje motocykl" },
-                mid: { n: "Ostra pogoń", b: 50, desc: "Jazda na limicie" },
-                out: { n: "Ryzykowny atak po dużej", b: 40, desc: "All-in po zewnętrznej" },
-                cut: { n: "Ścinka na pierwszym łuku", b: 55, desc: "Próbujesz wejść pod łokieć" }
-            }
-        ];
-        
-        let sit = situations[Math.floor(Math.random() * situations.length)];
-        
-        // Modifikatory szans
-        let ovrMod = Math.floor((ovr - 50) / 2); 
-        let formMod = (form - 1.5) * 10; 
-        let profMod = (prof - 50) / 5; 
-        
-        let totalMod = ovrMod + formMod + profMod;
-
-        const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-        const applyMod = (base) => clamp(base + totalMod + (Math.floor(Math.random() * 11) - 5), 5, 95);
-
-        let cFol = applyMod(sit.fol.b);
-        let cMid = applyMod(sit.mid.b);
-        let cOut = applyMod(sit.out.b);
-        let cCut = applyMod(sit.cut.b);
-
-        document.getElementById('simDecTitle').innerText = sit.text;
-        document.getElementById('btnDecFol').innerHTML = `<b>${sit.fol.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cFol)}%<br>(${sit.fol.desc})</small>`;
-        document.getElementById('btnDecMid').innerHTML = `<b>${sit.mid.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cMid)}%<br>(${sit.mid.desc})</small>`;
-        document.getElementById('btnDecOut').innerHTML = `<b>${sit.out.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cOut)}%<br>(${sit.out.desc})</small>`;
-        document.getElementById('btnDecCut').innerHTML = `<b>${sit.cut.n}</b><br><small style="color:#aaa;">Szansa: ${Math.round(cCut)}%<br>(${sit.cut.desc})</small>`;
-
-        let answered = false;
-        window.resolveSimDecision = (type) => {
-            if(answered) return;
-            answered = true;
-            box.style.display = 'none';
-            let pickedChance = type === 'follow' ? cFol : (type === 'middle' ? cMid : (type === 'outside' ? cOut : cCut));
-            resolve({ type, chance: pickedChance });
-        };
-    });
-}
-
-// Zmodyfikowany playSingleMatch - zawiera logikę kontuzji, formy oraz Poprawiony Dwumecz!
-async function playSingleMatch() {
-    let simDiv = document.getElementById('simOverlay');
-    if (!simDiv) {
-        simDiv = document.createElement('div');
-        simDiv.id = 'simOverlay';
-        simDiv.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10050; display: none; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(10px);`;
-        document.body.appendChild(simDiv);
-    }
-    
-    simDiv.innerHTML = `
-        <h2 style="color:var(--accent); font-weight:900; margin-bottom:10px; font-size:32px; text-transform:uppercase;">Trwa Mecz...</h2>
-        <div id="simMatchInfo" style="font-size:20px; font-weight:700; color:#fff; margin-bottom: 10px; text-align:center;"></div>
-        <div id="simMatchState" style="font-size:13px; font-weight:900; color:var(--text-dim); margin-bottom: 18px; text-align:center; text-transform:uppercase; letter-spacing:1px;"></div>
-        <div id="simMatchScore" style="font-size:18px; font-weight:900; background:rgba(0,0,0,0.4); padding: 10px 20px; border-radius: 12px; margin-bottom: 18px; text-align:center; letter-spacing:1px;">Wynik meczu 0:0</div>
-        <div style="display:flex; gap: 20px; margin-bottom: 30px;">
-            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">PUNKTY ZAW.</div><div id="simPts" style="font-size:40px; font-weight:900; color:var(--green-neon);">0</div></div>
-            <div style="text-align:center;"><div style="font-size:12px; color:var(--text-dim);">ŚREDNIA</div><div id="simAvg" style="font-size:40px; font-weight:900; color:#fff;">0.00</div></div>
-        </div>
-        <div id="simEvents" style="max-width: 400px; text-align:center; color: var(--red-neon); font-weight:bold; min-height:50px; line-height: 1.4;"></div>
-        
-        <div id="simDecisionBox" style="display: none; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; margin-top: 10px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
-            <div id="simDecTitle" style="color:var(--accent); font-weight:900; font-size:15px; text-align:center; line-height:1.4; margin-bottom: 10px;">Sytuacja na torze...</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #3498db; background:rgba(52, 152, 219, 0.2); color:#fff;" id="btnDecFol" onclick="resolveSimDecision('follow')"></button>
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #f1c40f; background:rgba(241, 196, 15, 0.2); color:#fff;" id="btnDecMid" onclick="resolveSimDecision('middle')"></button>
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #e74c3c; background:rgba(231, 76, 60, 0.2); color:#fff;" id="btnDecOut" onclick="resolveSimDecision('outside')"></button>
-                <button class="hub-action-btn" style="padding:15px 10px; font-size:12px; border-radius:10px; border:1px solid #2ecc71; background:rgba(46, 204, 113, 0.2); color:#fff;" id="btnDecCut" onclick="resolveSimDecision('cut')"></button>
-            </div>
-        </div>
-
-        <div id="simProgressContainer" style="width: 300px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; margin-top: 20px;">
-            <div id="simProgressBar" style="width: 0%; height: 100%; background: var(--accent); transition: width 0.3s;"></div>
-        </div>
-    `;
-    simDiv.style.display = 'flex';
-
-    const simMatchInfo = document.getElementById('simMatchInfo');
-    const simMatchState = document.getElementById('simMatchState');
-    const simMatchScore = document.getElementById('simMatchScore');
-    const simPts = document.getElementById('simPts');
-    const simAvg = document.getElementById('simAvg');
-    const simEvents = document.getElementById('simEvents');
-    const simProgressBar = document.getElementById('simProgressBar');
-    
-    let s = cState.season;
-    let m = s.matchIndex + 1;
-    let matchObj = s.schedule[s.matchIndex];
-    let opponent = matchObj.opp;
-    let isHome = matchObj.isHome;
-    let playingClub = activeLoanClub ? activeLoanClub : cState.club;
-    let oppColor = getCareerClubColor(opponent);
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    let lData = CAREER_CONSTANTS[playingLeague];
-    
-    let trackComfort = isHome ? 8 : -10;
-    let homeClubName = isHome ? playingClub : opponent;
-    let awayClubName = isHome ? opponent : playingClub;
-    let homeMatchScore = 0; let awayMatchScore = 0;
-
-    const totalMatchHeats = 15;
-    const clampMatchValue = (value, min, max) => Math.max(min, Math.min(max, value));
-    
-    let heatsInMatch = s.nextMatchHeats || 0;
-    let benched = s.nextMatchBenched || false;
-
-    let heatData = getPlayerHeats(cState.age, heatsInMatch, isHome);
-    let playerHeats = heatData.heats;
-    let startNumber = heatData.number;
-    
-    let matchPts = 0; let matchBon = 0;
-    let matchCrashed = false;
-
-    simMatchInfo.innerHTML = `${matchObj.type} - Runda ${m} <span style="font-size:12px; padding: 3px 8px; background: ${isHome?'rgba(0,255,102,0.2)':'rgba(255,51,51,0.2)'}; border-radius:5px; margin-left:10px;">${isHome?'DOM':'WYJAZD'}</span><br><div style="font-size:16px; margin-top:5px; color:${oppColor};">vs ${opponent}</div>${heatsInMatch>0 ? `<div style="font-size: 13px; margin-top:5px; color: var(--accent);">Twój nr startowy: ${startNumber}</div>` : ''}`;
-    
-    let avg = s.heats > 0 ? ((s.pts + s.bon)/s.heats).toFixed(2) : (cState.ovr / 40).toFixed(2);
-    let formNum = parseFloat(avg);
-    
-    let moraleMod = 0;
-    if (cState.relations.team > 80) moraleMod = 3;
-    if (cState.relations.team < 30) moraleMod = -3;
-    let matchEffOvr = cState.ovr + moraleMod + trackComfort; 
-    let ratio = matchEffOvr / lData.diff;
-
-    // ===========================================
-    // DWUMECZ - OBLICZANIE (POPRAWIONE)
-    // ===========================================
-    let firstLegScoreMe = 0;
-    let firstLegScoreOpp = 0;
-    let hasFirstLeg = false;
-
-    if (matchObj.leg === 2 || matchObj.type.includes("Rewanż") || matchObj.type.includes("Rew.")) {
-        // PĘTLA WSTECZ - Dzięki temu w fazie play-off znajdziemy pierwszy mecz półfinałowy z tym samym rywalem
-        for (let i = s.matchIndex - 1; i >= 0; i--) {
-            let pastMatch = s.schedule[i];
-            if (pastMatch.opp === opponent && pastMatch.leg === 1) { 
-                let res = s.matchResults[i];
-                if (res && res !== "-") {
-                    let p = res.split(':').map(Number); // W historii zawsze wynik dom:wyjazd
-                    firstLegScoreMe = pastMatch.isHome ? p[0] : p[1];
-                    firstLegScoreOpp = pastMatch.isHome ? p[1] : p[0];
-                    hasFirstLeg = true;
-                }
-                break; // Kończymy na najświeższym historycznym meczu
-            }
-        }
-    }
-
-    for (let h = 1; h <= totalMatchHeats; h++) {
-        await new Promise(r => setTimeout(r, 600)); 
-        simProgressBar.style.width = `${(h / totalMatchHeats) * 100}%`;
-        
-        let currentDiff = isHome ? (awayMatchScore - homeMatchScore) : (homeMatchScore - awayMatchScore);
-        
-        // REZERWA TAKTYCZNA (Dodatkowy bieg)
-        if (currentDiff >= 6 && h >= 5 && h <= 14 && !playerHeats.includes(h) && !playerHeats.includes(h-1) && !matchCrashed) {
-            let actualRidesSoFar = playerHeats.filter(ph => ph < h).length;
-            if (actualRidesSoFar < 6 && formNum > 1.5) {
-                if (Math.random() < 0.6) {
-                    playerHeats.push(h);
-                    playerHeats.sort((a,b)=>a-b);
-                    showToast(`🔥 Rezerwa Taktyczna! Menedżer posyła Cię do boju w biegu ${h}!`, "success");
-                }
-            }
-        }
-
-        let isPlayerRiding = playerHeats.includes(h) && !matchCrashed;
-        let rideStatus = matchCrashed ? "🚑 KONTUZJA" : (isPlayerRiding ? "🟢 JEDZIESZ" : "⏳ PAUZA");
-        
-        let aggHomeText = "";
-        if (hasFirstLeg) {
-            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
-            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
-            let aggH = isHome ? currentAggMe : currentAggOpp;
-            let aggA = isHome ? currentAggOpp : currentAggMe;
-            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">W Dwumeczu: ${aggH}:${aggA}</div>`;
-        }
-
-        simMatchScore.innerHTML = `
-            <span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> 
-            ${homeMatchScore}:${awayMatchScore} 
-            <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>
-            ${aggHomeText}
-        `;
-        
-        simMatchState.innerHTML = `BIEG ${h}/${totalMatchHeats} | <span style="color:${isPlayerRiding?'var(--green-neon)':(matchCrashed?'var(--red-neon)':'var(--text-dim)')};">${rideStatus}</span>`;
-
-        let heatMod = 0;
-        let eventText = `Bieg ${h}: Na torze...`;
-        let eventColor = "#fff";
-        let isExclusionPlayer = false;
-
-        if (isPlayerRiding) {
-            let dec = await promptHeatDecision(cState.ovr, formNum, cState.attributes.prof);
-            let roll = Math.random() * 100;
-            let success = roll < dec.chance;
-            
-            let crashRiskBase = dec.type === 'outside' ? 8 : (dec.type === 'cut' ? 5 : (dec.type === 'middle' ? 2 : 0));
-            let myInjRisk = cState.attributes.injRisk / 10; 
-            let totalCrashChance = crashRiskBase + myInjRisk;
-            
-            if (!success && Math.random() * 100 < totalCrashChance) {
-                matchCrashed = true;
-                isExclusionPlayer = true;
-                eventText = `Bieg ${h}: POTWORNY UPADEK! Karetka na torze! Koniec zawodów...`;
-                eventColor = "var(--red-neon)";
-                let injuryDuration = Math.floor(Math.random() * 3) + 1; 
-                s.injuryRounds = injuryDuration;
-                cState.ovr = Math.max(30, cState.ovr - 1); 
-            } else {
-                if (success) {
-                    heatMod = dec.type === 'outside' ? 0.9 : (dec.type === 'cut' ? 1.0 : (dec.type === 'middle' ? 0.6 : 0.3));
-                    eventText = `Bieg ${h}: Świetny manewr! Wyprzedzasz i powiększasz przewagę!`;
-                    eventColor = "var(--green-neon)";
-                } else {
-                    heatMod = dec.type === 'outside' ? -0.8 : (dec.type === 'cut' ? -0.5 : (dec.type === 'middle' ? -0.4 : -0.2));
-                    eventText = `Bieg ${h}: Błąd na trasie! Rywal zamyka Cię i ucieka.`;
-                    eventColor = "var(--yellow-neon)";
-                }
-            }
-        } else {
-            if (Math.random() < 0.15) { 
-                const events = [
-                    { text: "⚠️ Zawodnik wjeżdża w taśmę!", p: 0, b: 0, color: "var(--red-neon)", mod: -0.5 },
-                    { text: "🔥 Atomowy start pary!", mod: 1.0, color: "var(--green-neon)" },
-                    { text: "🚜 Dziura w torze, zawodnik traci rytm...", mod: -0.8, color: "var(--yellow-neon)" },
-                    { text: "🔧 Defekt motocykla lidera!", mod: -1.0, color: "var(--red-neon)" },
-                    { text: "💨 Ostrzeżenie za utrudnianie startu (Warning).", mod: -0.2, color: "var(--yellow-neon)" },
-                    { text: "🏍️ Fantastyczna akcja po zewnętrznej!", mod: 0.8, color: "var(--green-neon)" },
-                    { text: "🛑 Upadek na pierwszym łuku! Bieg przerwany.", mod: 0, color: "var(--red-neon)" },
-                    { text: "⚔️ Ostra walka na łokcie, sędzia puszcza grę!", mod: 0.2, color: "var(--accent)" },
-                    { text: "🌧️ Zaczyna kropić deszcz, tor robi się śliski...", mod: -0.5, color: "var(--text-dim)" },
-                    { text: "🚀 Kapitalna ścinka do krawężnika!", mod: 0.7, color: "var(--green-neon)" }
-                ];
-                let ev = events[Math.floor(Math.random() * events.length)];
-                eventText = `Bieg ${h}: ${ev.text}`;
-                eventColor = ev.color;
-                heatMod = ev.mod;
-            }
-        }
-
-        simEvents.innerText = eventText;
-        simEvents.style.color = eventColor;
-        playSound('flip');
-
-        const strengthBias = clampMatchValue((ratio - 1) * 0.9 + heatMod * 0.35 + (isHome ? 0.12 : -0.08), -1.2, 1.2);
-        
-        let heatOutcome;
-        if (isExclusionPlayer) {
-            heatOutcome = isHome ? { me: 1, opp: 5 } : { me: 1, opp: 5 }; 
-        } else {
-            const swing = strengthBias + (Math.random() * 0.9 - 0.45);
-            if (swing >= 0.85) heatOutcome = { me: 5, opp: 1 };
-            else if (swing >= 0.30) heatOutcome = { me: 4, opp: 2 };
-            else if (swing > -0.30) heatOutcome = { me: 3, opp: 3 };
-            else if (swing > -0.85) heatOutcome = { me: 2, opp: 4 };
-            else heatOutcome = { me: 1, opp: 5 };
-        }
-        
-        homeMatchScore += isHome ? heatOutcome.me : heatOutcome.opp;
-        awayMatchScore += isHome ? heatOutcome.opp : heatOutcome.me;
-
-        let hPts = 0; let hBon = 0;
-
-        if (isPlayerRiding && !isExclusionPlayer) {
-            let teamScore = heatOutcome.me;
-            if (teamScore === 5) { hPts = Math.random() < 0.5 ? 3 : 2; hBon = hPts === 2 ? 1 : 0; }
-            else if (teamScore === 4) { hPts = Math.random() < 0.6 ? 3 : 1; hBon = 0; }
-            else if (teamScore === 3) { hPts = Math.random() < 0.4 ? 2 : (Math.random() < 0.5 ? 1 : 0); hBon = hPts===1 ? 1 : 0; }
-            else if (teamScore === 2) { hPts = Math.random() < 0.5 ? 2 : 0; hBon = 0; }
-            else if (teamScore === 1) { hPts = Math.random() < 0.5 ? 1 : 0; hBon = 0; }
-            
-            matchPts += hPts; matchBon += hBon;
-        }
-
-        simPts.innerText = `${matchPts} (+${matchBon})`;
-        let actualRidesSoFar = playerHeats.filter(ph => ph <= h).length;
-        simAvg.innerText = actualRidesSoFar > 0 ? ((matchPts + matchBon) / actualRidesSoFar).toFixed(2) : "0.00";
-        
-        if (hasFirstLeg) {
-            let currentAggMe = firstLegScoreMe + (isHome ? homeMatchScore : awayMatchScore);
-            let currentAggOpp = firstLegScoreOpp + (isHome ? awayMatchScore : homeMatchScore);
-            let aggH = isHome ? currentAggMe : currentAggOpp;
-            let aggA = isHome ? currentAggOpp : currentAggMe;
-            aggHomeText = `<div style="font-size:11px; color:var(--text-dim); margin-top:5px; text-transform:uppercase;">W Dwumeczu: ${aggH}:${aggA}</div>`;
-        }
-
-        simMatchScore.innerHTML = `<span style="color:${isHome?'var(--accent)':'#fff'}">${homeClubName}</span> ${homeMatchScore}:${awayMatchScore} <span style="color:${!isHome?'var(--accent)':'#fff'}">${awayClubName}</span>${aggHomeText}`;
-    }
-    
-    await new Promise(r => setTimeout(r, 1500));
-    simDiv.style.display = 'none';
-
-    let finalPlayerTeamScore = isHome ? homeMatchScore : awayMatchScore;
-    let finalOpponentScore = isHome ? awayMatchScore : homeMatchScore;
-
-    simulateBotMatchesForCurrentRound(finalPlayerTeamScore, finalOpponentScore, false);
-
-    s.heats += heatsInMatch;
-    s.pts += matchPts;
-    s.bon += matchBon;
-    s.matchResults.push(`${finalPlayerTeamScore}:${finalOpponentScore}`);
-    s.currentMatchScore = { me: finalPlayerTeamScore, opp: finalOpponentScore };
-    s.matchIndex += 1;
-    s.trainedThisWeek = false; 
-    
-    if (!s.lastMatches) s.lastMatches = [];
-    s.lastMatches.push({ h: heatsInMatch, p: matchPts, b: matchBon });
-    if (s.lastMatches.length > 3) s.lastMatches.shift();
-
-    updateLeftPanelUI();
-    saveCareer();
-    renderCareerHub();
-}
-
-// ==========================================
-// ====== GENERATOR PROGRAMU BIEGÓW =========
-// ==========================================
-
-function getPlayerHeats(age, numHeats, isHome) {
-    if (numHeats <= 0) return { heats: [], number: '-' };
-
-    // Baza biegów z klasycznej tabeli żużlowej (Zestaw 1)
-    const awaySeniors = [ 
-        {n: 1, h: [1, 6, 9, 11]}, 
-        {n: 2, h: [3, 6, 9, 12]}, 
-        {n: 3, h: [1, 5, 8, 13]}, 
-        {n: 4, h: [4, 5, 8, 11]}, 
-        {n: 5, h: [3, 7, 10, 13]} 
-    ];
-    const awayJuniors = [ 
-        {n: 6, h: [2, 4, 10]}, 
-        {n: 7, h: [2, 7, 12]} 
-    ];
-    
-    const homeSeniors = [ 
-        {n: 9, h:  [1, 7, 9, 11]}, 
-        {n: 10, h: [4, 7, 9, 13]}, 
-        {n: 11, h: [1, 5, 10, 12]}, 
-        {n: 12, h: [3, 5, 10, 11]}, 
-        {n: 13, h: [3, 6, 8, 13]} 
-    ];
-    const homeJuniors = [ 
-        {n: 14, h: [2, 4, 8]}, 
-        {n: 15, h: [2, 6, 12]} 
-    ];
-
-    let pool = [];
-    if (age <= 21) {
-        pool = isHome ? homeJuniors : awayJuniors;
-    } else {
-        pool = isHome ? homeSeniors : awaySeniors;
-    }
-
-    // Losujemy zawodnikowi jego numer startowy na ten konkretny mecz
-    let selected = pool[Math.floor(Math.random() * pool.length)];
-    let heats = [...selected.h];
-    let startNumber = selected.n;
-
-    // Jeśli menadżer dał nam mniej biegów niż zakłada program (np. słaby OVR/ławka)
-    if (numHeats < heats.length) {
-        return { heats: heats.slice(0, numHeats), number: startNumber };
-    }
-
-    // Jeśli jedziemy świetnie i dostajemy biegi nominowane (14, 15)
-    let nominated = [14, 15].sort(() => 0.5 - Math.random());
-    while (heats.length < numHeats && nominated.length > 0) {
-        let h = nominated.pop();
-        if (!heats.includes(h)) heats.push(h);
-    }
-
-    // Jeśli wciąż brakuje nam biegów (np. Złota Rezerwa Taktyczna), dobieramy losowy wolny
-    if (heats.length < numHeats) {
-        let available = [1,2,3,4,5,6,7,8,9,10,11,12,13].filter(h => !heats.includes(h)).sort(() => 0.5 - Math.random());
-        while(heats.length < numHeats && available.length > 0) {
-            heats.push(available.pop());
-        }
-    }
-
-    return { heats: heats.sort((a,b) => a - b), number: startNumber };
-}
-
-// ==========================================
-// ====== SYMULACJA POJEDYNCZEGO MECZU ======
-// ==========================================
-
-function signContract(offerIndex) {
-    if (!cState.pendingOffers || !cState.pendingOffers[offerIndex]) return;
-    let offer = cState.pendingOffers[offerIndex];
-    
-    cState.club = offer.club;
-    cState.league = offer.league;
-    cState.contractYears = offer.years;
-    
-    // Zapisz okres w akademii jeśli to jest 1. sezon
-    if (cState.age === 16 && cState.history.length === 0) {
-        cState.history.push({
-            age: 15, club: "Akademia Żużlowa", league: "-", ovr: cState.ovr, 
-            mec: 0, bie: 0, pkt: 0, bon: 0, avg: "0.00", loan: false, dmp: null, ims: false, table: []
-        });
-    }
-    
-    cState.pendingOffers = [];
-    saveCareer();
-    updateLeftPanelUI();
-    startNewSeason();
-}
-
-
-function forceRetirement() {
-    if (confirm("Czy na pewno chcesz zakończyć karierę w tym momencie? Ta decyzja jest nieodwracalna!")) {
-        showCareerEnd();
-    }
-}
-
-function showCareerEnd() {
-    cState.active = false;
-    cState.club = "Koniec kariery";
-    cState.contractYears = 0;
-    saveCareer();
-    
-    document.getElementById('careerMainPanel').style.display = 'none';
-    document.getElementById('careerRetirement').style.display = 'block';
-    updateLeftPanelUI();
-}
-
-function generateTransferWindow() {
-    const area = document.getElementById('careerActionArea');
-    if (!area) return;
-
-    let offers = [];
-    let possibleLeagues = [];
-    
-    // Logika ofert transferowych oparta na OVR
-    if (cState.ovr >= 78) possibleLeagues.push("PGE Ekstraliga", "PGE Ekstraliga", "Metalkas 2.E");
-    else if (cState.ovr >= 65) possibleLeagues.push("PGE Ekstraliga", "Metalkas 2.E", "Metalkas 2.E", "KLŻ");
-    else possibleLeagues.push("Metalkas 2.E", "KLŻ", "KLŻ");
-    
-    for (let i = 0; i < 3; i++) {
-        let l = possibleLeagues[Math.floor(Math.random() * possibleLeagues.length)];
-        let c = cState.leagues[l][Math.floor(Math.random() * cState.leagues[l].length)];
-        
-        // Zabezpieczenie przed dublowaniem się klubów w ofertach
-        if(offers.some(o => o.club === c)) { i--; continue; } 
-        offers.push({ league: l, club: c, years: Math.floor(Math.random() * 2) + 1 });
-    }
-
-    cState.pendingOffers = offers;
-
-    let html = `
-        <h3 class="text-white font-black m-0 mb-5 text-xl">Okno Transferowe</h3>
-        <p class="text-xs text-dim mb-15">Twój kontrakt wygasł. Wybierz nowego pracodawcę na kolejne lata.</p>
-        <div class="copero-action-grid" style="${offers.length > 2 ? 'grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));' : ''}">
-    `;
-    
-    offers.forEach((o, i) => {
-        html += `
-            <div class="copero-card" onclick="signContract(${i})">
-                <span class="copero-card-title">${o.years} ${o.years === 1 ? 'ROK' : 'LATA'}</span>
-                <span class="copero-card-club" style="font-size:12px;">${o.club}</span>
-                <div class="copero-card-img" style="margin-bottom:5px;">${CAREER_CONSTANTS[o.league].logo}</div>
-                <span class="copero-card-bot">${o.league}</span>
-            </div>
-        `;
-    });
-    
-    html += `</div>`;
-    area.innerHTML = html;
-}
-
-function showLoanWindow() {
-    const area = document.getElementById('careerActionArea');
-    if (!area) return;
-
-    let targetLeague = cState.league === "PGE Ekstraliga" ? "Metalkas 2.E" : "KLŻ";
-    let loanClub = cState.leagues[targetLeague][Math.floor(Math.random() * cState.leagues[targetLeague].length)];
-
-    area.innerHTML = `
-        <h3 class="text-accent font-black m-0 mb-5 text-xl">Wypożyczenie!</h3>
-        <p class="text-xs text-dim mb-15">Twój klub macierzysty uznał, że masz za niski OVR. Zostałeś zaoferowany na rok do: <b>${loanClub}</b> (${targetLeague}).</p>
-        <div class="copero-action-grid">
-            <div class="copero-card" onclick="acceptLoan('${loanClub}', '${targetLeague}')">
-                <span class="copero-card-club mb-10">AKCEPTUJĘ</span>
-                <div class="copero-card-img text-green" style="background:transparent; border:none;">✅</div>
-                <span class="text-xs text-dim">Dostaniesz szansę na jazdę</span>
-            </div>
-            <div class="copero-card stay-card" onclick="rejectLoan()">
-                <span class="copero-card-club mb-10">ZOSTAJĘ</span>
-                <div class="copero-card-img text-red" style="background:transparent; border:none;">❌</div>
-                <span class="text-xs text-dim">Ryzykujesz grzanie ławki</span>
-            </div>
-        </div>
-    `;
-}
-
-function acceptLoan(club, league) {
-    activeLoanClub = club;
-    activeLoanLeague = league;
-    showToast("Udałeś się na wypożyczenie!", "success");
-    startNewSeason();
-}
-
-function rejectLoan() {
-    cState.relations.manager = Math.max(0, cState.relations.manager - 15);
-    showToast("Odrzuciłeś ofertę wypożyczenia. Menedżer jest wściekły.", "error");
-    startNewSeason();
-}
-
-// ==========================================
-// ====== BRAKUJĄCE FUNKCJE TABELI LIGOWEJ ==
-// ==========================================
-
-function generateSeasonTable(leagueName, myClubName, startPts = 0, startDiff = 0) {
-    if (!cState.leagues || !cState.leagues[leagueName]) return [];
-    let teams = cState.leagues[leagueName];
-    let table = [];
-    
-    teams.forEach((club, index) => {
-        table.push({
-            name: club,
-            isMe: club === myClubName,
-            pos: index + 1,
-            matchesPlayed: 0, m: 0, w: 0, r: 0, p: 0, b: 0, pts: startPts, diff: startDiff
-        });
-    });
-    return table;
-}
-
-function showSeasonTable() {
-    const overlay = document.getElementById('careerTableOverlay');
-    const list = document.getElementById('careerTableList');
-    const sub = document.getElementById('tableOverlaySub');
-    
-    if (!overlay || !list) return;
-
-    let s = cState.season;
-    let playingLeague = activeLoanLeague ? activeLoanLeague : cState.league;
-    
-    if (sub) {
-        sub.innerText = `Sezon ${2026 + (cState.history ? cState.history.length : 0)} | ${playingLeague}`;
-    }
-    
-    if (!s || !s.table || s.table.length === 0) {
-        list.innerHTML = '<div class="text-dim text-xs font-bold text-center" style="padding: 20px;">Tabela będzie dostępna po rozpoczęciu sezonu.</div>';
-    } else {
-        list.innerHTML = '';
-        s.table.forEach(row => {
-            const clubColor = getCareerClubColor(row.name);
-            const isPlayer = row.isMe;
-            list.innerHTML += `
-                <div class="career-season-row ${isPlayer ? 'active' : ''}">
-                    <div class="career-season-col-pos" style="color:${row.pos === 1 ? '#f1c40f' : row.pos >= s.table.length - 1 ? '#ff3333' : '#fff'};">${row.pos}</div>
-                    <div class="career-season-col-name" style="border-left: 3px solid ${clubColor}; padding-left: 10px; color: ${isPlayer ? '#fff' : '#d8d8d8'};">${row.name}</div>
-                    <div class="career-season-col-matches" style="color: var(--text-dim);">${row.matchesPlayed || 0}</div>
-                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.b || 0}</div>
-                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.w || 0}</div>
-                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.r || 0}</div>
-                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.p || 0}</div>
-                    <div class="career-season-col-points" style="color: ${((row.diff || 0) >= 0) ? 'var(--green-neon)' : 'var(--red-neon)'}; font-weight: 900;">${(row.diff || 0) >= 0 ? '+' : ''}${row.diff || 0}</div>
-                    <div class="career-season-col-points" style="color: #fff; font-weight: 900;">${row.pts}</div>
-                </div>
-            `;
-        });
-    }
-    
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function closeSeasonTable() {
-    const overlay = document.getElementById('careerTableOverlay');
-    if (overlay) {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.style.display = 'none', 300);
-    }
-}
-
-// Zabezpieczenia dla innych funkcji przypisanych do window w trakcie gry, 
-// które rzuciłyby kolejnym błędem "ReferenceError" na starcie skryptu:
-var closeTeamAchievement = window.closeTeamAchievement || function() {
-    const overlay = document.getElementById('careerTeamAchOverlay');
-    if (overlay) {
-        overlay.style.opacity = '0';
-        setTimeout(() => overlay.style.display = 'none', 300);
-    }
-};
-var showCareerCalendar = window.showCareerCalendar || function() {};
-
-function showTeamAchievement(club, gotDMP, medalColor, promoted, relegated, proceedCallback) {
-    const overlay = document.getElementById('careerTeamAchOverlay');
-    const title = document.getElementById('teamAchTitle');
-    const clubEl = document.getElementById('teamAchClub');
-    const desc = document.getElementById('teamAchDesc');
-    const icon = document.getElementById('teamAchIcon');
-
-    if (!overlay) { proceedCallback(); return; }
-
-    clubEl.innerText = club;
-    
-    if (gotDMP) {
-        icon.innerText = "🏆";
-        title.innerText = "MAMY MEDAL!";
-        title.style.color = "var(--accent)";
-        desc.innerText = `Zdobywasz ${medalColor.toLowerCase()} medal Drużynowych Mistrzostw Polski!`;
-    } else if (promoted) {
-        icon.innerText = "📈";
-        title.innerText = "AWANS!";
-        title.style.color = "var(--green-neon)";
-        desc.innerText = "Twoja drużyna awansowała do wyższej ligi!";
-    } else if (relegated) {
-        icon.innerText = "📉";
-        title.innerText = "SPADEK!";
-        title.style.color = "var(--red-neon)";
-        desc.innerText = "Niestety, twoja drużyna spada do niższej ligi...";
-    }
-
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
-
-    window.closeTeamAchievement = function() {
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            proceedCallback();
-        }, 300);
-    };
-}
-
 // ==============================================
 // ====== SYSTEM POZIOMÓW, MISJI I SKLEPU =======
 // ==============================================
 
 const MISSIONS_POOL_DAILY = [
-    { type: 'play_endless', target: 3, desc: 'Rozegraj 3 gry Endless', exp: 50, coins: 20 },
-    { type: 'win_endless', target: 1, desc: 'Wygraj 1 grę Endless', exp: 80, coins: 40 },
-    { type: 'no_hint_win', target: 1, desc: 'Wygraj grę bez podpowiedzi', exp: 100, coins: 50 },
-    { type: 'play_clash', target: 1, desc: 'Rozegraj 1 mecz w Clash', exp: 100, coins: 50 },
-    { type: 'win_clash', target: 1, desc: 'Wygraj 1 mecz w Clash', exp: 200, coins: 100 },
-    { type: 'claim_cells_clash', target: 5, desc: 'Przejmij 5 pól w Clash', exp: 150, coins: 70 },
-    { type: 'play_ta', target: 2, desc: 'Zagraj 2 razy w Time Attack', exp: 80, coins: 30 },
-    { type: 'ta_score', target: 20, desc: 'Zdobądź 20 pkt. w Time Attack (Suma)', exp: 150, coins: 70 },
-    { type: 'use_hint', target: 3, desc: 'Użyj podpowiedzi 3 razy', exp: 40, coins: 15 },
-    { type: 'play_daily', target: 1, desc: 'Rozegraj dzisiejsze Daily', exp: 100, coins: 50 }
+    { type: 'play_endless', target: 3, descKey: 'mission_play_endless_3', exp: 50, coins: 20 },
+    { type: 'win_endless', target: 1, descKey: 'mission_win_endless_1', exp: 80, coins: 40 },
+    { type: 'no_hint_win', target: 1, descKey: 'mission_no_hint_win_1', exp: 100, coins: 50 },
+    { type: 'play_clash', target: 1, descKey: 'mission_play_clash_1', exp: 100, coins: 50 },
+    { type: 'win_clash', target: 1, descKey: 'mission_win_clash_1', exp: 200, coins: 100 },
+    { type: 'claim_cells_clash', target: 5, descKey: 'mission_claim_cells_clash_5', exp: 150, coins: 70 },
+    { type: 'play_ta', target: 2, descKey: 'mission_play_ta_2', exp: 80, coins: 30 },
+    { type: 'ta_score', target: 20, descKey: 'mission_ta_score_20', exp: 150, coins: 70 },
+    { type: 'use_hint', target: 3, descKey: 'mission_use_hint_3', exp: 40, coins: 15 },
+    { type: 'play_daily', target: 1, descKey: 'mission_play_daily_1', exp: 100, coins: 50 }
 ];
 
 const MISSIONS_POOL_WEEKLY = [
-    { type: 'play_endless', target: 20, desc: 'Rozegraj 20 gier Endless', exp: 400, coins: 200 },
-    { type: 'win_endless', target: 10, desc: 'Wygraj 10 gier Endless', exp: 500, coins: 250 },
-    { type: 'no_hint_win', target: 10, desc: 'Wygraj 10 gier bez podpowiedzi', exp: 600, coins: 350 },
-    { type: 'play_clash', target: 10, desc: 'Rozegraj 10 meczów w Clash', exp: 600, coins: 300 },
-    { type: 'win_clash', target: 5, desc: 'Wygraj 5 meczów w Clash', exp: 800, coins: 400 },
-    { type: 'claim_cells_clash', target: 30, desc: 'Przejmij 30 pól w Clash', exp: 700, coins: 350 },
-    { type: 'ta_score', target: 150, desc: 'Zdobądź 150 pkt. w Time Attack (Suma)', exp: 600, coins: 300 },
-    { type: 'ta_single_score', target: 20, desc: 'Zdobądź 20 pkt. w 1 grze Time Attack', exp: 500, coins: 250 },
-    { type: 'streak_endless', target: 5, desc: 'Wygraj 5 gier Endless z rzędu', exp: 800, coins: 400 }
+    { type: 'play_endless', target: 20, descKey: 'mission_play_endless_20', exp: 400, coins: 200 },
+    { type: 'win_endless', target: 10, descKey: 'mission_win_endless_10', exp: 500, coins: 250 },
+    { type: 'no_hint_win', target: 10, descKey: 'mission_no_hint_win_10', exp: 600, coins: 350 },
+    { type: 'play_clash', target: 10, descKey: 'mission_play_clash_10', exp: 600, coins: 300 },
+    { type: 'win_clash', target: 5, descKey: 'mission_win_clash_5', exp: 800, coins: 400 },
+    { type: 'claim_cells_clash', target: 30, descKey: 'mission_claim_cells_clash_30', exp: 700, coins: 350 },
+    { type: 'ta_score', target: 150, descKey: 'mission_ta_score_150', exp: 600, coins: 300 },
+    { type: 'ta_single_score', target: 20, descKey: 'mission_ta_single_score_20', exp: 500, coins: 250 },
+    { type: 'streak_endless', target: 5, descKey: 'mission_streak_endless_5', exp: 800, coins: 400 }
 ];
 
 const MISSIONS_POOL_MONTHLY = [
-    { type: 'play_endless', target: 100, desc: 'Rozegraj 100 gier Endless', exp: 1500, coins: 1000 },
-    { type: 'win_endless', target: 50, desc: 'Wygraj 50 gier Endless', exp: 2000, coins: 1200 },
-    { type: 'play_clash', target: 50, desc: 'Rozegraj 50 meczów w Clash', exp: 2000, coins: 1200 },
-    { type: 'win_clash', target: 25, desc: 'Wygraj 25 meczów w Clash', exp: 3000, coins: 2000 },
-    { type: 'claim_cells_clash', target: 150, desc: 'Przejmij 150 pól w Clash', exp: 2500, coins: 1500 },
-    { type: 'ta_score', target: 500, desc: 'Zdobądź 500 pkt. w Time Attack (Suma)', exp: 2500, coins: 1500 },
-    { type: 'streak_endless', target: 15, desc: 'Wygraj 15 gier Endless z rzędu', exp: 3500, coins: 2500 }
+    { type: 'play_endless', target: 100, descKey: 'mission_play_endless_100', exp: 1500, coins: 1000 },
+    { type: 'win_endless', target: 50, descKey: 'mission_win_endless_50', exp: 2000, coins: 1200 },
+    { type: 'play_clash', target: 50, descKey: 'mission_play_clash_50', exp: 2000, coins: 1200 },
+    { type: 'win_clash', target: 25, descKey: 'mission_win_clash_25', exp: 3000, coins: 2000 },
+    { type: 'claim_cells_clash', target: 150, descKey: 'mission_claim_cells_clash_150', exp: 2500, coins: 1500 },
+    { type: 'ta_score', target: 500, descKey: 'mission_ta_score_500', exp: 2500, coins: 1500 },
+    { type: 'streak_endless', target: 15, descKey: 'mission_streak_endless_15', exp: 3500, coins: 2500 }
 ];
 
 function ensureProgressionStats() {
@@ -9682,6 +6095,7 @@ function openMissionsModal() {
     overlay.style.display = 'flex';
     setTimeout(() => overlay.style.opacity = '1', 10);
     
+    if (typeof setLang === 'function') setLang(currentLang);
     switchMissionTab('daily');
     document.getElementById('missionsCoinsDisplay').innerText = userStats.coins;
 }
@@ -9712,7 +6126,7 @@ window.switchMissionTab = function(type) {
     else if (type === 'monthly') taskList = userStats.missions.monthlyTasks;
 
     if (taskList.length === 0) {
-        container.innerHTML = '<div class="text-dim text-center mt-20">Brak dostępnych misji.</div>';
+        container.innerHTML = `<div class="text-dim text-center mt-20">${t('missionsNoTasks')}</div>`;
         return;
     }
     
@@ -9721,18 +6135,20 @@ window.switchMissionTab = function(type) {
         
         let actionHtml = '';
         if (task.claimed) {
-            actionHtml = `<button class="shop-btn" style="background:transparent; border:1px solid var(--text-dim); color:var(--text-dim);" disabled>Odebrano</button>`;
+            actionHtml = `<button class="shop-btn" style="background:transparent; border:1px solid var(--text-dim); color:var(--text-dim);" disabled>${t('missionsClaimed')}</button>`;
         } else if (task.completed) {
-            actionHtml = `<button class="shop-btn shop-btn-buy" onclick="claimMission('${type}', ${index})">Odbierz</button>`;
+            actionHtml = `<button class="shop-btn shop-btn-buy" onclick="claimMission('${type}', ${index})">${t('missionsClaim')}</button>`;
         } else {
             actionHtml = `<span style="font-size: 13px; font-weight: 900; color: var(--text-dim);">${task.progress} / ${task.target}</span>`;
         }
 
+        const missionText = t(task.descKey) || task.desc || '';
+
         container.innerHTML += `
             <div class="mission-card ${task.completed ? 'completed' : ''}">
                 <div class="mission-info">
-                    <div class="mission-title">${task.desc}</div>
-                    <div class="mission-reward">NAGRODA: ${task.exp} EXP | ${task.coins} 🪙</div>
+                    <div class="mission-title">${missionText}</div>
+                    <div class="mission-reward">${t('missionsReward')}: ${task.exp} EXP | ${task.coins} 🪙</div>
                     <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px;">
                         <div style="width: ${pct}%; height: 100%; background: ${task.completed ? 'var(--green-neon)' : 'var(--accent)'};"></div>
                     </div>
@@ -9756,7 +6172,7 @@ window.claimMission = function(type, index) {
     userStats.coins += task.coins;
     addExp(task.exp);
     
-    showToast(`Odebrano: ${task.coins} 🪙 i ${task.exp} EXP`, "success");
+    showToast(`${t('missionsCollected')} ${task.coins} 🪙 i ${task.exp} EXP`, "success");
     saveStats();
     
     document.getElementById('missionsCoinsDisplay').innerText = userStats.coins;
@@ -9773,34 +6189,34 @@ window.claimMission = function(type, index) {
 
 const SHOP_DB = {
     backgrounds: [
-        { id: 'rank-bg-gold', name: 'Złoty Prestiż', desc: 'Lśniące, złote tło', price: 5000 },
-        { id: 'rank-bg-ocean', name: 'Głębia Oceanu', desc: 'Błękitna animacja', price: 10000 },
-        { id: 'rank-bg-bubbles', name: 'Mydlane Bańki', desc: 'Unoszące się bąbelki', price: 10000 },
-        { id: 'rank-bg-toxic', name: 'Toksyczny Odpad', desc: 'Płynący, radioaktywny kwas', price: 15000 },
-        { id: 'rank-bg-forest', name: 'Mroczny Las', desc: 'Głęboka, mistyczna zieleń', price: 15000 },
-        { id: 'rank-bg-hearts', name: 'Miłosny Szał', desc: 'Deszcz czerwonych serc', price: 15000 },
-        { id: 'rank-bg-lightning', name: 'Gniew Zeusa', desc: 'Uderzenia błyskawic', price: 25000 },
-        { id: 'rank-bg-fire', name: 'Piekielny Ogień', desc: 'Płonące animowane tło', price: 50000 },
-        { id: 'rank-bg-sadurski', name: 'Sadurski Racing', desc: 'SPECJALNE TŁO: KS759', price: 75900 }
+        { id: 'rank-bg-gold', nameKey: 'shop_bg_gold_name', descKey: 'shop_bg_gold_desc', price: 5000 },
+        { id: 'rank-bg-ocean', nameKey: 'shop_bg_ocean_name', descKey: 'shop_bg_ocean_desc', price: 10000 },
+        { id: 'rank-bg-bubbles', nameKey: 'shop_bg_bubbles_name', descKey: 'shop_bg_bubbles_desc', price: 10000 },
+        { id: 'rank-bg-toxic', nameKey: 'shop_bg_toxic_name', descKey: 'shop_bg_toxic_desc', price: 15000 },
+        { id: 'rank-bg-forest', nameKey: 'shop_bg_forest_name', descKey: 'shop_bg_forest_desc', price: 15000 },
+        { id: 'rank-bg-hearts', nameKey: 'shop_bg_hearts_name', descKey: 'shop_bg_hearts_desc', price: 15000 },
+        { id: 'rank-bg-lightning', nameKey: 'shop_bg_lightning_name', descKey: 'shop_bg_lightning_desc', price: 25000 },
+        { id: 'rank-bg-fire', nameKey: 'shop_bg_fire_name', descKey: 'shop_bg_fire_desc', price: 50000 },
+        { id: 'rank-bg-sadurski', nameKey: 'shop_bg_sadurski_name', descKey: 'shop_bg_sadurski_desc', price: 75900 }
     ],
     nicks: [
-        { id: 'nick-effect-ice', name: 'Lodowe Ostrze', desc: 'Mroźna poświata na nazwie', price: 2000 },
-        { id: 'nick-effect-fire', name: 'Płonący Nick', desc: 'Ognista animacja tekstu', price: 4000 },
-        { id: 'nick-effect-rgb', name: 'Gamer RGB', desc: 'Przesuwająca się tęcza', price: 8000 },
-        { id: 'nick-effect-glitch', name: 'Cyber Glitch', desc: 'Klatkujący, zepsuty tekst', price: 12000 }
+        { id: 'nick-effect-ice', nameKey: 'shop_nick_ice_name', descKey: 'shop_nick_ice_desc', price: 2000 },
+        { id: 'nick-effect-fire', nameKey: 'shop_nick_fire_name', descKey: 'shop_nick_fire_desc', price: 4000 },
+        { id: 'nick-effect-rgb', nameKey: 'shop_nick_rgb_name', descKey: 'shop_nick_rgb_desc', price: 8000 },
+        { id: 'nick-effect-glitch', nameKey: 'shop_nick_glitch_name', descKey: 'shop_nick_glitch_desc', price: 12000 }
     ],
     helmets: [
-        { id: 'helmet-retro', name: 'Kask Retro', desc: 'Skórzana pilotka z goglami', price: 2000 },
-        { id: 'helmet-zloty', name: 'Złoty Kask', desc: 'Złoty relikt za bezbłędność', price: 3000 },
+        { id: 'helmet-retro', nameKey: 'shop_helmet_retro_name', descKey: 'shop_helmet_retro_desc', price: 2000 },
+        { id: 'helmet-zloty', nameKey: 'shop_helmet_gold_name', descKey: 'shop_helmet_gold_desc', price: 3000 },
     ],
     emotes: [
-        { id: 'emote-sedzia', name: 'Sędzia', desc: '🟥, 🟨, 🏁, 🛑, 🎥', price: 1500 },
-        { id: 'emote-kibic', name: 'Ultras', desc: '🌭, 🍻, 🧨, 🎺, 🧣', price: 2500 },
-        { id: 'emote-memy', name: 'Troll', desc: '🤡, 💩, 🥱, 💀, 🤫', price: 5000 }
+        { id: 'emote-sedzia', nameKey: 'shop_emote_ref_name', descKey: 'shop_emote_ref_desc', price: 1500 },
+        { id: 'emote-kibic', nameKey: 'shop_emote_ultras_name', descKey: 'shop_emote_ultras_desc', price: 2500 },
+        { id: 'emote-memy', nameKey: 'shop_emote_troll_name', descKey: 'shop_emote_troll_desc', price: 5000 }
     ],
     wins: [
-        { id: 'win-coins', name: 'Deszcz Pieniędzy', desc: 'Monety spadające z nieba', price: 7000 },
-        { id: 'win-fireworks', name: 'Sztuczne Ognie', desc: 'Wybuchy na ekranie', price: 10000 }
+        { id: 'win-coins', nameKey: 'shop_win_coins_name', descKey: 'shop_win_coins_desc', price: 7000 },
+        { id: 'win-fireworks', nameKey: 'shop_win_fireworks_name', descKey: 'shop_win_fireworks_desc', price: 10000 }
     ]
 };
 function openShopModal() {
@@ -9844,21 +6260,21 @@ window.switchShopTab = function(tab) {
     else if (tab === 'wins') { ownedArray = userStats.ownedWins; equipVar = 'equippedWin'; equipVal = userStats[equipVar]; }
 
     if (!SHOP_DB[tab] || SHOP_DB[tab].length === 0) {
-        container.innerHTML = `<div class="text-dim text-center mt-20">Kategoria wkrótce dostępna!</div>`;
+        container.innerHTML = `<div class="text-dim text-center mt-20">${t('shopComingSoon')}</div>`;
         return;
     }
 
     if (tab !== 'backgrounds') {
         let isDefaultEquipped = equipVal === 'default' || equipVal === null;
         let defBtn = isDefaultEquipped 
-            ? `<button class="shop-btn shop-btn-equipped" onclick="equipShopItem('${tab}', 'default')">ZAŁOŻONE</button>` 
-            : `<button class="shop-btn shop-btn-equip" onclick="equipShopItem('${tab}', 'default')">ZAŁÓŻ</button>`;
+            ? `<button class="shop-btn shop-btn-equipped" onclick="equipShopItem('${tab}', 'default')">${t('shopEquipped')}</button>` 
+            : `<button class="shop-btn shop-btn-equip" onclick="equipShopItem('${tab}', 'default')">${t('shopEquip')}</button>`;
             
         container.innerHTML += `
             <div class="shop-item-card">
                 <div>
-                    <div class="shop-item-title" style="color: #fff;">Domyślne</div>
-                    <div style="font-size:10px; color:var(--text-dim); font-weight:700;">Standardowy wygląd gry</div>
+                    <div class="shop-item-title" style="color: #fff;">${t('shopDefault')}</div>
+                    <div style="font-size:10px; color:var(--text-dim); font-weight:700;">${t('shopDefaultDesc')}</div>
                 </div>
                 <div>${defBtn}</div>
             </div>`;
@@ -9871,21 +6287,23 @@ window.switchShopTab = function(tab) {
         let actionBtn = '';
         if (isEquipped) {
             let revertId = tab === 'backgrounds' ? null : 'default';
-            actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipShopItem('${tab}', '${revertId}')">ZAŁOŻONE</button>`;
+            actionBtn = `<button class="shop-btn shop-btn-equipped" onclick="equipShopItem('${tab}', '${revertId}')">${t('shopEquipped')}</button>`;
         } else if (isOwned) {
-            actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipShopItem('${tab}', '${item.id}')">ZAŁÓŻ</button>`;
+            actionBtn = `<button class="shop-btn shop-btn-equip" onclick="equipShopItem('${tab}', '${item.id}')">${t('shopEquip')}</button>`;
         } else {
             actionBtn = `<button class="shop-btn shop-btn-buy" onclick="buyShopItem('${tab}', '${item.id}', ${item.price})">${item.price} 🪙</button>`;
         }
 
         let customStyleClass = tab === 'nicks' ? item.id : '';
         let customBgClass = tab === 'backgrounds' ? item.id : '';
+        let itemName = item.nameKey ? t(item.nameKey) : item.name;
+        let itemDesc = item.descKey ? t(item.descKey) : item.desc;
 
         container.innerHTML += `
             <div class="shop-item-card ${customBgClass}" style="border-left: none !important;">
                 <div style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
-                    <div class="shop-item-title ${customStyleClass}" style="color: #fff;">${item.name}</div>
-                    <div style="font-size:10px; color:rgba(255,255,255,0.7); font-weight:700;">${item.desc}</div>
+                    <div class="shop-item-title ${customStyleClass}" style="color: #fff;">${itemName}</div>
+                    <div style="font-size:10px; color:rgba(255,255,255,0.7); font-weight:700;">${itemDesc}</div>
                 </div>
                 <div>${actionBtn}</div>
             </div>
@@ -9905,10 +6323,10 @@ window.buyShopItem = function(category, id, price) {
         saveStats();
         switchShopTab(category);
         document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
-        showToast("Zakupiono nowy przedmiot!", "success");
+        showToast(t('shopBought'), "success");
         playSound('win');
     } else {
-        showToast("Nie masz wystarczająco Monet!", "error");
+        showToast(t('shopNoCoins'), "error");
         playSound('error');
     }
 }
@@ -9922,7 +6340,7 @@ window.equipShopItem = function(category, id) {
     
     saveStats();
     switchShopTab(category);
-    showToast("Wyposażenie zmienione!", "normal");
+    showToast(t('shopEquippedChanged'), "normal");
 }
 
 
@@ -9989,6 +6407,59 @@ function closePublicProfile() {
     const overlay = document.getElementById('publicProfileOverlay');
     overlay.style.opacity = '0';
     setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+// ==============================================
+// ====== SPLASH SCREEN & SWIPE DLA MOBILE ======
+// ==============================================
+function enterAppFromSplash() {
+    const splash = document.getElementById('mobileSplashScreen');
+    const menu = document.getElementById('mainMenuContainer');
+    if (!splash || splash.classList.contains('dismissed')) return;
+
+    splash.classList.add('dismissed');
+    if (menu) {
+        menu.classList.add('menu-visible');
+    }
+    sessionStorage.setItem('speedwaySplashPassed', 'true');
+}
+
+function initMobileSplash() {
+    const splash = document.getElementById('mobileSplashScreen');
+    const menu = document.getElementById('mainMenuContainer');
+    if (!splash) return;
+
+    // Jeśli gracz już przeszedł ekran powitalny w tej sesji (np. po powrocie z meczu)
+    if (sessionStorage.getItem('speedwaySplashPassed') === 'true') {
+        splash.style.display = 'none';
+        if (menu) menu.classList.add('menu-visible');
+        return;
+    }
+
+    let touchStartY = 0;
+    splash.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    splash.addEventListener('touchend', (e) => {
+        const diff = touchStartY - e.changedTouches[0].clientY;
+        if (diff > 45) { // Przesunięcie w górę (Swipe up)
+            enterAppFromSplash();
+        }
+    }, { passive: true });
+
+    splash.addEventListener('wheel', (e) => {
+        if (e.deltaY > 20) {
+            enterAppFromSplash();
+        }
+    }, { passive: true });
+}
+
+function toggleMobileDailyAccordion() {
+    const sub = document.getElementById('mobileDailySubmenu');
+    if (sub) {
+        sub.classList.toggle('expanded');
+    }
 }
 
 // ----------------------------------------
@@ -10063,33 +6534,20 @@ try {
     window.exitTimeAttackMenu = exitTimeAttackMenu;
     window.showTimeAttackInfo = showTimeAttackInfo;
     window.closeTimeAttackInfo = closeTimeAttackInfo;
-    
-    // CAREER EXPORTS
-    window.loadCareer = loadCareer;
-    window.showCareerCreator = showCareerCreator;
-    window.openCareerMode = openCareerMode;
-    window.exitCareerMode = exitCareerMode;
-    window.updateKevlarPreview = updateKevlarPreview;
-    window.selectCareerNat = selectCareerNat;
-    window.startCareerAcademy = startCareerAcademy;
-    window.signContract = signContract; 
-    window.acceptLoan = acceptLoan;
-    window.rejectLoan = rejectLoan;
-    window.startTrainingQTE = startTrainingQTE;
-    window.finishTraining = finishTraining;
-    window.triggerMatchOrEvent = triggerMatchOrEvent;
-    window.resolveMidSeasonEvent = resolveMidSeasonEvent;
-    window.endOfSeason = endOfSeason;
-    window.forceRetirement = forceRetirement;
-    window.showSeasonTable = showSeasonTable;
-    window.closeSeasonTable = closeSeasonTable;
-    window.closeTeamAchievement = closeTeamAchievement;
-    window.shareCareerResult = shareCareerResult;
-    window.showCareerCalendar = showCareerCalendar;
     window.openMissionsModal = openMissionsModal;
     window.closeMissionsModal = closeMissionsModal;
     window.openShopModal = openShopModal;
     window.closeShopModal = closeShopModal;
+    window.toggleMobileDailyAccordion = toggleMobileDailyAccordion;
+    window.enterAppFromSplash = enterAppFromSplash;
+    window.addEventListener('DOMContentLoaded', initMobileSplash);
+    window.showPrivacyPolicy = showPrivacyPolicy;
+    window.closePrivacyPolicy = closePrivacyPolicy;
+    window.showTerms = showTerms;
+    window.closeTerms = closeTerms;
+    window.applyTheme = applyTheme;
+    window.setTheme = setTheme;
+    window.setLang = setLang;
     
 } catch (e) {
     console.error("Global export error:", e);
