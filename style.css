@@ -3267,3 +3267,10 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .policy-section b {
     color: #fff;
 }
+
+/* Podświetlenia menu dla nowych przycisków */
+.nav-item-modern.hover-yellow:hover { color: #f1c40f; }
+.nav-item-modern.hover-yellow:hover .nav-icon-box { border-color: #f1c40f; color: #f1c40f; box-shadow: 0 0 15px rgba(241, 196, 15, 0.25); transform: scale(1.05); }
+
+.nav-item-modern.hover-orange:hover { color: #f39c12; }
+.nav-item-modern.hover-orange:hover .nav-icon-box { border-color: #f39c12; color: #f39c12; box-shadow: 0 0 15px rgba(243, 156, 18, 0.25); transform: scale(1.05); }

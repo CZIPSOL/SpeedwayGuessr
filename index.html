@@ -523,22 +523,10 @@
             </h1>
 
             <nav class="desktop-nav-modern">
-                <!-- DAILY GUESSR (Z Submenu) -->
-                <div class="nav-item-modern group" onmouseenter="loadDesktopRanking('daily')">
-                    <div class="nav-icon-box">📅</div>
-                    <div class="nav-text-main">DAILY GUESSR</div>
-                    <div class="nav-arrow">▶</div>
-                    <!-- Rozwijane menu po najechaniu -->
-                    <div class="nav-sub-modern">
-                        <span onclick="startDailyGame()"><i data-i18n="dToday">DZISIEJSZA GRA</i></span>
-                        <span onclick="openCalendar()"><i data-i18n="dArchive">ARCHIWUM DAILY</i></span>
-                    </div>
-                </div>
-
-                <!-- ENDLESS GUESSR -->
-                <div class="nav-item-modern" onclick="startEndlessGame()" onmouseenter="loadDesktopRanking('alltime')">
-                    <div class="nav-icon-box" style="font-size: 26px; line-height: 1;">∞</div>
-                    <div class="nav-text-main">ENDLESS GUESSR</div>
+                <!-- 1. GŁÓWNY TRYB GUESSR (Połączony Daily + Endless) -->
+                <div class="nav-item-modern hover-yellow" onclick="openGuessrMenu()" onmouseenter="loadDesktopRanking('daily')">
+                    <div class="nav-icon-box">🎯</div>
+                    <div class="nav-text-main">SPEEDWAY GUESSR</div>
                     <div class="nav-arrow">▶</div>
                 </div>
 
@@ -549,11 +537,21 @@
                     <div class="nav-arrow">▶</div>
                 </div>
 
+                <!-- TIME ATTACK -->
                 <div class="nav-item-modern hover-green" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" onmouseenter="loadDesktopRanking('timeattack')">
     <div class="nav-icon-box">⏱️</div>
-    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;" data-i18n="newBadge">(NOWOŚĆ)</span></div>
+    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;"</span></div>
     <div class="nav-arrow">▶</div>
     </div>
+
+            <!-- MORE / LESS -->
+            <div class="nav-item-modern hover-orange" onclick="openMoreLessMenu()" onmouseenter="loadDesktopRanking('alltime')">
+                    <div class="nav-icon-box">⚖️</div>
+                    <div class="nav-text-main" style="display: flex; align-items: baseline;">
+                        MORE / LESS <span style="font-size: 14px; font-weight: 700; color: #f39c12; margin-left: 10px;" data-i18n="newBadge">(NOWOŚĆ)</span>
+                    </div>
+                    <div class="nav-arrow">▶</div>
+                </div>
 
     <div class="nav-item-modern hover-orange" onclick="openMissionsModal()">
                     <div class="nav-icon-box" style="border-color: #9b59b6; color: #9b59b6;">📜</div>
@@ -678,30 +676,10 @@
 
         <!-- KAFLOWY PANEL GŁÓWNY W STYLU DESKTOP -->
         <nav class="desktop-nav-modern mobile-nav-grid">
-            <!-- DAILY GUESSR -->
-            <div class="nav-item-modern group w-100" onclick="toggleMobileDailyAccordion()">
-                <div class="nav-icon-box">📅</div>
-                <div class="nav-text-main">DAILY GUESSR</div>
-                <div class="nav-arrow">▼</div>
-            </div>
-            <div id="mobileDailySubmenu" class="mobile-sub-accordion">
-                <div class="daily-date-picker mb-10 mt-5">
-                    <button id="btnPrevDaily" class="icon-btn-small" onclick="changeDaily(-1); event.stopPropagation();">◀</button>
-                    <span id="dailyDayDisplay" class="daily-date-text">Daily 10.06.2026</span>
-                    <button id="btnNextDaily" class="icon-btn-small" onclick="changeDaily(1); event.stopPropagation();">▶</button>
-                </div>
-                <div class="flex-row gap-10">
-                    <button id="btnDailyMode" class="menu-btn btn-yellow flex-1" onclick="startDailyGame()">
-                        <span id="dailyBtnText">GRAJ DAILY</span>
-                    </button>
-                    <button class="menu-btn btn-flat" style="width: auto; padding: 12px 16px;" onclick="openCalendar()" title="Kalendarz">📅</button>
-                </div>
-            </div>
-
-            <!-- ENDLESS GUESSR -->
-            <div class="nav-item-modern w-100" onclick="startEndlessGame()">
-                <div class="nav-icon-box" style="font-size: 26px; line-height: 1;">∞</div>
-                <div class="nav-text-main">ENDLESS GUESSR</div>
+            <!-- 1. GŁÓWNY TRYB GUESSR -->
+            <div class="nav-item-modern hover-yellow w-100" onclick="openGuessrMenu()">
+                <div class="nav-icon-box">🎯</div>
+                <div class="nav-text-main">SPEEDWAY GUESSR</div>
                 <div class="nav-arrow">▶</div>
             </div>
 
@@ -716,7 +694,16 @@
             <div class="nav-item-modern hover-green w-100" onclick="openTimeAttackMenu()">
                 <div class="nav-icon-box">⏱️</div>
                 <div class="nav-text-main" style="display:flex; align-items:baseline;">
-                    TIME ATTACK <span style="font-size: 11px; font-weight:700; color:#1dd1a1; margin-left:8px;" data-i18n="newBadge">(NOWOŚĆ)</span>
+                    TIME ATTACK<span style="font-size: 11px; font-weight:700; color:#1dd1a1; margin-left:8px;"</span>
+                </div>
+                <div class="nav-arrow">▶</div>
+            </div>
+
+                        <!-- MORE / LESS -->
+            <div class="nav-item-modern hover-orange w-100" onclick="openMoreLessMenu()">
+                <div class="nav-icon-box">⚖️</div>
+                <div class="nav-text-main" style="display:flex; align-items:baseline;">
+                    MORE / LESS <span style="font-size: 11px; font-weight:700; color:#f39c12; margin-left:8px;" data-i18n="newBadge">(NOWOŚĆ)</span>
                 </div>
                 <div class="nav-arrow">▶</div>
             </div>
@@ -922,6 +909,234 @@
             </div>
 
             <button onclick="closeTimeAttackInfo()" class="btn-reset w-100 mt-10 p-15 text-lg">ZROZUMIANO, WRACAM DO MENU!</button>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- ====== EKRAN MENU SPEEDWAY GUESSR ============ -->
+    <!-- ============================================== -->
+    <div id="guessrMenuContainer" class="desktop-menu-wrapper" style="display: none;">
+        <div class="desktop-left">
+            <h1 class="desktop-logo" style="margin-bottom: 20px;">
+                <i style="color: #f1c40f;">SPEEDWAY</i><br>
+                <i>GUESSR</i><br>
+                <span class="logo-sub">KLASYCZNY QUIZ</span>
+            </h1>
+
+            <!-- KARTA GRACZA -->
+            <div style="background: rgba(40, 40, 45, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+                    <span id="guessrMenuNick" style="font-size: 20px; font-weight: 900; color: #fff;">GRACZ</span>
+                    <span id="guessrDailyBadge" style="font-size: 11px; font-weight: 900; color: var(--accent); background: rgba(241,196,15,0.15); padding: 4px 10px; border-radius: 8px;">DAILY #1</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Gier</span>
+                        <span id="guessrStatPlayed" style="font-size: 16px; font-weight: 900; color: #fff;">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Wygrane</span>
+                        <span id="guessrStatWon" style="font-size: 16px; font-weight: 900; color: #00ff66;">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Akt. Seria</span>
+                        <span id="guessrStatStreak" style="font-size: 16px; font-weight: 900; color: var(--accent);">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Najlepsza</span>
+                        <span id="guessrStatMax" style="font-size: 16px; font-weight: 900; color: #f39c12;">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NAWIGACJA -->
+            <nav class="desktop-nav">
+                <div class="nav-item">
+                    <div class="nav-main" style="color: #f1c40f;" onclick="startDailyGame()"><i>DZISIEJSZA GRA (DAILY) ►</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openCalendar()"><i>ARCHIWUM DAILY 📅</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="startEndlessGame()"><i>TRYB ENDLESS (BEZ KOŃCA) ∞</i></div>
+                </div>
+                <div class="nav-divider"></div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="showGuessrInfo()"><i>JAK GRAĆ?</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openProfile()"><i>PROFIL</i></div>
+                </div>
+            </nav>
+
+            <div class="desktop-footer-links">
+                <span onclick="exitGuessrMenu()">🔙 POWRÓT DO MENU GŁÓWNEGO</span>
+            </div>
+        </div>
+
+        <!-- PRAWA STRONA: Leaderboard Guessr -->
+        <div class="desktop-right">
+            <div class="desktop-leaderboard-panel">
+                <h2 id="guessrRankingTitle"><i>LEADERBOARD (DAILY)</i></h2>
+                <div class="desktop-table-wrapper">
+                    <table class="ranking-table desktop-table">
+                        <thead id="guessrRankingHead"></thead>
+                        <tbody id="guessrRankingBody">
+                            <tr><td colspan="4" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="desktop-rank-tabs">
+                    <span class="d-tab active" onclick="loadGuessrSubRanking('daily')">DAILY</span> |
+                    <span class="d-tab" onclick="loadGuessrSubRanking('weekly')">TYDZIEN</span> |
+                    <span class="d-tab" onclick="loadGuessrSubRanking('monthly')">MIESIAC</span> |
+                    <span class="d-tab" onclick="loadGuessrSubRanking('alltime')">OGOLNY</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: JAK GRAĆ W SPEEDWAY GUESSR -->
+    <div id="guessrInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal text-left overflow-y-auto max-h-90vh" style="max-width: 800px; padding: 40px;">
+            <h2 class="text-accent font-black text-center uppercase" style="font-size: 32px; letter-spacing: 2px;">Zasady: Speedway Guessr 🎯</h2>
+            <p class="text-center text-dim mb-30">Odgadnij ukrytego żużlowca krok po kroku na podstawie atrybutów!</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🎯</div>
+                    <h4 class="text-white font-black uppercase mb-10">10 Szans</h4>
+                    <p class="text-dim text-sm line-h-1-4">Masz <b>10 prób</b> na odgadnięcie tajemniczego żużlowca. Każda błędna próba odbiera jeden kask.</p>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🟩 🟨 🟥</div>
+                    <h4 class="text-white font-black uppercase mb-10">Kolory Atrybutów</h4>
+                    <p class="text-dim text-sm line-h-1-4"><b>Zielony:</b> Idealne dopasowanie.<br><b>Żółty:</b> Częściowe (np. ten sam kontynent).<br><b>Czerwony:</b> Brak zgodności.</p>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">⬆️ ⬇️</div>
+                    <h4 class="text-white font-black uppercase mb-10">Strzałki Wskazówek</h4>
+                    <p class="text-dim text-sm line-h-1-4">Przy roczniku i medalach DMP strzałki podpowiadają, czy szukany zawodnik ma <b>większą</b> (⬆️) czy <b>mniejszą</b> (⬇️) wartość.</p>
+                </div>
+
+                <div style="background: rgba(0, 255, 102, 0.1); border: 1px solid var(--green-neon); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🛡️</div>
+                    <h4 class="text-green font-black uppercase mb-10">Kluby z Przeszłości</h4>
+                    <p class="text-white text-sm line-h-1-4">Górna ścieżka kariery odkrywa kluby, w których jeździł Twój podany zawodnik oraz szukany rywal!</p>
+                </div>
+            </div>
+
+            <button onclick="closeGuessrInfo()" class="btn-reset w-100 mt-10 p-15 text-lg">ZROZUMIANO, WRACAM DO GRY!</button>
+        </div>
+    </div>
+
+    <!-- MODAL: JAK GRAĆ W MORE / LESS -->
+    <div id="moreLessInfoOverlay" class="win-overlay" style="display: none; z-index: 10010;">
+        <div class="stats-modal text-left overflow-y-auto max-h-90vh" style="max-width: 800px; padding: 40px;">
+            <h2 class="text-accent font-black text-center uppercase" style="font-size: 32px; letter-spacing: 2px;">Zasady: More / Less ⚖️</h2>
+            <p class="text-center text-dim mb-30">Porównuj statystyki i buduj jak najdłuższy rekord poprawnych odpowiedzi!</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🃏</div>
+                    <h4 class="text-white font-black uppercase mb-10">Dwie Karty</h4>
+                    <p class="text-dim text-sm line-h-1-4">Karta po lewej stronie ma <b>ujawnioną wartość</b>. Twoim celem jest zgadnąć, czy karta po prawej ma wartość wyższą czy niższą.</p>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🔼 🔽</div>
+                    <h4 class="text-white font-black uppercase mb-10">Więcej czy Mniej?</h4>
+                    <p class="text-dim text-sm line-h-1-4">Kliknij <b>WIĘCEJ</b> jeśli uważasz, że prawa karta ma wyższą statystykę, lub <b>MNIEJ</b> jeśli niższą.</p>
+                </div>
+
+                <div style="background: rgba(0, 255, 102, 0.1); border: 1px solid var(--green-neon); border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🤝</div>
+                    <h4 class="text-green font-black uppercase mb-10">Automatyczny Remis</h4>
+                    <p class="text-white text-sm line-h-1-4">Gdy obie karty mają dokładnie taką samą wartość, remis jest zawsze zaliczany jako <b>sukces</b> gracza!</p>
+                </div>
+
+                <div style="background: rgba(243, 156, 18, 0.1); border: 1px solid #f39c12; border-radius: 16px; padding: 20px;">
+                    <div style="font-size: 30px; margin-bottom: 10px;">🔥</div>
+                    <h4 class="text-white font-black uppercase mb-10">Rosnąca Seria i Trudność</h4>
+                    <p class="text-dim text-sm line-h-1-4">Każda poprawna odpowiedź przesuwa prawą kartę na lewą. Wraz ze wzrostem serii gra dobiera coraz bliższe wartości!</p>
+                </div>
+            </div>
+
+            <button onclick="closeMoreLessInfo()" class="btn-reset w-100 mt-10 p-15 text-lg">ZROZUMIANO, ZACZYNAMY!</button>
+        </div>
+    </div>
+    <!-- ============================================== -->
+    <!-- ====== EKRAN MENU MORE / LESS ================ -->
+    <!-- ============================================== -->
+    <div id="moreLessMenuContainer" class="desktop-menu-wrapper" style="display: none;">
+        <div class="desktop-left">
+            <h1 class="desktop-logo" style="margin-bottom: 20px;">
+                <i style="color: #f39c12;">MORE</i><br>
+                <i style="color: #e67e22;">LESS</i><br>
+                <span class="logo-sub">WIĘCEJ CZY MNIEJ?</span>
+            </h1>
+
+            <!-- KARTA GRACZA -->
+            <div style="background: rgba(40, 40, 45, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <span id="moreLessMenuNick" style="font-size: 20px; font-weight: 900; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">GRACZ</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Rozegrane</span>
+                        <span id="mlStatPlayed" style="font-size: 16px; font-weight: 900; color: #fff;">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Rekord Serii</span>
+                        <span id="mlStatBest" style="font-size: 16px; font-weight: 900; color: #f39c12;">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Średnia Seria</span>
+                        <span id="mlStatAvg" style="font-size: 16px; font-weight: 900; color: #00ff66;">0.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KATEGORIE ROZGRYWKI -->
+            <nav class="desktop-nav">
+                <div class="nav-item">
+                    <div class="nav-main" style="color: #f39c12;" onclick="startMoreLess('mix')"><i>ROZPOCZNIJ GRĘ (MIX) ►</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="startMoreLess('riders')"><i>STATYSTYKI ZAWODNIKÓW 🏍️</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="startMoreLess('attendance')"><i>FREKWENCJA STADIONÓW 🏟️</i></div>
+                </div>
+                <div class="nav-divider"></div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="showMoreLessInfo()"><i>JAK GRAĆ?</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openProfile()"><i>PROFIL</i></div>
+                </div>
+            </nav>
+
+            <div class="desktop-footer-links">
+                <span onclick="exitMoreLessMenu()">🔙 POWRÓT DO MENU GŁÓWNEGO</span>
+            </div>
+        </div>
+
+        <!-- PRAWA STRONA: Leaderboard More / Less -->
+        <div class="desktop-right">
+            <div class="desktop-leaderboard-panel">
+                <h2 style="color: #f39c12;"><i>LEADERBOARD (MORE / LESS)</i></h2>
+                <div class="desktop-table-wrapper">
+                    <table class="ranking-table desktop-table">
+                        <thead>
+                            <tr><th>Poz.</th><th style="text-align: left;">Nick</th><th style="color: #f39c12;">Rekord Serii</th></tr>
+                        </thead>
+                        <tbody id="desktopRankingBodyML">
+                            <tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 

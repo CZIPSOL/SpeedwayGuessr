@@ -1639,14 +1639,39 @@ function changeDailyInGame(dir) {
 
 function updateDailyMenu() {
     const strings = i18n[currentLang] || i18n.pl;
-    document.getElementById('dailyDayDisplay').innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
-    document.getElementById('btnPrevDaily').style.visibility = (selectedDailyDay <= 1) ? 'hidden' : 'visible';
-    document.getElementById('btnNextDaily').style.visibility = (selectedDailyDay >= currentDailyDay) ? 'hidden' : 'visible';
-    
-    const btn = document.getElementById('btnDailyMode'); const txt = document.getElementById('dailyBtnText');
-    if (!btn || !txt) return;
-    if (userStats.dailyResults[selectedDailyDay]) { btn.classList.remove('disabled'); txt.innerHTML = strings.btnReview; } 
-    else { btn.classList.remove('disabled'); txt.innerHTML = strings.btnDaily; }
+
+    const dayDisplay = document.getElementById('dailyDayDisplay');
+    if (dayDisplay) {
+        dayDisplay.innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
+    }
+
+    const prevBtn = document.getElementById('btnPrevDaily');
+    if (prevBtn) {
+        prevBtn.style.visibility = (selectedDailyDay <= 1) ? 'hidden' : 'visible';
+    }
+
+    const nextBtn = document.getElementById('btnNextDaily');
+    if (nextBtn) {
+        nextBtn.style.visibility = (selectedDailyDay >= currentDailyDay) ? 'hidden' : 'visible';
+    }
+
+    const btn = document.getElementById('btnDailyMode');
+    const txt = document.getElementById('dailyBtnText');
+    if (btn && txt) {
+        if (userStats.dailyResults && userStats.dailyResults[selectedDailyDay]) {
+            btn.classList.remove('disabled');
+            txt.innerHTML = strings.btnReview || 'Przejrzyj grę';
+        } else {
+            btn.classList.remove('disabled');
+            txt.innerHTML = strings.btnDaily || 'Graj Daily';
+        }
+    }
+
+    // Aktualizacja plakietki w nowym podmenu Guessr
+    const guessrBadge = document.getElementById('guessrDailyBadge');
+    if (guessrBadge) {
+        guessrBadge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
+    }
 }
 
 function openCalendar() {
@@ -2411,6 +2436,476 @@ function triggerTimeAttackErrorShake() {
     wrapper.classList.add('shake-error');
     playSound('error');
     setTimeout(() => wrapper.classList.remove('shake-error'), 400);
+}
+
+// ==============================================
+// ====== NAWIGACJA: SPEEDWAY GUESSR MENU =======
+// ==============================================
+
+function openGuessrMenu() {
+    promptForNick(() => {
+        document.getElementById('mainMenuContainer').style.display = 'none';
+        document.getElementById('desktopMainMenu').style.display = 'none';
+        document.getElementById('clashModeSelectContainer').style.display = 'none';
+        document.getElementById('timeAttackMenuContainer').style.display = 'none';
+        if (document.getElementById('moreLessMenuContainer')) {
+            document.getElementById('moreLessMenuContainer').style.display = 'none';
+        }
+
+        const menu = document.getElementById('guessrMenuContainer');
+        menu.style.display = 'grid';
+
+        const nickEl = document.getElementById('guessrMenuNick');
+        if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
+
+        const badgeEl = document.getElementById('guessrDailyBadge');
+        if (badgeEl) badgeEl.innerText = `DAILY ${getDailyDateString(currentDailyDay)}`;
+
+        document.getElementById('guessrStatPlayed').innerText = userStats.played || 0;
+        document.getElementById('guessrStatWon').innerText = userStats.won || 0;
+        document.getElementById('guessrStatStreak').innerText = userStats.currentStreak || 0;
+        document.getElementById('guessrStatMax').innerText = userStats.maxStreak || 0;
+
+        loadGuessrSubRanking('daily');
+    });
+}
+
+function exitGuessrMenu() {
+    window.location.reload();
+}
+
+function showGuessrInfo() {
+    const overlay = document.getElementById('guessrInfoOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeGuessrInfo() {
+    const overlay = document.getElementById('guessrInfoOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+// ==============================================
+// ====== POBIERANIE WYNIKÓW DLA GUESSR =========
+// ==============================================
+
+async function loadGuessrSubRanking(type) {
+    const thead = document.getElementById('guessrRankingHead');
+    const tbody = document.getElementById('guessrRankingBody');
+    const title = document.getElementById('guessrRankingTitle');
+    if (!tbody || !thead) return;
+
+    const titles = { 
+        daily: 'LEADERBOARD (DAILY)', 
+        weekly: 'LEADERBOARD (TYDZIEŃ)', 
+        monthly: 'LEADERBOARD (MIESIĄC)', 
+        alltime: 'LEADERBOARD (OGÓLNY)' 
+    };
+    if (title) title.innerHTML = `<i>${titles[type] || 'LEADERBOARD'}</i>`;
+
+    // Podświetlenie aktywnej zakładki (Daily/Tydzień/Miesiąc/Ogólny)
+    const tabsContainer = document.querySelector('#guessrMenuContainer .desktop-rank-tabs');
+    if (tabsContainer) {
+        tabsContainer.querySelectorAll('.d-tab').forEach(tab => tab.classList.remove('active'));
+        const tabMap = { daily: 0, weekly: 1, monthly: 2, alltime: 3 };
+        const idx = tabMap[type];
+        if (idx !== undefined && tabsContainer.children[idx]) {
+            tabsContainer.children[idx].classList.add('active');
+        }
+    }
+
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
+
+    try {
+        let snapshot;
+        if (type === 'daily') {
+            snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
+        } else if (type === 'weekly') {
+            snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(20).get();
+        } else if (type === 'monthly') {
+            snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
+        } else if (type === 'alltime') {
+            snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
+        }
+
+        let scores = [];
+        snapshot.forEach(doc => { 
+            let d = doc.data(); 
+            d.uid = doc.id; 
+            scores.push(d); 
+        });
+
+        scores.sort((a, b) => { 
+            let winsA = a.won !== undefined ? a.won : (a.wins || 0); 
+            let winsB = b.won !== undefined ? b.won : (b.wins || 0); 
+            if (winsB !== winsA) return winsB - winsA; 
+            if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
+            return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
+        });
+
+        let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
+        thead.innerHTML = `<tr><th style="width:15%;">Poz.</th><th style="text-align:left; width:45%;">Nick</th><th style="width:20%;">${headerText}</th><th style="width:20%;">Próby</th></tr>`;
+
+        tbody.innerHTML = '';
+        if (scores.length === 0) { 
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników. Zagraj pierwszy!</td></tr>`; 
+            return; 
+        }
+
+        scores.forEach((row, index) => {
+            let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
+            let wonText = winsAmount > 0 
+                ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : winsAmount}</span>` 
+                : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
+            
+            let rawNick = escapeHTML(row.nick || "Gracz");
+            let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+            safeNick += getMiniClubBadge(row.club); 
+            let bgClass = row.bg ? row.bg : '';
+            let isMeStyle = (rawNick === playerNickname) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
+
+            tbody.innerHTML += `
+                <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
+                    <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
+                    <td style="text-align:left;">${safeNick}</td>
+                    <td>${wonText}</td>
+                    <td style="color:var(--text-dim);">${row.guesses || '-'}</td>
+                </tr>`;
+        });
+    } catch(e) {
+        console.error("Błąd pobierania rankingu Guessr:", e);
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych</td></tr>`;
+    }
+}
+
+
+// ==============================================
+// ====== START TRYBU MORE / LESS ===============
+// ==============================================
+
+function startMoreLess(categoryMode = 'mix') {
+    // 1. Sprawdzenie czy baza moreless_db.js jest załadowana
+    if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
+        showToast("Ładowanie bazy statystyk...", "normal");
+        return;
+    }
+
+    // 2. Schowanie menu
+    document.getElementById('moreLessMenuContainer').style.display = 'none';
+    document.getElementById('desktopMainMenu').style.display = 'none';
+    document.getElementById('mainMenuContainer').style.display = 'none';
+
+    // 3. Przygotowanie sekwencji kategorii pod wybrany tryb
+    let sequence = [];
+    if (categoryMode === 'riders') {
+        sequence = ['player_points', 'player_points', 'player_average', 'player_average', 'player_points'];
+    } else if (categoryMode === 'attendance') {
+        sequence = ['attendance_avg', 'attendance_pct', 'attendance_total', 'attendance_avg'];
+    } else {
+        // Domyślny Daily MIX (5 pkt + 5 średnia + 2 stadiony)
+        sequence = generateMixSequence();
+    }
+
+    // 4. Inicjalizacja stanu rozgrywki
+    mlGame = {
+        active: true,
+        mode: categoryMode,
+        roundSequence: sequence,
+        currentRoundIndex: 0,
+        currentCategory: null,
+        score: 0,
+        usedKeys: new Set(),
+        leftCard: null,
+        rightCard: null
+    };
+
+    // 5. Otwarcie planszy gry (jeśli kontener istnieje)
+    const gameContainer = document.getElementById('moreLessContainer');
+    if (gameContainer) {
+        gameContainer.style.display = 'block';
+        prepareNextRound();
+    } else {
+        showToast(`Rozpoczęto tryb ${categoryMode.toUpperCase()}!`, "success");
+    }
+}
+
+// ==============================================
+// ====== NAWIGACJA: MORE / LESS MENU ===========
+// ==============================================
+
+function ensureMoreLessStats() {
+    if (!userStats.moreLess) {
+        userStats.moreLess = { played: 0, bestStreak: 0, totalCorrect: 0 };
+    }
+}
+
+function openMoreLessMenu() {
+    promptForNick(() => {
+        document.getElementById('mainMenuContainer').style.display = 'none';
+        document.getElementById('desktopMainMenu').style.display = 'none';
+        document.getElementById('clashModeSelectContainer').style.display = 'none';
+        document.getElementById('timeAttackMenuContainer').style.display = 'none';
+        document.getElementById('guessrMenuContainer').style.display = 'none';
+
+        const menu = document.getElementById('moreLessMenuContainer');
+        menu.style.display = 'grid';
+
+        ensureMoreLessStats();
+        const nickEl = document.getElementById('moreLessMenuNick');
+        if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
+
+        const ml = userStats.moreLess;
+        document.getElementById('mlStatPlayed').innerText = ml.played || 0;
+        document.getElementById('mlStatBest').innerText = ml.bestStreak || 0;
+        const avg = ml.played > 0 ? (ml.totalCorrect / ml.played).toFixed(1) : "0.0";
+        document.getElementById('mlStatAvg').innerText = avg;
+
+        loadMoreLessRanking();
+    });
+}
+
+function exitMoreLessMenu() {
+    window.location.reload();
+}
+
+function showMoreLessInfo() {
+    const overlay = document.getElementById('moreLessInfoOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function closeMoreLessInfo() {
+    const overlay = document.getElementById('moreLessInfoOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.style.display = 'none', 300);
+}
+
+// ==============================================
+// ====== POBIERANIE WYNIKÓW DLA MORE / LESS ====
+// ==============================================
+
+async function loadMoreLessRanking() {
+    const tbody = document.getElementById('desktopRankingBodyML');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
+
+    try {
+        const snapshot = await db.collection("leaderboard_moreless").orderBy("bestStreak", "desc").limit(20).get();
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników. Zagraj pierwszy!</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        let pos = 1;
+        snapshot.forEach(doc => {
+            const row = doc.data();
+            const safeNick = escapeHTML(row.nick || "Gracz") + getMiniClubBadge(row.club);
+            const isMe = (row.nick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            tbody.innerHTML += `
+                <tr ${isMe}>
+                    <td style="color:var(--accent); font-weight:900;">${pos}</td>
+                    <td style="text-align:left;">${safeNick}</td>
+                    <td style="color:#f39c12; font-weight:900;">${row.bestStreak || 0}</td>
+                </tr>`;
+            pos++;
+        });
+    } catch(e) {
+        // Przy braku kolekcji w Firestore nie blokujemy tabeli, tylko wyświetlamy czytelny stan pusty
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników w chmurze. Zagraj jako pierwszy!</td></tr>';
+    }
+}
+
+// ==============================================
+// ====== MORE / LESS: KONFIGURACJA KATEGORII ===
+// ==============================================
+
+const MORE_LESS_CATEGORIES = {
+    // 1. PUNKTY ZAWODNIKA
+    player_points: {
+        id: 'player_points',
+        title: 'Punkty w sezonie (PGE Ekstraliga)',
+        badge: 'PUNKTY',
+        formatValue: (val) => `${val} pkt`,
+        dataSource: () => seasonalPlayerStats,
+        mapItem: (item) => ({
+            key: `p_${item.name}_${item.sezon}`,
+            title: item.name,
+            subtitle: `Sezon ${item.sezon}`,
+            value: item.punkty,
+            image: `images/riders/${item.name.split(' ')[1] || item.name} Kevlar.jpg` // fallback obsłużony
+        })
+    },
+
+    // 2. ŚREDNIA BIEGOWA
+    player_average: {
+        id: 'player_average',
+        title: 'Średnia biegowa w sezonie',
+        badge: 'ŚREDNIA',
+        formatValue: (val) => val.toFixed(3),
+        dataSource: () => seasonalPlayerStats,
+        mapItem: (item) => ({
+            key: `a_${item.name}_${item.sezon}`,
+            title: item.name,
+            subtitle: `Sezon ${item.sezon}`,
+            value: item.srednia,
+            image: `images/riders/${item.name.split(' ')[1] || item.name} Kevlar.jpg`
+        })
+    },
+
+    // 3. ŚREDNIA FREKWENCJA NA MECZU
+    attendance_avg: {
+        id: 'attendance_avg',
+        title: 'Średnia frekwencja na meczu',
+        badge: 'FREKWENCJA',
+        formatValue: (val) => `${val.toLocaleString('pl-PL')} widzów`,
+        dataSource: () => attendanceStats,
+        mapItem: (item) => ({
+            key: `att_${item.club}_${item.sezon}`,
+            title: item.club,
+            subtitle: `${item.liga === 'PGEE' ? 'PGE Ekstraliga' : 'Metalkas 2.E'} (${item.sezon})`,
+            value: item.srednia,
+            icon: '🏟️'
+        })
+    },
+
+    // 4. ZAPEŁNIENIE STADIONU (%)
+    attendance_pct: {
+        id: 'attendance_pct',
+        title: 'Średnie zapełnienie stadionu',
+        badge: 'ZAPEŁNIENIE',
+        formatValue: (val) => `${val.toFixed(1)}%`,
+        dataSource: () => attendanceStats,
+        mapItem: (item) => ({
+            key: `pct_${item.club}_${item.sezon}`,
+            title: item.club,
+            subtitle: `${item.liga === 'PGEE' ? 'PGE Ekstraliga' : 'Metalkas 2.E'} (${item.sezon})`,
+            value: item.zajetosc,
+            icon: '📊'
+        })
+    },
+
+    // 5. SUMA KIBICÓW W CAŁYM SEZONIE
+    attendance_total: {
+        id: 'attendance_total',
+        title: 'Łączna liczba kibiców w sezonie',
+        badge: 'SUMA KIBICÓW',
+        formatValue: (val) => `${val.toLocaleString('pl-PL')} kibiców`,
+        dataSource: () => attendanceStats,
+        mapItem: (item) => ({
+            key: `sum_${item.club}_${item.sezon}`,
+            title: item.club,
+            subtitle: `Sezon ${item.sezon} (${item.mecze} meczów domowych)`,
+            value: item.suma,
+            icon: '👥'
+        })
+    }
+};
+
+// Generator sekwencji 12 rund dla Daily Mix
+function generateMixSequence() {
+    const clubCategories = ['attendance_avg', 'attendance_pct', 'attendance_total'];
+    // Losujemy dwie różne kategorie stadionowe na rundy 11 i 12
+    const shuffledClub = [...clubCategories].sort(() => 0.5 - Math.random());
+
+    return [
+        // Rundy 1 - 5: Punkty zawodników
+        'player_points', 'player_points', 'player_points', 'player_points', 'player_points',
+        // Rundy 6 - 10: Średnia biegowa
+        'player_average', 'player_average', 'player_average', 'player_average', 'player_average',
+        // Rundy 11 - 12: Finał stadionowy
+        shuffledClub[0], shuffledClub[1]
+    ];
+}
+
+// Stan aktualnej rozgrywki More / Less
+let mlGame = {
+    active: false,
+    mode: 'mix',               // 'mix' lub 'endless'
+    roundSequence: [],         // tablica 12 kategorii dla Daily
+    currentRoundIndex: 0,      // 0..11
+    currentCategory: null,
+    score: 0,
+    usedKeys: new Set(),       // ochrona przed powtórkami w jednej grze
+    leftCard: null,            // odsłonięta karta referencyjna
+    rightCard: null            // karta do zgadnięcia
+};
+
+// Losowanie unikalnego wpisu z danej kategorii
+function drawRandomItem(catId) {
+    const config = MORE_LESS_CATEGORIES[catId];
+    const rawData = config.dataSource();
+    
+    // Filtrujemy już użyte elementy
+    let candidates = rawData
+        .map(config.mapItem)
+        .filter(item => !mlGame.usedKeys.has(item.key));
+
+    // Jeśli baza się wyczerpała, resetujemy historię tej kategorii
+    if (candidates.length === 0) {
+        candidates = rawData.map(config.mapItem);
+    }
+
+    const selected = candidates[Math.floor(Math.random() * candidates.length)];
+    mlGame.usedKeys.add(selected.key);
+    return selected;
+}
+
+// Przygotowanie kolejnej pary kart
+function prepareNextRound() {
+    const targetCatId = mlGame.roundSequence[mlGame.currentRoundIndex];
+    const isCategoryChange = !mlGame.currentCategory || mlGame.currentCategory.id !== targetCatId;
+    mlGame.currentCategory = MORE_LESS_CATEGORIES[targetCatId];
+
+    if (isCategoryChange || !mlGame.rightCard) {
+        // Nowa kategoria lub start gry -> losujemy obie karty od nowa
+        mlGame.leftCard = drawRandomItem(targetCatId);
+        do {
+            mlGame.rightCard = drawRandomItem(targetCatId);
+        } while (mlGame.rightCard.key === mlGame.leftCard.key);
+    } else {
+        // Kontynuacja w tej samej kategorii -> prawa karta staje się lewą!
+        mlGame.leftCard = mlGame.rightCard;
+        do {
+            mlGame.rightCard = drawRandomItem(targetCatId);
+        } while (mlGame.rightCard.key === mlGame.leftCard.key);
+    }
+
+    renderMoreLessCards();
+}
+
+// choice: 'more' (Więcej) lub 'less' (Mniej)
+function submitMoreLessGuess(choice) {
+    if (!mlGame.active) return;
+
+    const leftVal = mlGame.leftCard.value;
+    const rightVal = mlGame.rightCard.value;
+
+    // Reguła: Remis ZAWSZE wygrywa na korzyść gracza!
+    const isCorrect = (leftVal === rightVal) || 
+                      (choice === 'more' && rightVal > leftVal) || 
+                      (choice === 'less' && rightVal < leftVal);
+
+    // Odsłaniamy liczbę na prawej karcie (animacja licznika)
+    revealRightCardValue(rightVal, isCorrect, () => {
+        if (isCorrect) {
+            playSound('guess');
+            mlGame.score++;
+            mlGame.currentRoundIndex++;
+
+            // Czy ukończono cały zestaw (np. 12 rund)?
+            if (mlGame.currentRoundIndex >= mlGame.roundSequence.length) {
+                handleMoreLessVictory();
+            } else {
+                // Przejście do następnej rundy
+                setTimeout(prepareNextRound, 1200);
+            }
+        } else {
+            playSound('lose');
+            handleMoreLessGameOver();
+        }
+    });
 }
 
 // ====== OBSŁUGA MENU TIME ATTACK ======
@@ -6180,7 +6675,7 @@ window.claimMission = function(type, index) {
 }
 
 // ==============================================
-// ====== UI SKLEPU (NOWY LAYOUT) ===============
+// ====== UI SKLEPU ===============
 // ==============================================
 
 // ==============================================
@@ -6548,6 +7043,16 @@ try {
     window.applyTheme = applyTheme;
     window.setTheme = setTheme;
     window.setLang = setLang;
+    window.openGuessrMenu = openGuessrMenu;
+    window.exitGuessrMenu = exitGuessrMenu;
+    window.showGuessrInfo = showGuessrInfo;
+    window.closeGuessrInfo = closeGuessrInfo;
+    window.loadGuessrSubRanking = loadGuessrSubRanking;
+    window.openMoreLessMenu = openMoreLessMenu;
+    window.exitMoreLessMenu = exitMoreLessMenu;
+    window.showMoreLessInfo = showMoreLessInfo;
+    window.closeMoreLessInfo = closeMoreLessInfo;
+    window.startMoreLess = startMoreLess;
     
 } catch (e) {
     console.error("Global export error:", e);
