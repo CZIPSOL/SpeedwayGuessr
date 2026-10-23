@@ -3281,6 +3281,8 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 .ml-screen {
     width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
     min-height: 100vh;
     padding: 20px 15px 40px;
     box-sizing: border-box;
@@ -3293,11 +3295,11 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 
 .ml-header {
     width: 100%;
-    max-width: 1000px;
+    max-width: 900px;
+    margin: 0 auto 15px auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
 }
 
 .ml-header-info { text-align: center; }
@@ -3318,6 +3320,9 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 .ml-streak-val { font-size: 22px; font-weight: 900; color: #fff; line-height: 1; }
 
 .ml-category-banner {
+    width: 100%;
+    max-width: 650px;
+    margin: 0 auto 25px auto;
     background: rgba(243, 156, 18, 0.12);
     border: 1px solid rgba(243, 156, 18, 0.4);
     color: #f39c12;
@@ -3327,9 +3332,9 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     letter-spacing: 1px;
     padding: 10px 24px;
     border-radius: 20px;
-    margin-bottom: 25px;
     box-shadow: 0 0 20px rgba(243, 156, 18, 0.15);
     text-align: center;
+    box-sizing: border-box;
 }
 
 /* Arena z dwoma kartami */
@@ -3338,8 +3343,10 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     grid-template-columns: 1fr 60px 1fr;
     gap: 20px;
     align-items: center;
+    justify-content: center;
     width: 100%;
-    max-width: 1000px;
+    max-width: 900px;
+    margin: 0 auto;
 }
 
 .ml-vs-badge {

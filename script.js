@@ -2746,16 +2746,18 @@ function revealRightCardValue(targetVal, isCorrect, callback) {
     const cardEl = document.getElementById('mlRightCard');
     valEl.className = "ml-value-number";
 
-    const duration = 750; // ms
+    const duration = 750;
     const startTime = performance.now();
-    const isFloat = typeof targetVal === 'number' && !Number.isInteger(targetVal);
+    const isFloatCategory = mlGame.currentCategory.id === 'player_average' || mlGame.currentCategory.id === 'attendance_pct';
 
     function animate(currentTime) {
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const currentVal = targetVal * progress;
 
-        valEl.innerText = mlGame.currentCategory.formatValue(currentVal);
+        // Kluczowe: dla punktów i frekwencji ZAWSZE Math.round (żadnych ułamków!)
+        const displayVal = isFloatCategory ? currentVal : Math.round(currentVal);
+        valEl.innerText = mlGame.currentCategory.formatValue(displayVal);
 
         if (progress < 1) {
             requestAnimationFrame(animate);
@@ -2989,44 +2991,44 @@ async function loadMoreLessRanking() {
 // ==============================================
 
 const MORE_LESS_CATEGORIES = {
-    // 1. PUNKTY ZAWODNIKA
+    // 1. PUNKTY ZAWODNIKA (zawsze jako INT)
     player_points: {
         id: 'player_points',
         title: 'Punkty w sezonie (PGE Ekstraliga)',
         badge: 'PUNKTY',
-        formatValue: (val) => `${val} pkt`,
+        formatValue: (val) => `${Math.round(val)} pkt`,
         dataSource: () => seasonalPlayerStats,
         mapItem: (item) => ({
             key: `p_${item.name}_${item.sezon}`,
             title: item.name,
             subtitle: `Sezon ${item.sezon}`,
             value: item.punkty,
-            image: `images/riders/${item.name.split(' ')[1] || item.name} Kevlar.jpg` // fallback obsłużony
+            icon: '🏍️'
         })
     },
 
-    // 2. ŚREDNIA BIEGOWA
+    // 2. ŚREDNIA BIEGOWA (zawsze 3 miejsca po przecinku)
     player_average: {
         id: 'player_average',
         title: 'Średnia biegowa w sezonie',
         badge: 'ŚREDNIA',
-        formatValue: (val) => val.toFixed(3),
+        formatValue: (val) => Number(val).toFixed(3),
         dataSource: () => seasonalPlayerStats,
         mapItem: (item) => ({
             key: `a_${item.name}_${item.sezon}`,
             title: item.name,
             subtitle: `Sezon ${item.sezon}`,
             value: item.srednia,
-            image: `images/riders/${item.name.split(' ')[1] || item.name} Kevlar.jpg`
+            icon: '🏍️'
         })
     },
 
-    // 3. ŚREDNIA FREKWENCJA NA MECZU
+    // 3. FREKWENCJA (zawsze jako INT)
     attendance_avg: {
         id: 'attendance_avg',
         title: 'Średnia frekwencja na meczu',
         badge: 'FREKWENCJA',
-        formatValue: (val) => `${val.toLocaleString('pl-PL')} widzów`,
+        formatValue: (val) => `${Math.round(val).toLocaleString('pl-PL')} widzów`,
         dataSource: () => attendanceStats,
         mapItem: (item) => ({
             key: `att_${item.club}_${item.sezon}`,
@@ -3125,14 +3127,23 @@ function prepareNextRound() {
     const isCategoryChange = !mlGame.currentCategory || mlGame.currentCategory.id !== targetCatId;
     mlGame.currentCategory = MORE_LESS_CATEGORIES[targetCatId];
 
+    // AKTUALIZACJA BANERA, RUNDY I SERII NA EKRANIE
+    const catBanner = document.getElementById('mlCategoryBanner');
+    if (catBanner) catBanner.innerText = mlGame.currentCategory.title;
+
+    const roundEl = document.getElementById('mlRoundDisplay');
+    if (roundEl) roundEl.innerText = `RUNDA ${mlGame.currentRoundIndex + 1} / ${mlGame.roundSequence.length}`;
+
+    const streakEl = document.getElementById('mlCurrentStreak');
+    if (streakEl) streakEl.innerText = mlGame.score;
+
     if (isCategoryChange || !mlGame.rightCard) {
-        // Nowa kategoria lub start gry -> losujemy obie karty od nowa
         mlGame.leftCard = drawRandomItem(targetCatId);
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
         } while (mlGame.rightCard.key === mlGame.leftCard.key);
     } else {
-        // Kontynuacja w tej samej kategorii -> prawa karta staje się lewą!
+        // Poprzednia prawa staje się nową lewą
         mlGame.leftCard = mlGame.rightCard;
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
@@ -3142,35 +3153,40 @@ function prepareNextRound() {
     renderMoreLessCards();
 }
 
-// choice: 'more' (Więcej) lub 'less' (Mniej)
+// 2. Kliknięcie WIĘCEJ / MNIEJ
 function submitMoreLessGuess(choice) {
     if (!mlGame.active) return;
+    
+    // Natychmiast ukrywamy przyciski, by zapobiec podwójnemu klikaniu
+    document.getElementById('mlActions').style.display = 'none';
 
     const leftVal = mlGame.leftCard.value;
     const rightVal = mlGame.rightCard.value;
 
-    // Reguła: Remis ZAWSZE wygrywa na korzyść gracza!
-    const isCorrect = (leftVal === rightVal) || 
-                      (choice === 'more' && rightVal > leftVal) || 
+    // Remis = automatyczna wygrana gracza!
+    const isCorrect = (leftVal === rightVal) ||
+                      (choice === 'more' && rightVal > leftVal) ||
                       (choice === 'less' && rightVal < leftVal);
 
-    // Odsłaniamy liczbę na prawej karcie (animacja licznika)
     revealRightCardValue(rightVal, isCorrect, () => {
         if (isCorrect) {
             playSound('guess');
             mlGame.score++;
-            mlGame.currentRoundIndex++;
+            
+            // Od razu odświeżamy licznik serii na górze
+            const streakEl = document.getElementById('mlCurrentStreak');
+            if (streakEl) streakEl.innerText = mlGame.score;
 
-            // Czy ukończono cały zestaw (np. 12 rund)?
-            if (mlGame.currentRoundIndex >= mlGame.roundSequence.length) {
-                handleMoreLessVictory();
+            // Sprawdzamy czy to koniec 12 rund
+            if (mlGame.currentRoundIndex + 1 >= mlGame.roundSequence.length) {
+                setTimeout(handleMoreLessVictory, 1000);
             } else {
-                // Przejście do następnej rundy
+                mlGame.currentRoundIndex++;
                 setTimeout(prepareNextRound, 1200);
             }
         } else {
             playSound('lose');
-            handleMoreLessGameOver();
+            setTimeout(handleMoreLessGameOver, 1400);
         }
     });
 }
