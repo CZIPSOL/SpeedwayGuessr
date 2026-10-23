@@ -2850,6 +2850,7 @@ function prepareNextRound() {
 
     renderCategoryTracker();
 
+    // Animacja przejścia UP NEXT (ZDJĘCIE 2)
     if (isCategoryChange) {
         showCategoryTransition(() => {
             setupRoundCards(targetCatId, isCategoryChange);
@@ -3077,7 +3078,7 @@ function openMoreLessMenu() {
         document.getElementById('guessrMenuContainer').style.display = 'none';
 
         const menu = document.getElementById('moreLessMenuContainer');
-        menu.style.display = 'grid';
+        menu.style.display = 'flex';
 
         ensureMoreLessStats();
         const nickEl = document.getElementById('moreLessMenuNick');
@@ -3088,8 +3089,6 @@ function openMoreLessMenu() {
         document.getElementById('mlStatBest').innerText = ml.bestStreak || 0;
         const avg = ml.played > 0 ? (ml.totalCorrect / ml.played).toFixed(1) : "0.0";
         document.getElementById('mlStatAvg').innerText = avg;
-
-        loadMoreLessRanking();
     });
 }
 
