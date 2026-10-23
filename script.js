@@ -2628,23 +2628,128 @@ function startMoreLess(categoryMode = 'mix') {
     prepareNextRound();
 }
 
-// 2. Przygotowanie kolejnej rundy
+// ==============================================
+// ====== PRZEJŚCIA KATEGORII & GÓRNY PASEK =====
+// ==============================================
+
+// Lista etapów w Daily Mix (Kategoria 1: Punkty, 2: Średnia, 3: Stadiony)
+const ML_STAGES = [
+    { id: 'player_points', name: 'Punkty w sezonie', icon: '🏍️' },
+    { id: 'player_average', name: 'Średnia biegowa', icon: '📈' },
+    { id: 'attendance_mix', name: 'Frekwencja stadionowa', icon: '🏟️' }
+];
+
+function getCurrentStageIndex() {
+    if (mlGame.currentRoundIndex < 5) return 0;
+    if (mlGame.currentRoundIndex < 10) return 1;
+    return 2;
+}
+
+// 1. Rysowanie górnego paska (kafelek aktywnej + ikonki pozostałych)
+function renderCategoryTracker() {
+    const container = document.getElementById('mlCategoryTracker');
+    if (!container) return;
+
+    const currentStageIdx = getCurrentStageIndex();
+    let html = '';
+
+    ML_STAGES.forEach((stage, idx) => {
+        if (idx === currentStageIdx) {
+            // Rozwinięta pigułka aktywnej kategorii
+            html += `
+                <div class="ml-cat-pill">
+                    <span>${stage.icon}</span>
+                    <span>${stage.name}</span>
+                </div>`;
+        } else {
+            // Zwykła ciemna kostka
+            const isCompleted = idx < currentStageIdx;
+            html += `
+                <div class="ml-cat-box ${isCompleted ? 'completed' : ''}" title="${stage.name}">
+                    ${isCompleted ? '✔' : stage.icon}
+                </div>`;
+        }
+    });
+
+    container.innerHTML = html;
+}
+
+// 2. Animacja przejścia kategorii ("UP NEXT")
+function showCategoryTransition(callback) {
+    const overlay = document.getElementById('mlCategoryTransitionOverlay');
+    const stageIdx = getCurrentStageIndex();
+    const stage = ML_STAGES[stageIdx];
+
+    // Górne ikonki na ekranie przejścia
+    const topIcons = document.getElementById('mlTransTopIcons');
+    if (topIcons) {
+        topIcons.innerHTML = ML_STAGES.map((s, idx) => `
+            <div class="ml-cat-box ${idx === stageIdx ? 'completed' : ''}" style="${idx === stageIdx ? 'background:#00ff66; color:#000; font-weight:bold;' : ''}">
+                ${s.icon}
+            </div>
+        `).join('');
+    }
+
+    // Środek
+    document.getElementById('mlTransKicker').innerText = `UP NEXT • KATEGORIA ${stageIdx + 1} / ${ML_STAGES.length}`;
+    document.getElementById('mlTransIcon').innerText = stage.icon;
+    document.getElementById('mlTransTitle').innerText = stage.name.toUpperCase();
+
+    // Reset paska postępu
+    const bar = document.getElementById('mlTransProgressFill');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+        bar.style.transition = 'width 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        bar.style.width = '100%';
+    }, 50);
+
+    // Po 1.5 sekundy gładkie zniknięcie i start rundy
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            if (callback) callback();
+        }, 300);
+    }, 1500);
+}
+
+// 3. Zaktualizowana funkcja rundy
 function prepareNextRound() {
     const targetCatId = mlGame.roundSequence[mlGame.currentRoundIndex];
     const isCategoryChange = !mlGame.currentCategory || mlGame.currentCategory.id !== targetCatId;
     mlGame.currentCategory = MORE_LESS_CATEGORIES[targetCatId];
 
-    // Aktualizacja banera kategorii
-    document.getElementById('mlCategoryBanner').innerText = mlGame.currentCategory.title;
-    document.getElementById('mlRoundDisplay').innerText = `RUNDA ${mlGame.currentRoundIndex + 1} / ${mlGame.roundSequence.length}`;
+    // Runda i Seria
+    const roundEl = document.getElementById('mlRoundDisplay');
+    if (roundEl) roundEl.innerText = `RUNDA ${mlGame.currentRoundIndex + 1} / ${mlGame.roundSequence.length}`;
 
+    const streakEl = document.getElementById('mlCurrentStreak');
+    if (streakEl) streakEl.innerText = mlGame.score;
+
+    // Odświeżenie górnego paska kafelków
+    renderCategoryTracker();
+
+    // Jeśli kategoria się zmieniła (lub to start gry) -> odpal kinową animację UP NEXT!
+    if (isCategoryChange) {
+        showCategoryTransition(() => {
+            setupRoundCards(targetCatId, isCategoryChange);
+        });
+    } else {
+        setupRoundCards(targetCatId, false);
+    }
+}
+
+function setupRoundCards(targetCatId, isCategoryChange) {
     if (isCategoryChange || !mlGame.rightCard) {
         mlGame.leftCard = drawRandomItem(targetCatId);
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
         } while (mlGame.rightCard.key === mlGame.leftCard.key);
     } else {
-        // Prawa karta przechodzi na lewą
         mlGame.leftCard = mlGame.rightCard;
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
@@ -2850,143 +2955,6 @@ function exitMoreLessGame() {
 }
 
 // ==============================================
-// ====== START TRYBU MORE / LESS ===============
-// ==============================================
-
-function startMoreLess(categoryMode = 'mix') {
-    // 1. Sprawdzenie czy baza moreless_db.js jest załadowana
-    if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
-        showToast("Ładowanie bazy statystyk...", "normal");
-        return;
-    }
-
-    // 2. Schowanie menu
-    document.getElementById('moreLessMenuContainer').style.display = 'none';
-    document.getElementById('desktopMainMenu').style.display = 'none';
-    document.getElementById('mainMenuContainer').style.display = 'none';
-
-    // 3. Przygotowanie sekwencji kategorii pod wybrany tryb
-    let sequence = [];
-    if (categoryMode === 'riders') {
-        sequence = ['player_points', 'player_points', 'player_average', 'player_average', 'player_points'];
-    } else if (categoryMode === 'attendance') {
-        sequence = ['attendance_avg', 'attendance_pct', 'attendance_total', 'attendance_avg'];
-    } else {
-        // Domyślny Daily MIX (5 pkt + 5 średnia + 2 stadiony)
-        sequence = generateMixSequence();
-    }
-
-    // 4. Inicjalizacja stanu rozgrywki
-    mlGame = {
-        active: true,
-        mode: categoryMode,
-        roundSequence: sequence,
-        currentRoundIndex: 0,
-        currentCategory: null,
-        score: 0,
-        usedKeys: new Set(),
-        leftCard: null,
-        rightCard: null
-    };
-
-    // 5. Otwarcie planszy gry (jeśli kontener istnieje)
-    const gameContainer = document.getElementById('moreLessContainer');
-    if (gameContainer) {
-        gameContainer.style.display = 'block';
-        prepareNextRound();
-    } else {
-        showToast(`Rozpoczęto tryb ${categoryMode.toUpperCase()}!`, "success");
-    }
-}
-
-// ==============================================
-// ====== NAWIGACJA: MORE / LESS MENU ===========
-// ==============================================
-
-function ensureMoreLessStats() {
-    if (!userStats.moreLess) {
-        userStats.moreLess = { played: 0, bestStreak: 0, totalCorrect: 0 };
-    }
-}
-
-function openMoreLessMenu() {
-    promptForNick(() => {
-        document.getElementById('mainMenuContainer').style.display = 'none';
-        document.getElementById('desktopMainMenu').style.display = 'none';
-        document.getElementById('clashModeSelectContainer').style.display = 'none';
-        document.getElementById('timeAttackMenuContainer').style.display = 'none';
-        document.getElementById('guessrMenuContainer').style.display = 'none';
-
-        const menu = document.getElementById('moreLessMenuContainer');
-        menu.style.display = 'grid';
-
-        ensureMoreLessStats();
-        const nickEl = document.getElementById('moreLessMenuNick');
-        if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
-
-        const ml = userStats.moreLess;
-        document.getElementById('mlStatPlayed').innerText = ml.played || 0;
-        document.getElementById('mlStatBest').innerText = ml.bestStreak || 0;
-        const avg = ml.played > 0 ? (ml.totalCorrect / ml.played).toFixed(1) : "0.0";
-        document.getElementById('mlStatAvg').innerText = avg;
-
-        loadMoreLessRanking();
-    });
-}
-
-function exitMoreLessMenu() {
-    window.location.reload();
-}
-
-function showMoreLessInfo() {
-    const overlay = document.getElementById('moreLessInfoOverlay');
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function closeMoreLessInfo() {
-    const overlay = document.getElementById('moreLessInfoOverlay');
-    overlay.style.opacity = '0';
-    setTimeout(() => overlay.style.display = 'none', 300);
-}
-
-// ==============================================
-// ====== POBIERANIE WYNIKÓW DLA MORE / LESS ====
-// ==============================================
-
-async function loadMoreLessRanking() {
-    const tbody = document.getElementById('desktopRankingBodyML');
-    if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
-
-    try {
-        const snapshot = await db.collection("leaderboard_moreless").orderBy("bestStreak", "desc").limit(20).get();
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników. Zagraj pierwszy!</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = '';
-        let pos = 1;
-        snapshot.forEach(doc => {
-            const row = doc.data();
-            const safeNick = escapeHTML(row.nick || "Gracz") + getMiniClubBadge(row.club);
-            const isMe = (row.nick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
-            tbody.innerHTML += `
-                <tr ${isMe}>
-                    <td style="color:var(--accent); font-weight:900;">${pos}</td>
-                    <td style="text-align:left;">${safeNick}</td>
-                    <td style="color:#f39c12; font-weight:900;">${row.bestStreak || 0}</td>
-                </tr>`;
-            pos++;
-        });
-    } catch(e) {
-        // Przy braku kolekcji w Firestore nie blokujemy tabeli, tylko wyświetlamy czytelny stan pusty
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników w chmurze. Zagraj jako pierwszy!</td></tr>';
-    }
-}
-
-// ==============================================
 // ====== MORE / LESS: KONFIGURACJA KATEGORII ===
 // ==============================================
 
@@ -3060,7 +3028,7 @@ const MORE_LESS_CATEGORIES = {
         id: 'attendance_total',
         title: 'Łączna liczba kibiców w sezonie',
         badge: 'SUMA KIBICÓW',
-        formatValue: (val) => `${val.toLocaleString('pl-PL')} kibiców`,
+        formatValue: (val) => `${Math.round(val).toLocaleString('pl-PL')} kibiców`,
         dataSource: () => attendanceStats,
         mapItem: (item) => ({
             key: `sum_${item.club}_${item.sezon}`,
@@ -3075,7 +3043,6 @@ const MORE_LESS_CATEGORIES = {
 // Generator sekwencji 12 rund dla Daily Mix
 function generateMixSequence() {
     const clubCategories = ['attendance_avg', 'attendance_pct', 'attendance_total'];
-    // Losujemy dwie różne kategorie stadionowe na rundy 11 i 12
     const shuffledClub = [...clubCategories].sort(() => 0.5 - Math.random());
 
     return [
@@ -3088,30 +3055,27 @@ function generateMixSequence() {
     ];
 }
 
-// Stan aktualnej rozgrywki More / Less
+// Stan gry
 let mlGame = {
     active: false,
-    mode: 'mix',               // 'mix' lub 'endless'
-    roundSequence: [],         // tablica 12 kategorii dla Daily
-    currentRoundIndex: 0,      // 0..11
+    mode: 'mix',
+    roundSequence: [],
+    currentRoundIndex: 0,
     currentCategory: null,
     score: 0,
-    usedKeys: new Set(),       // ochrona przed powtórkami w jednej grze
-    leftCard: null,            // odsłonięta karta referencyjna
-    rightCard: null            // karta do zgadnięcia
+    usedKeys: new Set(),
+    leftCard: null,
+    rightCard: null
 };
 
-// Losowanie unikalnego wpisu z danej kategorii
 function drawRandomItem(catId) {
     const config = MORE_LESS_CATEGORIES[catId];
     const rawData = config.dataSource();
     
-    // Filtrujemy już użyte elementy
     let candidates = rawData
         .map(config.mapItem)
         .filter(item => !mlGame.usedKeys.has(item.key));
 
-    // Jeśli baza się wyczerpała, resetujemy historię tej kategorii
     if (candidates.length === 0) {
         candidates = rawData.map(config.mapItem);
     }
@@ -3121,15 +3085,138 @@ function drawRandomItem(catId) {
     return selected;
 }
 
-// Przygotowanie kolejnej pary kart
+function getRiderPhoto(name) {
+    const p = playersDB.find(x => x.name.toLowerCase() === name.toLowerCase());
+    return (p && p.image) ? `images/riders/${p.image}` : null;
+}
+
+// ==============================================
+// ====== ETAPY & PASEK KATEGORII ===============
+// ==============================================
+
+const ML_STAGES = [
+    { id: 'player_points', name: 'Punkty w sezonie', icon: '🏍️' },
+    { id: 'player_average', name: 'Średnia biegowa', icon: '📈' },
+    { id: 'attendance_mix', name: 'Frekwencja stadionów', icon: '🏟️' }
+];
+
+function getCurrentStageIndex() {
+    if (mlGame.currentRoundIndex < 5) return 0;
+    if (mlGame.currentRoundIndex < 10) return 1;
+    return 2;
+}
+
+function renderCategoryTracker() {
+    const container = document.getElementById('mlCategoryTracker');
+    if (!container) return;
+
+    const currentStageIdx = getCurrentStageIndex();
+    let html = '';
+
+    ML_STAGES.forEach((stage, idx) => {
+        if (idx === currentStageIdx) {
+            html += `
+                <div class="ml-cat-pill">
+                    <span>${stage.icon}</span>
+                    <span>${stage.name}</span>
+                </div>`;
+        } else {
+            const isCompleted = idx < currentStageIdx;
+            html += `
+                <div class="ml-cat-box ${isCompleted ? 'completed' : ''}" title="${stage.name}">
+                    ${isCompleted ? '✔' : stage.icon}
+                </div>`;
+        }
+    });
+
+    container.innerHTML = html;
+}
+
+function showCategoryTransition(callback) {
+    const overlay = document.getElementById('mlCategoryTransitionOverlay');
+    if (!overlay) { if (callback) callback(); return; }
+
+    const stageIdx = getCurrentStageIndex();
+    const stage = ML_STAGES[stageIdx];
+
+    const topIcons = document.getElementById('mlTransTopIcons');
+    if (topIcons) {
+        topIcons.innerHTML = ML_STAGES.map((s, idx) => `
+            <div class="ml-cat-box ${idx === stageIdx ? 'completed' : ''}" style="${idx === stageIdx ? 'background:#00ff66; color:#000; font-weight:bold;' : ''}">
+                ${s.icon}
+            </div>
+        `).join('');
+    }
+
+    document.getElementById('mlTransKicker').innerText = `UP NEXT • KATEGORIA ${stageIdx + 1} / ${ML_STAGES.length}`;
+    document.getElementById('mlTransIcon').innerText = stage.icon;
+    document.getElementById('mlTransTitle').innerText = stage.name.toUpperCase();
+
+    const bar = document.getElementById('mlTransProgressFill');
+    bar.style.transition = 'none';
+    bar.style.width = '0%';
+
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+        bar.style.transition = 'width 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        bar.style.width = '100%';
+    }, 50);
+
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            if (callback) callback();
+        }, 300);
+    }, 1500);
+}
+
+// ==============================================
+// ====== RUNDY & STEROWANIE GRĄ ================
+// ==============================================
+
+function startMoreLess(categoryMode = 'mix') {
+    if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
+        showToast("Baza statystyk nie została znaleziona!", "error");
+        return;
+    }
+
+    document.getElementById('moreLessMenuContainer').style.display = 'none';
+    document.getElementById('desktopMainMenu').style.display = 'none';
+    document.getElementById('mainMenuContainer').style.display = 'none';
+
+    let sequence = [];
+    if (categoryMode === 'riders') {
+        sequence = ['player_points', 'player_points', 'player_average', 'player_average', 'player_points'];
+    } else if (categoryMode === 'attendance') {
+        sequence = ['attendance_avg', 'attendance_pct', 'attendance_total', 'attendance_avg'];
+    } else {
+        sequence = generateMixSequence();
+    }
+
+    mlGame = {
+        active: true,
+        mode: categoryMode,
+        roundSequence: sequence,
+        currentRoundIndex: 0,
+        currentCategory: null,
+        score: 0,
+        usedKeys: new Set(),
+        leftCard: null,
+        rightCard: null
+    };
+
+    document.getElementById('mlCurrentStreak').innerText = "0";
+    document.getElementById('moreLessContainer').style.display = 'flex';
+
+    prepareNextRound();
+}
+
 function prepareNextRound() {
     const targetCatId = mlGame.roundSequence[mlGame.currentRoundIndex];
     const isCategoryChange = !mlGame.currentCategory || mlGame.currentCategory.id !== targetCatId;
     mlGame.currentCategory = MORE_LESS_CATEGORIES[targetCatId];
-
-    // AKTUALIZACJA BANERA, RUNDY I SERII NA EKRANIE
-    const catBanner = document.getElementById('mlCategoryBanner');
-    if (catBanner) catBanner.innerText = mlGame.currentCategory.title;
 
     const roundEl = document.getElementById('mlRoundDisplay');
     if (roundEl) roundEl.innerText = `RUNDA ${mlGame.currentRoundIndex + 1} / ${mlGame.roundSequence.length}`;
@@ -3137,13 +3224,24 @@ function prepareNextRound() {
     const streakEl = document.getElementById('mlCurrentStreak');
     if (streakEl) streakEl.innerText = mlGame.score;
 
+    renderCategoryTracker();
+
+    if (isCategoryChange) {
+        showCategoryTransition(() => {
+            setupRoundCards(targetCatId, isCategoryChange);
+        });
+    } else {
+        setupRoundCards(targetCatId, false);
+    }
+}
+
+function setupRoundCards(targetCatId, isCategoryChange) {
     if (isCategoryChange || !mlGame.rightCard) {
         mlGame.leftCard = drawRandomItem(targetCatId);
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
         } while (mlGame.rightCard.key === mlGame.leftCard.key);
     } else {
-        // Poprzednia prawa staje się nową lewą
         mlGame.leftCard = mlGame.rightCard;
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
@@ -3153,17 +3251,63 @@ function prepareNextRound() {
     renderMoreLessCards();
 }
 
-// 2. Kliknięcie WIĘCEJ / MNIEJ
+function renderMoreLessCards() {
+    const l = mlGame.leftCard;
+    const r = mlGame.rightCard;
+
+    const leftCardEl = document.getElementById('mlLeftCard');
+    const rightCardEl = document.getElementById('mlRightCard');
+    leftCardEl.className = 'ml-card ml-card-left';
+    rightCardEl.className = 'ml-card ml-card-right';
+
+    // Lewa
+    document.getElementById('mlLeftName').innerText = l.title;
+    document.getElementById('mlLeftSub').innerText = l.subtitle;
+    document.getElementById('mlLeftValue').innerText = mlGame.currentCategory.formatValue(l.value);
+
+    const leftPhoto = document.getElementById('mlLeftPhoto');
+    const leftIcon = document.getElementById('mlLeftIcon');
+    const lPhotoSrc = getRiderPhoto(l.title);
+    if (lPhotoSrc) {
+        leftPhoto.src = lPhotoSrc;
+        leftPhoto.style.display = 'block';
+        leftIcon.style.display = 'none';
+    } else {
+        leftPhoto.style.display = 'none';
+        leftIcon.style.display = 'block';
+        leftIcon.innerText = l.icon || '🏍️';
+    }
+
+    // Prawa
+    document.getElementById('mlRightName').innerText = r.title;
+    document.getElementById('mlRightSub').innerText = r.subtitle;
+    document.getElementById('mlRightValue').innerText = "???";
+    document.getElementById('mlRightValue').className = "ml-value-number ml-hidden-val";
+    document.getElementById('mlRightHint').innerText = "CZY MA WIĘCEJ CZY MNIEJ?";
+
+    const rightPhoto = document.getElementById('mlRightPhoto');
+    const rightIcon = document.getElementById('mlRightIcon');
+    const rPhotoSrc = getRiderPhoto(r.title);
+    if (rPhotoSrc) {
+        rightPhoto.src = rPhotoSrc;
+        rightPhoto.style.display = 'block';
+        rightIcon.style.display = 'none';
+    } else {
+        rightPhoto.style.display = 'none';
+        rightIcon.style.display = 'block';
+        rightIcon.innerText = r.icon || '🏍️';
+    }
+
+    document.getElementById('mlActions').style.display = 'flex';
+}
+
 function submitMoreLessGuess(choice) {
     if (!mlGame.active) return;
-    
-    // Natychmiast ukrywamy przyciski, by zapobiec podwójnemu klikaniu
     document.getElementById('mlActions').style.display = 'none';
 
     const leftVal = mlGame.leftCard.value;
     const rightVal = mlGame.rightCard.value;
 
-    // Remis = automatyczna wygrana gracza!
     const isCorrect = (leftVal === rightVal) ||
                       (choice === 'more' && rightVal > leftVal) ||
                       (choice === 'less' && rightVal < leftVal);
@@ -3172,12 +3316,8 @@ function submitMoreLessGuess(choice) {
         if (isCorrect) {
             playSound('guess');
             mlGame.score++;
-            
-            // Od razu odświeżamy licznik serii na górze
-            const streakEl = document.getElementById('mlCurrentStreak');
-            if (streakEl) streakEl.innerText = mlGame.score;
+            document.getElementById('mlCurrentStreak').innerText = mlGame.score;
 
-            // Sprawdzamy czy to koniec 12 rund
             if (mlGame.currentRoundIndex + 1 >= mlGame.roundSequence.length) {
                 setTimeout(handleMoreLessVictory, 1000);
             } else {
@@ -3189,6 +3329,109 @@ function submitMoreLessGuess(choice) {
             setTimeout(handleMoreLessGameOver, 1400);
         }
     });
+}
+
+function revealRightCardValue(targetVal, isCorrect, callback) {
+    const valEl = document.getElementById('mlRightValue');
+    const cardEl = document.getElementById('mlRightCard');
+    valEl.className = "ml-value-number";
+
+    const duration = 750;
+    const startTime = performance.now();
+    const isFloatCategory = mlGame.currentCategory.id === 'player_average' || mlGame.currentCategory.id === 'attendance_pct';
+
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentVal = targetVal * progress;
+
+        const displayVal = isFloatCategory ? currentVal : Math.round(currentVal);
+        valEl.innerText = mlGame.currentCategory.formatValue(displayVal);
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            valEl.innerText = mlGame.currentCategory.formatValue(targetVal);
+            cardEl.classList.add(isCorrect ? 'card-correct' : 'card-wrong');
+            document.getElementById('mlRightHint').innerText = isCorrect ? "TRAFIENIE! 🎯" : "PUDŁO! ❌";
+            if (callback) callback();
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+function handleMoreLessGameOver() {
+    mlGame.active = false;
+    saveMoreLessScore(mlGame.score);
+
+    document.getElementById('mlSummaryEmoji').innerText = "💥";
+    document.getElementById('mlSummaryTitle').innerText = "KONIEC SERII!";
+    document.getElementById('mlSummaryTitle').style.color = "var(--red-neon)";
+    document.getElementById('mlFinalScore').innerText = mlGame.score;
+
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function handleMoreLessVictory() {
+    mlGame.active = false;
+    saveMoreLessScore(mlGame.score);
+    playSound('win');
+    if (typeof launchConfetti === 'function') launchConfetti();
+
+    document.getElementById('mlSummaryEmoji').innerText = "🏆";
+    document.getElementById('mlSummaryTitle').innerText = "MISTRZ STATYSTYK!";
+    document.getElementById('mlSummaryTitle').style.color = "var(--green-neon)";
+    document.getElementById('mlFinalScore').innerText = `${mlGame.score} / ${mlGame.roundSequence.length}`;
+
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+function saveMoreLessScore(score) {
+    ensureMoreLessStats();
+    const ml = userStats.moreLess;
+    ml.played++;
+    ml.totalCorrect = (ml.totalCorrect || 0) + score;
+
+    let isNewRecord = false;
+    if (score > (ml.bestStreak || 0)) {
+        ml.bestStreak = score;
+        isNewRecord = true;
+    }
+
+    const notice = document.getElementById('mlNewRecordNotice');
+    if (notice) notice.innerText = isNewRecord ? "NOWY REKORD SERII! 🔥" : "PUNKTÓW W TEJ SERII";
+
+    saveStats();
+
+    if (playerId && (auth.currentUser || playerId.startsWith('guest_'))) {
+        db.collection('leaderboard_moreless').doc(playerId).set({
+            nick: playerNickname || 'Gracz',
+            club: userStats.favoriteClub || null,
+            bestStreak: ml.bestStreak,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(() => {});
+    }
+}
+
+function restartMoreLess() {
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        startMoreLess(mlGame.mode || 'mix');
+    }, 200);
+}
+
+function exitMoreLessGame() {
+    mlGame.active = false;
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('moreLessContainer').style.display = 'none';
+    openMoreLessMenu();
 }
 
 // ====== OBSŁUGA MENU TIME ATTACK ======

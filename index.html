@@ -19,7 +19,7 @@
 
     <link rel="canonical" href="https://speedwayguessr.pl/">
     <link rel="icon" type="image/png" href="images/speedwayguessr-icon.png">
-    <link rel="stylesheet" href="style.css?v=1.13">
+    <link rel="stylesheet" href="style.css?v=1.14">
     <meta property="og:image" content="https://speedwayguessr.pl/miniatura_speedwayguessr.png">
     <script>
         let savedTheme = localStorage.getItem('theme') || 'dark';
@@ -2033,8 +2033,8 @@
         </header>
 
         <!-- Baner aktywnej kategorii -->
-        <div class="ml-category-banner" id="mlCategoryBanner">
-            Ładowanie kategorii...
+        <div class="ml-cat-tracker" id="mlCategoryTracker">
+            <!-- Dynamicznie generowane ikonki etapów -->
         </div>
 
         <!-- Arena pojedynku (Dwie karty) -->
@@ -2083,6 +2083,34 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================== -->
+    <!-- ====== EKRAN PRZEJŚCIA KATEGORII (UP NEXT) === -->
+    <!-- ============================================== -->
+    <div id="mlCategoryTransitionOverlay" class="ml-transition-screen" style="display: none;">
+        <!-- Pasek ikon na samej górze ekranu przejścia -->
+        <div class="ml-trans-top-icons" id="mlTransTopIcons"></div>
+        <div class="ml-trans-top-line"></div>
+
+        <!-- Środek ekranu -->
+        <div class="ml-trans-center">
+            <div class="ml-trans-kicker" id="mlTransKicker">UP NEXT • KATEGORIA 1 / 3</div>
+            
+            <div class="ml-trans-icon-circle">
+                <span id="mlTransIcon">🏍️</span>
+            </div>
+
+            <h1 class="ml-trans-title" id="mlTransTitle">PUNKTY W SEZONIE</h1>
+            <div class="ml-trans-divider"></div>
+            <div class="ml-trans-sub">Przygotuj się...</div>
+        </div>
+
+        <!-- Dolny pasek ładowania animacji -->
+        <div class="ml-trans-progress-track">
+            <div class="ml-trans-progress-fill" id="mlTransProgressFill"></div>
         </div>
     </div>
 
@@ -2137,7 +2165,7 @@
     <script src="events.js?v2.3"></script>
     <script src="changelog.js?v1.0"></script>
     <script src="moreless_db.js?v1.01"></script>
-    <script src="script.js?v2.102"></script>
+    <script src="script.js?v2.104"></script>
 
     
 </body>
