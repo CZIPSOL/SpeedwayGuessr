@@ -548,8 +548,7 @@
             <div class="nav-item-modern hover-orange" onclick="openMoreLessMenu()" onmouseenter="loadDesktopRanking('alltime')">
                     <div class="nav-icon-box">⚖️</div>
                     <div class="nav-text-main" style="display: flex; align-items: baseline;">
-                        MORE / LESS <span style="font-size: 14px; font-weight: 700; color: #f39c12; margin-left: 10px;" data-i18n="newBadge">(NOWOŚĆ)</span>
-                    </div>
+MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; margin-left: 8px;">(TESTY 🔒)</span>                    </div>
                     <div class="nav-arrow">▶</div>
                 </div>
 
@@ -1070,46 +1069,73 @@
     <!-- ============================================== -->
     <!-- ====== EKRAN MENU MORE / LESS ================ -->
     <!-- ============================================== -->
-    <div id="moreLessMenuContainer" class="menu-container" style="display: none; max-width: 580px; margin: 30px auto; z-index: 50;">
-        <h1 class="game-title title-lg mb-10" style="color: #f39c12;">⚖️ MORE / LESS</h1>
-        <p class="menu-subtitle mb-25">WIĘCEJ CZY MNIEJ? • STATYSTYKI ŻUŻLA</p>
+    <div id="moreLessMenuContainer" class="desktop-menu-wrapper" style="display: none;">
+        <div class="desktop-left">
+            <h1 class="desktop-logo" style="margin-bottom: 20px;">
+                <i style="color: #f39c12;">MORE</i><br>
+                <i style="color: #e67e22;">LESS</i><br>
+                <span class="logo-sub">WIĘCEJ CZY MNIEJ?</span>
+            </h1>
 
-        <!-- KARTA REKORDU GRACZA -->
-        <div style="background: rgba(0,0,0,0.4); border: 2px solid rgba(243, 156, 18, 0.3); border-radius: 18px; padding: 18px 25px; width: 100%; max-width: 440px; margin-bottom: 25px;">
-            <div style="font-size: 18px; font-weight: 900; color: #fff; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;" id="moreLessMenuNick">GRACZ</div>
-            <div style="display: flex; justify-content: space-around; align-items: center;">
-                <div style="text-align: center;">
-                    <span style="font-size: 11px; color: var(--text-dim); font-weight: 700; display: block;">Rozegrane</span>
-                    <span id="mlStatPlayed" style="font-size: 20px; font-weight: 900; color: #fff;">0</span>
+            <!-- KARTA GRACZA -->
+            <div style="background: rgba(40, 40, 45, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                <span id="moreLessMenuNick" style="font-size: 20px; font-weight: 900; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">GRACZ</span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Rozegrane</span>
+                        <span id="mlStatPlayed" style="font-size: 16px; font-weight: 900; color: #fff;">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Rekord Serii</span>
+                        <span id="mlStatBest" style="font-size: 16px; font-weight: 900; color: #f39c12;">0</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Średnia Seria</span>
+                        <span id="mlStatAvg" style="font-size: 16px; font-weight: 900; color: #00ff66;">0.0</span>
+                    </div>
                 </div>
-                <div style="text-align: center;">
-                    <span style="font-size: 11px; color: var(--text-dim); font-weight: 700; display: block;">Rekord Serii</span>
-                    <span id="mlStatBest" style="font-size: 22px; font-weight: 900; color: #f39c12;">0</span>
+            </div>
+
+            <!-- KATEGORIE ROZGRYWKI -->
+            <nav class="desktop-nav">
+                <div class="nav-item">
+                    <div class="nav-main" style="color: #f39c12;" onclick="startMoreLess('mix')"><i>ROZPOCZNIJ GRĘ (MIX) ►</i></div>
                 </div>
-                <div style="text-align: center;">
-                    <span style="font-size: 11px; color: var(--text-dim); font-weight: 700; display: block;">Średnia</span>
-                    <span id="mlStatAvg" style="font-size: 20px; font-weight: 900; color: #00ff66;">0.0</span>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="startMoreLess('riders')"><i>STATYSTYKI ZAWODNIKÓW 🏍️</i></div>
                 </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="startMoreLess('attendance')"><i>FREKWENCJA STADIONÓW 🏟️</i></div>
+                </div>
+                <div class="nav-divider"></div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="showMoreLessInfo()"><i>JAK GRAĆ?</i></div>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-main" onclick="openProfile()"><i>PROFIL</i></div>
+                </div>
+            </nav>
+
+            <div class="desktop-footer-links">
+                <span onclick="exitMoreLessMenu()">🔙 POWRÓT DO MENU GŁÓWNEGO</span>
             </div>
         </div>
 
-        <!-- PRZYCISKI TRYBÓW -->
-        <div class="flex-col gap-12 w-100 max-w-440">
-            <button class="menu-btn btn-yellow" onclick="startMoreLess('mix')">
-                <span class="btn-icon">⚡</span><span class="btn-text">DAILY MIX (12 RUND) ►</span>
-            </button>
-            <button class="menu-btn btn-flat" onclick="startMoreLess('riders')" style="border-style: solid; border-color: rgba(255,255,255,0.15); color: #fff;">
-                <span class="btn-icon">🏍️</span><span class="btn-text">TYLKO ZAWODNICY</span>
-            </button>
-            <button class="menu-btn btn-flat" onclick="startMoreLess('attendance')" style="border-style: solid; border-color: rgba(255,255,255,0.15); color: #fff;">
-                <span class="btn-icon">🏟️</span><span class="btn-text">TYLKO STADIONY</span>
-            </button>
-            <button class="menu-btn btn-flat" onclick="showMoreLessInfo()">
-                <span class="btn-icon">❓</span><span class="btn-text">JAK GRAĆ?</span>
-            </button>
-            <button onclick="exitMoreLessMenu()" class="btn-close w-100 mt-10 p-12 text-sm">
-                🔙 POWRÓT DO MENU
-            </button>
+        <!-- PRAWA STRONA: Leaderboard More / Less -->
+        <div class="desktop-right">
+            <div class="desktop-leaderboard-panel">
+                <h2 style="color: #f39c12;"><i>LEADERBOARD (MORE / LESS)</i></h2>
+                <div class="desktop-table-wrapper">
+                    <table class="ranking-table desktop-table">
+                        <thead>
+                            <tr><th>Poz.</th><th style="text-align: left;">Nick</th><th style="color: #f39c12;">Rekord Serii</th></tr>
+                        </thead>
+                        <tbody id="desktopRankingBodyML">
+                            <tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1993,17 +2019,12 @@
     <!-- ============================================== -->
     <div id="moreLessContainer" class="ml-screen" style="display: none;">
         <!-- Pasek górny (Header) -->
-        <div class="ml-top-bar">
-            <button onclick="exitMoreLessGame()" class="icon-btn" title="Powrót do menu" style="padding: 8px 14px;">↩</button>
-            
-            <!-- Pigułka aktywnej kategorii + ikony kolejnych -->
-            <div class="ml-cat-tracker" id="mlCategoryTracker"></div>
-
-            <div class="ml-streak-badge">
-                <span id="mlRoundDisplay" style="color:var(--text-dim); font-size:10px;">RUNDA 1/12</span>
-                <span style="color:#f39c12; font-size:14px; font-weight:900;">🔥 <span id="mlCurrentStreak">0</span></span>
+        <header class="ml-header">
+            <button onclick="exitMoreLessGame()" class="icon-btn" title="Powrót do menu">↩</button>
+            <div class="ml-header-info">
+                <h1 class="ml-title">MORE / LESS ⚖️</h1>
+                <div class="ml-round-badge" id="mlRoundDisplay">RUNDA 1 / 12</div>
             </div>
-        </div>
             <div class="ml-streak-box">
                 <span class="ml-streak-lbl">SERIA</span>
                 <span class="ml-streak-val" id="mlCurrentStreak">0</span>
@@ -2143,7 +2164,7 @@
     <script src="events.js?v2.3"></script>
     <script src="changelog.js?v1.0"></script>
     <script src="moreless_db.js?v1.01"></script>
-    <script src="script.js?v2.106"></script>
+    <script src="script.js?v2.102"></script>
 
     
 </body>

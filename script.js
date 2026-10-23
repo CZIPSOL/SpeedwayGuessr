@@ -2801,6 +2801,10 @@ function showCategoryTransition(callback) {
 // ==============================================
 
 function startMoreLess(categoryMode = 'mix') {
+    if (!window.isAdmin && !window.isTester) {
+        showToast("🔒 Brak dostępu!", "error");
+        return;
+    }
     if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
         showToast("Baza statystyk nie została znaleziona!", "error");
         return;
@@ -3070,6 +3074,12 @@ function ensureMoreLessStats() {
 }
 
 function openMoreLessMenu() {
+    // BLOKADA DLA ZWYKŁYCH GRACZY (Tylko Admin i Testerzy)
+    if (!window.isAdmin && !window.isTester) {
+        showToast("🔒 Tryb w fazie zamkniętych testów! Dostępny wkrótce.", "error");
+        return;
+    }
+
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
         document.getElementById('desktopMainMenu').style.display = 'none';
