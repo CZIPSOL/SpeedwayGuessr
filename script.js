@@ -2579,6 +2579,273 @@ async function loadGuessrSubRanking(type) {
     }
 }
 
+// ==============================================
+// ====== SILNIK ROZGRYWKI: MORE / LESS =========
+// ==============================================
+
+// Pomocnik do szukania zdjęcia zawodnika w bazie
+function getRiderPhoto(name) {
+    const p = playersDB.find(x => x.name.toLowerCase() === name.toLowerCase());
+    return (p && p.image) ? `images/riders/${p.image}` : null;
+}
+
+// 1. Rozpoczęcie gry
+function startMoreLess(categoryMode = 'mix') {
+    if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
+        showToast("Baza statystyk nie została znaleziona!", "error");
+        return;
+    }
+
+    // Schowanie pozostałych widoków
+    document.getElementById('moreLessMenuContainer').style.display = 'none';
+    document.getElementById('desktopMainMenu').style.display = 'none';
+    document.getElementById('mainMenuContainer').style.display = 'none';
+
+    let sequence = [];
+    if (categoryMode === 'riders') {
+        sequence = ['player_points', 'player_points', 'player_average', 'player_average', 'player_points'];
+    } else if (categoryMode === 'attendance') {
+        sequence = ['attendance_avg', 'attendance_pct', 'attendance_total', 'attendance_avg'];
+    } else {
+        sequence = generateMixSequence(); // 5 pkt + 5 średnia + 2 stadiony
+    }
+
+    mlGame = {
+        active: true,
+        mode: categoryMode,
+        roundSequence: sequence,
+        currentRoundIndex: 0,
+        currentCategory: null,
+        score: 0,
+        usedKeys: new Set(),
+        leftCard: null,
+        rightCard: null
+    };
+
+    document.getElementById('mlCurrentStreak').innerText = "0";
+    document.getElementById('moreLessContainer').style.display = 'flex';
+
+    prepareNextRound();
+}
+
+// 2. Przygotowanie kolejnej rundy
+function prepareNextRound() {
+    const targetCatId = mlGame.roundSequence[mlGame.currentRoundIndex];
+    const isCategoryChange = !mlGame.currentCategory || mlGame.currentCategory.id !== targetCatId;
+    mlGame.currentCategory = MORE_LESS_CATEGORIES[targetCatId];
+
+    // Aktualizacja banera kategorii
+    document.getElementById('mlCategoryBanner').innerText = mlGame.currentCategory.title;
+    document.getElementById('mlRoundDisplay').innerText = `RUNDA ${mlGame.currentRoundIndex + 1} / ${mlGame.roundSequence.length}`;
+
+    if (isCategoryChange || !mlGame.rightCard) {
+        mlGame.leftCard = drawRandomItem(targetCatId);
+        do {
+            mlGame.rightCard = drawRandomItem(targetCatId);
+        } while (mlGame.rightCard.key === mlGame.leftCard.key);
+    } else {
+        // Prawa karta przechodzi na lewą
+        mlGame.leftCard = mlGame.rightCard;
+        do {
+            mlGame.rightCard = drawRandomItem(targetCatId);
+        } while (mlGame.rightCard.key === mlGame.leftCard.key);
+    }
+
+    renderMoreLessCards();
+}
+
+// 3. Renderowanie kart
+function renderMoreLessCards() {
+    const l = mlGame.leftCard;
+    const r = mlGame.rightCard;
+
+    // Reset wizualny kart
+    const leftCardEl = document.getElementById('mlLeftCard');
+    const rightCardEl = document.getElementById('mlRightCard');
+    leftCardEl.className = 'ml-card ml-card-left';
+    rightCardEl.className = 'ml-card ml-card-right';
+
+    // Lewa karta (Odsłonięta)
+    document.getElementById('mlLeftName').innerText = l.title;
+    document.getElementById('mlLeftSub').innerText = l.subtitle;
+    document.getElementById('mlLeftValue').innerText = mlGame.currentCategory.formatValue(l.value);
+
+    const leftPhoto = document.getElementById('mlLeftPhoto');
+    const leftIcon = document.getElementById('mlLeftIcon');
+    const lPhotoSrc = getRiderPhoto(l.title);
+    if (lPhotoSrc) {
+        leftPhoto.src = lPhotoSrc;
+        leftPhoto.style.display = 'block';
+        leftIcon.style.display = 'none';
+    } else {
+        leftPhoto.style.display = 'none';
+        leftIcon.style.display = 'block';
+        leftIcon.innerText = l.icon || '🏍️';
+    }
+
+    // Prawa karta (Zasłonięta)
+    document.getElementById('mlRightName').innerText = r.title;
+    document.getElementById('mlRightSub').innerText = r.subtitle;
+    document.getElementById('mlRightValue').innerText = "???";
+    document.getElementById('mlRightValue').className = "ml-value-number ml-hidden-val";
+    document.getElementById('mlRightHint').innerText = "CZY MA WIĘCEJ CZY MNIEJ?";
+
+    const rightPhoto = document.getElementById('mlRightPhoto');
+    const rightIcon = document.getElementById('mlRightIcon');
+    const rPhotoSrc = getRiderPhoto(r.title);
+    if (rPhotoSrc) {
+        rightPhoto.src = rPhotoSrc;
+        rightPhoto.style.display = 'block';
+        rightIcon.style.display = 'none';
+    } else {
+        rightPhoto.style.display = 'none';
+        rightIcon.style.display = 'block';
+        rightIcon.innerText = r.icon || '🏍️';
+    }
+
+    // Włączenie przycisków
+    document.getElementById('mlActions').style.display = 'flex';
+}
+
+// 4. Odpowiedź gracza i animacja licznika
+function submitMoreLessGuess(choice) {
+    if (!mlGame.active) return;
+    document.getElementById('mlActions').style.display = 'none'; // Blokada dwukliku
+
+    const leftVal = mlGame.leftCard.value;
+    const rightVal = mlGame.rightCard.value;
+
+    // Automatyczny remis = sukces gracza!
+    const isCorrect = (leftVal === rightVal) ||
+                      (choice === 'more' && rightVal > leftVal) ||
+                      (choice === 'less' && rightVal < leftVal);
+
+    revealRightCardValue(rightVal, isCorrect, () => {
+        if (isCorrect) {
+            playSound('guess');
+            mlGame.score++;
+            document.getElementById('mlCurrentStreak').innerText = mlGame.score;
+
+            // Sprawdzamy czy to koniec 12 rund
+            if (mlGame.currentRoundIndex + 1 >= mlGame.roundSequence.length) {
+                setTimeout(handleMoreLessVictory, 1000);
+            } else {
+                mlGame.currentRoundIndex++;
+                setTimeout(prepareNextRound, 1200);
+            }
+        } else {
+            playSound('lose');
+            setTimeout(handleMoreLessGameOver, 1200);
+        }
+    });
+}
+
+// 5. Animacja kręcenia licznika (Count-up)
+function revealRightCardValue(targetVal, isCorrect, callback) {
+    const valEl = document.getElementById('mlRightValue');
+    const cardEl = document.getElementById('mlRightCard');
+    valEl.className = "ml-value-number";
+
+    const duration = 750; // ms
+    const startTime = performance.now();
+    const isFloat = typeof targetVal === 'number' && !Number.isInteger(targetVal);
+
+    function animate(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const currentVal = targetVal * progress;
+
+        valEl.innerText = mlGame.currentCategory.formatValue(currentVal);
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            valEl.innerText = mlGame.currentCategory.formatValue(targetVal);
+            cardEl.classList.add(isCorrect ? 'card-correct' : 'card-wrong');
+            document.getElementById('mlRightHint').innerText = isCorrect ? "TRAFIENIE! 🎯" : "PUDŁO! ❌";
+            if (callback) callback();
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+// 6. Koniec gry (Porażka)
+function handleMoreLessGameOver() {
+    mlGame.active = false;
+    saveMoreLessScore(mlGame.score);
+
+    document.getElementById('mlSummaryEmoji').innerText = "💥";
+    document.getElementById('mlSummaryTitle').innerText = "KONIEC SERII!";
+    document.getElementById('mlSummaryTitle').style.color = "var(--red-neon)";
+    document.getElementById('mlFinalScore').innerText = mlGame.score;
+
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+// 7. Zwycięstwo (Ukończone wszystkie 12 rund Daily Mix)
+function handleMoreLessVictory() {
+    mlGame.active = false;
+    saveMoreLessScore(mlGame.score);
+    playSound('win');
+    if (typeof launchConfetti === 'function') launchConfetti();
+
+    document.getElementById('mlSummaryEmoji').innerText = "🏆";
+    document.getElementById('mlSummaryTitle').innerText = "MISTRZ STATYSTYK!";
+    document.getElementById('mlSummaryTitle').style.color = "var(--green-neon)";
+    document.getElementById('mlFinalScore').innerText = `${mlGame.score} / ${mlGame.roundSequence.length}`;
+
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    overlay.style.display = 'block';
+    setTimeout(() => overlay.style.opacity = '1', 10);
+}
+
+// 8. Zapis wyników
+function saveMoreLessScore(score) {
+    ensureMoreLessStats();
+    const ml = userStats.moreLess;
+    ml.played++;
+    ml.totalCorrect = (ml.totalCorrect || 0) + score;
+
+    let isNewRecord = false;
+    if (score > (ml.bestStreak || 0)) {
+        ml.bestStreak = score;
+        isNewRecord = true;
+    }
+
+    const notice = document.getElementById('mlNewRecordNotice');
+    if (notice) notice.innerText = isNewRecord ? "NOWY REKORD SERII! 🔥" : "PUNKTÓW W TEJ SERII";
+
+    saveStats();
+
+    // Wysłanie rekordu do chmury (Firebase)
+    if (playerId && (auth.currentUser || playerId.startsWith('guest_'))) {
+        db.collection('leaderboard_moreless').doc(playerId).set({
+            nick: playerNickname || 'Gracz',
+            club: userStats.favoriteClub || null,
+            bestStreak: ml.bestStreak,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true }).catch(() => {});
+    }
+}
+
+function restartMoreLess() {
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        startMoreLess(mlGame.mode || 'mix');
+    }, 200);
+}
+
+function exitMoreLessGame() {
+    mlGame.active = false;
+    const overlay = document.getElementById('moreLessSummaryOverlay');
+    if (overlay) overlay.style.display = 'none';
+    document.getElementById('moreLessContainer').style.display = 'none';
+    openMoreLessMenu();
+}
 
 // ==============================================
 // ====== START TRYBU MORE / LESS ===============
@@ -7053,6 +7320,9 @@ try {
     window.showMoreLessInfo = showMoreLessInfo;
     window.closeMoreLessInfo = closeMoreLessInfo;
     window.startMoreLess = startMoreLess;
+    window.submitMoreLessGuess = submitMoreLessGuess;
+    window.restartMoreLess = restartMoreLess;
+    window.exitMoreLessGame = exitMoreLessGame;
     
 } catch (e) {
     console.error("Global export error:", e);

@@ -2014,6 +2014,97 @@
             <button onclick="closeTerms()" class="policy-accept-btn w-100" style="background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; box-shadow: 0 4px 20px rgba(52, 152, 219, 0.35);">ZROZUMIAŁEM I AKCEPTUJĘ REGULAMIN</button>
         </div>
     </div>
+
+    <!-- ============================================== -->
+    <!-- ====== PLANSZA GRY: MORE / LESS ============= -->
+    <!-- ============================================== -->
+    <div id="moreLessContainer" class="ml-screen" style="display: none;">
+        <!-- Pasek górny (Header) -->
+        <header class="ml-header">
+            <button onclick="exitMoreLessGame()" class="icon-btn" title="Powrót do menu">↩</button>
+            <div class="ml-header-info">
+                <h1 class="ml-title">MORE / LESS ⚖️</h1>
+                <div class="ml-round-badge" id="mlRoundDisplay">RUNDA 1 / 12</div>
+            </div>
+            <div class="ml-streak-box">
+                <span class="ml-streak-lbl">SERIA</span>
+                <span class="ml-streak-val" id="mlCurrentStreak">0</span>
+            </div>
+        </header>
+
+        <!-- Baner aktywnej kategorii -->
+        <div class="ml-category-banner" id="mlCategoryBanner">
+            Ładowanie kategorii...
+        </div>
+
+        <!-- Arena pojedynku (Dwie karty) -->
+        <div class="ml-arena">
+            <!-- LEWA KARTA (Odsłonięta wartość) -->
+            <div class="ml-card ml-card-left" id="mlLeftCard">
+                <div class="ml-card-img-wrapper" id="mlLeftImgBox">
+                    <span class="ml-card-icon" id="mlLeftIcon">🏍️</span>
+                    <img id="mlLeftPhoto" src="" alt="" style="display:none;">
+                </div>
+                <div class="ml-card-info">
+                    <h2 class="ml-card-name" id="mlLeftName">---</h2>
+                    <div class="ml-card-sub" id="mlLeftSub">---</div>
+                </div>
+                <div class="ml-value-box">
+                    <span class="ml-value-number" id="mlLeftValue">---</span>
+                    <span class="ml-value-label">WARTOŚĆ BAZOWA</span>
+                </div>
+            </div>
+
+            <!-- SEPARATOR VS -->
+            <div class="ml-vs-badge">VS</div>
+
+            <!-- PRAWA KARTA (Ukryta do zgadnięcia) -->
+            <div class="ml-card ml-card-right" id="mlRightCard">
+                <div class="ml-card-img-wrapper" id="mlRightImgBox">
+                    <span class="ml-card-icon" id="mlRightIcon">🏍️</span>
+                    <img id="mlRightPhoto" src="" alt="" style="display:none;">
+                </div>
+                <div class="ml-card-info">
+                    <h2 class="ml-card-name" id="mlRightName">---</h2>
+                    <div class="ml-card-sub" id="mlRightSub">---</div>
+                </div>
+                <div class="ml-value-box">
+                    <span class="ml-value-number ml-hidden-val" id="mlRightValue">???</span>
+                    <span class="ml-value-label" id="mlRightHint">CZY MA WIĘCEJ CZY MNIEJ?</span>
+                </div>
+
+                <!-- Przyciski wyboru -->
+                <div class="ml-actions" id="mlActions">
+                    <button class="ml-btn ml-btn-more" onclick="submitMoreLessGuess('more')">
+                        <span class="ml-btn-arrow">▲</span> WIĘCEJ
+                    </button>
+                    <button class="ml-btn ml-btn-less" onclick="submitMoreLessGuess('less')">
+                        <span class="ml-btn-arrow">▼</span> MNIEJ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KOŃCA GRY MORE / LESS -->
+    <div id="moreLessSummaryOverlay" class="win-overlay" style="display: none; z-index: 10020;">
+        <div class="stats-modal modal-md text-center">
+            <div id="mlSummaryEmoji" style="font-size: 60px; margin-bottom: 15px;">🏁</div>
+            <h2 id="mlSummaryTitle" class="text-white font-black uppercase mb-10" style="font-size: 26px;">KONIEC GRY!</h2>
+            <p id="mlSummaryDesc" class="text-dim text-sm font-bold mb-20 line-h-1-4">Twój wynik w tej serii:</p>
+
+            <div class="ml-summary-score-box mb-25">
+                <div class="ml-summary-score" id="mlFinalScore">0</div>
+                <div class="text-dim text-xs font-bold uppercase mt-5" id="mlNewRecordNotice">PUNKTÓW Z RZĘDU</div>
+            </div>
+
+            <div class="flex-col gap-10">
+                <button onclick="restartMoreLess()" class="btn-reset w-100 p-15 text-sm">ZAGRAJ PONOWNIE 🔁</button>
+                <button onclick="exitMoreLessGame()" class="btn-close w-100 p-12 text-sm">MENU TRYBU 🔙</button>
+            </div>
+        </div>
+    </div>
+
 <!-- Stopka (Footer) -->
 <footer class="app-footer">
     <div class="footer-links">
@@ -2045,6 +2136,7 @@
     <script src="db.js?v2.3"></script>
     <script src="events.js?v2.3"></script>
     <script src="changelog.js?v1.0"></script>
+    <script src="moreless_db.js?v1.0"></script>
     <script src="script.js?v2.100"></script>
 
     
