@@ -956,7 +956,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
                         <span><i>DAILY MODE</i></span>
                         <span id="guessrDailyBadge" style="font-size: 11px; background: rgba(0, 255, 102, 0.2); color: #00ff66; padding: 3px 8px; border-radius: 20px; font-weight: 800;">DAILY #1</span>
                     </div>
-                    <button type="button" class="ml-calendar-btn icon-btn" onclick="openCalendar()" title="Kalendarz Daily" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; width: 48px; min-width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; cursor: pointer; flex-shrink: 0;">
+                    <button type="button" class="ml-calendar-btn icon-btn" onclick="openCalendar('guessr')" title="Kalendarz Daily" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; width: 48px; min-width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; cursor: pointer; flex-shrink: 0;">
                         📅
                     </button>
                 </div>
@@ -1107,7 +1107,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
                         <span><i>DAILY MODE</i></span>
                         <span id="mlMenuDailyBadge" style="font-size: 11px; background: rgba(0, 255, 102, 0.2); color: #00ff66; padding: 3px 8px; border-radius: 20px; font-weight: 800;">DAILY #1</span>
                     </div>
-                    <button type="button" class="ml-calendar-btn icon-btn" onclick="openCalendar()" title="Kalendarz Daily" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; width: 48px; min-width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; cursor: pointer; flex-shrink: 0;">
+                    <button type="button" class="ml-calendar-btn icon-btn" onclick="openCalendar('moreless')" title="Kalendarz Daily" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; width: 48px; min-width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; cursor: pointer; flex-shrink: 0;">
                         📅
                     </button>
                 </div>
@@ -1353,7 +1353,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
             
             <div id="gameDailyControls" class="game-daily-controls" style="display: none;">
                 <button id="inGamePrevBtn" class="icon-btn-small" onclick="changeDailyInGame(-1)">◀</button>
-                <button class="icon-btn-small" onclick="openCalendar()">📅</button>
+                <button class="icon-btn-small" onclick="openCalendar('guessr')">📅</button>
                 <button id="inGameNextBtn" class="icon-btn-small" onclick="changeDailyInGame(1)">▶</button>
             </div>
             
@@ -2178,7 +2178,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
     <script src="events.js?v2.3"></script>
     <script src="changelog.js?v1.01"></script>
     <script src="moreless_db.js?v1.01"></script>
-    <script src="script.js?v2.103"></script>
+    <script src="script.js?v2.104"></script>
 
     
 </body>

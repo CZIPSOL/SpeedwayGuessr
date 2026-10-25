@@ -135,13 +135,25 @@ const functions = firebase.functions();
 // ==============================================
 // ====== 3. ZMIENNE GLOBALNE I SLUCHACZ AUTH ====
 // ==============================================
+let activeCalendarMode = 'guessr';
 let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
-let currentDailyDay = 256; let selectedDailyDay = 256; let dailyNumberGlobal = "";
+// Daily dla każdej gry ma osobny licznik i datę startu.
+let currentDailyDay = 1; // Guessr
+let selectedDailyDay = 1; // Guessr
+let dailyNumberGlobal = "";
+
+let currentMoreLessDailyDay = 1; // More/Less
+let selectedMoreLessDailyDay = 1;
+
 let hasWon = false; let hasLost = false; let isRestoring = false;
-let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
-const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2026-10-25T00:00:00');
+let calRenderMonth = new Date().getMonth(); 
+let calRenderYear = new Date().getFullYear();
+
+const GUESS_LIMIT = 10;
+
+const GUESSR_DAILY_START_DATE = new Date('2026-05-12T00:00:00');
+const MORE_LESS_DAILY_START_DATE = new Date('2026-10-25T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; 
@@ -1604,10 +1616,31 @@ function saveStats() {
     syncStatsToFirebase(); 
 }
 
-function getDailyDateString(dayNumber) {
-    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
+function getDailyDateString(dayNumber, startDate = GUESSR_DAILY_START_DATE) {
+    const startUTC = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
     const d = new Date(startUTC + (dayNumber - 1) * 24 * 60 * 60 * 1000);
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function getMoreLessDailyDayForToday() {
+    const now = new Date();
+
+    const nowUTC = Date.UTC(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+    );
+
+    const startUTC = Date.UTC(
+        MORE_LESS_DAILY_START_DATE.getFullYear(),
+        MORE_LESS_DAILY_START_DATE.getMonth(),
+        MORE_LESS_DAILY_START_DATE.getDate()
+    );
+
+    return Math.max(
+        1,
+        Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1
+    );
 }
 
 function getCurrentMonthStr() { const d = new Date(); return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0'); }
@@ -1619,11 +1652,30 @@ function getCurrentWeekStr() {
 }
 
 function initDailyMenu() {
-    const now = new Date(); const nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
-    currentDailyDay = Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
-    if (currentDailyDay < 1) currentDailyDay = 1; selectedDailyDay = currentDailyDay; updateDailyMenu();
-}
+const now = new Date();
+
+const nowUTC = Date.UTC(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+);
+
+const startUTC = Date.UTC(
+    GUESSR_DAILY_START_DATE.getFullYear(),
+    GUESSR_DAILY_START_DATE.getMonth(),
+    GUESSR_DAILY_START_DATE.getDate()
+);
+
+currentDailyDay = Math.max(
+    1,
+    Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1
+);
+
+selectedDailyDay = currentDailyDay;
+
+// More/Less ma osobny licznik
+currentMoreLessDailyDay = getMoreLessDailyDayForToday();
+selectedMoreLessDailyDay = currentMoreLessDailyDay;}
 
 function changeDaily(dir) {
     selectedDailyDay += dir;
@@ -1642,7 +1694,7 @@ function updateDailyMenu() {
 
     const dayDisplay = document.getElementById('dailyDayDisplay');
     if (dayDisplay) {
-        dayDisplay.innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
+        dayDisplay.innerText = `Daily ${getDailyDateString(selectedDailyDay, GUESSR_DAILY_START_DATE)}`;
     }
 
     const prevBtn = document.getElementById('btnPrevDaily');
@@ -1667,78 +1719,127 @@ function updateDailyMenu() {
         }
     }
 
-    // Aktualizacja plakietki w nowym podmenu Guessr
-    const guessrBadge = document.getElementById('guessrDailyBadge');
-    if (guessrBadge) {
-        guessrBadge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
-    }
+    // Aktualizacja wszystkich plakietek Guessr Daily
+    document.querySelectorAll('#guessrDailyBadge, .guessr-daily-badge').forEach(badge => {
+        badge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay, GUESSR_DAILY_START_DATE)})`;
+    });
 }
 
-function openCalendar() {
-    calRenderMonth = new Date().getMonth(); calRenderYear = new Date().getFullYear(); renderCalendar();
-    const overlay = document.getElementById('calendarOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+function openCalendar(mode = null) {
+    if (mode) {
+        activeCalendarMode = mode;
+    } else {
+        const mlMenu = document.getElementById('moreLessMenuContainer');
+        activeCalendarMode = (mlMenu && mlMenu.style.display !== 'none') ? 'moreless' : 'guessr';
+    }
+    calRenderMonth = new Date().getMonth(); 
+    calRenderYear = new Date().getFullYear(); 
+    renderCalendar();
+    const overlay = document.getElementById('calendarOverlay'); 
+    overlay.style.display = 'block'; 
+    setTimeout(() => overlay.style.opacity = '1', 10);
 }
+
 function closeCalendar() { const overlay = document.getElementById('calendarOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 function changeCalendarMonth(dir) { calRenderMonth += dir; if (calRenderMonth > 11) { calRenderMonth = 0; calRenderYear++; } else if (calRenderMonth < 0) { calRenderMonth = 11; calRenderYear--; } renderCalendar(); }
 
 function renderCalendar() {
     document.getElementById('calendarMonthDisplay').innerText = `${i18n[currentLang].months[calRenderMonth]} ${calRenderYear}`;
-    const wdContainer = document.getElementById('calendarWeekdays'); wdContainer.innerHTML = '';
+    const wdContainer = document.getElementById('calendarWeekdays'); 
+    wdContainer.innerHTML = '';
     i18n[currentLang].weekdays.forEach(wd => { wdContainer.innerHTML += `<div>${wd}</div>`; });
 
-    const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
+    const grid = document.getElementById('calendarGrid'); 
+    grid.innerHTML = '';
     const firstDay = new Date(calRenderYear, calRenderMonth, 1);
     const daysInMonth = new Date(calRenderYear, calRenderMonth + 1, 0).getDate();
     let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
-    for (let i = 0; i < startDayOfWeek; i++) { const emptyBox = document.createElement('div'); emptyBox.className = 'cal-day empty'; grid.appendChild(emptyBox); }
+    for (let i = 0; i < startDayOfWeek; i++) { 
+        const emptyBox = document.createElement('div'); 
+        emptyBox.className = 'cal-day empty'; 
+        grid.appendChild(emptyBox); 
+    }
 
-    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
-    const now = new Date(); const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const isML = (activeCalendarMode === 'moreless');
+    const baseDate = isML ? MORE_LESS_DAILY_START_DATE : GUESSR_DAILY_START_DATE;
+    const startUTC = Date.UTC(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+    const now = new Date(); 
+    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     for (let i = 1; i <= daysInMonth; i++) {
-        const box = document.createElement('div'); box.className = 'cal-day'; box.innerText = i;
+        const box = document.createElement('div'); 
+        box.className = 'cal-day'; 
+        box.innerText = i;
         const cellUTC = Date.UTC(calRenderYear, calRenderMonth, i);
         
-        if (cellUTC < startUTC) { box.classList.add('disabled'); } 
-        else if (cellUTC > todayUTC) { box.classList.add('disabled', 'future'); } 
-        else {
+        if (cellUTC < startUTC) { 
+            box.classList.add('disabled'); 
+        } else if (cellUTC > todayUTC) { 
+            box.classList.add('disabled', 'future'); 
+        } else {
             const dailyNum = Math.floor((cellUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
             box.title = `Daily #${dailyNum}`;
-            if (userStats.dailyResults[dailyNum] === 'win') { box.classList.add('win'); }
-            else if (userStats.dailyResults[dailyNum] === 'loss') { box.classList.add('loss'); }
-            else { box.classList.add('playable'); }
+            
+            if (isML) {
+                const mlRes = userStats.moreLessDaily && userStats.moreLessDaily[dailyNum];
+                if (mlRes) {
+                    // Zielony jeśli wynik >= 9/12, w przeciwnym razie czerwony (ukończono)
+                    box.classList.add(mlRes.score >= 9 ? 'win' : 'loss');
+                    box.title = `Daily #${dailyNum} (${mlRes.score}/${mlRes.total || 12})`;
+                } else {
+                    box.classList.add('playable');
+                }
+                if (dailyNum === selectedMoreLessDailyDay) box.style.border = "2px solid var(--accent)";
+            } else {
+                if (userStats.dailyResults[dailyNum] === 'win') { 
+                    box.classList.add('win'); 
+                } else if (userStats.dailyResults[dailyNum] === 'loss') { 
+                    box.classList.add('loss'); 
+                } else { 
+                    box.classList.add('playable'); 
+                }
+                if (dailyNum === selectedDailyDay) box.style.border = "2px solid var(--accent)";
+            }
+            
             box.onclick = () => { selectDayFromCalendar(dailyNum); };
-            if (dailyNum === selectedDailyDay) box.style.border = "2px solid var(--accent)";
         }
         grid.appendChild(box);
     }
 }
 
 function selectDayFromCalendar(dayNum) { 
-    selectedDailyDay = dayNum; 
-    updateDailyMenu(); 
-    closeCalendar(); 
-    if(document.getElementById('gameContainer') && document.getElementById('gameContainer').style.display === 'block') {
-        changeDailyInGame(0);
-    }
-    const mlBadge = document.getElementById('mlMenuDailyBadge');
-    if (mlBadge) mlBadge.innerText = `DAILY #${dayNum}`;
-    const guessrBadge = document.getElementById('guessrDailyBadge');
-    if (guessrBadge) guessrBadge.innerText = `DAILY #${dayNum}`;
-    const mlDailyToday = document.getElementById('mlStatDailyToday');
-    if (mlDailyToday) {
-        if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
-            const d = userStats.moreLessDaily[dayNum];
-            mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
-            mlDailyToday.style.color = '#00ff66';
-        } else {
-            mlDailyToday.innerText = 'DO GRY';
-            mlDailyToday.style.color = '#f39c12';
+    if (activeCalendarMode === 'moreless') {
+        selectedMoreLessDailyDay = dayNum;
+        closeCalendar();
+
+        const mlBadge = document.getElementById('mlMenuDailyBadge');
+        if (mlBadge) mlBadge.innerText = `DAILY #${dayNum} (${getDailyDateString(dayNum, MORE_LESS_DAILY_START_DATE)})`;
+
+        const mlDailyToday = document.getElementById('mlStatDailyToday');
+        if (mlDailyToday) {
+            if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+                const d = userStats.moreLessDaily[dayNum];
+                mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
+                mlDailyToday.style.color = '#00ff66';
+            } else {
+                mlDailyToday.innerText = 'DO GRY';
+                mlDailyToday.style.color = '#f39c12';
+            }
         }
-    }
-    if (document.getElementById('moreLessMenuContainer') && document.getElementById('moreLessMenuContainer').style.display === 'flex') {
-        loadMoreLessRanking();
+        if (document.getElementById('moreLessMenuContainer') && document.getElementById('moreLessMenuContainer').style.display !== 'none') {
+            loadMoreLessRanking(dayNum);
+        }
+    } else {
+        selectedDailyDay = dayNum; 
+        updateDailyMenu(); 
+        closeCalendar(); 
+        if (document.getElementById('gameContainer') && document.getElementById('gameContainer').style.display === 'block') {
+            changeDailyInGame(0);
+        }
+        if (document.getElementById('guessrMenuContainer') && document.getElementById('guessrMenuContainer').style.display !== 'none') {
+            loadGuessrSubRanking('daily');
+        }
     }
 }
 
@@ -2485,14 +2586,13 @@ function openGuessrMenu() {
             document.getElementById('moreLessMenuContainer').style.display = 'none';
         }
 
+        updateDailyMenu();
+
         const menu = document.getElementById('guessrMenuContainer');
         menu.style.display = 'grid';
 
         const nickEl = document.getElementById('guessrMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
-
-        const badgeEl = document.getElementById('guessrDailyBadge');
-        if (badgeEl) badgeEl.innerText = `DAILY #${selectedDailyDay || currentDailyDay}`;
 
         document.getElementById('guessrStatPlayed').innerText = userStats.played || 0;
         document.getElementById('guessrStatWon').innerText = userStats.won || 0;
@@ -2918,7 +3018,7 @@ function startMoreLess(categoryMode = 'daily') {
     let precalculatedRounds = null;
 
     if (categoryMode === 'daily') {
-        const generated = generateDailyMoreLessRounds(selectedDailyDay || currentDailyDay);
+        const generated = generateDailyMoreLessRounds(selectedMoreLessDailyDay || currentMoreLessDailyDay);
         sequence = generated.sequence;
         precalculatedRounds = generated.rounds;
     } else if (categoryMode === 'riders') {
@@ -2933,7 +3033,7 @@ function startMoreLess(categoryMode = 'daily') {
         active: true,
         mode: categoryMode,
         isDaily: (categoryMode === 'daily'),
-        dailyDay: (categoryMode === 'daily') ? (selectedDailyDay || currentDailyDay) : null,
+        dailyDay: (categoryMode === 'daily') ? (selectedMoreLessDailyDay || currentMoreLessDailyDay) : null,
         roundSequence: sequence,
         precalculatedRounds: precalculatedRounds,
         currentRoundIndex: 0,
@@ -3124,7 +3224,12 @@ function handleMoreLessFinished() {
         playSound('lose');
     }
 
-    saveMoreLessScore(score, total, mlGame.dailyDay || selectedDailyDay, isDaily);
+    saveMoreLessScore(
+    score,
+    total,
+    mlGame.dailyDay || selectedMoreLessDailyDay,
+    isDaily
+    );
 
     const titleEl = document.getElementById('mlSummaryTitle');
     const emojiEl = document.getElementById('mlSummaryEmoji');
@@ -3165,7 +3270,7 @@ function handleMoreLessFinished() {
     }
 }
 
-function saveMoreLessScore(score, total = 12, dayNumber = selectedDailyDay, isDaily = true) {
+function saveMoreLessScore(score, total = 12, dayNumber = selectedMoreLessDailyDay, isDaily = true) {
     ensureMoreLessStats();
     const ml = userStats.moreLess;
     ml.played = (ml.played || 0) + 1;
@@ -3266,9 +3371,9 @@ function openMoreLessMenu() {
         const nickEl = document.getElementById('moreLessMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
-        const currentDay = selectedDailyDay || currentDailyDay;
+        const currentDay = selectedMoreLessDailyDay || currentMoreLessDailyDay;
         const badgeEl = document.getElementById('mlMenuDailyBadge');
-        if (badgeEl) badgeEl.innerText = `DAILY #${currentDay}`;
+        if (badgeEl) badgeEl.innerText = `DAILY #${currentDay} (${getDailyDateString(currentDay, MORE_LESS_DAILY_START_DATE)})`;
 
         const ml = userStats.moreLess;
         document.getElementById('mlStatPlayed').innerText = ml.played || 0;
@@ -3306,7 +3411,7 @@ function closeMoreLessInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-async function loadMoreLessRanking(dayNum = selectedDailyDay || currentDailyDay) {
+async function loadMoreLessRanking(dayNum = selectedMoreLessDailyDay || currentMoreLessDailyDay) {
     const tbody = document.getElementById('desktopRankingBodyML');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
