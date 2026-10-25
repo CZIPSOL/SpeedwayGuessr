@@ -141,7 +141,7 @@ let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
+const DAILY_START_DATE = new Date('2026-10-25T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; 
@@ -1582,6 +1582,7 @@ function loadStats() {
     
     ensureLeagueStats(userStats);
     ensureTimeAttackStats(userStats);
+    ensureMoreLessStats();
     updateDiscordButtonUI();
     
     // Wysyłamy wciemno ELO tylko dla Gości. Zalogowani (Google) 
@@ -1715,8 +1716,30 @@ function renderCalendar() {
 }
 
 function selectDayFromCalendar(dayNum) { 
-    selectedDailyDay = dayNum; updateDailyMenu(); closeCalendar(); 
-    if(document.getElementById('gameContainer').style.display === 'block') changeDailyInGame(0);
+    selectedDailyDay = dayNum; 
+    updateDailyMenu(); 
+    closeCalendar(); 
+    if(document.getElementById('gameContainer') && document.getElementById('gameContainer').style.display === 'block') {
+        changeDailyInGame(0);
+    }
+    const mlBadge = document.getElementById('mlMenuDailyBadge');
+    if (mlBadge) mlBadge.innerText = `DAILY #${dayNum}`;
+    const guessrBadge = document.getElementById('guessrDailyBadge');
+    if (guessrBadge) guessrBadge.innerText = `DAILY #${dayNum}`;
+    const mlDailyToday = document.getElementById('mlStatDailyToday');
+    if (mlDailyToday) {
+        if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+            const d = userStats.moreLessDaily[dayNum];
+            mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
+            mlDailyToday.style.color = '#00ff66';
+        } else {
+            mlDailyToday.innerText = 'DO GRY';
+            mlDailyToday.style.color = '#f39c12';
+        }
+    }
+    if (document.getElementById('moreLessMenuContainer') && document.getElementById('moreLessMenuContainer').style.display === 'flex') {
+        loadMoreLessRanking();
+    }
 }
 
 function renderLastGames() {
@@ -1858,27 +1881,37 @@ function updateStatsOnLoss() {
     saveStats();
 }
 
+function hideScreensForGuessr() {
+    const toHide = [
+        'mainMenuContainer',
+        'desktopMainMenu',
+        'guessrMenuContainer',
+        'moreLessMenuContainer',
+        'clashModeSelectContainer',
+        'timeAttackMenuContainer',
+        'mobileSplashScreen'
+    ];
+    toHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+}
+
 function startDailyGame() { 
     promptForNick(() => {
         gameMode = 'daily';
-        const mainMenu = document.getElementById('mainMenuContainer');
+        hideScreensForGuessr();
         const gameContainer = document.getElementById('gameContainer');
-        if (mainMenu) mainMenu.style.display = 'none';
         if (gameContainer) gameContainer.style.display = 'block';
-
-        document.getElementById('desktopMainMenu').style.display = 'none';
         initGame(); 
     });
 }
 
 function startEndlessGame() {
     gameMode = 'endless';
-    const mainMenu = document.getElementById('mainMenuContainer');
+    hideScreensForGuessr();
     const gameContainer = document.getElementById('gameContainer');
-    if (mainMenu) mainMenu.style.display = 'none';
     if (gameContainer) gameContainer.style.display = 'block';
-
-    document.getElementById('desktopMainMenu').style.display = 'none';
     initGame();
 }
 
@@ -1996,6 +2029,7 @@ function seededRandom(seed) { const x = Math.sin(seed) * 10000; return x - Math.
 
 
 async function initGame() {
+    hideScreensForGuessr();
     const modeDisplay = document.getElementById('gameModeDisplay'); 
     const controls = document.getElementById('gameDailyControls'); 
     const inputSec = document.querySelector('#gameContainer .input-section'); 
@@ -2458,7 +2492,7 @@ function openGuessrMenu() {
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
         const badgeEl = document.getElementById('guessrDailyBadge');
-        if (badgeEl) badgeEl.innerText = `DAILY ${getDailyDateString(currentDailyDay)}`;
+        if (badgeEl) badgeEl.innerText = `DAILY #${selectedDailyDay || currentDailyDay}`;
 
         document.getElementById('guessrStatPlayed').innerText = userStats.played || 0;
         document.getElementById('guessrStatWon').innerText = userStats.won || 0;
@@ -2800,22 +2834,94 @@ function showCategoryTransition(callback) {
 // ====== RUNDY & STEROWANIE GRĄ ================
 // ==============================================
 
-function startMoreLess(categoryMode = 'mix') {
-    if (!window.isAdmin && !window.isTester) {
-        showToast("🔒 Brak dostępu!", "error");
-        return;
+// Generator 12 rund deterministycznych dla More/Less Daily
+function generateDailyMoreLessRounds(dayNumber) {
+    let seed = Number(dayNumber) || 1;
+    function prng() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
     }
+
+    const clubCategories = ['attendance_avg', 'attendance_pct', 'attendance_total'];
+    const c1 = clubCategories[Math.floor(prng() * clubCategories.length)];
+    let c2 = clubCategories[Math.floor(prng() * clubCategories.length)];
+    if (c2 === c1) {
+        c2 = clubCategories.find(c => c !== c1) || 'attendance_total';
+    }
+
+    const sequence = [
+        // Rundy 1-5: Punkty
+        'player_points', 'player_points', 'player_points', 'player_points', 'player_points',
+        // Rundy 6-10: Średnia biegowa
+        'player_average', 'player_average', 'player_average', 'player_average', 'player_average',
+        // Rundy 11-12: Stadiony
+        c1, c2
+    ];
+
+    const usedKeys = new Set();
+    const rounds = [];
+    let prevCard = null;
+
+    for (let r = 0; r < sequence.length; r++) {
+        const catId = sequence[r];
+        const isCatChange = (r === 0 || sequence[r] !== sequence[r - 1]);
+        const config = MORE_LESS_CATEGORIES[catId];
+        const rawData = config.dataSource();
+        let pool = rawData.map(config.mapItem).filter(item => !usedKeys.has(item.key));
+        if (pool.length < 2) {
+            pool = rawData.map(config.mapItem);
+        }
+
+        let leftCard = null;
+        if (isCatChange || !prevCard) {
+            const leftIdx = Math.floor(prng() * pool.length);
+            leftCard = pool[leftIdx];
+            usedKeys.add(leftCard.key);
+        } else {
+            leftCard = prevCard;
+        }
+
+        let remaining = pool.filter(item => item.key !== leftCard.key);
+        if (remaining.length === 0) remaining = rawData.map(config.mapItem).filter(item => item.key !== leftCard.key);
+        const rightIdx = Math.floor(prng() * remaining.length);
+        const rightCard = remaining[rightIdx];
+        usedKeys.add(rightCard.key);
+
+        rounds.push({
+            catId,
+            isCatChange,
+            leftCard,
+            rightCard
+        });
+
+        prevCard = rightCard;
+    }
+
+    return { sequence, rounds };
+}
+
+function startMoreLessDaily() {
+    startMoreLess('daily');
+}
+
+function startMoreLess(categoryMode = 'daily') {
     if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
         showToast("Baza statystyk nie została znaleziona!", "error");
         return;
     }
 
-    document.getElementById('moreLessMenuContainer').style.display = 'none';
-    document.getElementById('desktopMainMenu').style.display = 'none';
-    document.getElementById('mainMenuContainer').style.display = 'none';
+    hideScreensForGuessr();
+    const moreLessMenu = document.getElementById('moreLessMenuContainer');
+    if (moreLessMenu) moreLessMenu.style.display = 'none';
 
     let sequence = [];
-    if (categoryMode === 'riders') {
+    let precalculatedRounds = null;
+
+    if (categoryMode === 'daily') {
+        const generated = generateDailyMoreLessRounds(selectedDailyDay || currentDailyDay);
+        sequence = generated.sequence;
+        precalculatedRounds = generated.rounds;
+    } else if (categoryMode === 'riders') {
         sequence = ['player_points', 'player_points', 'player_average', 'player_average', 'player_points'];
     } else if (categoryMode === 'attendance') {
         sequence = ['attendance_avg', 'attendance_pct', 'attendance_total', 'attendance_avg'];
@@ -2826,7 +2932,10 @@ function startMoreLess(categoryMode = 'mix') {
     mlGame = {
         active: true,
         mode: categoryMode,
+        isDaily: (categoryMode === 'daily'),
+        dailyDay: (categoryMode === 'daily') ? (selectedDailyDay || currentDailyDay) : null,
         roundSequence: sequence,
+        precalculatedRounds: precalculatedRounds,
         currentRoundIndex: 0,
         currentCategory: null,
         score: 0,
@@ -2835,10 +2944,22 @@ function startMoreLess(categoryMode = 'mix') {
         rightCard: null
     };
 
-    document.getElementById('mlCurrentStreak').innerText = "0";
+    const titleEl = document.getElementById('mlGameTitle');
+    if (titleEl) {
+        titleEl.innerText = mlGame.isDaily ? `MORE / LESS • DAILY #${mlGame.dailyDay}` : `MORE / LESS ⚖️`;
+    }
+
+    updateMoreLessScoreDisplay();
     document.getElementById('moreLessContainer').style.display = 'flex';
 
     prepareNextRound();
+}
+
+function updateMoreLessScoreDisplay() {
+    const streakEl = document.getElementById('mlCurrentStreak');
+    if (streakEl) {
+        streakEl.innerText = `${mlGame.score} / ${mlGame.roundSequence.length}`;
+    }
 }
 
 function prepareNextRound() {
@@ -2849,12 +2970,10 @@ function prepareNextRound() {
     const roundEl = document.getElementById('mlRoundDisplay');
     if (roundEl) roundEl.innerText = `RUNDA ${mlGame.currentRoundIndex + 1} / ${mlGame.roundSequence.length}`;
 
-    const streakEl = document.getElementById('mlCurrentStreak');
-    if (streakEl) streakEl.innerText = mlGame.score;
-
+    updateMoreLessScoreDisplay();
     renderCategoryTracker();
 
-    // Animacja przejścia UP NEXT (ZDJĘCIE 2)
+    // Animacja przejścia UP NEXT
     if (isCategoryChange) {
         showCategoryTransition(() => {
             setupRoundCards(targetCatId, isCategoryChange);
@@ -2865,7 +2984,11 @@ function prepareNextRound() {
 }
 
 function setupRoundCards(targetCatId, isCategoryChange) {
-    if (isCategoryChange || !mlGame.rightCard) {
+    if (mlGame.precalculatedRounds && mlGame.precalculatedRounds[mlGame.currentRoundIndex]) {
+        const pre = mlGame.precalculatedRounds[mlGame.currentRoundIndex];
+        mlGame.leftCard = pre.leftCard;
+        mlGame.rightCard = pre.rightCard;
+    } else if (isCategoryChange || !mlGame.rightCard) {
         mlGame.leftCard = drawRandomItem(targetCatId);
         do {
             mlGame.rightCard = drawRandomItem(targetCatId);
@@ -2945,17 +3068,16 @@ function submitMoreLessGuess(choice) {
         if (isCorrect) {
             playSound('guess');
             mlGame.score++;
-            document.getElementById('mlCurrentStreak').innerText = mlGame.score;
-
-            if (mlGame.currentRoundIndex + 1 >= mlGame.roundSequence.length) {
-                setTimeout(handleMoreLessVictory, 1000);
-            } else {
-                mlGame.currentRoundIndex++;
-                setTimeout(prepareNextRound, 1200);
-            }
         } else {
             playSound('lose');
-            setTimeout(handleMoreLessGameOver, 1400);
+        }
+        updateMoreLessScoreDisplay();
+
+        if (mlGame.currentRoundIndex + 1 >= mlGame.roundSequence.length) {
+            setTimeout(handleMoreLessFinished, 1200);
+        } else {
+            mlGame.currentRoundIndex++;
+            setTimeout(prepareNextRound, 1200);
         }
     });
 }
@@ -2989,60 +3111,113 @@ function revealRightCardValue(targetVal, isCorrect, callback) {
     requestAnimationFrame(animate);
 }
 
-function handleMoreLessGameOver() {
+function handleMoreLessFinished() {
     mlGame.active = false;
-    saveMoreLessScore(mlGame.score);
+    const total = mlGame.roundSequence.length;
+    const score = mlGame.score;
+    const isDaily = (mlGame.mode === 'daily');
 
-    document.getElementById('mlSummaryEmoji').innerText = "💥";
-    document.getElementById('mlSummaryTitle').innerText = "KONIEC SERII!";
-    document.getElementById('mlSummaryTitle').style.color = "var(--red-neon)";
-    document.getElementById('mlFinalScore').innerText = mlGame.score;
+    if (score >= Math.round(total * 0.75)) {
+        playSound('win');
+        if (typeof launchConfetti === 'function') launchConfetti();
+    } else {
+        playSound('lose');
+    }
+
+    saveMoreLessScore(score, total, mlGame.dailyDay || selectedDailyDay, isDaily);
+
+    const titleEl = document.getElementById('mlSummaryTitle');
+    const emojiEl = document.getElementById('mlSummaryEmoji');
+    const finalScoreEl = document.getElementById('mlFinalScore');
+
+    if (score === total) {
+        if (emojiEl) emojiEl.innerText = "🏆";
+        if (titleEl) {
+            titleEl.innerText = "KOMPLET PUNKTÓW!";
+            titleEl.style.color = "var(--green-neon)";
+        }
+    } else if (score >= 9) {
+        if (emojiEl) emojiEl.innerText = "🔥";
+        if (titleEl) {
+            titleEl.innerText = "ŚWIETNY WYNIK!";
+            titleEl.style.color = "var(--green-neon)";
+        }
+    } else if (score >= 5) {
+        if (emojiEl) emojiEl.innerText = "👏";
+        if (titleEl) {
+            titleEl.innerText = "DOBRY MECZ!";
+            titleEl.style.color = "#f39c12";
+        }
+    } else {
+        if (emojiEl) emojiEl.innerText = "🏍️";
+        if (titleEl) {
+            titleEl.innerText = "TRENING CZYNI MISTRZA!";
+            titleEl.style.color = "var(--red-neon)";
+        }
+    }
+
+    if (finalScoreEl) finalScoreEl.innerText = `${score} / ${total}`;
 
     const overlay = document.getElementById('moreLessSummaryOverlay');
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
+    if (overlay) {
+        overlay.style.display = 'block';
+        setTimeout(() => overlay.style.opacity = '1', 10);
+    }
 }
 
-function handleMoreLessVictory() {
-    mlGame.active = false;
-    saveMoreLessScore(mlGame.score);
-    playSound('win');
-    if (typeof launchConfetti === 'function') launchConfetti();
-
-    document.getElementById('mlSummaryEmoji').innerText = "🏆";
-    document.getElementById('mlSummaryTitle').innerText = "MISTRZ STATYSTYK!";
-    document.getElementById('mlSummaryTitle').style.color = "var(--green-neon)";
-    document.getElementById('mlFinalScore').innerText = `${mlGame.score} / ${mlGame.roundSequence.length}`;
-
-    const overlay = document.getElementById('moreLessSummaryOverlay');
-    overlay.style.display = 'block';
-    setTimeout(() => overlay.style.opacity = '1', 10);
-}
-
-function saveMoreLessScore(score) {
+function saveMoreLessScore(score, total = 12, dayNumber = selectedDailyDay, isDaily = true) {
     ensureMoreLessStats();
     const ml = userStats.moreLess;
-    ml.played++;
+    ml.played = (ml.played || 0) + 1;
     ml.totalCorrect = (ml.totalCorrect || 0) + score;
 
-    let isNewRecord = false;
-    if (score > (ml.bestStreak || 0)) {
+    if (!ml.bestStreak || score > ml.bestStreak) {
         ml.bestStreak = score;
-        isNewRecord = true;
+    }
+
+    if (!userStats.moreLessDaily) {
+        userStats.moreLessDaily = {};
+    }
+
+    const previousDaily = userStats.moreLessDaily[dayNumber];
+    if (!previousDaily || score > (previousDaily.score || 0)) {
+        userStats.moreLessDaily[dayNumber] = {
+            score: score,
+            total: total,
+            date: new Date().toISOString()
+        };
     }
 
     const notice = document.getElementById('mlNewRecordNotice');
-    if (notice) notice.innerText = isNewRecord ? "NOWY REKORD SERII! 🔥" : "PUNKTÓW W TEJ SERII";
+    if (notice) {
+        if (isDaily) {
+            notice.innerText = `WYNIK DAILY #${dayNumber}`;
+        } else {
+            notice.innerText = "PUNKTÓW W TEJ SERII";
+        }
+    }
 
     saveStats();
 
-    if (playerId && (auth.currentUser || playerId.startsWith('guest_'))) {
-        db.collection('leaderboard_moreless').doc(playerId).set({
+    // Firestore Leaderboard update
+    if (isDaily && playerId) {
+        const payload = {
             nick: playerNickname || 'Gracz',
             club: userStats.favoriteClub || null,
-            bestStreak: ml.bestStreak,
+            score: score,
+            total: total,
+            day: dayNumber,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true }).catch(() => {});
+        };
+
+        db.collection("rankings_moreless").doc(dayNumber.toString()).collection("scores").doc(playerId)
+            .set(payload, { merge: true }).catch(() => {});
+
+        db.collection('leaderboard_moreless').doc(playerId)
+            .set({
+                ...payload,
+                bestScoreRatio: `${score}/${total}`
+            }, { merge: true }).catch(() => {});
     }
 }
 
@@ -3051,7 +3226,7 @@ function restartMoreLess() {
     overlay.style.opacity = '0';
     setTimeout(() => {
         overlay.style.display = 'none';
-        startMoreLess(mlGame.mode || 'mix');
+        startMoreLess(mlGame.mode || 'daily');
     }, 200);
 }
 
@@ -3071,15 +3246,12 @@ function ensureMoreLessStats() {
     if (!userStats.moreLess) {
         userStats.moreLess = { played: 0, bestStreak: 0, totalCorrect: 0 };
     }
+    if (!userStats.moreLessDaily) {
+        userStats.moreLessDaily = {};
+    }
 }
 
 function openMoreLessMenu() {
-    // BLOKADA DLA ZWYKŁYCH GRACZY (Tylko Admin i Testerzy)
-    if (!window.isAdmin && !window.isTester) {
-        showToast("🔒 Tryb w fazie zamkniętych testów! Dostępny wkrótce.", "error");
-        return;
-    }
-
     promptForNick(() => {
         document.getElementById('mainMenuContainer').style.display = 'none';
         document.getElementById('desktopMainMenu').style.display = 'none';
@@ -3094,11 +3266,27 @@ function openMoreLessMenu() {
         const nickEl = document.getElementById('moreLessMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
+        const currentDay = selectedDailyDay || currentDailyDay;
+        const badgeEl = document.getElementById('mlMenuDailyBadge');
+        if (badgeEl) badgeEl.innerText = `DAILY #${currentDay}`;
+
         const ml = userStats.moreLess;
         document.getElementById('mlStatPlayed').innerText = ml.played || 0;
-        document.getElementById('mlStatBest').innerText = ml.bestStreak || 0;
-        const avg = ml.played > 0 ? (ml.totalCorrect / ml.played).toFixed(1) : "0.0";
-        document.getElementById('mlStatAvg').innerText = avg;
+        document.getElementById('mlStatBest').innerText = `${ml.bestStreak || 0}/12`;
+        
+        const mlDailyToday = document.getElementById('mlStatDailyToday');
+        if (mlDailyToday) {
+            if (userStats.moreLessDaily && userStats.moreLessDaily[currentDay]) {
+                const d = userStats.moreLessDaily[currentDay];
+                mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
+                mlDailyToday.style.color = '#00ff66';
+            } else {
+                mlDailyToday.innerText = 'DO GRY';
+                mlDailyToday.style.color = '#f39c12';
+            }
+        }
+
+        loadMoreLessRanking(currentDay);
     });
 }
 
@@ -3118,15 +3306,33 @@ function closeMoreLessInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-async function loadMoreLessRanking() {
+async function loadMoreLessRanking(dayNum = selectedDailyDay || currentDailyDay) {
     const tbody = document.getElementById('desktopRankingBodyML');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
 
     try {
-        const snapshot = await db.collection("leaderboard_moreless").orderBy("bestStreak", "desc").limit(20).get();
+        let snapshot = await db.collection("rankings_moreless").doc(dayNum.toString()).collection("scores")
+            .orderBy("score", "desc").limit(30).get();
+
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników. Zagraj pierwszy!</td></tr>';
+            snapshot = await db.collection("leaderboard_moreless").where("day", "==", dayNum)
+                .orderBy("score", "desc").limit(30).get().catch(() => ({ empty: true }));
+        }
+
+        if (!snapshot || snapshot.empty) {
+            if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+                const myD = userStats.moreLessDaily[dayNum];
+                const safeNick = escapeHTML(playerNickname || "Gracz") + getMiniClubBadge(userStats.favoriteClub);
+                tbody.innerHTML = `
+                    <tr style="background: rgba(255,255,255,0.05);">
+                        <td style="color:var(--accent); font-weight:900;">1</td>
+                        <td style="text-align:left;">${safeNick}</td>
+                        <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || 12}</td>
+                    </tr>`;
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników na ten dzień. Zagraj jako pierwszy!</td></tr>';
             return;
         }
 
@@ -3135,16 +3341,29 @@ async function loadMoreLessRanking() {
         snapshot.forEach(doc => {
             const row = doc.data();
             const safeNick = escapeHTML(row.nick || "Gracz") + getMiniClubBadge(row.club);
-            const isMe = (row.nick === playerNickname) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            const isMe = (row.nick === playerNickname || doc.id === playerId) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
+            const totalVal = row.total || 12;
             tbody.innerHTML += `
                 <tr ${isMe}>
                     <td style="color:var(--accent); font-weight:900;">${pos}</td>
                     <td style="text-align:left;">${safeNick}</td>
-                    <td style="color:#f39c12; font-weight:900;">${row.bestStreak || 0}</td>
+                    <td style="color:#00ff66; font-weight:900; text-align:center;">${scoreVal}/${totalVal}</td>
                 </tr>`;
             pos++;
         });
     } catch(e) {
+        if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+            const myD = userStats.moreLessDaily[dayNum];
+            const safeNick = escapeHTML(playerNickname || "Gracz") + getMiniClubBadge(userStats.favoriteClub);
+            tbody.innerHTML = `
+                <tr style="background: rgba(255,255,255,0.05);">
+                    <td style="color:var(--accent); font-weight:900;">1</td>
+                    <td style="text-align:left;">${safeNick}</td>
+                    <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || 12}</td>
+                </tr>`;
+            return;
+        }
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników w chmurze. Zagraj jako pierwszy!</td></tr>';
     }
 }
@@ -7294,9 +7513,11 @@ try {
     window.showMoreLessInfo = showMoreLessInfo;
     window.closeMoreLessInfo = closeMoreLessInfo;
     window.startMoreLess = startMoreLess;
+    window.startMoreLessDaily = startMoreLessDaily;
     window.submitMoreLessGuess = submitMoreLessGuess;
     window.restartMoreLess = restartMoreLess;
     window.exitMoreLessGame = exitMoreLessGame;
+    window.loadMoreLessRanking = loadMoreLessRanking;
     
 } catch (e) {
     console.error("Global export error:", e);

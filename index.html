@@ -19,7 +19,7 @@
 
     <link rel="canonical" href="https://speedwayguessr.pl/">
     <link rel="icon" type="image/png" href="images/speedwayguessr-icon.png">
-    <link rel="stylesheet" href="style.css?v=1.15">
+    <link rel="stylesheet" href="style.css?v=2.6">
     <meta property="og:image" content="https://speedwayguessr.pl/miniatura_speedwayguessr.png">
     <script>
         let savedTheme = localStorage.getItem('theme') || 'dark';
@@ -540,7 +540,7 @@
                 <!-- TIME ATTACK -->
                 <div class="nav-item-modern hover-green" id="btnTimeAttackDesktop" onclick="openTimeAttackMenu()" onmouseenter="loadDesktopRanking('timeattack')">
     <div class="nav-icon-box">⏱️</div>
-    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;"</span></div>
+    <div class="nav-text-main" style="display: flex; align-items: baseline;">TIME ATTACK <span style="font-size: 14px; font-weight: 700; color: #1dd1a1; margin-left: 10px;"></span></div>
     <div class="nav-arrow">▶</div>
     </div>
 
@@ -548,7 +548,8 @@
             <div class="nav-item-modern hover-orange" onclick="openMoreLessMenu()" onmouseenter="loadDesktopRanking('alltime')">
                     <div class="nav-icon-box">⚖️</div>
                     <div class="nav-text-main" style="display: flex; align-items: baseline;">
-MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; margin-left: 8px;">(TESTY 🔒)</span>                    </div>
+MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; margin-left: 8px;" data-i18n="newBadge">(NOWOŚĆ)</span>
+                    </div>
                     <div class="nav-arrow">▶</div>
                 </div>
 
@@ -693,7 +694,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
             <div class="nav-item-modern hover-green w-100" onclick="openTimeAttackMenu()">
                 <div class="nav-icon-box">⏱️</div>
                 <div class="nav-text-main" style="display:flex; align-items:baseline;">
-                    TIME ATTACK<span style="font-size: 11px; font-weight:700; color:#1dd1a1; margin-left:8px;"</span>
+                    TIME ATTACK<span style="font-size: 11px; font-weight:700; color:#1dd1a1; margin-left:8px;"></span>
                 </div>
                 <div class="nav-arrow">▶</div>
             </div>
@@ -950,11 +951,14 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
 
             <!-- NAWIGACJA -->
             <nav class="desktop-nav">
-                <div class="nav-item">
-                    <div class="nav-main" style="color: #f1c40f;" onclick="startDailyGame()"><i>DZISIEJSZA GRA (DAILY) ►</i></div>
-                </div>
-                <div class="nav-item">
-                    <div class="nav-main" onclick="openCalendar()"><i>ARCHIWUM DAILY 📅</i></div>
+                <div class="nav-item ml-daily-row" style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
+                    <div class="nav-main" style="flex: 1; color: #00ff66; font-weight: 900; background: rgba(0, 255, 102, 0.08); border: 1px solid rgba(0, 255, 102, 0.35); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;" onclick="startDailyGame()">
+                        <span><i>DAILY MODE</i></span>
+                        <span id="guessrDailyBadge" style="font-size: 11px; background: rgba(0, 255, 102, 0.2); color: #00ff66; padding: 3px 8px; border-radius: 20px; font-weight: 800;">DAILY #1</span>
+                    </div>
+                    <button type="button" class="ml-calendar-btn icon-btn" onclick="openCalendar()" title="Kalendarz Daily" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; width: 48px; min-width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; cursor: pointer; flex-shrink: 0;">
+                        📅
+                    </button>
                 </div>
                 <div class="nav-item">
                     <div class="nav-main" onclick="startEndlessGame()"><i>TRYB ENDLESS (BEZ KOŃCA) ∞</i></div>
@@ -1086,20 +1090,29 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
                         <span id="mlStatPlayed" style="font-size: 16px; font-weight: 900; color: #fff;">0</span>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: center;">
-                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Rekord Serii</span>
-                        <span id="mlStatBest" style="font-size: 16px; font-weight: 900; color: #f39c12;">0</span>
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Najlepszy Wynik</span>
+                        <span id="mlStatBest" style="font-size: 16px; font-weight: 900; color: #00ff66;">0/12</span>
                     </div>
                     <div style="display: flex; flex-direction: column; align-items: center;">
-                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Średnia Seria</span>
-                        <span id="mlStatAvg" style="font-size: 16px; font-weight: 900; color: #00ff66;">0.0</span>
+                        <span style="font-size: 10px; color: var(--text-dim); font-weight: 700;">Dzisiejsze Daily</span>
+                        <span id="mlStatDailyToday" style="font-size: 16px; font-weight: 900; color: #f39c12;">-</span>
                     </div>
                 </div>
             </div>
 
             <!-- KATEGORIE ROZGRYWKI -->
             <nav class="desktop-nav">
+                <div class="nav-item ml-daily-row" style="display: flex; gap: 8px; align-items: stretch; width: 100%;">
+                    <div class="nav-main" style="flex: 1; color: #00ff66; font-weight: 900; background: rgba(0, 255, 102, 0.08); border: 1px solid rgba(0, 255, 102, 0.35); border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;" onclick="startMoreLessDaily()">
+                        <span><i>DAILY MODE</i></span>
+                        <span id="mlMenuDailyBadge" style="font-size: 11px; background: rgba(0, 255, 102, 0.2); color: #00ff66; padding: 3px 8px; border-radius: 20px; font-weight: 800;">DAILY #1</span>
+                    </div>
+                    <button type="button" class="ml-calendar-btn icon-btn" onclick="openCalendar()" title="Kalendarz Daily" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; width: 48px; min-width: 48px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; cursor: pointer; flex-shrink: 0;">
+                        📅
+                    </button>
+                </div>
                 <div class="nav-item">
-                    <div class="nav-main" style="color: #f39c12;" onclick="startMoreLess('mix')"><i>ROZPOCZNIJ GRĘ (MIX) ►</i></div>
+                    <div class="nav-main" style="color: #f39c12;" onclick="startMoreLess('mix')"><i>TRENING MIX (12 RUND) ►</i></div>
                 </div>
                 <div class="nav-item">
                     <div class="nav-main" onclick="startMoreLess('riders')"><i>STATYSTYKI ZAWODNIKÓW 🏍️</i></div>
@@ -1124,11 +1137,15 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
         <!-- PRAWA STRONA: Leaderboard More / Less -->
         <div class="desktop-right">
             <div class="desktop-leaderboard-panel">
-                <h2 style="color: #f39c12;"><i>LEADERBOARD (MORE / LESS)</i></h2>
+                <h2 style="color: #f39c12;"><i>LEADERBOARD (MORE / LESS DAILY)</i></h2>
                 <div class="desktop-table-wrapper">
                     <table class="ranking-table desktop-table">
                         <thead>
-                            <tr><th>Poz.</th><th style="text-align: left;">Nick</th><th style="color: #f39c12;">Rekord Serii</th></tr>
+                            <tr>
+                                <th style="width: 60px;">POZ</th>
+                                <th style="text-align: left;">NICK</th>
+                                <th style="color: #00ff66; width: 90px; text-align: center;">WYNIK</th>
+                            </tr>
                         </thead>
                         <tbody id="desktopRankingBodyML">
                             <tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>
@@ -2022,12 +2039,12 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
         <header class="ml-header">
             <button onclick="exitMoreLessGame()" class="icon-btn" title="Powrót do menu">↩</button>
             <div class="ml-header-info">
-                <h1 class="ml-title">MORE / LESS ⚖️</h1>
+                <h1 class="ml-title" id="mlGameTitle">MORE / LESS ⚖️</h1>
                 <div class="ml-round-badge" id="mlRoundDisplay">RUNDA 1 / 12</div>
             </div>
             <div class="ml-streak-box">
-                <span class="ml-streak-lbl">SERIA</span>
-                <span class="ml-streak-val" id="mlCurrentStreak">0</span>
+                <span class="ml-streak-lbl">WYNIK</span>
+                <span class="ml-streak-val" id="mlCurrentStreak">0 / 12</span>
             </div>
         </header>
 
@@ -2135,13 +2152,13 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
 <!-- Stopka (Footer) -->
 <footer class="app-footer">
     <div class="footer-links">
-        <button type="button" class="footer-btn-badge" onclick="showPrivacyPolicy()">
+        <button type="button" class="footer-btn-badge icon-btn" onclick="showPrivacyPolicy()" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; color: #ffffff; padding: 8px 16px; font-size: 13px; font-weight: 700; text-transform: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.25s ease;">
             <span>🛡️</span> <span data-i18n="footerPrivacy">Polityka Prywatności</span>
         </button>
-        <button type="button" class="footer-btn-badge" onclick="showTerms()">
+        <button type="button" class="footer-btn-badge icon-btn" onclick="showTerms()" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; color: #ffffff; padding: 8px 16px; font-size: 13px; font-weight: 700; text-transform: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.25s ease;">
             <span>📜</span> <span data-i18n="footerTerms">Regulamin</span>
         </button>
-        <button type="button" class="footer-btn-badge" onclick="openBugReport()">
+        <button type="button" class="footer-btn-badge icon-btn" onclick="openBugReport()" style="background: rgba(255, 255, 255, 0.05); border: 2px solid var(--border-color, rgba(255, 255, 255, 0.15)); border-radius: 12px; color: #ffffff; padding: 8px 16px; font-size: 13px; font-weight: 700; text-transform: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.25s ease;">
             <span>🚩</span> <span data-i18n="footerContact">Kontakt (Zgłoś błąd)</span>
         </button>
     </div>
@@ -2149,9 +2166,6 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
         &copy; 2026 Speedway Guessr by CZIPSOL. Wszelkie prawa zastrzeżone.<br>
         <a href="mailto:kontakt@speedwayguessr.pl" style="color: var(--text-dim); text-decoration: none; font-size: 11px; margin-top: 5px; display: inline-block;">kontakt@speedwayguessr.pl</a>
     </div>
-</footer>
-
-    
 </footer>
     <!-- Biblioteki Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
@@ -2162,9 +2176,9 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
     <script src="i18n.js?v1.0"></script>
     <script src="db.js?v2.3"></script>
     <script src="events.js?v2.3"></script>
-    <script src="changelog.js?v1.0"></script>
+    <script src="changelog.js?v1.01"></script>
     <script src="moreless_db.js?v1.01"></script>
-    <script src="script.js?v2.102"></script>
+    <script src="script.js?v2.103"></script>
 
     
 </body>

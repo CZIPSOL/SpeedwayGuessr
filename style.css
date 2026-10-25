@@ -922,7 +922,7 @@ body {
 }
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
-button { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
+button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn-badge):not(.btn-close):not(.btn-danger):not(.settings-tab-btn):not(.ml-btn):not(.splash-enter-btn):not(.menu-btn-half) { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
 
 /* --- PRZYCISKI BOCZNE (POWER-UPY) --- */
 .hint-btn, .giveup-btn {
@@ -1883,11 +1883,13 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
     body { padding: 10px 5px; overflow-x: hidden; width: 100vw; max-width: 100%; box-sizing: border-box; }
     
     /* DODANE: Naprawa ułożenia menu trybu Clash (1 kolumna zamiast 2 na telefonie) */
-    .desktop-menu-wrapper { grid-template-columns: 1fr !important; padding: 20px 10px !important; gap: 30px !important; width: 100%; max-width: 100%; }
-    .desktop-left { padding-right: 0 !important; align-items: center; text-align: center; }
-    .desktop-logo { font-size: 40px !important; margin-bottom: 20px !important; }
+    .desktop-menu-wrapper { grid-template-columns: 1fr !important; padding: 15px 8px !important; gap: 20px !important; width: 100%; max-width: 100%; }
+    .desktop-left { padding-right: 0 !important; align-items: center; text-align: center; width: 100%; }
+    .desktop-logo { font-size: 34px !important; margin-bottom: 15px !important; }
     .desktop-right { max-width: 100% !important; width: 100%; }
-    .desktop-leaderboard-panel { height: auto !important; min-height: 350px !important; padding: 15px !important; width: 100%; }
+    .desktop-leaderboard-panel { height: auto !important; min-height: 320px !important; padding: 12px 10px !important; width: 100%; }
+    .desktop-table-wrapper { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+    .desktop-table th, .desktop-table td { padding: 8px 6px !important; font-size: 13px !important; }
     
     .menu-container { padding: 25px 15px 35px 15px; width: 100%; max-width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
     
@@ -3193,6 +3195,100 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
         grid-template-columns: 360px 1fr;
         padding: 15px;
     }
+
+    /* Wygładzenie menu More/Less, Guessr, Clash na tabletach */
+    .desktop-menu-wrapper {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 20px !important;
+        padding: 25px 20px !important;
+        width: 100% !important;
+        min-height: auto !important;
+    }
+
+    /* More/Less na tablecie */
+    .ml-screen {
+        padding: 15px 10px 30px !important;
+        max-width: 100% !important;
+    }
+    .ml-arena {
+        grid-template-columns: 1fr 50px 1fr !important;
+        gap: 12px !important;
+        max-width: 100% !important;
+    }
+    .ml-card {
+        min-height: 420px !important;
+        padding: 20px 12px !important;
+        border-radius: 20px !important;
+    }
+    .ml-card-img-wrapper {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    .ml-card-name {
+        font-size: 20px !important;
+    }
+    .ml-value-number {
+        font-size: 32px !important;
+    }
+    .ml-actions {
+        max-width: 220px !important;
+        gap: 8px !important;
+    }
+    .ml-btn {
+        padding: 12px 14px !important;
+        font-size: 14px !important;
+    }
+
+    /* Guessr na tablecie */
+    #gameContainer {
+        width: 98% !important;
+        max-width: 98% !important;
+        margin: 0 auto !important;
+        padding: 15px 5px !important;
+    }
+    .main-card {
+        padding: 20px 15px !important;
+        border-radius: 20px !important;
+    }
+    .table-wrapper {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 10px !important;
+    }
+    .table-headers {
+        display: flex !important;
+        min-width: 720px !important;
+        font-size: 10px !important;
+    }
+    .guess-row {
+        min-width: 720px !important;
+        padding: 10px 8px !important;
+    }
+    .col-name {
+        width: 130px !important;
+        font-size: 12px !important;
+    }
+    .col-attr {
+        width: 75px !important;
+        padding: 0 2px !important;
+    }
+    .attr-box {
+        width: 58px !important;
+        height: 58px !important;
+        border-radius: 10px !important;
+    }
+    .val-num {
+        font-size: 16px !important;
+    }
+    .tile-flag, .tile-flag-dual {
+        width: 36px !important;
+        height: 36px !important;
+    }
+    .col-clubs-header, .col-clubs {
+        min-width: 160px !important;
+        flex: 1 !important;
+    }
 }
 
 /* Ukrycie wersji mobilnej na komputerach i tabletach */
@@ -3469,15 +3565,214 @@ button { padding: 15px 30px; background: var(--accent); color: #000; border: non
 }
 .ml-summary-score { font-size: 56px; font-weight: 900; color: #f39c12; line-height: 1; }
 
-/* RWD - Mobile */
+.ml-calendar-btn {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 2px solid var(--border-color, rgba(255, 255, 255, 0.12)) !important;
+    border-radius: 12px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    height: 100% !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    color: var(--text-main, #ffffff) !important;
+    cursor: pointer !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    flex-shrink: 0 !important;
+}
+.ml-calendar-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+}
+.ml-calendar-btn:active {
+    transform: scale(0.95) !important;
+}
+
+/* ============================================== */
+/* ====== STOPKA APLIKACJI (FOOTER) ============= */
+/* ============================================== */
+.app-footer {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 28px 16px 36px;
+    margin-top: 40px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    background: transparent;
+    position: relative;
+    z-index: 5;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.footer-btn-badge {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 2px solid var(--border-color, rgba(255, 255, 255, 0.12)) !important;
+    border-radius: 12px !important;
+    color: var(--text-main, #ffffff) !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-transform: none !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    backdrop-filter: blur(10px) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.2px !important;
+    margin: 0 !important;
+}
+
+.footer-btn-badge:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+}
+
+.footer-btn-badge:active {
+    transform: scale(0.96) !important;
+}
+
+.footer-copy {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.6;
+}
+
+/* RWD - Mobile More/Less */
 @media (max-width: 768px) {
-    .ml-arena { grid-template-columns: 1fr; gap: 15px; }
-    .ml-vs-badge { width: 44px; height: 44px; font-size: 14px; margin: -10px auto; }
-    .ml-card { min-height: auto; padding: 20px 15px; border-radius: 18px; }
-    .ml-card-img-wrapper { width: 80px; height: 80px; }
-    .ml-card-name { font-size: 19px; }
-    .ml-value-number { font-size: 32px; }
-    .ml-btn { padding: 12px 15px; font-size: 14px; }
+    .footer-btn-badge {
+        padding: 7px 12px !important;
+        font-size: 11px !important;
+        border-radius: 10px !important;
+    }
+    .ml-calendar-btn {
+        width: 44px !important;
+        min-width: 44px !important;
+        font-size: 18px !important;
+        border-radius: 10px !important;
+    }
+    .ml-screen {
+        padding: 10px 8px 30px !important;
+        min-height: auto !important;
+    }
+    .ml-header {
+        margin: 0 auto 10px auto !important;
+        padding: 0 4px !important;
+    }
+    .ml-title {
+        font-size: 19px !important;
+    }
+    .ml-round-badge {
+        font-size: 10px !important;
+        letter-spacing: 1px !important;
+    }
+    .ml-streak-box {
+        padding: 4px 10px !important;
+        border-radius: 10px !important;
+    }
+    .ml-streak-lbl {
+        font-size: 8px !important;
+    }
+    .ml-streak-val {
+        font-size: 16px !important;
+    }
+    .ml-cat-tracker {
+        margin: 0 auto 12px auto !important;
+        gap: 4px !important;
+    }
+    .ml-cat-pill {
+        padding: 6px 14px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+    }
+    .ml-cat-box {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 13px !important;
+        border-radius: 8px !important;
+    }
+    .ml-arena {
+        grid-template-columns: 1fr !important;
+        gap: 6px !important;
+        max-width: 440px !important;
+        width: 100% !important;
+    }
+    .ml-vs-badge {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 11px !important;
+        margin: -5px auto !important;
+    }
+    .ml-card {
+        min-height: auto !important;
+        padding: 12px 14px !important;
+        border-radius: 16px !important;
+        gap: 4px !important;
+    }
+    .ml-card-img-wrapper {
+        width: 58px !important;
+        height: 58px !important;
+        margin-bottom: 4px !important;
+        border-width: 2px !important;
+    }
+    .ml-card-icon {
+        font-size: 26px !important;
+    }
+    .ml-card-name {
+        font-size: 17px !important;
+        margin: 0 0 2px !important;
+    }
+    .ml-card-sub {
+        font-size: 11px !important;
+    }
+    .ml-value-box {
+        margin: 6px 0 !important;
+        gap: 2px !important;
+    }
+    .ml-value-number {
+        font-size: 26px !important;
+    }
+    .ml-value-label {
+        font-size: 9px !important;
+    }
+    .ml-actions {
+        flex-direction: row !important;
+        gap: 8px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 4px !important;
+    }
+    .ml-btn {
+        flex: 1 !important;
+        padding: 10px 8px !important;
+        font-size: 13px !important;
+        border-radius: 10px !important;
+        gap: 6px !important;
+    }
 }
 
 
