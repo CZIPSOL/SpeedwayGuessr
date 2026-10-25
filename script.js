@@ -137,7 +137,7 @@ const functions = firebase.functions();
 // ==============================================
 let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
-let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
+let currentDailyDay = 256; let selectedDailyDay = 256; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; 
