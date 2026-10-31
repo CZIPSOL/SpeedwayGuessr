@@ -101,8 +101,8 @@
         const day = date.getDate();
         const year = date.getFullYear();
 
-        // 1. Halloween: 24 października do 3 listopada
-        if ((month === 9 && day >= 24) || (month === 10 && day <= 3)) {
+        // 1. Halloween: 24 października do 31 października
+        if (month === 9 && day >= 24) {
             return 'halloween';
         }
 
@@ -145,12 +145,10 @@
             const currentDetectedEvent = detectCurrentEvent();
             let savedSetting = localStorage.getItem('speedwaySeasonalEvent');
 
-            // W okresie Halloween nadpisujemy stary zapis w localStorage, żeby nie zostać zablokowanym
-            // przez dawny wybór "winter" z poprzedniego eventu.
+            // W trybie auto nie wymuszamy już Halloween, gdy obecnie nie ma żadnego eventu.
+            // Jeśli sezon nie jest aktywny, event sam się wyłącza i zostaje ustawiony na "none".
             if (!savedSetting || savedSetting === 'auto' || savedSetting === 'hallowee') {
-                savedSetting = 'halloween';
-            } else if (currentDetectedEvent === 'halloween' && savedSetting !== 'halloween') {
-                savedSetting = 'halloween';
+                savedSetting = currentDetectedEvent === 'none' ? 'none' : currentDetectedEvent;
             }
 
             localStorage.setItem('speedwaySeasonalEvent', savedSetting);
