@@ -7039,11 +7039,13 @@ window.openProfile = function() {
     document.getElementById('profileAvatarOverview').src = userStats.avatarUrl || defAvatar;
     document.getElementById('profileAvatarEdit').src = userStats.avatarUrl || defAvatar;
     const avOver = document.getElementById('profileAvatarOverview');
-    if (avOver) {
-        avOver.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween');
-        if (userStats.equippedHelmet === 'helmet-swieta') avOver.classList.add('avatar-frame-swieta');
-        else if (userStats.equippedHelmet === 'helmet-halloween') avOver.classList.add('avatar-frame-halloween');
-    }
+    const avEdit = document.getElementById('profileAvatarEdit');
+    [avOver, avEdit].forEach(avatar => {
+        if (!avatar) return;
+        avatar.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween');
+        if (userStats.equippedHelmet === 'helmet-swieta') avatar.classList.add('avatar-frame-swieta');
+        else if (userStats.equippedHelmet === 'helmet-halloween') avatar.classList.add('avatar-frame-halloween');
+    });
 
     // Nick + Poziom z efektami ze sklepu
     const pNick = playerNickname || "GRACZ";
@@ -7283,6 +7285,12 @@ const SHOP_DB = {
         { id: 'helmet-retro', nameKey: 'shop_helmet_retro_name', descKey: 'shop_helmet_retro_desc', price: 2000 },
         { id: 'helmet-zloty', nameKey: 'shop_helmet_gold_name', descKey: 'shop_helmet_gold_desc', price: 3000 },
     ],
+    frames: [
+        { id: 'helmet-halloween', name: 'Halloween Ramka 🎃', desc: 'Mroczna profilowa ramka z ciepłym pomarańczowym blaskiem i lekkim klimatem upiora.', price: 0, isEvent: true },
+        { id: 'helmet-swieta', name: 'Świąteczna Ramka 🎄', desc: 'Lodowo-złota ramka awatara na święta i zimowy klimat.', price: 0, isEvent: true },
+        { id: 'helmet-retro', nameKey: 'shop_helmet_retro_name', descKey: 'shop_helmet_retro_desc', price: 2000 },
+        { id: 'helmet-zloty', nameKey: 'shop_helmet_gold_name', descKey: 'shop_helmet_gold_desc', price: 3000 },
+    ],
     emotes: [
         { id: 'emote-swieta', name: 'Świąteczny Pakiet Clash 🎁', desc: 'Świąteczny zestaw emotek: 🎅 🎄 ⛄ 🎁 ❄️ 🦌 (Event Świąt)!', price: 0, isEvent: true },
         { id: 'emote-sedzia', nameKey: 'shop_emote_ref_name', descKey: 'shop_emote_ref_desc', price: 1500 },
@@ -7331,11 +7339,11 @@ window.switchShopTab = function(tab) {
     let ownedArray = []; let equipVar = ''; let equipVal = null;
     if (tab === 'backgrounds') { ownedArray = userStats.ownedBgs; equipVar = 'equippedBg'; equipVal = userStats[equipVar]; }
     else if (tab === 'nicks') { ownedArray = userStats.ownedNicks; equipVar = 'equippedNick'; equipVal = userStats[equipVar]; }
-    else if (tab === 'helmets') { ownedArray = userStats.ownedHelmets; equipVar = 'equippedHelmet'; equipVal = userStats[equipVar]; }
+    else if (tab === 'frames' || tab === 'helmets') { ownedArray = userStats.ownedHelmets; equipVar = 'equippedHelmet'; equipVal = userStats[equipVar]; }
     else if (tab === 'emotes') { ownedArray = userStats.ownedEmotes; equipVar = 'equippedEmote'; equipVal = userStats[equipVar]; }
     else if (tab === 'wins') { ownedArray = userStats.ownedWins; equipVar = 'equippedWin'; equipVal = userStats[equipVar]; }
 
-    const visibleItems = (SHOP_DB[tab] || []).filter(item => !item.isEvent);
+    const visibleItems = (SHOP_DB[tab] || []).filter(item => !item.isEvent || ownedArray.includes(item.id));
     if (!visibleItems.length) {
         container.innerHTML = `<div class="text-dim text-center mt-20">${t('shopComingSoon')}</div>`;
         return;
@@ -7399,7 +7407,7 @@ window.buyShopItem = function(category, id, price) {
         userStats.coins -= price;
         if (category === 'backgrounds') { userStats.ownedBgs.push(id); userStats.equippedBg = id; }
         else if (category === 'nicks') { userStats.ownedNicks.push(id); userStats.equippedNick = id; }
-        else if (category === 'helmets') { userStats.ownedHelmets.push(id); userStats.equippedHelmet = id; updateCounterDisplay(); }
+        else if (category === 'frames' || category === 'helmets') { userStats.ownedHelmets.push(id); userStats.equippedHelmet = id; updateCounterDisplay(); }
         else if (category === 'emotes') { userStats.ownedEmotes.push(id); userStats.equippedEmote = id; renderClashEmotePanel(); }
         else if (category === 'wins') { userStats.ownedWins.push(id); userStats.equippedWin = id; }
         
@@ -7417,7 +7425,7 @@ window.buyShopItem = function(category, id, price) {
 window.equipShopItem = function(category, id) {
     if (category === 'backgrounds') userStats.equippedBg = id;
     else if (category === 'nicks') userStats.equippedNick = id;
-    else if (category === 'helmets') { userStats.equippedHelmet = id; updateCounterDisplay(); }
+    else if (category === 'frames' || category === 'helmets') { userStats.equippedHelmet = id; updateCounterDisplay(); }
     else if (category === 'emotes') { userStats.equippedEmote = id; renderClashEmotePanel(); }
     else if (category === 'wins') userStats.equippedWin = id;
     
