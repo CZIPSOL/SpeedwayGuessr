@@ -135,25 +135,13 @@ const functions = firebase.functions();
 // ==============================================
 // ====== 3. ZMIENNE GLOBALNE I SLUCHACZ AUTH ====
 // ==============================================
-let activeCalendarMode = 'guessr';
 let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
-// Daily dla każdej gry ma osobny licznik i datę startu.
-let currentDailyDay = 1; // Guessr
-let selectedDailyDay = 1; // Guessr
-let dailyNumberGlobal = "";
-
-let currentMoreLessDailyDay = 1; // More/Less
-let selectedMoreLessDailyDay = 1;
-
+let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
 let hasWon = false; let hasLost = false; let isRestoring = false;
-let calRenderMonth = new Date().getMonth(); 
-let calRenderYear = new Date().getFullYear();
-
-const GUESS_LIMIT = 10;
-
-const GUESSR_DAILY_START_DATE = new Date('2026-05-12T00:00:00');
-const MORE_LESS_DAILY_START_DATE = new Date('2026-10-25T00:00:00');
+let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
+const GUESS_LIMIT = 10; 
+const DAILY_START_DATE = new Date('2026-10-25T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; 
@@ -417,7 +405,7 @@ function setRandomBackground() {
 // ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
 // ==============================================
 
-const CURRENT_GAME_VERSION = "Beta v1.3.2";
+const CURRENT_GAME_VERSION = "Beta v2.1.0";
 const changelog = window.changelog || { pl: [], en: [] };
 
 function checkUnseenUpdates() {
@@ -1616,31 +1604,10 @@ function saveStats() {
     syncStatsToFirebase(); 
 }
 
-function getDailyDateString(dayNumber, startDate = GUESSR_DAILY_START_DATE) {
-    const startUTC = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+function getDailyDateString(dayNumber) {
+    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
     const d = new Date(startUTC + (dayNumber - 1) * 24 * 60 * 60 * 1000);
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-function getMoreLessDailyDayForToday() {
-    const now = new Date();
-
-    const nowUTC = Date.UTC(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-    );
-
-    const startUTC = Date.UTC(
-        MORE_LESS_DAILY_START_DATE.getFullYear(),
-        MORE_LESS_DAILY_START_DATE.getMonth(),
-        MORE_LESS_DAILY_START_DATE.getDate()
-    );
-
-    return Math.max(
-        1,
-        Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1
-    );
 }
 
 function getCurrentMonthStr() { const d = new Date(); return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0'); }
@@ -1652,30 +1619,11 @@ function getCurrentWeekStr() {
 }
 
 function initDailyMenu() {
-const now = new Date();
-
-const nowUTC = Date.UTC(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-);
-
-const startUTC = Date.UTC(
-    GUESSR_DAILY_START_DATE.getFullYear(),
-    GUESSR_DAILY_START_DATE.getMonth(),
-    GUESSR_DAILY_START_DATE.getDate()
-);
-
-currentDailyDay = Math.max(
-    1,
-    Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1
-);
-
-selectedDailyDay = currentDailyDay;
-
-// More/Less ma osobny licznik
-currentMoreLessDailyDay = getMoreLessDailyDayForToday();
-selectedMoreLessDailyDay = currentMoreLessDailyDay;}
+    const now = new Date(); const nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
+    currentDailyDay = Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
+    if (currentDailyDay < 1) currentDailyDay = 1; selectedDailyDay = currentDailyDay; updateDailyMenu();
+}
 
 function changeDaily(dir) {
     selectedDailyDay += dir;
@@ -1694,7 +1642,7 @@ function updateDailyMenu() {
 
     const dayDisplay = document.getElementById('dailyDayDisplay');
     if (dayDisplay) {
-        dayDisplay.innerText = `Daily ${getDailyDateString(selectedDailyDay, GUESSR_DAILY_START_DATE)}`;
+        dayDisplay.innerText = `Daily ${getDailyDateString(selectedDailyDay)}`;
     }
 
     const prevBtn = document.getElementById('btnPrevDaily');
@@ -1719,127 +1667,78 @@ function updateDailyMenu() {
         }
     }
 
-    // Aktualizacja wszystkich plakietek Guessr Daily
-    document.querySelectorAll('#guessrDailyBadge, .guessr-daily-badge').forEach(badge => {
-        badge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay, GUESSR_DAILY_START_DATE)})`;
-    });
-}
-
-function openCalendar(mode = null) {
-    if (mode) {
-        activeCalendarMode = mode;
-    } else {
-        const mlMenu = document.getElementById('moreLessMenuContainer');
-        activeCalendarMode = (mlMenu && mlMenu.style.display !== 'none') ? 'moreless' : 'guessr';
+    // Aktualizacja plakietki w nowym podmenu Guessr
+    const guessrBadge = document.getElementById('guessrDailyBadge');
+    if (guessrBadge) {
+        guessrBadge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
     }
-    calRenderMonth = new Date().getMonth(); 
-    calRenderYear = new Date().getFullYear(); 
-    renderCalendar();
-    const overlay = document.getElementById('calendarOverlay'); 
-    overlay.style.display = 'block'; 
-    setTimeout(() => overlay.style.opacity = '1', 10);
 }
 
+function openCalendar() {
+    calRenderMonth = new Date().getMonth(); calRenderYear = new Date().getFullYear(); renderCalendar();
+    const overlay = document.getElementById('calendarOverlay'); overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
+}
 function closeCalendar() { const overlay = document.getElementById('calendarOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 function changeCalendarMonth(dir) { calRenderMonth += dir; if (calRenderMonth > 11) { calRenderMonth = 0; calRenderYear++; } else if (calRenderMonth < 0) { calRenderMonth = 11; calRenderYear--; } renderCalendar(); }
 
 function renderCalendar() {
     document.getElementById('calendarMonthDisplay').innerText = `${i18n[currentLang].months[calRenderMonth]} ${calRenderYear}`;
-    const wdContainer = document.getElementById('calendarWeekdays'); 
-    wdContainer.innerHTML = '';
+    const wdContainer = document.getElementById('calendarWeekdays'); wdContainer.innerHTML = '';
     i18n[currentLang].weekdays.forEach(wd => { wdContainer.innerHTML += `<div>${wd}</div>`; });
 
-    const grid = document.getElementById('calendarGrid'); 
-    grid.innerHTML = '';
+    const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
     const firstDay = new Date(calRenderYear, calRenderMonth, 1);
     const daysInMonth = new Date(calRenderYear, calRenderMonth + 1, 0).getDate();
     let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
-    for (let i = 0; i < startDayOfWeek; i++) { 
-        const emptyBox = document.createElement('div'); 
-        emptyBox.className = 'cal-day empty'; 
-        grid.appendChild(emptyBox); 
-    }
+    for (let i = 0; i < startDayOfWeek; i++) { const emptyBox = document.createElement('div'); emptyBox.className = 'cal-day empty'; grid.appendChild(emptyBox); }
 
-    const isML = (activeCalendarMode === 'moreless');
-    const baseDate = isML ? MORE_LESS_DAILY_START_DATE : GUESSR_DAILY_START_DATE;
-    const startUTC = Date.UTC(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
-    const now = new Date(); 
-    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
+    const now = new Date(); const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     for (let i = 1; i <= daysInMonth; i++) {
-        const box = document.createElement('div'); 
-        box.className = 'cal-day'; 
-        box.innerText = i;
+        const box = document.createElement('div'); box.className = 'cal-day'; box.innerText = i;
         const cellUTC = Date.UTC(calRenderYear, calRenderMonth, i);
         
-        if (cellUTC < startUTC) { 
-            box.classList.add('disabled'); 
-        } else if (cellUTC > todayUTC) { 
-            box.classList.add('disabled', 'future'); 
-        } else {
+        if (cellUTC < startUTC) { box.classList.add('disabled'); } 
+        else if (cellUTC > todayUTC) { box.classList.add('disabled', 'future'); } 
+        else {
             const dailyNum = Math.floor((cellUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
             box.title = `Daily #${dailyNum}`;
-            
-            if (isML) {
-                const mlRes = userStats.moreLessDaily && userStats.moreLessDaily[dailyNum];
-                if (mlRes) {
-                    // Zielony jeśli wynik >= 9/12, w przeciwnym razie czerwony (ukończono)
-                    box.classList.add(mlRes.score >= 9 ? 'win' : 'loss');
-                    box.title = `Daily #${dailyNum} (${mlRes.score}/${mlRes.total || 12})`;
-                } else {
-                    box.classList.add('playable');
-                }
-                if (dailyNum === selectedMoreLessDailyDay) box.style.border = "2px solid var(--accent)";
-            } else {
-                if (userStats.dailyResults[dailyNum] === 'win') { 
-                    box.classList.add('win'); 
-                } else if (userStats.dailyResults[dailyNum] === 'loss') { 
-                    box.classList.add('loss'); 
-                } else { 
-                    box.classList.add('playable'); 
-                }
-                if (dailyNum === selectedDailyDay) box.style.border = "2px solid var(--accent)";
-            }
-            
+            if (userStats.dailyResults[dailyNum] === 'win') { box.classList.add('win'); }
+            else if (userStats.dailyResults[dailyNum] === 'loss') { box.classList.add('loss'); }
+            else { box.classList.add('playable'); }
             box.onclick = () => { selectDayFromCalendar(dailyNum); };
+            if (dailyNum === selectedDailyDay) box.style.border = "2px solid var(--accent)";
         }
         grid.appendChild(box);
     }
 }
 
 function selectDayFromCalendar(dayNum) { 
-    if (activeCalendarMode === 'moreless') {
-        selectedMoreLessDailyDay = dayNum;
-        closeCalendar();
-
-        const mlBadge = document.getElementById('mlMenuDailyBadge');
-        if (mlBadge) mlBadge.innerText = `DAILY #${dayNum} (${getDailyDateString(dayNum, MORE_LESS_DAILY_START_DATE)})`;
-
-        const mlDailyToday = document.getElementById('mlStatDailyToday');
-        if (mlDailyToday) {
-            if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
-                const d = userStats.moreLessDaily[dayNum];
-                mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
-                mlDailyToday.style.color = '#00ff66';
-            } else {
-                mlDailyToday.innerText = 'DO GRY';
-                mlDailyToday.style.color = '#f39c12';
-            }
+    selectedDailyDay = dayNum; 
+    updateDailyMenu(); 
+    closeCalendar(); 
+    if(document.getElementById('gameContainer') && document.getElementById('gameContainer').style.display === 'block') {
+        changeDailyInGame(0);
+    }
+    const mlBadge = document.getElementById('mlMenuDailyBadge');
+    if (mlBadge) mlBadge.innerText = `DAILY #${dayNum}`;
+    const guessrBadge = document.getElementById('guessrDailyBadge');
+    if (guessrBadge) guessrBadge.innerText = `DAILY #${dayNum}`;
+    const mlDailyToday = document.getElementById('mlStatDailyToday');
+    if (mlDailyToday) {
+        if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+            const d = userStats.moreLessDaily[dayNum];
+            mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
+            mlDailyToday.style.color = '#00ff66';
+        } else {
+            mlDailyToday.innerText = 'DO GRY';
+            mlDailyToday.style.color = '#f39c12';
         }
-        if (document.getElementById('moreLessMenuContainer') && document.getElementById('moreLessMenuContainer').style.display !== 'none') {
-            loadMoreLessRanking(dayNum);
-        }
-    } else {
-        selectedDailyDay = dayNum; 
-        updateDailyMenu(); 
-        closeCalendar(); 
-        if (document.getElementById('gameContainer') && document.getElementById('gameContainer').style.display === 'block') {
-            changeDailyInGame(0);
-        }
-        if (document.getElementById('guessrMenuContainer') && document.getElementById('guessrMenuContainer').style.display !== 'none') {
-            loadGuessrSubRanking('daily');
-        }
+    }
+    if (document.getElementById('moreLessMenuContainer') && document.getElementById('moreLessMenuContainer').style.display === 'flex') {
+        loadMoreLessRanking();
     }
 }
 
@@ -1854,6 +1753,10 @@ function renderLastGames() {
 }
 
 function openSettings() {
+    const sel = document.getElementById('seasonalEventSelector');
+    if (sel) {
+        sel.value = localStorage.getItem('speedwaySeasonalEvent') || 'auto';
+    }
     const overlay = document.getElementById('settingsOverlay');
     overlay.style.display = 'block'; setTimeout(() => overlay.style.opacity = '1', 10);
 }
@@ -2099,7 +2002,8 @@ function renderClashEmotePanel() {
     
     let emotes = ['🤯', '👏', '🤬', '⏳', '🤡']; 
     
-    if (userStats.equippedEmote === 'emote-sedzia') emotes = ['🟥', '🟨', '🏁', '🛑', '🎥'];
+    if (userStats.equippedEmote === 'emote-swieta') emotes = ['🎅', '🎄', '⛄', '🎁', '❄️', '🦌'];
+    else if (userStats.equippedEmote === 'emote-sedzia') emotes = ['🟥', '🟨', '🏁', '🛑', '🎥'];
     else if (userStats.equippedEmote === 'emote-kibic') emotes = ['🌭', '🍻', '🧨', '🎺', '🧣'];
     else if (userStats.equippedEmote === 'emote-memy') emotes = ['🤡', '💩', '🥱', '💀', '🤫'];
     
@@ -2586,13 +2490,14 @@ function openGuessrMenu() {
             document.getElementById('moreLessMenuContainer').style.display = 'none';
         }
 
-        updateDailyMenu();
-
         const menu = document.getElementById('guessrMenuContainer');
         menu.style.display = 'grid';
 
         const nickEl = document.getElementById('guessrMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
+
+        const badgeEl = document.getElementById('guessrDailyBadge');
+        if (badgeEl) badgeEl.innerText = `DAILY #${selectedDailyDay || currentDailyDay}`;
 
         document.getElementById('guessrStatPlayed').innerText = userStats.played || 0;
         document.getElementById('guessrStatWon').innerText = userStats.won || 0;
@@ -3018,7 +2923,7 @@ function startMoreLess(categoryMode = 'daily') {
     let precalculatedRounds = null;
 
     if (categoryMode === 'daily') {
-        const generated = generateDailyMoreLessRounds(selectedMoreLessDailyDay || currentMoreLessDailyDay);
+        const generated = generateDailyMoreLessRounds(selectedDailyDay || currentDailyDay);
         sequence = generated.sequence;
         precalculatedRounds = generated.rounds;
     } else if (categoryMode === 'riders') {
@@ -3033,7 +2938,7 @@ function startMoreLess(categoryMode = 'daily') {
         active: true,
         mode: categoryMode,
         isDaily: (categoryMode === 'daily'),
-        dailyDay: (categoryMode === 'daily') ? (selectedMoreLessDailyDay || currentMoreLessDailyDay) : null,
+        dailyDay: (categoryMode === 'daily') ? (selectedDailyDay || currentDailyDay) : null,
         roundSequence: sequence,
         precalculatedRounds: precalculatedRounds,
         currentRoundIndex: 0,
@@ -3224,12 +3129,7 @@ function handleMoreLessFinished() {
         playSound('lose');
     }
 
-    saveMoreLessScore(
-    score,
-    total,
-    mlGame.dailyDay || selectedMoreLessDailyDay,
-    isDaily
-    );
+    saveMoreLessScore(score, total, mlGame.dailyDay || selectedDailyDay, isDaily);
 
     const titleEl = document.getElementById('mlSummaryTitle');
     const emojiEl = document.getElementById('mlSummaryEmoji');
@@ -3270,7 +3170,7 @@ function handleMoreLessFinished() {
     }
 }
 
-function saveMoreLessScore(score, total = 12, dayNumber = selectedMoreLessDailyDay, isDaily = true) {
+function saveMoreLessScore(score, total = 12, dayNumber = selectedDailyDay, isDaily = true) {
     ensureMoreLessStats();
     const ml = userStats.moreLess;
     ml.played = (ml.played || 0) + 1;
@@ -3371,9 +3271,9 @@ function openMoreLessMenu() {
         const nickEl = document.getElementById('moreLessMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
-        const currentDay = selectedMoreLessDailyDay || currentMoreLessDailyDay;
+        const currentDay = selectedDailyDay || currentDailyDay;
         const badgeEl = document.getElementById('mlMenuDailyBadge');
-        if (badgeEl) badgeEl.innerText = `DAILY #${currentDay} (${getDailyDateString(currentDay, MORE_LESS_DAILY_START_DATE)})`;
+        if (badgeEl) badgeEl.innerText = `DAILY #${currentDay}`;
 
         const ml = userStats.moreLess;
         document.getElementById('mlStatPlayed').innerText = ml.played || 0;
@@ -3411,7 +3311,7 @@ function closeMoreLessInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-async function loadMoreLessRanking(dayNum = selectedMoreLessDailyDay || currentMoreLessDailyDay) {
+async function loadMoreLessRanking(dayNum = selectedDailyDay || currentDailyDay) {
     const tbody = document.getElementById('desktopRankingBodyML');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
@@ -3990,10 +3890,59 @@ function launchCoins() {
     function draw() { ctx.clearRect(0,0,canvas.width,canvas.height); particles.forEach(p => { ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r*Math.PI/180); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle='#d4af37'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill(); ctx.restore(); p.y+=p.sy; if(p.y>canvas.height)p.y=-20; }); requestAnimationFrame(draw); } draw();
 }
 
+// Efekt wygranej: Świąteczna Śnieżyca & Złote Gwiazdy
+function launchChristmasWin() {
+    const canvas = document.getElementById('confettiCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    let particles = [];
+    const symbols = ['❄️', '⭐', '🎁', '🎄', '✨', '🔔'];
+    for (let i = 0; i < 65; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * -canvas.height,
+            sym: symbols[Math.floor(Math.random() * symbols.length)],
+            size: Math.random() * 16 + 18,
+            sy: Math.random() * 4 + 2,
+            sx: (Math.random() - 0.5) * 2,
+            rot: Math.random() * 360,
+            dRot: (Math.random() - 0.5) * 3
+        });
+    }
+    let frame = 0;
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot * Math.PI / 180);
+            ctx.font = `${p.size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(p.sym, 0, 0);
+            ctx.restore();
+            p.y += p.sy;
+            p.x += p.sx;
+            p.rot += p.dRot;
+            if (p.y > canvas.height + 30) {
+                p.y = -30;
+                p.x = Math.random() * canvas.width;
+            }
+        });
+        frame++;
+        if (frame < 260) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    draw();
+}
+
 function handleWin(finalName) {
     playSound('win'); revealTargetInfoUI(finalName); 
     
     if (userStats.equippedWin === 'win-coins') launchCoins();
+    else if (userStats.equippedWin === 'win-swieta') launchChristmasWin();
     else if (userStats.equippedWin === 'win-fireworks') { launchConfetti(); }
     else launchConfetti(); 
     
@@ -7032,6 +6981,11 @@ window.openProfile = function() {
     const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
     document.getElementById('profileAvatarOverview').src = userStats.avatarUrl || defAvatar;
     document.getElementById('profileAvatarEdit').src = userStats.avatarUrl || defAvatar;
+    const avOver = document.getElementById('profileAvatarOverview');
+    if (avOver) {
+        if (userStats.equippedHelmet === 'helmet-swieta') avOver.classList.add('avatar-frame-swieta');
+        else avOver.classList.remove('avatar-frame-swieta');
+    }
 
     // Nick + Poziom z efektami ze sklepu
     const pNick = playerNickname || "GRACZ";
@@ -7249,6 +7203,7 @@ window.claimMission = function(type, index) {
 
 const SHOP_DB = {
     backgrounds: [
+        { id: 'rank-bg-swieta', name: 'Zimowe Świąteczne Tło ❄️', desc: 'Magiczny lodowy blask z zimowymi gwiazdami w rankingu (Event Świąt)!', price: 0, isEvent: true },
         { id: 'rank-bg-gold', nameKey: 'shop_bg_gold_name', descKey: 'shop_bg_gold_desc', price: 5000 },
         { id: 'rank-bg-ocean', nameKey: 'shop_bg_ocean_name', descKey: 'shop_bg_ocean_desc', price: 10000 },
         { id: 'rank-bg-bubbles', nameKey: 'shop_bg_bubbles_name', descKey: 'shop_bg_bubbles_desc', price: 10000 },
@@ -7266,15 +7221,18 @@ const SHOP_DB = {
         { id: 'nick-effect-glitch', nameKey: 'shop_nick_glitch_name', descKey: 'shop_nick_glitch_desc', price: 12000 }
     ],
     helmets: [
+        { id: 'helmet-swieta', name: 'Świąteczna Ramka & Kask 🎄', desc: 'Szmaragdowo-złota świąteczna ramka i lodowy kask (Event Świąt)!', price: 0, isEvent: true },
         { id: 'helmet-retro', nameKey: 'shop_helmet_retro_name', descKey: 'shop_helmet_retro_desc', price: 2000 },
         { id: 'helmet-zloty', nameKey: 'shop_helmet_gold_name', descKey: 'shop_helmet_gold_desc', price: 3000 },
     ],
     emotes: [
+        { id: 'emote-swieta', name: 'Świąteczny Pakiet Clash 🎁', desc: 'Świąteczny zestaw emotek: 🎅 🎄 ⛄ 🎁 ❄️ 🦌 (Event Świąt)!', price: 0, isEvent: true },
         { id: 'emote-sedzia', nameKey: 'shop_emote_ref_name', descKey: 'shop_emote_ref_desc', price: 1500 },
         { id: 'emote-kibic', nameKey: 'shop_emote_ultras_name', descKey: 'shop_emote_ultras_desc', price: 2500 },
         { id: 'emote-memy', nameKey: 'shop_emote_troll_name', descKey: 'shop_emote_troll_desc', price: 5000 }
     ],
     wins: [
+        { id: 'win-swieta', name: 'Świąteczna Wygrana 🎅', desc: 'Złote gwiazdy, wirujący śnieg i dzwoneczki świąteczne (Event Świąt)!', price: 0, isEvent: true },
         { id: 'win-coins', nameKey: 'shop_win_coins_name', descKey: 'shop_win_coins_desc', price: 7000 },
         { id: 'win-fireworks', nameKey: 'shop_win_fireworks_name', descKey: 'shop_win_fireworks_desc', price: 10000 }
     ]

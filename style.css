@@ -922,7 +922,7 @@ body {
 }
 input { padding: 15px 25px; font-size: 16px; width: 100%; border-radius: 14px; border: 2px solid var(--border-color); background: var(--input-bg); color: var(--text-main); outline: none; transition: 0.3s; box-sizing: border-box;}
 input::placeholder { color: var(--text-dim); }
-button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn-badge):not(.btn-close):not(.btn-danger):not(.settings-tab-btn):not(.ml-btn):not(.splash-enter-btn):not(.menu-btn-half) { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
+button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn-badge):not(.btn-close):not(.btn-danger):not(.settings-tab-btn):not(.ml-btn):not(.splash-enter-btn):not(.menu-btn-half):not(.seasonal-action-btn):not(.halloween-btn):not(.advent-btn):not(.winter-calendar-btn):not(.seasonal-claim-button):not(.festive-item) { padding: 15px 30px; background: var(--accent); color: #000; border: none; border-radius: 14px; cursor: pointer; font-weight: 900; text-transform: uppercase; z-index: 2;}
 
 /* --- PRZYCISKI BOCZNE (POWER-UPY) --- */
 .hint-btn, .giveup-btn {
@@ -1882,24 +1882,60 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     #desktopMainMenu { display: none !important; }
     body { padding: 10px 5px; overflow-x: hidden; width: 100vw; max-width: 100%; box-sizing: border-box; }
     
-    /* DODANE: Naprawa ułożenia menu trybu Clash (1 kolumna zamiast 2 na telefonie) */
-    .desktop-menu-wrapper { grid-template-columns: 1fr !important; padding: 15px 8px !important; gap: 20px !important; width: 100%; max-width: 100%; }
+    /* Ułożenie menu (1 kolumna na telefonie) */
+    .desktop-menu-wrapper { grid-template-columns: 1fr !important; padding: 12px 8px !important; gap: 16px !important; width: 100%; max-width: 100%; }
     .desktop-left { padding-right: 0 !important; align-items: center; text-align: center; width: 100%; }
-    .desktop-logo { font-size: 34px !important; margin-bottom: 15px !important; }
+    .desktop-logo { font-size: 32px !important; margin-bottom: 12px !important; text-align: center !important; }
     .desktop-right { max-width: 100% !important; width: 100%; }
-    .desktop-leaderboard-panel { height: auto !important; min-height: 320px !important; padding: 12px 10px !important; width: 100%; }
+    .desktop-leaderboard-panel { height: auto !important; min-height: 280px !important; max-height: 380px !important; padding: 12px 10px !important; width: 100%; }
+    .desktop-leaderboard-panel h2 { font-size: 18px !important; margin-bottom: 10px !important; text-align: center !important; }
     .desktop-table-wrapper { width: 100% !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-    .desktop-table th, .desktop-table td { padding: 8px 6px !important; font-size: 13px !important; }
+    .desktop-table th, .desktop-table td { padding: 7px 5px !important; font-size: 12px !important; }
+
+    /* Guessr i More/Less Menu nawigacja */
+    #guessrMenuContainer .desktop-nav,
+    #moreLessMenuContainer .desktop-nav {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    #guessrMenuContainer .desktop-nav .nav-item,
+    #moreLessMenuContainer .desktop-nav .nav-item {
+        width: 100% !important;
+    }
+    #guessrMenuContainer .desktop-nav .nav-main,
+    #moreLessMenuContainer .desktop-nav .nav-main {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 14px !important;
+        padding: 11px 12px !important;
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        text-align: center !important;
+        transform: none !important;
+        letter-spacing: 0.5px !important;
+    }
+    #guessrMenuContainer .desktop-footer-links,
+    #moreLessMenuContainer .desktop-footer-links {
+        justify-content: center !important;
+        margin-top: 14px !important;
+        font-size: 12px !important;
+        text-align: center !important;
+    }
     
     .menu-container { padding: 25px 15px 35px 15px; width: 100%; max-width: 100%; margin-top: 10px; border-radius: 20px; box-sizing: border-box; }
     
-    /* NAPRAWA IKONEK (Usunięcie nachodzenia na tytuł) */
-    .top-right-buttons { position: relative; right: auto; top: auto; justify-content: center; width: 100%; margin-bottom: 20px; z-index: 10; }
+    /* Pasek górny gry */
+    .top-right-buttons { position: relative; right: auto; top: auto; justify-content: center; width: 100%; margin-bottom: 12px; z-index: 10; gap: 8px; flex-wrap: wrap; }
     
-    .game-header { width: 100%; max-width: 100%; padding: 0 5px; box-sizing: border-box; padding-top: 10px; }
+    .game-header { width: 100%; max-width: 100%; padding: 0 4px; box-sizing: border-box; padding-top: 6px; margin-bottom: 12px; }
     .game-title { font-size: 24px; margin-bottom: 10px; }
-    .game-title-small { font-size: 18px; margin-top: 0; }
+    .game-title-small { font-size: 19px; margin-top: 0; letter-spacing: 0.5px; }
     .glow-title { font-size: 24px; }
+    #gameModeDisplay { font-size: 12px; margin-top: 3px; }
+    .game-daily-controls { gap: 10px; margin-top: 6px; }
+    .lives-container { margin-top: 8px; gap: 4px; justify-content: center; }
+    .helmet-icon { width: 22px !important; }
 
     /* ======================================================== */
     /* PANCERNE KONTENERY - ZABEZPIECZENIE PRZED ROZPYCHANIEM */
@@ -1909,184 +1945,257 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     .input-section { 
         width: 100%; 
         max-width: 100% !important; 
-        margin: 0 auto 15px auto !important; 
-        padding: 0 5px; 
+        margin: 0 auto 10px auto !important; 
+        padding: 0 4px; 
         box-sizing: border-box; 
     }
 
     .search-box { 
         display: flex; 
-        flex-direction: row; /* Zmieniamy na układ poziomy z małym przyciskiem Zgadnij */
+        flex-direction: row; 
         width: 100%; 
-        gap: 5px; 
+        gap: 6px; 
         align-items: stretch;
     }
     
     .input-wrapper { width: 100%; flex: 1; min-width: 0; }
     
-    /* Mniejsze pole tekstowe i przycisk, by zmieścić power-upy */
-    .search-box input { padding: 12px 15px; font-size: 13px; height: 100%; }
-    .search-box button[onclick="makeGuess()"] { padding: 0 15px; font-size: 13px; height: auto; flex-shrink: 0; }
+    .search-box input { 
+        padding: 0 12px !important; 
+        font-size: 13px !important; 
+        height: 42px !important; 
+        border-radius: 10px !important;
+        box-sizing: border-box !important;
+    }
+    .search-box button[onclick="makeGuess()"] { 
+        padding: 0 14px !important; 
+        font-size: 12px !important; 
+        font-weight: 900 !important;
+        height: 42px !important; 
+        flex-shrink: 0 !important; 
+        border-radius: 10px !important;
+        white-space: nowrap !important;
+    }
 
-    /* --- NOWY, BEZPIECZNY WYGLĄD PRZYCISKÓW POWER-UP (Brak rozpychania) --- */
+    /* Przyciski power-up w pasku */
     .hint-btn, .giveup-btn {
         position: relative !important; 
         left: auto !important;
         right: auto !important;
-        width: 44px !important; /* Małe, urocze kwadraty */
-        height: 44px !important; 
+        width: 40px !important; 
+        min-width: 40px !important;
+        height: 42px !important; 
         padding: 0 !important;
-        font-size: 20px !important; 
-        flex-shrink: 0;
-        border-radius: 12px !important;
-        transform: none !important; /* Wyłącza animację sprężystą na mobile */
+        font-size: 18px !important; 
+        flex-shrink: 0 !important;
+        border-radius: 10px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transform: none !important; 
     }
 
     /* Główna karta z pytajnikiem */
     .main-card { 
-        padding: 15px 10px; /* Zmniejszone marginesy wewnętrzne */
-        border-radius: 20px; 
-        width: 100%; 
+        padding: 12px 8px !important; 
+        border-radius: 16px !important; 
+        width: 100% !important; 
         max-width: 100% !important; 
         margin: 0 auto !important; 
-        box-sizing: border-box; 
-        overflow: hidden; 
-        min-width: 0; 
+        box-sizing: border-box !important; 
+        overflow: hidden !important; 
+        min-width: 0 !important; 
     }
     
-    .header-section-centered { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; width: 100%; }
-    .photo-container { width: 90px; height: 110px; margin: 0 auto; }
-.info-container-centered { 
-        width: 100%; 
-        max-width: 100%; 
-        min-width: 0; /* To kluczowe! Zatrzymuje rozszerzanie się bloku */
-        box-sizing: border-box; 
-        text-align: center; 
+    .header-section-centered { 
+        display: flex !important; 
+        flex-direction: row !important; 
+        align-items: center !important; 
+        justify-content: flex-start !important;
+        gap: 12px !important; 
+        margin-bottom: 8px !important; 
+        width: 100% !important; 
+        text-align: left !important;
     }
-    #mysteryName { font-size: 18px; text-align: center; margin: 0; line-height: 1.3; width: 100%; word-wrap: break-word; }
+    .photo-container { 
+        width: 62px !important; 
+        height: 76px !important; 
+        min-width: 62px !important;
+        border-radius: 12px !important;
+        font-size: 36px !important;
+        margin: 0 !important; 
+    }
+    .info-container-centered { 
+        flex: 1 !important;
+        width: 100% !important; 
+        max-width: 100% !important; 
+        min-width: 0 !important; 
+        box-sizing: border-box !important; 
+        text-align: left !important; 
+        align-items: flex-start !important;
+    }
+    #mysteryName { 
+        font-size: 16px !important; 
+        text-align: left !important; 
+        margin: 0 0 3px 0 !important; 
+        line-height: 1.2 !important; 
+        width: 100% !important; 
+        word-wrap: break-word !important; 
+    }
     .team-path-centered { 
-        width: 100%; 
-        max-width: 100%; 
-        min-width: 0; /* To kluczowe! */
-        display: flex; 
-        flex-direction: column;
-        align-items: center; 
-        margin: 0; 
+        width: 100% !important; 
+        max-width: 100% !important; 
+        min-width: 0 !important; 
+        display: flex !important; 
+        flex-direction: column !important;
+        align-items: flex-start !important; 
+        margin: 0 !important; 
     }
-    .path-label { display: block; margin-bottom: 5px; font-size: 11px; }
+    .path-label { display: block !important; margin-bottom: 3px !important; font-size: 9.5px !important; font-weight: 800 !important; }
 
-    /* SCROLL DLA GÓRNYCH KLUBÓW (POD ZNAKIEM ZAPYTANIA) */
- .path-boxes { 
-        width: 100%; 
-        max-width: 85vw; /* Sztywna blokada: nie może być szersze niż 85% ekranu telefonu */
-        box-sizing: border-box;
+    /* Scroll dla klubów pod znakiem zapytania */
+    .path-boxes { 
+        width: 100% !important; 
+        max-width: calc(100vw - 110px) !important; 
+        box-sizing: border-box !important;
         overflow-x: auto !important; 
-        display: flex; 
-        flex-wrap: nowrap; 
-        padding-bottom: 8px; 
-        -webkit-overflow-scrolling: touch; 
-        justify-content: flex-start; 
-        gap: 5px;
-        margin: 0 auto; /* Centrowanie paska scrolla */
+        display: flex !important; 
+        flex-wrap: nowrap !important; 
+        padding-bottom: 4px !important; 
+        -webkit-overflow-scrolling: touch !important; 
+        justify-content: flex-start !important; 
+        gap: 4px !important;
+        margin: 0 !important;
     }
 
-    /* Ochrona przed kurczeniem - klocki MUSZĄ wychodzić za ekran, żeby scroll działał */
-    .path-box { width: 35px; height: 35px; font-size: 11px; flex-shrink: 0 !important; }
-    .path-arrow { font-size: 14px; flex-shrink: 0 !important; display: flex; align-items: center; justify-content: center;}
-
-    /* Usuwamy zepsute pseudo-elementy */
+    .path-box { width: 32px !important; height: 32px !important; font-size: 10px !important; border-radius: 6px !important; flex-shrink: 0 !important; }
+    .path-arrow { font-size: 12px !important; flex-shrink: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; }
     .path-boxes::before, .path-boxes::after { display: none !important; }
+    .path-boxes::-webkit-scrollbar { height: 4px; }
+    .path-boxes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 4px; }
 
-    /* Widoczny pasek scrollowania */
-    .path-boxes::-webkit-scrollbar { height: 6px; }
-    .path-boxes::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    .divider { margin: 10px 0 !important; }
+
     /* Modale i tabele */
-    .post-game-actions { flex-direction: column; bottom: 10px; width: 95%; max-width: 95%; padding: 15px; }
-    .post-game-actions button { width: 100%; margin-bottom: 8px; }
-    .post-game-actions button:last-child { margin-bottom: 0; }
+    .post-game-actions { flex-direction: column !important; bottom: 10px !important; width: 95% !important; max-width: 95% !important; padding: 12px !important; gap: 8px !important; }
+    .post-game-actions button { width: 100% !important; margin: 0 !important; }
     .calendar-weekdays { font-size: 10px; }
     .cal-day { font-size: 12px; }
+
+    /* Tabela nagłówków */
     .table-headers { 
         display: grid !important; 
-        grid-template-columns: repeat(5, 1fr); 
-        gap: 4px; 
-        width: 100%; 
-        padding: 0 5px 8px 5px; 
-        box-sizing: border-box; 
+        grid-template-columns: repeat(5, 1fr) !important; 
+        gap: 4px !important; 
+        width: 100% !important; 
+        padding: 0 4px 6px 4px !important; 
+        box-sizing: border-box !important; 
     }
     .table-headers .col-name, 
     .table-headers .col-clubs-header { 
         display: none !important; 
     }
     .table-headers .col-attr { 
-        width: 100%; 
-        padding: 0; 
-        font-size: 8.5px; 
-        line-height: 1.1;
-        text-align: center; 
-        display: flex; 
-        align-items: flex-end; 
-        justify-content: center; 
+        width: 100% !important; 
+        padding: 0 1px !important; 
+        font-size: 8px !important; 
+        font-weight: 800 !important;
+        line-height: 1.15 !important;
+        text-align: center !important; 
+        display: flex !important; 
+        align-items: flex-end !important; 
+        justify-content: center !important; 
+        word-break: break-word !important;
+        hyphens: auto !important;
+        letter-spacing: 0.2px !important;
     }
-    .table-wrapper { width: 100%; max-width: 100%; overflow: hidden; } /* Blokada rozlewania tabeli */
+    .table-wrapper { width: 100% !important; max-width: 100% !important; overflow: hidden !important; padding: 0 !important; }
 
-    /* UKŁAD ODGADYWANIA - 3 WIERSZE (Grid) */
+    /* Wiersz odgadywania */
     .guess-row { 
         display: grid !important; 
-        grid-template-columns: repeat(5, 1fr); 
+        grid-template-columns: repeat(5, 1fr) !important; 
         gap: 4px !important; 
-        width: 100%; 
+        width: 100% !important; 
         max-width: 100% !important; 
-        margin: 0 auto 10px auto !important; 
-        padding: 10px 5px; /* Minimalny padding */
-        box-sizing: border-box; 
-        border-radius: 12px; 
-        background: rgba(128, 128, 128, 0.05); 
-        border: 1px solid var(--border-color); 
+        margin: 0 auto 8px auto !important; 
+        padding: 8px 4px !important; 
+        box-sizing: border-box !important; 
+        border-radius: 10px !important; 
+        background: rgba(128, 128, 128, 0.05) !important; 
+        border: 1px solid var(--border-color) !important; 
     }
     
-    .col-name { grid-column: 1 / -1; width: 100%; text-align: center; padding: 0; font-size: 14px; font-weight: 900; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .col-attr { width: 100%; padding: 0; display: flex; justify-content: center; }
+    .col-name { 
+        grid-column: 1 / -1 !important; 
+        width: 100% !important; 
+        text-align: center !important; 
+        padding: 0 4px !important; 
+        font-size: 13.5px !important; 
+        font-weight: 900 !important; 
+        margin-bottom: 5px !important; 
+        white-space: nowrap !important; 
+        overflow: hidden !important; 
+        text-overflow: ellipsis !important; 
+        color: #ffffff !important;
+    }
+    .col-attr { width: 100% !important; padding: 0 !important; display: flex !important; justify-content: center !important; }
     
-    /* Ekstremalne zmniejszenie kwadratów atrybutów, aby uniknąć psujących szerokość elementów! */
     .attr-box { 
-        width: 100%; 
-        max-width: 48px !important; 
-        height: 48px !important; 
-        border-radius: 8px; 
-        padding: 2px; 
-        margin: 0 auto;
+        width: 100% !important; 
+        max-width: 46px !important; 
+        height: 46px !important; 
+        border-radius: 8px !important; 
+        padding: 2px !important; 
+        margin: 0 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
     }
     
-    .val-num { font-size: 12px; }
-    .status-icon { font-size: 14px; }
-    .tile-flag { width: 30px !important; height: 30px !important; }
-    /* Flaga dla podwójnych narodowości musi się zwęzić i nie wystawać */
-    .tile-flag-dual { width: 30px !important; height: 30px !important; border-radius: 50% !important; overflow: hidden; display: flex; }
+    .val-num { font-size: 12px !important; line-height: 1 !important; }
+    .val-arrow { font-size: 12px !important; margin-top: 2px !important; line-height: 1 !important; }
+    .status-icon { font-size: 14px !important; }
+    .tile-flag { width: 28px !important; height: 28px !important; }
+    .tile-flag-dual { width: 28px !important; height: 28px !important; border-radius: 50% !important; overflow: hidden !important; display: flex !important; }
 
-    /* SCROLL DLA DOLNYCH KLUBÓW (HISTORIA ODP) */
-    .col-clubs { grid-column: 1 / -1; width: 100%; max-width: 100%; min-width: 0; padding: 0; margin-top: 5px; overflow: hidden; display: block; }
+    /* Historia klubów w wierszu zgadnięcia */
+    .col-clubs { 
+        grid-column: 1 / -1 !important; 
+        width: 100% !important; 
+        max-width: 100% !important; 
+        min-width: 0 !important; 
+        padding: 0 !important; 
+        margin-top: 4px !important; 
+        overflow: hidden !important; 
+        display: block !important; 
+    }
     
     .clubs-path-container { 
-        width: 100%; 
-        overflow-x: auto; 
-        -webkit-overflow-scrolling: touch; 
-        display: flex; 
-        flex-wrap: nowrap; 
-        padding: 10px 5px; 
-        box-sizing: border-box; 
-        border: 2px solid var(--border-color); 
-        border-radius: 10px;
-        justify-content: flex-start; 
-        gap: 4px;
+        width: 100% !important; 
+        overflow-x: auto !important; 
+        -webkit-overflow-scrolling: touch !important; 
+        touch-action: pan-x !important;
+        display: flex !important; 
+        flex-wrap: nowrap !important; 
+        padding: 6px 4px !important; 
+        box-sizing: border-box !important; 
+        border: 1px solid var(--border-color) !important; 
+        border-radius: 8px !important;
+        justify-content: flex-start !important; 
+        gap: 4px !important;
+        min-height: 44px !important;
+        height: auto !important;
     }
 
-    .club-abbr-box { width: 36px; height: 36px; font-size: 11px; border-radius: 6px; } /* Mniejsze klocki z klubami */
+    .club-abbr-box { width: 32px !important; height: 32px !important; font-size: 10px !important; border-radius: 6px !important; }
+    .loan-badge { width: 14px !important; height: 14px !important; font-size: 8px !important; top: -3px !important; right: -3px !important; }
 
     .clubs-path-container::before, .clubs-path-container::after { display: none !important; }
     .club-logo-wrapper, .club-divider { flex-shrink: 0 !important; }
 
-    .clubs-path-container::-webkit-scrollbar { height: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; }
+    .clubs-path-container::-webkit-scrollbar { height: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; }
     .clubs-path-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
 
     /* Clash Mobile Responsive */
@@ -3566,33 +3675,35 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
 .ml-summary-score { font-size: 56px; font-weight: 900; color: #f39c12; line-height: 1; }
 
 .ml-calendar-btn {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 2px solid var(--border-color, rgba(255, 255, 255, 0.12)) !important;
+    all: unset !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.15) !important;
     border-radius: 12px !important;
     width: 48px !important;
     min-width: 48px !important;
     height: 100% !important;
     min-height: 44px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
     font-size: 20px !important;
-    color: var(--text-main, #ffffff) !important;
+    color: #ffffff !important;
     cursor: pointer !important;
-    padding: 0 8px !important;
+    padding: 0 !important;
     margin: 0 !important;
     box-sizing: border-box !important;
-    backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
     flex-shrink: 0 !important;
 }
 .ml-calendar-btn:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.35) !important;
-    color: #ffffff !important;
+    background: rgba(0, 255, 102, 0.12) !important;
+    border-color: rgba(0, 255, 102, 0.5) !important;
+    color: #00ff66 !important;
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 6px 20px rgba(0, 255, 102, 0.3) !important;
 }
 .ml-calendar-btn:active {
     transform: scale(0.95) !important;
@@ -3604,8 +3715,8 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
 .app-footer {
     width: 100%;
     box-sizing: border-box;
-    padding: 28px 16px 36px;
-    margin-top: 40px;
+    padding: 24px 16px 34px;
+    margin-top: 15px;
     text-align: center;
     border-top: 1px solid rgba(255, 255, 255, 0.07);
     background: transparent;
@@ -3622,28 +3733,33 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     margin-bottom: 14px;
 }
 
+.footer-links button,
 .footer-btn-badge {
-    background: rgba(255, 255, 255, 0.04) !important;
-    border: 2px solid var(--border-color, rgba(255, 255, 255, 0.12)) !important;
+    all: unset !important;
+    box-sizing: border-box !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
     border-radius: 12px !important;
-    color: var(--text-main, #ffffff) !important;
+    color: #ffffff !important;
     padding: 8px 16px !important;
-    font-size: 13px !important;
+    font-size: 12px !important;
     font-weight: 700 !important;
-    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
     cursor: pointer !important;
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
-    backdrop-filter: blur(10px) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
     line-height: 1.4 !important;
-    letter-spacing: 0.2px !important;
     margin: 0 !important;
 }
 
+.footer-links button:hover,
 .footer-btn-badge:hover {
     background: rgba(255, 255, 255, 0.12) !important;
     border-color: rgba(255, 255, 255, 0.35) !important;
@@ -3652,6 +3768,7 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
 }
 
+.footer-links button:active,
 .footer-btn-badge:active {
     transform: scale(0.96) !important;
 }
@@ -3934,5 +4051,919 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     box-shadow: 0 0 15px #00ff66;
     transition: width 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
+
+
+
+
+/* ============================================== */
+/* ====== SEASONAL EVENTS SYSTEM (HALLOWEEN, ZIMA, ADWENT, WIELKANOC) ====== */
+/* ============================================== */
+
+/* Pełnoekranowa nakładka atmosferyczna (zmienia całe tło menu) */
+.seasonal-bg-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+    transition: opacity 0.5s ease !important;
+    opacity: 0;
+}
+
+body.seasonal-halloween #seasonalBackgroundOverlay {
+    opacity: 1 !important;
+    background: radial-gradient(circle at 50% 25%, rgba(255, 120, 0, 0.22) 0%, rgba(35, 12, 28, 0.75) 50%, rgba(8, 4, 12, 0.95) 100%) !important;
+}
+
+body.seasonal-winter #seasonalBackgroundOverlay,
+body.seasonal-advent #seasonalBackgroundOverlay {
+    opacity: 1 !important;
+    background: radial-gradient(circle at 50% 25%, rgba(52, 152, 219, 0.22) 0%, rgba(12, 26, 42, 0.75) 50%, rgba(5, 12, 20, 0.95) 100%) !important;
+}
+
+body.seasonal-easter #seasonalBackgroundOverlay {
+    opacity: 1 !important;
+    background: radial-gradient(circle at 50% 25%, rgba(46, 204, 113, 0.2) 0%, rgba(16, 32, 20, 0.7) 50%, rgba(6, 15, 8, 0.95) 100%) !important;
+}
+
+/* Płótno padającego śniegu lub unoszących się iskier i nietoperzy */
+.seasonal-canvas-layer {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+}
+
+/* Nastrojowe narożne pajęczyny Halloween */
+.seasonal-corner-web {
+    position: fixed !important;
+    width: 150px !important;
+    height: 150px !important;
+    pointer-events: none !important;
+    z-index: 8 !important;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.8)) !important;
+    animation: webFadeIn 0.8s ease-out forwards;
+}
+.corner-web-left {
+    top: 0 !important;
+    left: 0 !important;
+}
+.corner-web-right {
+    top: 0 !important;
+    right: 0 !important;
+}
+.web-svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@keyframes webFadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 0.95; transform: scale(1); }
+}
+
+/* Wiszący pająk */
+.seasonal-spider-thread {
+    position: absolute !important;
+    top: 75px !important;
+    left: 75px !important;
+    width: 2px !important;
+    height: 45px !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    transform-origin: top center !important;
+    animation: spiderSwing 3s ease-in-out infinite alternate !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+}
+.seasonal-spider {
+    font-size: 20px !important;
+    transform: translateY(12px) !important;
+    filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8)) !important;
+}
+@keyframes spiderSwing {
+    0% { transform: rotate(-18deg); }
+    100% { transform: rotate(18deg); }
+}
+
+/* Dekoracja logo */
+.seasonal-logo-decoration {
+    display: inline-block !important;
+    font-size: 28px !important;
+    margin-left: 8px !important;
+    vertical-align: middle !important;
+    filter: drop-shadow(0 0 12px rgba(255, 140, 0, 0.8)) !important;
+    animation: pumpkinBreathe 2.5s ease-in-out infinite alternate !important;
+}
+@keyframes pumpkinBreathe {
+    0% { transform: scale(1) rotate(-5deg); filter: drop-shadow(0 0 8px rgba(255, 140, 0, 0.6)); }
+    100% { transform: scale(1.18) rotate(5deg); filter: drop-shadow(0 0 20px #ff7700); }
+}
+
+/* ============================================== */
+/* ====== MOTYWY CAŁEGO MENU DLA KAŻDEGO EVENTU ====== */
+/* ============================================== */
+
+/* 1. MROCZNY KLIMAT HALLOWEEN */
+body.seasonal-halloween {
+    background-color: #0b060d !important;
+}
+body.seasonal-halloween .desktop-logo,
+body.seasonal-halloween .splash-title {
+    color: #ff9f43 !important;
+    text-shadow: 0 0 25px rgba(255, 120, 0, 0.75), 0 5px 15px rgba(0,0,0,0.9) !important;
+}
+body.seasonal-halloween .desktop-leaderboard-panel {
+    background: rgba(26, 12, 18, 0.82) !important;
+    border: 2px solid rgba(255, 120, 0, 0.45) !important;
+    box-shadow: 0 0 35px rgba(255, 100, 0, 0.25), 0 20px 50px rgba(0,0,0,0.8) !important;
+}
+/* 2. ZIMOWY ŚNIEŻNY KLIMAT */
+body.seasonal-winter,
+body.seasonal-advent {
+    background-color: #08111d !important;
+}
+body.seasonal-winter .desktop-logo,
+body.seasonal-advent .desktop-logo {
+    color: #e0f7fa !important;
+    text-shadow: 0 0 25px rgba(68, 189, 255, 0.75), 0 5px 15px rgba(0,0,0,0.9) !important;
+}
+body.seasonal-winter .desktop-leaderboard-panel,
+body.seasonal-advent .desktop-leaderboard-panel {
+    background: rgba(12, 26, 42, 0.82) !important;
+    border: 2px solid rgba(68, 189, 255, 0.45) !important;
+    box-shadow: 0 0 35px rgba(68, 189, 255, 0.25), 0 20px 50px rgba(0,0,0,0.8) !important;
+}
+
+/* 3. WIOSENNY KLIMAT WIELKANOCY */
+body.seasonal-easter {
+    background-color: #0b150f !important;
+}
+body.seasonal-easter .desktop-logo {
+    color: #2ecc71 !important;
+    text-shadow: 0 0 25px rgba(46, 204, 113, 0.75), 0 5px 15px rgba(0,0,0,0.9) !important;
+}
+body.seasonal-easter .desktop-leaderboard-panel {
+    background: rgba(15, 28, 18, 0.82) !important;
+    border: 2px solid rgba(46, 204, 113, 0.45) !important;
+    box-shadow: 0 0 35px rgba(46, 204, 113, 0.25), 0 20px 50px rgba(0,0,0,0.8) !important;
+}
+
+/* ============================================== */
+/* ====== NOWOCZESNE KARTY EVENTU W MENU ======== */
+/* ============================================== */
+.seasonal-menu-card {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 16px !important;
+    padding: 14px 18px !important;
+    margin-bottom: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+    animation: bannerPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+.seasonal-menu-card:hover {
+    transform: translateY(-2px) !important;
+}
+
+@keyframes bannerPop {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Karta Halloween */
+.halloween-card {
+    background: linear-gradient(135deg, rgba(45, 18, 5, 0.92), rgba(20, 8, 28, 0.95)) !important;
+    border: 2px solid #ff7700 !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 119, 0, 0.25), inset 0 0 15px rgba(255, 119, 0, 0.1) !important;
+}
+.halloween-card:hover {
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 28px rgba(255, 119, 0, 0.45) !important;
+}
+
+/* Karta Kalendarza Adwentowego */
+.advent-card {
+    background: linear-gradient(135deg, rgba(16, 44, 25, 0.92), rgba(46, 15, 20, 0.95)) !important;
+    border: 2px solid #2ecc71 !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(46, 204, 113, 0.25), inset 0 0 15px rgba(46, 204, 113, 0.1) !important;
+    cursor: pointer !important;
+}
+.advent-card:hover {
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7), 0 0 28px rgba(46, 204, 113, 0.45) !important;
+}
+
+/* Karta Zimy */
+.winter-card {
+    background: linear-gradient(135deg, rgba(15, 34, 52, 0.92), rgba(10, 20, 36, 0.95)) !important;
+    border: 2px solid #3498db !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(52, 152, 219, 0.25) !important;
+}
+
+/* Karta Wielkanocy */
+.easter-card {
+    background: linear-gradient(135deg, rgba(40, 35, 12, 0.92), rgba(16, 38, 22, 0.95)) !important;
+    border: 2px solid #f1c40f !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(241, 196, 15, 0.25) !important;
+}
+
+/* Lewa strona karty */
+.seasonal-card-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.seasonal-card-icon-box {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 26px !important;
+    user-select: none !important;
+}
+.pumpkin-glow {
+    background: rgba(255, 119, 0, 0.2) !important;
+    border: 1.5px solid rgba(255, 119, 0, 0.5) !important;
+    box-shadow: 0 0 15px rgba(255, 119, 0, 0.35) !important;
+}
+.tree-glow {
+    background: rgba(46, 204, 113, 0.2) !important;
+    border: 1.5px solid rgba(46, 204, 113, 0.5) !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.35) !important;
+}
+.snow-glow {
+    background: rgba(52, 152, 219, 0.2) !important;
+    border: 1.5px solid rgba(52, 152, 219, 0.5) !important;
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.35) !important;
+}
+.egg-glow {
+    background: rgba(241, 196, 15, 0.2) !important;
+    border: 1.5px solid rgba(241, 196, 15, 0.5) !important;
+    box-shadow: 0 0 15px rgba(241, 196, 15, 0.35) !important;
+}
+
+.seasonal-card-text {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    min-width: 0 !important;
+}
+.seasonal-tag-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+.seasonal-badge-tag {
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+}
+.tag-halloween {
+    background: rgba(255, 119, 0, 0.3) !important;
+    color: #ff9f43 !important;
+    border: 1px solid rgba(255, 119, 0, 0.6) !important;
+}
+.tag-advent {
+    background: rgba(46, 204, 113, 0.3) !important;
+    color: #2ecc71 !important;
+    border: 1px solid rgba(46, 204, 113, 0.6) !important;
+}
+.tag-winter {
+    background: rgba(52, 152, 219, 0.3) !important;
+    color: #54a0ff !important;
+    border: 1px solid rgba(52, 152, 219, 0.6) !important;
+}
+.tag-easter {
+    background: rgba(241, 196, 15, 0.3) !important;
+    color: #f1c40f !important;
+    border: 1px solid rgba(241, 196, 15, 0.6) !important;
+}
+
+.seasonal-badge-sub {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    text-transform: uppercase !important;
+}
+
+.seasonal-title {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.seasonal-desc {
+    font-size: 11px !important;
+    color: rgba(255, 255, 255, 0.75) !important;
+    line-height: 1.3 !important;
+}
+
+/* Prawa strona karty & Przyciski */
+.seasonal-card-right {
+    flex-shrink: 0 !important;
+}
+
+.seasonal-claim-button {
+    all: unset !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 10px 18px !important;
+    border-radius: 12px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    white-space: nowrap !important;
+}
+
+.btn-orange-glow {
+    background: linear-gradient(135deg, #ff7700, #d35400) !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 15px rgba(255, 119, 0, 0.5) !important;
+}
+.btn-orange-glow:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 6px 20px rgba(255, 119, 0, 0.75) !important;
+}
+
+.btn-green-glow {
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.5) !important;
+}
+.btn-green-glow:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.75) !important;
+}
+
+.seasonal-claim-button.is-claimed {
+    background: rgba(46, 204, 113, 0.15) !important;
+    border: 1.5px solid rgba(46, 204, 113, 0.6) !important;
+    color: #2ecc71 !important;
+    cursor: default !important;
+    box-shadow: none !important;
+    opacity: 0.85 !important;
+}
+
+.seasonal-status-pill {
+    padding: 8px 14px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap !important;
+}
+.easter-pill {
+    background: rgba(241, 196, 15, 0.15) !important;
+    border-color: rgba(241, 196, 15, 0.4) !important;
+    color: #f1c40f !important;
+}
+
+/* ============================================== */
+/* ====== MODAL KALENDARZA ADWENTOWEGO ========== */
+/* ============================================== */
+.advent-calendar-modal {
+    max-width: 680px !important;
+    width: 95% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 24px 20px !important;
+    box-sizing: border-box !important;
+    border: 2px solid rgba(46, 204, 113, 0.45) !important;
+    background: linear-gradient(150deg, rgba(14, 28, 42, 0.98), rgba(8, 16, 26, 0.98)) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(46, 204, 113, 0.25) !important;
+    border-radius: 20px !important;
+}
+
+.advent-modal-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-bottom: 12px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+.advent-header-title {
+    margin: 0 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    font-size: 18px !important;
+    color: #2ecc71 !important;
+    letter-spacing: 0.8px !important;
+    text-shadow: 0 0 15px rgba(46, 204, 113, 0.4) !important;
+}
+.advent-header-sub {
+    font-size: 11px !important;
+    color: var(--text-dim) !important;
+    margin-top: 3px !important;
+    font-weight: 600 !important;
+}
+
+.advent-milestones-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 12px !important;
+    justify-content: center !important;
+}
+.advent-milestone-pill {
+    font-size: 9.5px !important;
+    font-weight: 800 !important;
+    padding: 3px 8px !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #ffd700 !important;
+    letter-spacing: 0.3px !important;
+}
+
+.advent-grid-container {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px !important;
+    margin-top: 14px !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (min-width: 580px) {
+    .advent-grid-container {
+        grid-template-columns: repeat(6, 1fr) !important;
+        gap: 10px !important;
+    }
+}
+
+.advent-door {
+    min-width: 0 !important;
+    width: 100% !important;
+    aspect-ratio: 1 !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 3px !important;
+    position: relative !important;
+    user-select: none !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+.door-ready {
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.25), rgba(39, 174, 96, 0.4)) !important;
+    border: 2px solid #2ecc71 !important;
+    cursor: pointer !important;
+    box-shadow: 0 0 16px rgba(46, 204, 113, 0.45) !important;
+    animation: doorPulse 2s ease-in-out infinite !important;
+}
+.door-ready:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    border-color: #ffd700 !important;
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6) !important;
+}
+@keyframes doorPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(46, 204, 113, 0.6); }
+}
+
+.door-claimed {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    opacity: 0.8 !important;
+}
+
+.door-locked {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+}
+
+.door-special {
+    border: 2px solid #f1c40f !important;
+    box-shadow: 0 0 14px rgba(241, 196, 15, 0.4) !important;
+}
+.door-special.door-claimed {
+    border: 1.5px solid rgba(241, 196, 15, 0.6) !important;
+    background: rgba(241, 196, 15, 0.08) !important;
+}
+
+.advent-special-badge {
+    position: absolute !important;
+    top: 2px !important;
+    left: 2px !important;
+    right: 2px !important;
+    font-size: 7px !important;
+    font-weight: 900 !important;
+    color: #111 !important;
+    background: #ffd700 !important;
+    border-radius: 4px !important;
+    text-align: center !important;
+    padding: 1px 0 !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4) !important;
+}
+
+.advent-door-num {
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    margin-top: 3px !important;
+}
+.advent-door-status {
+    font-size: 18px !important;
+    margin: 2px 0 !important;
+    line-height: 1 !important;
+}
+.advent-door-action {
+    font-size: 8.5px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.3px !important;
+    color: #2ecc71 !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+}
+.door-locked .advent-door-action {
+    color: var(--text-dim) !important;
+}
+.advent-door-reward {
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #f1c40f !important;
+    text-align: center !important;
+    line-height: 1.1 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+}
+
+/* Świąteczne Tło Rankingu */
+.rank-bg-swieta {
+    background: linear-gradient(90deg, rgba(8, 24, 42, 0.95), rgba(18, 54, 88, 0.95), rgba(8, 24, 42, 0.95)) !important;
+    border-left: 3px solid #00d2d3 !important;
+    box-shadow: inset 0 0 16px rgba(0, 210, 211, 0.35) !important;
+}
+.rank-bg-swieta td {
+    color: #e0f7fa !important;
+    text-shadow: 0 0 8px rgba(0, 210, 211, 0.5) !important;
+}
+
+/* Świąteczna Ramka Awatara */
+.avatar-frame-swieta {
+    outline: 3.5px solid #2ecc71 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.8), 0 0 25px rgba(241, 196, 15, 0.5) !important;
+    border: 2px solid #ffd700 !important;
+    border-radius: 50% !important;
+}
+
+/* ============================================== */
+/* ====== WIELKANOC: UKRYTE PISANKI ============= */
+/* ============================================== */
+.seasonal-easter-egg {
+    position: fixed !important;
+    font-size: 28px !important;
+    cursor: pointer !important;
+    z-index: 105 !important;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5)) !important;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    user-select: none !important;
+    animation: eggWobble 4s ease-in-out infinite !important;
+}
+.seasonal-easter-egg:hover {
+    transform: scale(1.35) rotate(15deg) !important;
+}
+
+.egg-pos-header {
+    top: 15px !important;
+    left: 20px !important;
+}
+.egg-pos-bottom {
+    bottom: 25px !important;
+    right: 25px !important;
+}
+.egg-pos-nav {
+    bottom: 85px !important;
+    left: 25px !important;
+}
+
+@keyframes eggWobble {
+    0%, 80%, 100% { transform: rotate(0); }
+    85% { transform: rotate(-10deg) scale(1.08); }
+    90% { transform: rotate(10deg) scale(1.08); }
+    95% { transform: rotate(-5deg) scale(1.08); }
+}
+
+/* ============================================== */
+/* ====== ZIMOWY PRZYCISK KALENDARZA (MODERN) === */
+/* ============================================== */
+.winter-calendar-btn {
+    all: unset !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    background: rgba(0, 210, 211, 0.12) !important;
+    border: 1.5px solid rgba(0, 210, 211, 0.45) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important;
+    padding: 8px 16px !important;
+    font-family: 'Montserrat', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.6px !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(0, 210, 211, 0.2) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    white-space: nowrap !important;
+}
+
+.winter-calendar-btn:hover {
+    background: rgba(0, 210, 211, 0.25) !important;
+    border-color: #00d2d3 !important;
+    color: #ffffff !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 24px rgba(0, 210, 211, 0.45) !important;
+}
+
+.winter-calendar-btn:active {
+    transform: scale(0.97) !important;
+}
+
+/* ============================================== */
+/* ====== ZIMOWE PUSZYSTE CZAPY ŚNIEŻNE (WZÓR) == */
+/* ============================================== */
+.desktop-leaderboard-panel {
+    position: relative !important;
+}
+
+.snow-cap-leaderboard {
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    height: 44px !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+    overflow: visible !important;
+}
+
+.snow-cap-banner {
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    height: 32px !important;
+    pointer-events: none !important;
+    z-index: 15 !important;
+    overflow: visible !important;
+}
+
+.menu-discord-btn {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.snow-cap-discord {
+    position: absolute !important;
+    top: -2px !important;
+    left: -2px !important;
+    right: -2px !important;
+    height: 20px !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+    overflow: visible !important;
+}
+
+.pillow-snow-svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+/* ============================================== */
+/* ====== PUSZYSTY ŚNIEG NA FOOTERZE (3D CAP) === */
+/* ============================================== */
+.app-footer {
+    position: relative !important;
+}
+
+body.seasonal-winter .app-footer,
+body.seasonal-advent .app-footer {
+    padding-top: 42px !important;
+}
+
+.snow-cap-footer {
+    position: absolute !important;
+    top: -2px !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 38px !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+    overflow: visible !important;
+}
+
+/* ============================================== */
+/* ====== ZWIĘKSZONE TOP-MARGIN W MOTYWIE ZIMOWYM */
+/* ============================================== */
+body.seasonal-winter .seasonal-menu-card,
+body.seasonal-advent .seasonal-menu-card {
+    margin-top: 24px !important;
+    padding: 34px 20px 14px 20px !important;
+}
+
+body.seasonal-winter .desktop-leaderboard-panel,
+body.seasonal-advent .desktop-leaderboard-panel {
+    margin-top: 24px !important;
+    padding-top: 54px !important;
+}
+
+body.seasonal-winter .desktop-leaderboard-panel h2,
+body.seasonal-advent .desktop-leaderboard-panel h2 {
+    margin-top: 4px !important;
+    margin-bottom: 14px !important;
+}
+
+body.seasonal-winter .menu-discord-btn,
+body.seasonal-advent .menu-discord-btn {
+    margin-top: 32px !important;
+    padding: 18px 24px 10px 24px !important;
+    min-height: 48px !important;
+}
+
+/* ============================================== */
+/* ====== RESPONSYWNOŚĆ: TABLETY I TELEFONY ===== */
+/* ============================================== */
+@media (max-width: 900px) {
+    .seasonal-menu-card {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        text-align: center !important;
+    }
+    .seasonal-menu-card > div:first-child {
+        margin: 0 auto !important;
+    }
+    .seasonal-menu-card .seasonal-badge-text {
+        justify-content: center !important;
+    }
+    .seasonal-menu-card .seasonal-claim-button,
+    .seasonal-menu-card .winter-calendar-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        align-self: stretch !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .snow-cap-leaderboard {
+        top: -2px !important;
+        height: 36px !important;
+    }
+    .snow-cap-banner {
+        top: -2px !important;
+        height: 26px !important;
+    }
+    .snow-cap-discord {
+        top: -2px !important;
+        height: 18px !important;
+    }
+    .snow-cap-footer {
+        top: -2px !important;
+        height: 28px !important;
+    }
+
+    body.seasonal-winter .app-footer,
+    body.seasonal-advent .app-footer {
+        padding-top: 34px !important;
+    }
+
+    body.seasonal-winter .seasonal-menu-card,
+    body.seasonal-advent .seasonal-menu-card {
+        margin-top: 16px !important;
+        padding: 30px 14px 14px 14px !important;
+    }
+
+    body.seasonal-winter .desktop-leaderboard-panel,
+    body.seasonal-advent .desktop-leaderboard-panel {
+        margin-top: 16px !important;
+        padding-top: 44px !important;
+    }
+
+    body.seasonal-winter .menu-discord-btn,
+    body.seasonal-advent .menu-discord-btn {
+        margin-top: 24px !important;
+        padding: 16px 20px 10px 20px !important;
+    }
+
+    .advent-calendar-modal {
+        width: 94vw !important;
+        max-width: 94vw !important;
+        padding: 18px 12px !important;
+        border-radius: 16px !important;
+    }
+
+    .advent-door {
+        padding: 4px 2px !important;
+        border-radius: 10px !important;
+    }
+
+    .advent-door-num {
+        font-size: 13px !important;
+    }
+
+    .advent-door-status {
+        font-size: 15px !important;
+        margin: 1px 0 !important;
+    }
+
+    .advent-door-action {
+        font-size: 7.5px !important;
+    }
+
+    .advent-door-reward {
+        font-size: 7.5px !important;
+    }
+
+    .advent-milestones-row {
+        gap: 4px !important;
+    }
+
+    .advent-milestone-pill {
+        font-size: 8.5px !important;
+        padding: 2px 6px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .advent-grid-container {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
+    }
+
+    .advent-door {
+        padding: 4px 2px !important;
+        min-height: 52px !important;
+    }
+
+    .advent-header-title {
+        font-size: 15px !important;
+    }
+
+    .advent-header-sub {
+        font-size: 9.5px !important;
+    }
+}
+
 
 

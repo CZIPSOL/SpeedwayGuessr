@@ -1,6 +1,15 @@
 window.changelog = {
     pl: [
         {
+            version: "Beta v2.1.0", date: "30.10.2026",
+            changes: [
+                "⚖️ <b>Nowy tryb: More / Less Daily!</b> Sprawdź swoją wiedzę o statystykach ligowych – punkty zawodników, średnie biegowe i frekwencje stadionów w pełnym 12-rundowym starciu każdego dnia!",
+                "🎨 <b>Poprawa UI i modernizacja przycisków:</b> odświeżony, modernistyczny styl przycisków w menu, szklane kontrolki kalendarza oraz elegancka stopka z pełną responsywnością na telefonach i tabletach.",
+                "🎉 <b>Sezonowe wydarzenia w menu:</b> automatyczne motywy okolicznościowe na Halloween (mroczny klimat, dynie, pajęczyny), zimę (padający śnieg i Kalendarz Adwentowy 1-24 grudnia) oraz Wielkanoc!",
+                "🐛 <b>Naprawa błędów i stabilność:</b> usunięto nakładanie się ekranu menu po starcie gry Guessr, poprawiono zaliczanie pełnych 12 rund w More / Less oraz zoptymalizowano działanie tabeli wyników."
+            ]
+        },
+        {
             version: "Beta v2.0.0", date: "18.10.2026",
             changes: [
                 "📱 <b>Kompletny redesign UI na telefonach:</b> odświeżony układ menu, profilu, misji i trybów gry z większą czytelnością, wygodniejszymi odstępami i lepszym dopasowaniem do małych ekranów.",
@@ -123,6 +132,15 @@ window.changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v2.1.0", date: "30.10.2026",
+            changes: [
+                "⚖️ <b>New Game Mode: More / Less Daily!</b> Test your knowledge of speedway statistics — rider points, heat averages, and stadium attendance in a 12-round daily challenge!",
+                "🎨 <b>UI improvements & modern buttons:</b> sleek glassmorphic controls for the calendar and footer, refined spacing, and seamless responsiveness across desktop, mobile, and tablets.",
+                "🎉 <b>Seasonal Menu Events:</b> automatic seasonal themes for Halloween (spooky atmosphere, pumpkins, spiderwebs), Winter (falling snow and 24-day Advent Calendar), and Easter (Easter egg hunt)!",
+                "🐛 <b>Bug fixes & stability:</b> resolved menu overlay issues when starting Guessr, improved More / Less score tracking, and optimized cloud leaderboards."
+            ]
+        },
         {
             version: "Beta v2.0.0", date: "18.10.2026",
             changes: [
