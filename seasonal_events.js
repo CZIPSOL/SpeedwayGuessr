@@ -142,12 +142,18 @@
 
         init: function () {
             this.ensureUserSeasonalStats();
-            // Domyślnie aktywujemy Halloween, aby aktualny event od razu był mroczny.
+            const currentDetectedEvent = detectCurrentEvent();
             let savedSetting = localStorage.getItem('speedwaySeasonalEvent');
+
+            // W okresie Halloween nadpisujemy stary zapis w localStorage, żeby nie zostać zablokowanym
+            // przez dawny wybór "winter" z poprzedniego eventu.
             if (!savedSetting || savedSetting === 'auto' || savedSetting === 'hallowee') {
                 savedSetting = 'halloween';
-                localStorage.setItem('speedwaySeasonalEvent', 'halloween');
+            } else if (currentDetectedEvent === 'halloween' && savedSetting !== 'halloween') {
+                savedSetting = 'halloween';
             }
+
+            localStorage.setItem('speedwaySeasonalEvent', savedSetting);
             this.applyEvent(savedSetting, false);
             this.setupScreenWatcher();
         },
