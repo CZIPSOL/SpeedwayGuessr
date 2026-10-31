@@ -138,10 +138,12 @@ const functions = firebase.functions();
 let gameMode = 'endless'; let guessCount = 0;
 let guessHistory = []; let guessedPlayersNames = []; 
 let currentDailyDay = 1; let selectedDailyDay = 1; let dailyNumberGlobal = "";
+let currentMoreLessDay = 1; let selectedMoreLessDay = 1;
 let hasWon = false; let hasLost = false; let isRestoring = false;
 let calRenderMonth = new Date().getMonth(); let calRenderYear = new Date().getFullYear();
 const GUESS_LIMIT = 10; 
-const DAILY_START_DATE = new Date('2026-10-25T00:00:00');
+const DAILY_START_DATE = new Date('2026-05-12T00:00:00');
+const MORE_LESS_START_DATE = new Date('2026-10-24T00:00:00');
 
 let hintActive = false; 
 let hintsUsedCount = 0; 
@@ -1409,7 +1411,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // --- GŁÓWNA POPRAWKA ---
     // Wczytujemy dane gracza ZANIM gra zostanie zablokowana przez łączenie z chmurą! 
     loadStats(); 
-    initDailyMenu(); 
+    initDailyMenu();
+    initMoreLessMenuState();
     renderLastGames(); 
     preloadHelmetImage(); 
     setLang(currentLang); 
@@ -1618,11 +1621,21 @@ function getCurrentWeekStr() {
     return date.getUTCFullYear() + "_W" + weekNo.toString().padStart(2, '0');
 }
 
+function getDayNumberFromStart(startDate, now = new Date()) {
+    const nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const startUTC = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    return Math.max(1, Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1);
+}
+
 function initDailyMenu() {
-    const now = new Date(); const nowUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
-    currentDailyDay = Math.floor((nowUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
-    if (currentDailyDay < 1) currentDailyDay = 1; selectedDailyDay = currentDailyDay; updateDailyMenu();
+    currentDailyDay = getDayNumberFromStart(DAILY_START_DATE);
+    selectedDailyDay = currentDailyDay;
+    updateDailyMenu();
+}
+
+function initMoreLessMenuState() {
+    currentMoreLessDay = getDayNumberFromStart(MORE_LESS_START_DATE);
+    selectedMoreLessDay = currentMoreLessDay;
 }
 
 function changeDaily(dir) {
@@ -2923,7 +2936,8 @@ function startMoreLess(categoryMode = 'daily') {
     let precalculatedRounds = null;
 
     if (categoryMode === 'daily') {
-        const generated = generateDailyMoreLessRounds(selectedDailyDay || currentDailyDay);
+        const dayForMoreLess = selectedMoreLessDay || currentMoreLessDay;
+        const generated = generateDailyMoreLessRounds(dayForMoreLess);
         sequence = generated.sequence;
         precalculatedRounds = generated.rounds;
     } else if (categoryMode === 'riders') {
@@ -2938,7 +2952,7 @@ function startMoreLess(categoryMode = 'daily') {
         active: true,
         mode: categoryMode,
         isDaily: (categoryMode === 'daily'),
-        dailyDay: (categoryMode === 'daily') ? (selectedDailyDay || currentDailyDay) : null,
+        dailyDay: (categoryMode === 'daily') ? (selectedMoreLessDay || currentMoreLessDay) : null,
         roundSequence: sequence,
         precalculatedRounds: precalculatedRounds,
         currentRoundIndex: 0,
@@ -3129,7 +3143,7 @@ function handleMoreLessFinished() {
         playSound('lose');
     }
 
-    saveMoreLessScore(score, total, mlGame.dailyDay || selectedDailyDay, isDaily);
+    saveMoreLessScore(score, total, mlGame.dailyDay || selectedMoreLessDay || currentMoreLessDay, isDaily);
 
     const titleEl = document.getElementById('mlSummaryTitle');
     const emojiEl = document.getElementById('mlSummaryEmoji');
@@ -3170,7 +3184,7 @@ function handleMoreLessFinished() {
     }
 }
 
-function saveMoreLessScore(score, total = 12, dayNumber = selectedDailyDay, isDaily = true) {
+function saveMoreLessScore(score, total = 12, dayNumber = selectedMoreLessDay || currentMoreLessDay, isDaily = true) {
     ensureMoreLessStats();
     const ml = userStats.moreLess;
     ml.played = (ml.played || 0) + 1;
@@ -3273,7 +3287,7 @@ function openMoreLessMenu() {
         const nickEl = document.getElementById('moreLessMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
-        const currentDay = selectedDailyDay || currentDailyDay;
+        const currentDay = selectedMoreLessDay || currentMoreLessDay;
         const badgeEl = document.getElementById('mlMenuDailyBadge');
         if (badgeEl) badgeEl.innerText = `DAILY #${currentDay}`;
 
@@ -3313,7 +3327,7 @@ function closeMoreLessInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-async function loadMoreLessRanking(dayNum = selectedDailyDay || currentDailyDay) {
+async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLessDay) {
     const tbody = document.getElementById('desktopRankingBodyML');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
