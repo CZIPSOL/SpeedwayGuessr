@@ -142,11 +142,11 @@
 
         init: function () {
             this.ensureUserSeasonalStats();
-            // Ustawiamy domyślnie 'winter' na życzenie użytkownika ("pokaż mi zimowe")
+            // Domyślnie aktywujemy Halloween, aby aktualny event od razu był mroczny.
             let savedSetting = localStorage.getItem('speedwaySeasonalEvent');
-            if (!savedSetting || savedSetting === 'auto' || savedSetting === 'halloween') {
-                savedSetting = 'winter';
-                localStorage.setItem('speedwaySeasonalEvent', 'winter');
+            if (!savedSetting || savedSetting === 'auto' || savedSetting === 'hallowee') {
+                savedSetting = 'halloween';
+                localStorage.setItem('speedwaySeasonalEvent', 'halloween');
             }
             this.applyEvent(savedSetting, false);
             this.setupScreenWatcher();
