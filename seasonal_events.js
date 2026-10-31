@@ -162,6 +162,38 @@
             if (typeof userStats === 'undefined') return;
             if (!userStats.seasonalRewards) userStats.seasonalRewards = {};
             if (!userStats.seasonalRewards.advent) userStats.seasonalRewards.advent = {};
+            if (typeof userStats.seasonalRewards.halloweenRewarded === 'undefined') {
+                userStats.seasonalRewards.halloweenRewarded = false;
+            }
+        },
+
+        awardHalloweenReward: function () {
+            if (typeof userStats === 'undefined') return;
+            this.ensureUserSeasonalStats();
+
+            if (userStats.seasonalRewards.halloweenRewarded) return;
+
+            if (!userStats.ownedHelmets) userStats.ownedHelmets = ['default'];
+            if (!userStats.ownedHelmets.includes('helmet-halloween')) {
+                userStats.ownedHelmets.push('helmet-halloween');
+            }
+            userStats.equippedHelmet = 'helmet-halloween';
+
+            if (typeof userStats.coins === 'undefined') userStats.coins = 0;
+            userStats.coins += 666;
+
+            if (typeof addExp === 'function') {
+                addExp(666);
+            } else {
+                userStats.exp = (userStats.exp || 0) + 666;
+            }
+
+            userStats.seasonalRewards.halloweenRewarded = true;
+            if (typeof saveStats === 'function') saveStats();
+            if (typeof updateCounterDisplay === 'function') updateCounterDisplay();
+            if (typeof showToast === 'function') {
+                showToast('🎃 Halloween: otrzymujesz ramkę profilową, 666 🪙 i 666 EXP!', 'success');
+            }
         },
 
         setEvent: function (eventName, save = true) {
@@ -171,6 +203,9 @@
             let targetEvent = eventName;
             if (eventName === 'auto') {
                 targetEvent = detectCurrentEvent();
+            }
+            if (targetEvent === 'halloween') {
+                this.awardHalloweenReward();
             }
             this.applyEvent(targetEvent, true);
         },
@@ -521,8 +556,8 @@
             const currentYear = new Date().getFullYear();
             const currentMonth = new Date().getMonth();
             const currentDate = new Date().getDate();
-
-            const activeDay = (currentMonth === 11) ? currentDate : 24;
+            const isDecember = currentMonth === 11;
+            const activeDay = isDecember ? Math.min(currentDate, 24) : 0;
 
             if (typeof userStats !== 'undefined' && userStats.seasonalRewards && !userStats.seasonalRewards.advent[currentYear]) {
                 userStats.seasonalRewards.advent[currentYear] = [];
@@ -579,7 +614,15 @@
         claimAdventDoor: function (day) {
             this.ensureUserSeasonalStats();
             const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth();
+            const currentDate = new Date().getDate();
             if (typeof userStats === 'undefined') return;
+            if (currentMonth !== 11 || day > currentDate || day > 24) {
+                if (typeof showToast === 'function') {
+                    showToast('🔒 To okienko jest zablokowane. Otwieraj je chronologicznie w grudniu.', 'info');
+                }
+                return;
+            }
             if (!userStats.seasonalRewards.advent[currentYear]) {
                 userStats.seasonalRewards.advent[currentYear] = [];
             }

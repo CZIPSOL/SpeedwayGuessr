@@ -4661,6 +4661,14 @@ body.seasonal-easter .desktop-leaderboard-panel {
     border-radius: 50% !important;
 }
 
+.avatar-frame-halloween {
+    outline: 3.5px solid #ff7700 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 20px rgba(255, 119, 0, 0.85), 0 0 30px rgba(140, 0, 255, 0.5) !important;
+    border: 2px solid #ffb84d !important;
+    border-radius: 50% !important;
+}
+
 /* ============================================== */
 /* ====== WIELKANOC: UKRYTE PISANKI ============= */
 /* ============================================== */

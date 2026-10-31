@@ -3212,6 +3212,7 @@ function saveMoreLessScore(score, total = 12, dayNumber = selectedDailyDay, isDa
             score: score,
             total: total,
             day: dayNumber,
+            mode: 'daily',
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
@@ -3221,6 +3222,7 @@ function saveMoreLessScore(score, total = 12, dayNumber = selectedDailyDay, isDa
         db.collection('leaderboard_moreless').doc(playerId)
             .set({
                 ...payload,
+                mode: 'daily',
                 bestScoreRatio: `${score}/${total}`
             }, { merge: true }).catch(() => {});
     }
@@ -3321,8 +3323,12 @@ async function loadMoreLessRanking(dayNum = selectedDailyDay || currentDailyDay)
             .orderBy("score", "desc").limit(30).get();
 
         if (snapshot.empty) {
-            snapshot = await db.collection("leaderboard_moreless").where("day", "==", dayNum)
-                .orderBy("score", "desc").limit(30).get().catch(() => ({ empty: true }));
+            snapshot = await db.collection("leaderboard_moreless")
+                .where("day", "==", dayNum)
+                .where("mode", "==", "daily")
+                .orderBy("score", "desc")
+                .limit(30)
+                .get().catch(() => ({ empty: true }));
         }
 
         if (!snapshot || snapshot.empty) {
@@ -6983,8 +6989,9 @@ window.openProfile = function() {
     document.getElementById('profileAvatarEdit').src = userStats.avatarUrl || defAvatar;
     const avOver = document.getElementById('profileAvatarOverview');
     if (avOver) {
+        avOver.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween');
         if (userStats.equippedHelmet === 'helmet-swieta') avOver.classList.add('avatar-frame-swieta');
-        else avOver.classList.remove('avatar-frame-swieta');
+        else if (userStats.equippedHelmet === 'helmet-halloween') avOver.classList.add('avatar-frame-halloween');
     }
 
     // Nick + Poziom z efektami ze sklepu
