@@ -1681,10 +1681,16 @@ function updateDailyMenu() {
     }
 
     // Aktualizacja plakietek Daily w różnych panelach menu
-    const guessrBadge = document.getElementById('guessrDailyBadge');
-    if (guessrBadge) {
-        guessrBadge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
-    }
+    const guessrBadges = [
+        document.getElementById('guessrDailyBadge'),
+        document.getElementById('guessrPlayerDailyBadge'),
+        document.getElementById('guessrMenuDailyBadge')
+    ];
+    guessrBadges.forEach((badge) => {
+        if (badge) {
+            badge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
+        }
+    });
 
     const mlMenuBadge = document.getElementById('mlMenuDailyBadge');
     if (mlMenuBadge) {
@@ -1742,8 +1748,14 @@ function selectDayFromCalendar(dayNum) {
     }
     const mlBadge = document.getElementById('mlMenuDailyBadge');
     if (mlBadge) mlBadge.innerText = `DAILY #${dayNum}`;
-    const guessrBadge = document.getElementById('guessrDailyBadge');
-    if (guessrBadge) guessrBadge.innerText = `DAILY #${dayNum}`;
+    const guessrBadges = [
+        document.getElementById('guessrDailyBadge'),
+        document.getElementById('guessrPlayerDailyBadge'),
+        document.getElementById('guessrMenuDailyBadge')
+    ];
+    guessrBadges.forEach((badge) => {
+        if (badge) badge.innerText = `DAILY #${dayNum}`;
+    });
     const mlDailyToday = document.getElementById('mlStatDailyToday');
     if (mlDailyToday) {
         if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
@@ -2514,8 +2526,14 @@ function openGuessrMenu() {
         const nickEl = document.getElementById('guessrMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
-        const badgeEl = document.getElementById('guessrDailyBadge');
-        if (badgeEl) badgeEl.innerText = `DAILY #${selectedDailyDay || currentDailyDay}`;
+        const guessrBadges = [
+            document.getElementById('guessrDailyBadge'),
+            document.getElementById('guessrPlayerDailyBadge'),
+            document.getElementById('guessrMenuDailyBadge')
+        ];
+        guessrBadges.forEach((badge) => {
+            if (badge) badge.innerText = `DAILY #${selectedDailyDay || currentDailyDay}`;
+        });
 
         document.getElementById('guessrStatPlayed').innerText = userStats.played || 0;
         document.getElementById('guessrStatWon').innerText = userStats.won || 0;
@@ -2928,6 +2946,11 @@ function startMoreLessDaily() {
 }
 
 function startMoreLess(categoryMode = 'daily') {
+    if (categoryMode === 'daily' && new Date() < MORE_LESS_START_DATE) {
+        showToast('More / Less zaczyna się 24.10.', 'info');
+        return;
+    }
+
     if (typeof seasonalPlayerStats === 'undefined' || typeof attendanceStats === 'undefined') {
         showToast("Baza statystyk nie została znaleziona!", "error");
         return;
@@ -3292,9 +3315,10 @@ function openMoreLessMenu() {
         const nickEl = document.getElementById('moreLessMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
-        const currentDay = selectedMoreLessDay || currentMoreLessDay;
+        const isUnlocked = new Date() >= MORE_LESS_START_DATE;
+        const currentDay = isUnlocked ? (selectedMoreLessDay || currentMoreLessDay) : 1;
         const badgeEl = document.getElementById('mlMenuDailyBadge');
-        if (badgeEl) badgeEl.innerText = `DAILY #${currentDay}`;
+        if (badgeEl) badgeEl.innerText = isUnlocked ? `DAILY #${currentDay}` : 'OD 24.10';
 
         const ml = userStats.moreLess;
         document.getElementById('mlStatPlayed').innerText = ml.played || 0;
@@ -3302,7 +3326,10 @@ function openMoreLessMenu() {
         
         const mlDailyToday = document.getElementById('mlStatDailyToday');
         if (mlDailyToday) {
-            if (userStats.moreLessDaily && userStats.moreLessDaily[currentDay]) {
+            if (!isUnlocked) {
+                mlDailyToday.innerText = 'OD 24.10';
+                mlDailyToday.style.color = '#f39c12';
+            } else if (userStats.moreLessDaily && userStats.moreLessDaily[currentDay]) {
                 const d = userStats.moreLessDaily[currentDay];
                 mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
                 mlDailyToday.style.color = '#00ff66';
@@ -3312,7 +3339,12 @@ function openMoreLessMenu() {
             }
         }
 
-        loadMoreLessRanking(currentDay);
+        if (isUnlocked) {
+            loadMoreLessRanking(currentDay);
+        } else {
+            const tbody = document.getElementById('desktopRankingBodyML');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">More / Less zaczyna się 24.10.</td></tr>';
+        }
     });
 }
 
