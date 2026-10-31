@@ -204,9 +204,6 @@
             if (eventName === 'auto') {
                 targetEvent = detectCurrentEvent();
             }
-            if (targetEvent === 'halloween') {
-                this.awardHalloweenReward();
-            }
             this.applyEvent(targetEvent, true);
         },
 
@@ -305,7 +302,8 @@
 
             this.decorateLogo('🎃');
 
-            // Karta informacyjna klimatu (BEZ przycisku darmowych nagród)
+            // Karta informacyjna klimatu z możliwością ręcznego odbioru nagrody Halloween
+            const hasReward = typeof userStats !== 'undefined' && userStats.seasonalRewards && userStats.seasonalRewards.halloweenRewarded;
             this.insertBanner('halloween', `
                 <div class="seasonal-card-left">
                     <div class="seasonal-card-icon-box pumpkin-glow">
@@ -317,11 +315,14 @@
                             <span class="seasonal-badge-sub">31 PAŹDZIERNIKA</span>
                         </div>
                         <div class="seasonal-title">HALLOWEEN: MROCZNA NOC NA TORZE 🦇</div>
-                        <div class="seasonal-desc">Mroczny klimat ogarnął Speedway Guessr! Odkryj upiorny motyw menu i żużlowych duchów.</div>
+                        <div class="seasonal-desc">Mroczny klimat ogarnął Speedway Guessr! Odbierz nagrodę za event i zyskaj ramkę Halloween.</div>
                     </div>
                 </div>
                 <div class="seasonal-card-right">
                     <div class="seasonal-status-pill" style="border-color: #ff7700; color: #ff9f43; background: rgba(255, 119, 0, 0.15);">🎃 HALLOWEEN</div>
+                    <button class="seasonal-action-btn" onclick="window.SeasonalEvents.awardHalloweenReward()" ${hasReward ? 'disabled' : ''}>
+                        ${hasReward ? 'ODEBRANO' : 'ODBierz RAMKĘ'}
+                    </button>
                 </div>
             `);
         },

@@ -1680,10 +1680,15 @@ function updateDailyMenu() {
         }
     }
 
-    // Aktualizacja plakietki w nowym podmenu Guessr
+    // Aktualizacja plakietek Daily w różnych panelach menu
     const guessrBadge = document.getElementById('guessrDailyBadge');
     if (guessrBadge) {
         guessrBadge.innerText = `DAILY #${selectedDailyDay} (${getDailyDateString(selectedDailyDay)})`;
+    }
+
+    const mlMenuBadge = document.getElementById('mlMenuDailyBadge');
+    if (mlMenuBadge) {
+        mlMenuBadge.innerText = `DAILY #${selectedDailyDay}`;
     }
 }
 
@@ -7298,7 +7303,8 @@ window.switchShopTab = function(tab) {
     else if (tab === 'emotes') { ownedArray = userStats.ownedEmotes; equipVar = 'equippedEmote'; equipVal = userStats[equipVar]; }
     else if (tab === 'wins') { ownedArray = userStats.ownedWins; equipVar = 'equippedWin'; equipVal = userStats[equipVar]; }
 
-    if (!SHOP_DB[tab] || SHOP_DB[tab].length === 0) {
+    const visibleItems = (SHOP_DB[tab] || []).filter(item => !item.isEvent);
+    if (!visibleItems.length) {
         container.innerHTML = `<div class="text-dim text-center mt-20">${t('shopComingSoon')}</div>`;
         return;
     }
@@ -7319,7 +7325,7 @@ window.switchShopTab = function(tab) {
             </div>`;
     }
 
-    SHOP_DB[tab].forEach(item => {
+    visibleItems.forEach(item => {
         const isOwned = ownedArray.includes(item.id);
         const isEquipped = equipVal === item.id;
         
@@ -7351,6 +7357,12 @@ window.switchShopTab = function(tab) {
 }
 
 window.buyShopItem = function(category, id, price) {
+    const item = (SHOP_DB[category] || []).find(entry => entry.id === id);
+    if (item && item.isEvent) {
+        showToast('To przedmiot jest dostępny tylko z eventu sezonowego.', 'info');
+        return;
+    }
+
     if (userStats.coins >= price) {
         userStats.coins -= price;
         if (category === 'backgrounds') { userStats.ownedBgs.push(id); userStats.equippedBg = id; }
