@@ -81,6 +81,10 @@ function applyAdminState(isServerAdmin, isServerTester) {
     window.isAdmin = Boolean(isServerAdmin);
     window.isTester = Boolean(isServerTester);
 
+    if (window.isAdmin && window.SeasonalEvents && typeof window.SeasonalEvents.applyAdminPreviewSetting === 'function') {
+        window.SeasonalEvents.applyAdminPreviewSetting();
+    }
+
     // Omijanie przerwy technicznej TYLKO dla Admina!
     if (window.isAdmin) {
         const maintOverlay = document.getElementById('maintenanceOverlay');
@@ -377,8 +381,11 @@ const stadiumBackgrounds = [
     'url("images/stadiony/bydgoszcz.png")',
     'url("images/stadiony/mureck.png")',
     'url("images/stadiony/zarnovica.png")',
-    'url("images/stadiony/pockin.png")',
+    'url("images/stadiony/pocking.png")',
     'url("images/stadiony/lublin.png")',
+    'url("images/stadiony/ostrow.png")',
+    'url("images/stadiony/krosno.png")',
+    'url("images/stadiony/lodz.png")'
 ];
 
 function setRandomBackground() {
@@ -1705,6 +1712,11 @@ function openCalendar() {
 function closeCalendar() { const overlay = document.getElementById('calendarOverlay'); overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 300); }
 function changeCalendarMonth(dir) { calRenderMonth += dir; if (calRenderMonth > 11) { calRenderMonth = 0; calRenderYear++; } else if (calRenderMonth < 0) { calRenderMonth = 11; calRenderYear--; } renderCalendar(); }
 
+function isMoreLessCalendarContext() {
+    const mlMenu = document.getElementById('moreLessMenuContainer');
+    return !!(mlMenu && mlMenu.style.display === 'flex');
+}
+
 function renderCalendar() {
     document.getElementById('calendarMonthDisplay').innerText = `${i18n[currentLang].months[calRenderMonth]} ${calRenderYear}`;
     const wdContainer = document.getElementById('calendarWeekdays'); wdContainer.innerHTML = '';
@@ -1714,10 +1726,13 @@ function renderCalendar() {
     const firstDay = new Date(calRenderYear, calRenderMonth, 1);
     const daysInMonth = new Date(calRenderYear, calRenderMonth + 1, 0).getDate();
     let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const isMoreLessCalendar = isMoreLessCalendarContext();
+    const modeStartDate = isMoreLessCalendar ? MORE_LESS_START_DATE : DAILY_START_DATE;
+    const modeSelectedDay = isMoreLessCalendar ? selectedMoreLessDay : selectedDailyDay;
 
     for (let i = 0; i < startDayOfWeek; i++) { const emptyBox = document.createElement('div'); emptyBox.className = 'cal-day empty'; grid.appendChild(emptyBox); }
 
-    const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
+    const startUTC = Date.UTC(modeStartDate.getFullYear(), modeStartDate.getMonth(), modeStartDate.getDate());
     const now = new Date(); const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
     for (let i = 1; i <= daysInMonth; i++) {
@@ -1727,19 +1742,55 @@ function renderCalendar() {
         if (cellUTC < startUTC) { box.classList.add('disabled'); } 
         else if (cellUTC > todayUTC) { box.classList.add('disabled', 'future'); } 
         else {
-            const dailyNum = Math.floor((cellUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
-            box.title = `Daily #${dailyNum}`;
-            if (userStats.dailyResults[dailyNum] === 'win') { box.classList.add('win'); }
-            else if (userStats.dailyResults[dailyNum] === 'loss') { box.classList.add('loss'); }
-            else { box.classList.add('playable'); }
-            box.onclick = () => { selectDayFromCalendar(dailyNum); };
-            if (dailyNum === selectedDailyDay) box.style.border = "2px solid var(--accent)";
+            const dayNum = Math.floor((cellUTC - startUTC) / (1000 * 60 * 60 * 24)) + 1;
+            box.title = `${isMoreLessCalendar ? 'More/Less' : 'Daily'} #${dayNum}`;
+
+            if (isMoreLessCalendar) {
+                if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+                    box.classList.add('win');
+                } else {
+                    box.classList.add('playable');
+                }
+            } else {
+                if (userStats.dailyResults[dayNum] === 'win') { box.classList.add('win'); }
+                else if (userStats.dailyResults[dayNum] === 'loss') { box.classList.add('loss'); }
+                else { box.classList.add('playable'); }
+            }
+
+            box.onclick = () => { selectDayFromCalendar(dayNum); };
+            if (dayNum === modeSelectedDay) box.style.border = "2px solid var(--accent)";
         }
         grid.appendChild(box);
     }
 }
 
 function selectDayFromCalendar(dayNum) { 
+    if (isMoreLessCalendarContext()) {
+        if (dayNum < 1) dayNum = 1;
+        if (dayNum > currentMoreLessDay) dayNum = currentMoreLessDay;
+
+        selectedMoreLessDay = dayNum;
+        closeCalendar();
+
+        const mlBadge = document.getElementById('mlMenuDailyBadge');
+        if (mlBadge) mlBadge.innerText = `DAILY #${dayNum}`;
+
+        const mlDailyToday = document.getElementById('mlStatDailyToday');
+        if (mlDailyToday) {
+            if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
+                const d = userStats.moreLessDaily[dayNum];
+                mlDailyToday.innerText = `${d.score}/${d.total || ML_DAILY_TOTAL_ROUNDS}`;
+                mlDailyToday.style.color = '#00ff66';
+            } else {
+                mlDailyToday.innerText = 'DO GRY';
+                mlDailyToday.style.color = '#f39c12';
+            }
+        }
+
+        loadMoreLessRanking(dayNum);
+        return;
+    }
+
     selectedDailyDay = dayNum; 
     updateDailyMenu(); 
     closeCalendar(); 
@@ -1760,7 +1811,7 @@ function selectDayFromCalendar(dayNum) {
     if (mlDailyToday) {
         if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
             const d = userStats.moreLessDaily[dayNum];
-            mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
+            mlDailyToday.innerText = `${d.score}/${d.total || ML_DAILY_TOTAL_ROUNDS}`;
             mlDailyToday.style.color = '#00ff66';
         } else {
             mlDailyToday.innerText = 'DO GRY';
@@ -2739,18 +2790,19 @@ const MORE_LESS_CATEGORIES = {
     }
 };
 
-// Generator sekwencji 12 rund dla Daily Mix
-function generateMixSequence() {
-    const clubCategories = ['attendance_avg', 'attendance_pct', 'attendance_total'];
-    const shuffledClub = [...clubCategories].sort(() => 0.5 - Math.random());
+const ML_DAILY_TOTAL_ROUNDS = 14;
 
+// Generator sekwencji 14 rund dla Daily Mix
+function generateMixSequence() {
     return [
         // Rundy 1 - 5: Punkty zawodników
         'player_points', 'player_points', 'player_points', 'player_points', 'player_points',
         // Rundy 6 - 10: Średnia biegowa
         'player_average', 'player_average', 'player_average', 'player_average', 'player_average',
-        // Rundy 11 - 12: Finał stadionowy
-        shuffledClub[0], shuffledClub[1]
+        // Rundy 11 - 12: Średnia frekwencja stadionowa
+        'attendance_avg', 'attendance_avg',
+        // Rundy 13 - 14: Procentowe zapełnienie stadionu
+        'attendance_pct', 'attendance_pct'
     ];
 }
 
@@ -2786,7 +2838,19 @@ function drawRandomItem(catId) {
 
 function getRiderPhoto(name) {
     const p = playersDB.find(x => x.name.toLowerCase() === name.toLowerCase());
-    return (p && p.image) ? `images/riders/${p.image}` : null;
+    return resolveRiderImageSrc(p);
+}
+
+function resolveRiderImageSrc(player) {
+    if (!player || !player.image) return null;
+
+    const rawImage = String(player.image).trim();
+    if (!rawImage) return null;
+
+    if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) return rawImage;
+    if (rawImage.startsWith('images/') || rawImage.startsWith('/images/')) return rawImage;
+
+    return `images/riders/${rawImage}`;
 }
 
 // ==============================================
@@ -2796,13 +2860,15 @@ function getRiderPhoto(name) {
 const ML_STAGES = [
     { id: 'player_points', name: 'Punkty w sezonie', icon: '🏍️' },
     { id: 'player_average', name: 'Średnia biegowa', icon: '📈' },
-    { id: 'attendance_mix', name: 'Frekwencja stadionów', icon: '🏟️' }
+    { id: 'attendance_avg', name: 'Średnia frekwencja', icon: '🏟️' },
+    { id: 'attendance_pct', name: 'Procent zapełnienia', icon: '📊' }
 ];
 
 function getCurrentStageIndex() {
     if (mlGame.currentRoundIndex < 5) return 0;
     if (mlGame.currentRoundIndex < 10) return 1;
-    return 2;
+    if (mlGame.currentRoundIndex < 12) return 2;
+    return 3;
 }
 
 function renderCategoryTracker() {
@@ -2875,7 +2941,7 @@ function showCategoryTransition(callback) {
 // ====== RUNDY & STEROWANIE GRĄ ================
 // ==============================================
 
-// Generator 12 rund deterministycznych dla More/Less Daily
+// Generator 14 rund deterministycznych dla More/Less Daily
 function generateDailyMoreLessRounds(dayNumber) {
     let seed = Number(dayNumber) || 1;
     function prng() {
@@ -2883,20 +2949,15 @@ function generateDailyMoreLessRounds(dayNumber) {
         return seed / 233280;
     }
 
-    const clubCategories = ['attendance_avg', 'attendance_pct', 'attendance_total'];
-    const c1 = clubCategories[Math.floor(prng() * clubCategories.length)];
-    let c2 = clubCategories[Math.floor(prng() * clubCategories.length)];
-    if (c2 === c1) {
-        c2 = clubCategories.find(c => c !== c1) || 'attendance_total';
-    }
-
     const sequence = [
         // Rundy 1-5: Punkty
         'player_points', 'player_points', 'player_points', 'player_points', 'player_points',
         // Rundy 6-10: Średnia biegowa
         'player_average', 'player_average', 'player_average', 'player_average', 'player_average',
-        // Rundy 11-12: Stadiony
-        c1, c2
+        // Rundy 11-12: Średnia frekwencja stadionowa
+        'attendance_avg', 'attendance_avg',
+        // Rundy 13-14: Procentowe zapełnienie stadionu
+        'attendance_pct', 'attendance_pct'
     ];
 
     const usedKeys = new Set();
@@ -2964,14 +3025,15 @@ function startMoreLess(categoryMode = 'daily') {
     let precalculatedRounds = null;
 
     if (categoryMode === 'daily') {
-        const dayForMoreLess = selectedMoreLessDay || currentMoreLessDay;
+        const dayForMoreLess = Math.min(Math.max((selectedMoreLessDay || currentMoreLessDay), 1), currentMoreLessDay);
+        selectedMoreLessDay = dayForMoreLess;
         const generated = generateDailyMoreLessRounds(dayForMoreLess);
         sequence = generated.sequence;
         precalculatedRounds = generated.rounds;
     } else if (categoryMode === 'riders') {
         sequence = ['player_points', 'player_points', 'player_average', 'player_average', 'player_points'];
     } else if (categoryMode === 'attendance') {
-        sequence = ['attendance_avg', 'attendance_pct', 'attendance_total', 'attendance_avg'];
+        sequence = ['attendance_avg', 'attendance_avg', 'attendance_pct', 'attendance_pct'];
     } else {
         sequence = generateMixSequence();
     }
@@ -3183,13 +3245,13 @@ function handleMoreLessFinished() {
             titleEl.innerText = "KOMPLET PUNKTÓW!";
             titleEl.style.color = "var(--green-neon)";
         }
-    } else if (score >= 9) {
+    } else if (score >= Math.round(total * 0.72)) {
         if (emojiEl) emojiEl.innerText = "🔥";
         if (titleEl) {
             titleEl.innerText = "ŚWIETNY WYNIK!";
             titleEl.style.color = "var(--green-neon)";
         }
-    } else if (score >= 5) {
+    } else if (score >= Math.round(total * 0.45)) {
         if (emojiEl) emojiEl.innerText = "👏";
         if (titleEl) {
             titleEl.innerText = "DOBRY MECZ!";
@@ -3212,7 +3274,7 @@ function handleMoreLessFinished() {
     }
 }
 
-function saveMoreLessScore(score, total = 12, dayNumber = selectedMoreLessDay || currentMoreLessDay, isDaily = true) {
+function saveMoreLessScore(score, total = ML_DAILY_TOTAL_ROUNDS, dayNumber = selectedMoreLessDay || currentMoreLessDay, isDaily = true) {
     ensureMoreLessStats();
     const ml = userStats.moreLess;
     ml.played = (ml.played || 0) + 1;
@@ -3312,6 +3374,8 @@ function openMoreLessMenu() {
         menu.style.display = 'flex';
 
         ensureMoreLessStats();
+        if (selectedMoreLessDay < 1) selectedMoreLessDay = 1;
+        if (selectedMoreLessDay > currentMoreLessDay) selectedMoreLessDay = currentMoreLessDay;
         const nickEl = document.getElementById('moreLessMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
@@ -3322,7 +3386,7 @@ function openMoreLessMenu() {
 
         const ml = userStats.moreLess;
         document.getElementById('mlStatPlayed').innerText = ml.played || 0;
-        document.getElementById('mlStatBest').innerText = `${ml.bestStreak || 0}/12`;
+        document.getElementById('mlStatBest').innerText = `${ml.bestStreak || 0}/${ML_DAILY_TOTAL_ROUNDS}`;
         
         const mlDailyToday = document.getElementById('mlStatDailyToday');
         if (mlDailyToday) {
@@ -3331,7 +3395,7 @@ function openMoreLessMenu() {
                 mlDailyToday.style.color = '#f39c12';
             } else if (userStats.moreLessDaily && userStats.moreLessDaily[currentDay]) {
                 const d = userStats.moreLessDaily[currentDay];
-                mlDailyToday.innerText = `${d.score}/${d.total || 12}`;
+                mlDailyToday.innerText = `${d.score}/${d.total || ML_DAILY_TOTAL_ROUNDS}`;
                 mlDailyToday.style.color = '#00ff66';
             } else {
                 mlDailyToday.innerText = 'DO GRY';
@@ -3390,7 +3454,7 @@ async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLe
                     <tr style="background: rgba(255,255,255,0.05);">
                         <td style="color:var(--accent); font-weight:900;">1</td>
                         <td style="text-align:left;">${safeNick}</td>
-                        <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || 12}</td>
+                        <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || ML_DAILY_TOTAL_ROUNDS}</td>
                     </tr>`;
                 return;
             }
@@ -3405,7 +3469,7 @@ async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLe
             const safeNick = escapeHTML(row.nick || "Gracz") + getMiniClubBadge(row.club);
             const isMe = (row.nick === playerNickname || doc.id === playerId) ? 'style="background: rgba(255,255,255,0.05);"' : '';
             const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
-            const totalVal = row.total || 12;
+            const totalVal = row.total || ML_DAILY_TOTAL_ROUNDS;
             tbody.innerHTML += `
                 <tr ${isMe}>
                     <td style="color:var(--accent); font-weight:900;">${pos}</td>
@@ -3422,7 +3486,7 @@ async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLe
                 <tr style="background: rgba(255,255,255,0.05);">
                     <td style="color:var(--accent); font-weight:900;">1</td>
                     <td style="text-align:left;">${safeNick}</td>
-                    <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || 12}</td>
+                    <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || ML_DAILY_TOTAL_ROUNDS}</td>
                 </tr>`;
             return;
         }
@@ -3778,7 +3842,7 @@ function revealTargetInfoUI(finalName) {
     const photoImg = document.getElementById('mysteryPhoto'); 
     const photoWrapper = document.getElementById('photoWrapper');
     
-    photoImg.src = target && target.image ? `images/riders/${target.image}` : `images/riders/image_0.png`; 
+    photoImg.src = resolveRiderImageSrc(target) || `images/riders/image_0.png`;
     photoImg.style.display = 'block';
     photoWrapper.classList.add('revealed'); 
 
@@ -4022,7 +4086,7 @@ function revealTargetInfoUI(finalName) {
     const photoImg = document.getElementById('mysteryPhoto'); 
     const photoWrapper = document.getElementById('photoWrapper');
     
-    photoImg.src = target && target.image ? `images/riders/${target.image}` : `images/riders/image_0.png`; 
+    photoImg.src = resolveRiderImageSrc(target) || `images/riders/image_0.png`;
     photoImg.style.display = 'block';
     photoWrapper.classList.add('revealed'); 
 
@@ -7040,11 +7104,19 @@ window.openProfile = function() {
     document.getElementById('profileAvatarEdit').src = userStats.avatarUrl || defAvatar;
     const avOver = document.getElementById('profileAvatarOverview');
     const avEdit = document.getElementById('profileAvatarEdit');
-    [avOver, avEdit].forEach(avatar => {
+    const resolveAvatarFrameClass = (helmetId) => {
+        if (helmetId === 'helmet-swieta') return 'avatar-frame-swieta';
+        if (helmetId === 'helmet-halloween') return 'avatar-frame-halloween';
+        if (helmetId === 'helmet-retro') return 'avatar-frame-retro';
+        if (helmetId === 'helmet-zloty') return 'avatar-frame-zloty';
+        return null;
+    };
+
+    [avOver, avEdit].forEach((avatar) => {
         if (!avatar) return;
-        avatar.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween');
-        if (userStats.equippedHelmet === 'helmet-swieta') avatar.classList.add('avatar-frame-swieta');
-        else if (userStats.equippedHelmet === 'helmet-halloween') avatar.classList.add('avatar-frame-halloween');
+        avatar.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween', 'avatar-frame-retro', 'avatar-frame-zloty');
+        const frameClass = resolveAvatarFrameClass(userStats.equippedHelmet);
+        if (frameClass) avatar.classList.add(frameClass);
     });
 
     // Nick + Poziom z efektami ze sklepu
@@ -7383,10 +7455,22 @@ window.switchShopTab = function(tab) {
         let customBgClass = tab === 'backgrounds' ? item.id : '';
         let itemName = item.nameKey ? t(item.nameKey) : item.name;
         let itemDesc = item.descKey ? t(item.descKey) : item.desc;
+        const isFrameTab = tab === 'frames' || tab === 'helmets';
+
+        let framePreviewClass = '';
+        if (item.id === 'helmet-swieta') framePreviewClass = 'avatar-frame-swieta';
+        else if (item.id === 'helmet-halloween') framePreviewClass = 'avatar-frame-halloween';
+        else if (item.id === 'helmet-retro') framePreviewClass = 'avatar-frame-retro';
+        else if (item.id === 'helmet-zloty') framePreviewClass = 'avatar-frame-zloty';
+
+        const framePreviewHtml = isFrameTab
+            ? `<div class="shop-frame-preview"><div class="shop-frame-preview-avatar ${framePreviewClass}">👤</div></div>`
+            : '';
 
         container.innerHTML += `
-            <div class="shop-item-card ${customBgClass}" style="border-left: none !important;">
-                <div style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+            <div class="shop-item-card ${customBgClass} ${isFrameTab ? 'shop-frame-card' : ''}" style="border-left: none !important;">
+                <div class="shop-item-info-wrap" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
+                    ${framePreviewHtml}
                     <div class="shop-item-title ${customStyleClass}" style="color: #fff;">${itemName}</div>
                     <div style="font-size:10px; color:rgba(255,255,255,0.7); font-weight:700;">${itemDesc}</div>
                 </div>
@@ -7469,6 +7553,15 @@ async function openPublicProfile(uid, clickedNick = "Gracz") {
 
             // Awatar (Bierze najpierw z roota, potem ze statystyk, na końcu domyślny)
             document.getElementById('pubAvatar').src = data.avatarUrl || parsedStats.avatarUrl || defAvatar;
+
+            const pubAvatar = document.getElementById('pubAvatar');
+            if (pubAvatar) {
+                pubAvatar.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween', 'avatar-frame-retro', 'avatar-frame-zloty');
+                if (parsedStats.equippedHelmet === 'helmet-swieta') pubAvatar.classList.add('avatar-frame-swieta');
+                else if (parsedStats.equippedHelmet === 'helmet-halloween') pubAvatar.classList.add('avatar-frame-halloween');
+                else if (parsedStats.equippedHelmet === 'helmet-retro') pubAvatar.classList.add('avatar-frame-retro');
+                else if (parsedStats.equippedHelmet === 'helmet-zloty') pubAvatar.classList.add('avatar-frame-zloty');
+            }
             
             // Szukamy najlepszego nicku (Z roota, ze statsów, a jak nie ma, to ten z tabeli)
             let pNick = data.displayName || parsedStats.nickname || clickedNick;
@@ -7557,8 +7650,8 @@ function toggleMobileDailyAccordion() {
 // GLOBALNE FUNKCJE DLA HTML-A (ZABEZPIECZENIE)
 // ----------------------------------------
 try {
-    window.openProfile = openProfile;
-    window.closeProfile = closeProfile;
+    window.openProfile = window.openProfile || openProfile;
+    window.closeProfile = window.closeProfile || closeProfile;
     window.openRanking = openRanking;
     window.closeRanking = closeRanking;
     window.openSettings = openSettings;
