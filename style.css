@@ -2902,6 +2902,28 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     box-shadow: inset 0 0 20px rgba(255, 204, 0, 0.2) !important;
 }
 
+/* Parnitskyi w tabelach rankingu: większe logo, przesunięte w wolne miejsce (nie zasłania nicku i wyników) */
+.ranking-table tbody tr.rank-bg-parnitskyi {
+    background-image:
+        linear-gradient(90deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 32%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 85%, rgba(0,0,0,0.88) 100%),
+        url('images/np785.png') !important;
+    background-size: 100% 100%, auto 90% !important;
+    background-position: center, 46% center !important;
+}
+.ranking-table tbody tr.rank-bg-parnitskyi td { padding-top: 11px !important; padding-bottom: 11px !important; }
+@media (max-width: 768px) {
+    .ranking-table tbody tr.rank-bg-parnitskyi td { padding-top: 9px !important; padding-bottom: 9px !important; }
+}
+
+/* Klub pod nickiem, ranga pod ELO (tabele rankingów) */
+.rank-club-sub { display: block; font-size: 10px; font-weight: 600; color: var(--text-dim); line-height: 1.25; margin-top: 2px; text-transform: none; }
+.rank-sub { display: block; font-size: 10px; font-weight: 700; color: var(--text-dim); line-height: 1.25; margin-top: 2px; letter-spacing: 0.3px; }
+.ranking-table tbody tr[class*="rank-bg-"] .rank-club-sub,
+.ranking-table tbody tr[class*="rank-bg-"] .rank-sub { color: rgba(255, 255, 255, 0.82); }
+
+/* Bez domyślnej 2px przerwy między komórkami - przez nią tło wiersza było przecinane pionowymi liniami */
+.ranking-table { border-spacing: 0; }
+
 /* ============================================== */
 /* ====== PRZYCISKI MENU PIONOWE/POZIOME ======== */
 /* ============================================== */

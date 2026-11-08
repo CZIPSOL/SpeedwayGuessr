@@ -1306,6 +1306,12 @@ function getMiniClubBadge(clubName) {
 }
 
 
+// Klub gracza w tabelach rankingu: w osobnej linii pod nickiem (nie zasłania tła i nie ściska kolumn)
+function getClubSubline(clubName) {
+    if (!clubName || clubName === "null" || clubName === "undefined") return '';
+    return `<span class="rank-club-sub">${escapeHTML(clubName)}</span>`;
+}
+
 // Ensure function is available from inline onclick handlers in HTML
 try { window.setLang = setLang; } catch (e) {}
 
@@ -2804,7 +2810,7 @@ async function loadGuessrSubRanking(type) {
             
             let rawNick = renderNick(row.nick || "Gracz");
             let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
-            safeNick += getMiniClubBadge(row.club); 
+            safeNick += getClubSubline(row.club); 
             let bgClass = rowBg(row);
             let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
 
@@ -3566,16 +3572,35 @@ async function fetchMoreLessRows(dayNum) {
     }
     const rows = [];
     snapshot.forEach(doc => { const d = doc.data(); d.uid = doc.id; rows.push(d); });
+    // wpisy More/Less nie niosą tła/efektu nicku - dociągamy je z rankingu ogólnego (jedno zapytanie na 10 graczy)
+    const cos = await fetchCosmeticsForUids(rows.map(r => r.uid));
+    rows.forEach(r => { if (cos[r.uid]) { r.bg = cos[r.uid].bg; r.nickEffect = cos[r.uid].nickEffect; } });
     return rows;
+}
+
+async function fetchCosmeticsForUids(uids) {
+    const map = {};
+    const ids = [...new Set(uids.filter(Boolean))];
+    const col = db.collection("leaderboard_alltime").doc("global").collection("scores");
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
+    await Promise.all(chunks.map(async (chunk) => {
+        try {
+            const snap = await col.where(firebase.firestore.FieldPath.documentId(), 'in', chunk).get();
+            snap.forEach(d => { const v = d.data(); map[d.id] = { bg: v.bg || null, nickEffect: v.nickEffect || null }; });
+        } catch (e) { console.warn('Nie udało się pobrać wyglądu graczy:', e && (e.code || e.message)); }
+    }));
+    return map;
 }
 
 function moreLessRowsHtml(rows) {
     return rows.map((row, i) => {
-        const nickHtml = renderNick(row.nick || "Gracz") + getMiniClubBadge(row.club);
-        const isMe = (row.uid === playerId) ? ' style="background: rgba(255,255,255,0.05);"' : '';
+        const rawNick = renderNick(row.nick || "Gracz");
+        const nickHtml = (rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick) + getClubSubline(row.club);
+        const isMe = (row.uid === playerId) ? ' style="background: rgba(255,255,255,0.05); cursor: pointer;"' : ' style="cursor: pointer;"';
         const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
         const totalVal = row.total || ML_DAILY_TOTAL_ROUNDS;
-        return `<tr${isMe}><td style="color:var(--accent); font-weight:900;">${i + 1}</td><td style="text-align:left;">${nickHtml}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${escapeHTML(scoreVal)}/${escapeHTML(totalVal)}</td></tr>`;
+        return `<tr class="${rowBg(row)}"${isMe} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}"><td style="color:var(--accent); font-weight:900;">${i + 1}</td><td style="text-align:left;">${nickHtml}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${escapeHTML(scoreVal)}/${escapeHTML(totalVal)}</td></tr>`;
     }).join('');
 }
 
@@ -3597,7 +3622,7 @@ async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLe
     const localFallback = () => {
         const myD = userStats.moreLessDaily && userStats.moreLessDaily[dayNum];
         if (!myD) return false;
-        const nickHtml = escapeHTML(playerNickname || "Gracz") + getMiniClubBadge(userStats.favoriteClub);
+        const nickHtml = escapeHTML(playerNickname || "Gracz") + getClubSubline(userStats.favoriteClub);
         tbody.innerHTML = `<tr style="background: rgba(255,255,255,0.05);"><td style="color:var(--accent); font-weight:900;">1</td><td style="text-align:left;">${nickHtml}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || ML_DAILY_TOTAL_ROUNDS}</td></tr>`;
         return true;
     };
@@ -3689,7 +3714,7 @@ async function loadTimeAttackRanking() {
     
     try {
         let snapshot = await db.collection("leaderboard_timeattack").orderBy("score", "desc").limit(50).get();
-        let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+        let scores = []; snapshot.forEach(doc => { const d = doc.data(); d.uid = doc.id; scores.push(d); });
         
         tbody.innerHTML = '';
         if (scores.length === 0) { 
@@ -3699,13 +3724,15 @@ async function loadTimeAttackRanking() {
 
         let pos = 1;
         scores.forEach((row) => {
-            let safeNick = renderNick(row.nick || "Gracz");
-            let isMe = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            let rawNick = renderNick(row.nick || "Gracz");
+            let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
+            safeNick += getClubSubline(row.club);
+            let isMe = isMyRankingRow(row) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
             
             let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
             
             tbody.insertAdjacentHTML('beforeend', `
-                <tr ${isMe}>
+                <tr class="${rowBg(row)}" ${isMe} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}">
                     <td class="${rankClass}" style="font-weight:900;">${pos}</td>
                     <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
                     <td style="color:#feca57; font-weight:900;">${escapeHTML(row.score)}</td>
@@ -4393,21 +4420,21 @@ async function loadDesktopRanking(type) {
             return;
         }
         if (type === 'league') {
-            thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
+            thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:60%;">${t('colNick')}</th><th style="width:25%;">ELO</th></tr>`;
             
             let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
             let scores = []; snapshot.forEach(doc => { let d = doc.data(); d.uid = doc.id; scores.push(d); });
             scores = scores.filter(row => (row.matchesPlayed || 0) >= 5).slice(0, 20);
 
             tbody.innerHTML = '';
-            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników</td></tr>`; return; }
+            if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Brak wyników</td></tr>`; return; }
 
             let pos = 1;
             scores.forEach((row) => {
                 let rawNick = renderNick(row.nick || t('defaultPlayer'));
                 let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-                safeNick += getMiniClubBadge(row.club); 
+                safeNick += getClubSubline(row.club); 
                 
                 let bgClass = rowBg(row);
                 let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
@@ -4416,8 +4443,7 @@ async function loadDesktopRanking(type) {
                     <tr class="${bgClass}" ${isMeStyle} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}">
                         <td style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td style="text-align:left;">${safeNick}</td>
-                        <td style="font-size:10px;">${rangaText}</td>
-                        <td style="color:#3399ff;">${escapeHTML(row.elo)}</td>
+                        <td style="color:#3399ff;">${escapeHTML(row.elo)}<span class="rank-sub">${rangaText}</span></td>
                     </tr>`);
                 pos++;
             });
@@ -4434,7 +4460,7 @@ async function loadDesktopRanking(type) {
             scores.forEach((row) => {
                 let rawNick = renderNick(row.nick || t('defaultPlayer'));
                 let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
-                safeNick += getMiniClubBadge(row.club); 
+                safeNick += getClubSubline(row.club); 
                 
                 let bgClass = rowBg(row);
                 let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
@@ -4476,7 +4502,7 @@ async function loadDesktopRanking(type) {
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : escapeHTML(winsAmount)}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 let rawNick = renderNick(row.nick || t('defaultPlayer'));
                 let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
-                safeNick += getMiniClubBadge(row.club); 
+                safeNick += getClubSubline(row.club); 
                 
                 let bgClass = rowBg(row);
                 let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
@@ -4562,7 +4588,7 @@ async function loadRanking(type) {
                 else if (currentRankPosition === 2) rankClass = "rank-2"; 
                 else if (currentRankPosition === 3) rankClass = "rank-3";
                 
-                safeRenderNick += getMiniClubBadge(row.club); 
+                safeRenderNick += getClubSubline(row.club); 
                 
                 let bgClass = rowBg(row);
                 let isMeStyle = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
@@ -4592,7 +4618,7 @@ async function loadRanking(type) {
                 let myRankClass = getRankClass(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let myRankImg = getLeagueImageTag(myPersonalScore.elo, myPersonalScore.matchesPlayed, 18);
                 let mySafeNick = typeof escapeHTML === 'function' ? renderNick(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
-                mySafeNick += getMiniClubBadge(myPersonalScore.club);
+                mySafeNick += getClubSubline(myPersonalScore.club);
                 let myBgClass = rowBg(myPersonalScore);
                 
                 tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`);
@@ -4663,7 +4689,7 @@ async function loadRanking(type) {
             let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? t('yes') : escapeHTML(winsAmount)}</span>` : `<span class="rank-lost">${type === 'daily' ? t('no') : '0'}</span>`;
             
             let safeRenderNick = typeof escapeHTML === 'function' ? renderNick(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-            safeRenderNick += getMiniClubBadge(row.club); 
+            safeRenderNick += getClubSubline(row.club); 
             
             let bgClass = rowBg(row);
             let isMeStyle = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
@@ -4912,30 +4938,31 @@ async function loadClashRankingOnly() {
     const tbody = document.getElementById('desktopRankingBodyClash'); 
     if (!tbody) return;
     try {
-        let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(20).get();
-        let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
+        let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
+        let scores = []; snapshot.forEach(doc => { const d = doc.data(); d.uid = doc.id; scores.push(d); });
+        scores = scores.filter(row => !row.provisional && (row.matchesPlayed || 0) >= 5).slice(0, 20);
         
         tbody.innerHTML = '';
-        if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">Brak wyników. Zagraj pierwszy!</td></tr>`; return; }
+        if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Brak wyników. Zagraj pierwszy!</td></tr>`; return; }
 
         let pos = 1;
         scores.forEach((row) => {
-            if (row.provisional || row.matchesPlayed < 5) return; 
             let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-            let safeNick = renderNick(row.nick || "Gracz");
-            let isMe = sameNick(row.nick) ? 'style="color: var(--accent);"' : '';
+            let rawNick = renderNick(row.nick || "Gracz");
+            let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
+            safeNick += getClubSubline(row.club);
+            let isMe = isMyRankingRow(row) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
             
             tbody.insertAdjacentHTML('beforeend', `
-                <tr ${isMe}>
+                <tr class="${rowBg(row)}" ${isMe} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}">
                     <td style="color:var(--accent); font-weight:900;">${pos}</td>
-                    <td>${safeNick}</td>
-                    <td style="font-size:10px;">${rangaText}</td>
-                    <td style="color:#3399ff;">${escapeHTML(row.elo)}</td>
+                    <td style="text-align:left;">${safeNick}</td>
+                    <td style="color:#3399ff;">${escapeHTML(row.elo)}<span class="rank-sub">${rangaText}</span></td>
                 </tr>`);
             pos++;
         });
     } catch (e) { 
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:red;">Błąd bazy danych.</td></tr>`; 
     }
 }
 
