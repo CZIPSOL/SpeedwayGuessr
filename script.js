@@ -165,7 +165,7 @@ let userStats = {
     clashHistory: [] 
 };
 
-let playerNickname = localStorage.getItem('speedwayNickname') || null;
+let playerNickname = normalizeStoredNick(localStorage.getItem('speedwayNickname')) || null;
 window.hasUpdatedLeague = false; 
 
 let playerId = localStorage.getItem('speedwayUserId');
@@ -379,7 +379,7 @@ const stadiumBackgrounds = [
     'url("images/stadiony/zg.png")',
     'url("images/stadiony/poznan.png")',
     'url("images/stadiony/bydgoszcz.png")',
-    'url("images/stadiony/mureck.png")',
+    'url("images/stadiony/Mureck.png")',
     'url("images/stadiony/zarnovica.png")',
     'url("images/stadiony/pocking.png")',
     'url("images/stadiony/lublin.png")',
@@ -423,12 +423,14 @@ function checkUnseenUpdates() {
     // Szukamy kropek powiadomień w różnych miejscach (Mobile, Gra, PC)
     const badgeMobile = document.getElementById('updateBadge'); 
     const badgeGame = document.getElementById('updateBadgeGame');
+    const badgeGame2 = document.getElementById('updateBadgeGame2');
     const badgeDesktop = document.getElementById('updateBadgeDesktop');
     
     const isUnseen = lastSeen !== CURRENT_GAME_VERSION;
     
     if (badgeMobile) badgeMobile.style.display = isUnseen ? 'block' : 'none';
     if (badgeGame) badgeGame.style.display = isUnseen ? 'block' : 'none';
+    if (badgeGame2) badgeGame2.style.display = isUnseen ? 'block' : 'none';
     if (badgeDesktop) badgeDesktop.style.display = isUnseen ? 'inline-block' : 'none';
 }
 
@@ -484,7 +486,7 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
         playerId = user.uid;
         if (!playerNickname || playerNickname.startsWith('guest_') || playerNickname === "GoogleUser") {
-            playerNickname = user.displayName || "Gracz";
+            playerNickname = sanitizeNickInput(user.displayName || "Gracz").slice(0, 12) || "Gracz";
             localStorage.setItem('speedwayNickname', playerNickname);
         }
         localStorage.setItem('speedwayUserId', playerId);
@@ -569,6 +571,21 @@ function updateAuthUI(user) {
     }
 }
 
+// Nagrody z giveawayów Discorda trzymane są po stronie serwera (kolekcja giveaway_rewards) - odbieramy różnicę
+async function claimGiveawayCoins() {
+    try {
+        const res = await functions.httpsCallable('getGiveawayCoins')({});
+        const total = Number(res && res.data && res.data.total) || 0;
+        const claimed = Number(userStats.giveawayCoinsClaimed) || 0;
+        if (total > claimed) {
+            const gained = total - claimed;
+            userStats.coins = (Number(userStats.coins) || 0) + gained;
+            userStats.giveawayCoinsClaimed = total;
+            showToast(`Nagroda z Discorda: +${gained} 🪙`, "success");
+        }
+    } catch (e) { console.warn('Giveaway coins:', e && e.message); }
+}
+
 async function syncStatsFromFirebase() {
     if (!auth.currentUser) return;
     try {
@@ -579,7 +596,13 @@ async function syncStatsFromFirebase() {
             // Scalenie statystyk
             if (data.stats) {
                 let cloudStats = JSON.parse(data.stats);
-                userStats = { ...userStats, ...cloudStats };
+                const merged = { ...userStats, ...cloudStats };
+                // postęp zagnieżdżony scalamy, żeby chmura nie kasowała lokalnych dni
+                ['dailyResults', 'dailyGuesses', 'moreLessDaily'].forEach(k => {
+                    const a = userStats[k], b = cloudStats[k];
+                    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) merged[k] = { ...a, ...b };
+                });
+                userStats = merged;
             }
             
             // Pobranie danych zapisanych luźno w Firebase (Root)
@@ -593,6 +616,7 @@ async function syncStatsFromFirebase() {
 
             ensureLeagueStats(userStats);
             ensureProgressionStats();
+            await claimGiveawayCoins();
             localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
             updateLeagueUI();
             updateDiscordButtonUI();
@@ -639,24 +663,15 @@ function applyMatchmakingBan(reasonText) {
     }, 1000);
 }
 
-function getLeagueRankName(elo, matchesPlayed) {
-    if (matchesPlayed < 5) return `KALIBRACJA (${matchesPlayed}/5)`;
-    if (elo < 900) return 'BRĄZ';
-    if (elo < 1100) return 'SREBRO';
-    if (elo < 1300) return 'ZŁOTO';
-    if (elo < 1500) return 'PLATYNA';
-    if (elo < 1700) return 'DIAMENT';
-    return 'LEGENDA';
-}
-
 function getLeagueBadgeColor(elo, matchesPlayed) {
+    // progi zgodne z getLeagueRankName
     if (matchesPlayed < 5) return 'var(--text-dim)';
-    if (elo < 900) return '#b87333';
-    if (elo < 1050) return '#d8d8d8';
-    if (elo < 1200) return '#f1c40f';
-    if (elo < 1350) return '#9ad7ff';
-    if (elo < 1500) return '#6fffe9';
-    return '#ff5fd7';
+    if (elo <= 475) return '#b87333';   // BRĄZ
+    if (elo <= 950) return '#d8d8d8';   // SREBRO
+    if (elo <= 1500) return '#f1c40f';  // ZŁOTO
+    if (elo <= 2750) return '#2ecc71';  // SZMARAGD
+    if (elo <= 4000) return '#9ad7ff';  // DIAMENT
+    return '#ff5fd7';                   // LEGENDA
 }
 
 function getLeagueDisplayText() {
@@ -664,7 +679,21 @@ function getLeagueDisplayText() {
     return `${getLeagueRankName(league.elo, league.matchesPlayed)} • ELO ${Math.round(league.elo)} • ${league.matchesPlayed} MECZ/Y`;
 }
 
-async function syncStatsToFirebase() {
+var _syncStatsTimer = null;
+// Zapis do chmury z opóźnieniem (debounce) - wcześniej leciał przy każdym zgadnięciu
+function syncStatsToFirebase(immediate = false) {
+    clearTimeout(_syncStatsTimer);
+    if (immediate) { _syncStatsTimer = null; return _syncStatsToFirebaseNow(); }
+    _syncStatsTimer = setTimeout(() => { _syncStatsTimer = null; _syncStatsToFirebaseNow(); }, 2500);
+    return Promise.resolve();
+}
+function _flushStatsSync() {
+    if (_syncStatsTimer) { clearTimeout(_syncStatsTimer); _syncStatsTimer = null; _syncStatsToFirebaseNow(); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _flushStatsSync(); });
+window.addEventListener('pagehide', _flushStatsSync);
+
+async function _syncStatsToFirebaseNow() {
     // Ranking ELO wysyłamy ZAWSZE (nawet jako Gość)
     await syncLeagueScoreToFirebase();
 
@@ -693,7 +722,11 @@ function startDiscordLinking() {
     let currentUrl = window.location.origin + "/";
     let dynamicRedirectUri = encodeURIComponent(currentUrl);
     
-    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID_FRONTEND}&redirect_uri=${dynamicRedirectUri}&response_type=code&scope=identify`;
+    // parametr state chroni przed podstawieniem cudzego kodu OAuth (CSRF)
+    const stateBytes = new Uint8Array(16); crypto.getRandomValues(stateBytes);
+    const oauthState = Array.from(stateBytes, b => b.toString(16).padStart(2, '0')).join('');
+    sessionStorage.setItem('discordOAuthState', oauthState);
+    const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID_FRONTEND}&redirect_uri=${dynamicRedirectUri}&response_type=code&scope=identify&state=${oauthState}`;
     window.location.href = authUrl; 
 }
 
@@ -704,7 +737,7 @@ function updateDiscordButtonUI() {
 
     if (userStats.discordUsername) {
         // Jeśli konto połączone
-        btn.innerHTML = `<span style="font-size: 18px;">✅</span> POŁĄCZONO: ${userStats.discordUsername}`;
+        btn.innerHTML = `<span style="font-size: 18px;">✅</span> POŁĄCZONO: ${escapeHTML(userStats.discordUsername)}`;
         btn.style.background = "rgba(46, 204, 113, 0.15)"; 
         btn.style.border = "1px solid #2ecc71";
         btn.style.color = "#2ecc71";
@@ -732,7 +765,16 @@ async function handleDiscordCallback(savedCode = null) {
             return;
         }
 
+        if (window._discordCallbackHandled) return;
+        window._discordCallbackHandled = true;
+        const returnedState = urlParams.get('state');
+        const expectedState = sessionStorage.getItem('discordOAuthState');
+        sessionStorage.removeItem('discordOAuthState');
         window.history.replaceState({}, document.title, window.location.pathname);
+        if (!expectedState || returnedState !== expectedState) {
+            appAlert("Nieprawidłowy parametr bezpieczeństwa (state). Spróbuj połączyć konto Discord jeszcze raz.", "Błąd bezpieczeństwa");
+            return;
+        }
         showToast("Łączenie z kontem Discord... ⏳", "normal");
 
         try {
@@ -740,10 +782,6 @@ async function handleDiscordCallback(savedCode = null) {
             const idToken = await auth.currentUser.getIdToken(true);
             const currentUrl = window.location.origin + "/"; 
 
-            console.log("=== DIAGNOSTYKA WYSYŁKI ===");
-            console.log("KOD:", code);
-            console.log("URL:", currentUrl);
-            console.log("TOKEN:", idToken ? "Wygenerowany poprawnie!" : "BRAK TOKENA!");
 
             // Jeśli przeglądarka zawiodła i nie wygenerowała tokena - blokujemy wysyłkę
             if (!idToken) {
@@ -843,7 +881,7 @@ function saveFavoriteClub(clubName) {
     
     // Aktualizujemy wyświetlacz w profilu i na karcie w Clashu na żywo
     const currentClubDisplay = document.getElementById('currentClubDisplay');
-    if (currentClubDisplay) currentClubDisplay.innerHTML = clubName ? `KLUB: <b>${clubName}</b>` : "WYBIERZ KLUB 🛡️";
+    if (currentClubDisplay) currentClubDisplay.innerHTML = clubName ? `KLUB: <b>${escapeHTML(clubName)}</b>` : "WYBIERZ KLUB 🛡️";
     
     const clashMenuNick = document.getElementById('clashMenuNick');
     if (clashMenuNick) clashMenuNick.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(clubName);
@@ -1072,6 +1110,32 @@ function escapeHTML(str) {
     );
 }
 
+// --- Pomocnicze: bezpieczne wyświetlanie danych z bazy ---
+function unescapeHTMLEntities(str) {
+    return String(str).replace(/&(amp|lt|gt|quot|#39);/g, m => ({ '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" }[m]));
+}
+// Nicki zapisane w starszych wersjach były HTML-escapowane (czasem wielokrotnie) - sprowadzamy je do postaci surowej.
+function normalizeStoredNick(str) {
+    if (str === null || str === undefined) return str;
+    let s = String(str);
+    for (let i = 0; i < 3; i++) {
+        const next = unescapeHTMLEntities(s);
+        if (next === s) break;
+        s = next;
+    }
+    return s;
+}
+function renderNick(str) { return escapeHTML(normalizeStoredNick(str)); }
+function sameNick(storedNick) {
+    if (!storedNick || !playerNickname) return false;
+    return normalizeStoredNick(storedNick) === playerNickname;
+}
+function sanitizeNickInput(str) {
+    return String(str).replace(/\s+/g, ' ').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+}
+// Klasy CSS pochodzące z bazy wpuszczamy tylko jeśli wyglądają jak zwykła nazwa klasy
+function safeClass(v) { return (typeof v === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(v)) ? v : ''; }
+
 const nativeAlert = window.alert ? window.alert.bind(window) : null;
 
 function showAppModal({ title = "Komunikat", message = "", confirmText = "OK", cancelText = null, danger = false } = {}) {
@@ -1131,9 +1195,12 @@ try {
 
 async function isNickTaken(nickToCheck) {
     try {
-        const snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").where("nick", "==", nickToCheck).get();
+        const col = db.collection("leaderboard_alltime").doc("global").collection("scores");
+        // stare wpisy mogły zostać zapisane jako HTML-escaped, więc sprawdzamy oba warianty
+        const variants = [...new Set([nickToCheck, escapeHTML(nickToCheck)])];
+        const snaps = await Promise.all(variants.map(v => col.where("nick", "==", v).get()));
         let taken = false;
-        snapshot.forEach(doc => { if (doc.id !== playerId) taken = true; });
+        snaps.forEach(s => s.forEach(doc => { if (doc.id !== playerId) taken = true; }));
         return taken;
     } catch (e) { console.error("Błąd weryfikacji:", e); return false; }
 }
@@ -1153,7 +1220,7 @@ async function saveNick() {
     if (input.length < 3) { alert("Nick musi mieć minimum 3 znaki!"); return; }
     if (!isNickClean(input)) { alert("Ten nick narusza zasady. Wybierz inny."); document.getElementById('nickInput').value = ""; return; }
 
-    let safeInput = escapeHTML(input); 
+    let safeInput = sanitizeNickInput(input); 
     const btn = document.querySelector('#nickOverlay .btn-reset');
     const originalText = btn.innerText; btn.innerText = "SPRAWDZANIE..."; btn.disabled = true;
 
@@ -1177,7 +1244,7 @@ async function changeNickname() {
     if (newNick.length < 3) { alert("Nick musi mieć minimum 3 znaki!"); return; }
     if (!isNickClean(newNick)) { alert("Ten nick narusza zasady. Wybierz inny."); inputEl.value = playerNickname || ""; return; }
 
-    let safeInput = escapeHTML(newNick); 
+    let safeInput = sanitizeNickInput(newNick); 
     const originalText = btn.innerText; btn.innerText = "⏳"; btn.disabled = true;
 
     const taken = await isNickTaken(safeInput);
@@ -1219,7 +1286,7 @@ function ensureClubStat(stats) {
 
 function getMiniClubBadge(clubName) {
     if (!clubName || clubName === "null" || clubName === "undefined") return '';
-    return ` <span style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: none;">(${clubName})</span>`;
+    return ` <span style="font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: none;">(${escapeHTML(clubName)})</span>`;
 }
 
 
@@ -1617,7 +1684,7 @@ function saveStats() {
 function getDailyDateString(dayNumber) {
     const startUTC = Date.UTC(DAILY_START_DATE.getFullYear(), DAILY_START_DATE.getMonth(), DAILY_START_DATE.getDate());
     const d = new Date(startUTC + (dayNumber - 1) * 24 * 60 * 60 * 1000);
-    return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
 }
 
 function getCurrentMonthStr() { const d = new Date(); return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0'); }
@@ -1858,7 +1925,7 @@ async function sendScoreToDatabase(isWin, attempts) {
     if (!playerNickname) return;
     try {
         const batch = db.batch(); const ts = firebase.firestore.FieldValue.serverTimestamp();
-        const safeNick = escapeHTML(playerNickname);
+        const safeNick = playerNickname; // surowy nick - escapowanie tylko przy renderowaniu
         const nickEffectToSave = userStats.equippedNick === 'default' ? null : userStats.equippedNick;
 
         const dailyRef = db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId);
@@ -1885,7 +1952,8 @@ async function syncLeagueScoreToFirebase() {
 
     const league = ensureLeagueStats(userStats).clashLeague;
     let eloToSend = Math.round(league.elo);
-    if (isNaN(eloToSend) || eloToSend === null || eloToSend < 0) eloToSend = 1000;
+    if (isNaN(eloToSend) || eloToSend === null) eloToSend = 1000;
+    if (eloToSend < 0) eloToSend = 0;
     if (eloToSend > 5000) eloToSend = 5000;
 
     try {
@@ -2097,6 +2165,7 @@ function renderClashEmotePanel() {
 function useHint() {
     if (hintActive) return;
     const target = _unlockTarget();
+    if (!target) return;
     hintActive = true; hintsUsedCount = 1;
     document.getElementById('btnHint').style.display = 'none'; 
     document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
@@ -2244,7 +2313,7 @@ function removePolishAccents(str) { const accents = 'ąćęłńóśźżĄĆĘŁ�
 
 function getCleanClubName(clubName) { 
     if (!clubName) return "";
-    return clubName.replace(" (W)", "").replace(" (G)", "").replace("[Zawieszenie]", "Zawieszenie").replace("[Aresztowanie]", "Aresztowanie").trim().toLowerCase(); 
+    return clubName.replace(/\s*[\(\[](?:W|G)[\)\]]/gi, "").replace("[Zawieszenie]", "Zawieszenie").replace("[Aresztowanie]", "Aresztowanie").trim().toLowerCase(); 
 }
 
 function getClubAbbr(clubName) { 
@@ -2258,11 +2327,16 @@ function getClubAbbr(clubName) {
 // NOWA FUNKCJA POMOCNICZA DO RENDEROWANIA (W) oraz (G)
 function getClubBadgeHTML(rawClubName) {
     if (!rawClubName) return "";
-    if (rawClubName.includes("(W)")) return '<div class="loan-badge">W</div>';
-    if (rawClubName.includes("(G)")) return '<div class="loan-badge">G</div>';
+    if (/[\(\[]W[\)\]]/i.test(rawClubName)) return '<div class="loan-badge">W</div>';
+    if (/[\(\[]G[\)\]]/i.test(rawClubName)) return '<div class="loan-badge">G</div>';
     return "";
 }
 
+// Delegowany klik w wiersz rankingu (zamiast inline onclick z danymi z bazy)
+document.addEventListener("click", function (e) {
+    const tr = e.target && e.target.closest ? e.target.closest('tr[data-uid]') : null;
+    if (tr) openPublicProfile(tr.dataset.uid, tr.dataset.nick || "Gracz");
+});
 document.addEventListener("click", function (e) { if (e.target.id !== "guessInput" && e.target.id !== "clashGuessInput" && e.target.id !== "timeAttackInput") closeAllLists(); });
 
 function closeAllLists() { let items = document.getElementsByClassName("autocomplete-items"); while (items.length > 0) items[0].parentNode.removeChild(items[0]); }
@@ -2681,22 +2755,22 @@ async function loadGuessrSubRanking(type) {
         scores.forEach((row, index) => {
             let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
             let wonText = winsAmount > 0 
-                ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : winsAmount}</span>` 
+                ? `<span style="color:var(--green-neon);">${type === 'daily' ? 'TAK' : escapeHTML(winsAmount)}</span>` 
                 : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
             
-            let rawNick = escapeHTML(row.nick || "Gracz");
-            let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+            let rawNick = renderNick(row.nick || "Gracz");
+            let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
             safeNick += getMiniClubBadge(row.club); 
-            let bgClass = row.bg ? row.bg : '';
-            let isMeStyle = (rawNick === playerNickname) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
+            let bgClass = safeClass(row.bg);
+            let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
 
-            tbody.innerHTML += `
-                <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
+            tbody.insertAdjacentHTML('beforeend', `
+                <tr class="${bgClass}" ${isMeStyle} data-uid="${escapeHTML(row.uid)}">
                     <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
                     <td style="text-align:left;">${safeNick}</td>
                     <td>${wonText}</td>
-                    <td style="color:var(--text-dim);">${row.guesses || '-'}</td>
-                </tr>`;
+                    <td style="color:var(--text-dim);">${escapeHTML(row.guesses || '-')}</td>
+                </tr>`);
         });
     } catch(e) {
         console.error("Błąd pobierania rankingu Guessr:", e);
@@ -3321,14 +3395,14 @@ function saveMoreLessScore(score, total = ML_DAILY_TOTAL_ROUNDS, dayNumber = sel
         };
 
         db.collection("rankings_moreless").doc(dayNumber.toString()).collection("scores").doc(playerId)
-            .set(payload, { merge: true }).catch(() => {});
+            .set(payload, { merge: true }).catch(e => console.warn('Zapis rankingu More/Less nieudany:', e && (e.code || e.message)));
 
         db.collection('leaderboard_moreless').doc(playerId)
             .set({
                 ...payload,
                 mode: 'daily',
                 bestScoreRatio: `${score}/${total}`
-            }, { merge: true }).catch(() => {});
+            }, { merge: true }).catch(e => console.warn('Zapis rankingu More/Less nieudany:', e && (e.code || e.message)));
     }
 }
 
@@ -3466,16 +3540,16 @@ async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLe
         let pos = 1;
         snapshot.forEach(doc => {
             const row = doc.data();
-            const safeNick = escapeHTML(row.nick || "Gracz") + getMiniClubBadge(row.club);
-            const isMe = (row.nick === playerNickname || doc.id === playerId) ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            const safeNick = renderNick(row.nick || "Gracz") + getMiniClubBadge(row.club);
+            const isMe = (sameNick(row.nick) || doc.id === playerId) ? 'style="background: rgba(255,255,255,0.05);"' : '';
             const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
             const totalVal = row.total || ML_DAILY_TOTAL_ROUNDS;
-            tbody.innerHTML += `
+            tbody.insertAdjacentHTML('beforeend', `
                 <tr ${isMe}>
                     <td style="color:var(--accent); font-weight:900;">${pos}</td>
                     <td style="text-align:left;">${safeNick}</td>
                     <td style="color:#00ff66; font-weight:900; text-align:center;">${scoreVal}/${totalVal}</td>
-                </tr>`;
+                </tr>`);
             pos++;
         });
     } catch(e) {
@@ -3566,17 +3640,17 @@ async function loadTimeAttackRanking() {
 
         let pos = 1;
         scores.forEach((row) => {
-            let safeNick = escapeHTML(row.nick || "Gracz");
-            let isMe = safeNick === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            let safeNick = renderNick(row.nick || "Gracz");
+            let isMe = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
             
-            tbody.innerHTML += `
+            tbody.insertAdjacentHTML('beforeend', `
                 <tr ${isMe}>
                     <td class="${rankClass}" style="font-weight:900;">${pos}</td>
                     <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
-                    <td style="color:#feca57; font-weight:900;">${row.score}</td>
-                </tr>`;
+                    <td style="color:#feca57; font-weight:900;">${escapeHTML(row.score)}</td>
+                </tr>`);
             pos++;
         });
     } catch (e) { 
@@ -3782,6 +3856,7 @@ async function makeGuess() {
     if (!guessedPlayerLocal || guessedPlayersNames.includes(guessedPlayerLocal?.name)) { triggerErrorShake(); return; }
     
     const target = _unlockTarget(); // Wyciągamy gracza na moment sprawdzenia
+    if (!target) { showToast("Błąd gry - odśwież stronę.", "error"); return; }
     const isWinningGuess = (target.id === guessedPlayerLocal.id);
 
     guessedPlayersNames.push(guessedPlayerLocal.name); 
@@ -3829,86 +3904,12 @@ async function giveUpGame() {
     if (!confirmed) return;
     
     const target = _unlockTarget();
+    if (!target) return;
     guessCount = GUESS_LIMIT; hintsUsedCount = 1; updateCounterDisplay(); updateStatsOnLoss(); handleLoss(target.name);
     document.getElementById('btnGiveUp').style.display = 'none';
 }
 
 
-function revealTargetInfoUI(finalName) {
-    let target = _unlockTarget();
-    if (!target && gameMode === 'daily') target = _generateDailyTarget(selectedDailyDay);
-
-    document.getElementById('mysteryPlaceholder').style.display = 'none'; 
-    const photoImg = document.getElementById('mysteryPhoto'); 
-    const photoWrapper = document.getElementById('photoWrapper');
-    
-    photoImg.src = resolveRiderImageSrc(target) || `images/riders/image_0.png`;
-    photoImg.style.display = 'block';
-    photoWrapper.classList.add('revealed'); 
-
-    // ---- LOGIKA PRAW AUTORSKICH ZDJĘCIA (COPYRIGHTS) ----
-    let cpEl = document.getElementById('photoCopyright');
-    if (!cpEl) {
-        cpEl = document.createElement('div');
-        cpEl.id = 'photoCopyright';
-        // Style wymuszające tekst pionowy od dołu do góry w rogu zdjęcia
-        cpEl.style.cssText = `
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            pointer-events: none;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            z-index: 10;
-        `;
-        photoWrapper.appendChild(cpEl);
-    }
-    
-    if (target && target.cp) {
-        cpEl.innerHTML = `&copy; ${target.cp}`;
-        cpEl.style.display = 'block';
-    } else {
-        cpEl.style.display = 'none';
-    }
-    // -----------------------------------------------------
-    
-    document.getElementById('mysteryName').innerText = finalName || (target ? target.name : "???");
-    
-    if (hasLost) document.getElementById('mysteryName').style.color = "var(--red-neon)";
-    
-    document.querySelectorAll('.path-box').forEach(box => {
-        if (!box.dataset.index || !target) return;
-        let trueClub = target.pastClubs[box.dataset.index]; 
-        let cleanC = getCleanClubName(trueClub).toLowerCase(); 
-        if (['brak klubu', 'brak', 'zawieszenie', 'kontuzja', 'koniec kariery', 'aresztowanie'].includes(cleanC)) { box.classList.add('club-special'); }
-        box.innerHTML = `<span>${getClubAbbr(trueClub)}</span>${getClubBadgeHTML(trueClub)}`; 
-        box.classList.add('found'); 
-        box.setAttribute('title', trueClub);
-    });
-    
-    const endBox = document.getElementById('pathBox-retired'); 
-    if (endBox) { 
-        endBox.innerText = '❌'; 
-        endBox.classList.add('found'); 
-        endBox.style.border = 'none'; 
-        endBox.style.background = 'transparent'; 
-    }
-}
-
-
-function useHint() {
-    if (hintActive) return;
-    const target = _unlockTarget();
-    hintActive = true; hintsUsedCount = 1;
-    document.getElementById('btnHint').style.display = 'none'; 
-    document.getElementById('mysteryName').innerText = _getSafeHint(target.name, guessCount);
-    showToast("Użyto podpowiedzi!", "success");
-}
 
 function revealClubsOnPath(guessedPlayer) {
     const target = _unlockTarget();
@@ -4324,7 +4325,7 @@ async function loadDesktopRanking(type) {
         if (type === 'league') {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
             
-            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(30).get();
+            let snapshot = await db.collection("leaderboard_clash_beta").orderBy("elo", "desc").limit(100).get();
             let scores = []; snapshot.forEach(doc => { let d = doc.data(); d.uid = doc.id; scores.push(d); });
             scores = scores.filter(row => (row.matchesPlayed || 0) >= 5).slice(0, 20);
 
@@ -4333,21 +4334,21 @@ async function loadDesktopRanking(type) {
 
             let pos = 1;
             scores.forEach((row) => {
-                let rawNick = escapeHTML(row.nick || t('defaultPlayer'));
-                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+                let rawNick = renderNick(row.nick || t('defaultPlayer'));
+                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
+                let bgClass = safeClass(row.bg);
+                let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
-                tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}', '${rawNick.replace(/'/g, "\\'")}')">
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="${bgClass}" ${isMeStyle} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}">
                         <td style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td style="font-size:10px;">${rangaText}</td>
-                        <td style="color:#3399ff;">${row.elo}</td>
-                    </tr>`;
+                        <td style="color:#3399ff;">${escapeHTML(row.elo)}</td>
+                    </tr>`);
                 pos++;
             });
 
@@ -4361,20 +4362,20 @@ async function loadDesktopRanking(type) {
 
             let pos = 1;
             scores.forEach((row) => {
-                let rawNick = escapeHTML(row.nick || t('defaultPlayer'));
-                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+                let rawNick = renderNick(row.nick || t('defaultPlayer'));
+                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (rawNick === playerNickname) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
+                let bgClass = safeClass(row.bg);
+                let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
-                tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}', '${rawNick.replace(/'/g, "\\'")}')">
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="${bgClass}" ${isMeStyle} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}">
                         <td class="${rankClass}" style="color:var(--accent); font-weight:900;">${pos}</td>
                         <td class="${rankClass}" style="text-align:left;">${safeNick}</td>
-                        <td style="color:#1dd1a1; font-weight:900; text-align: center;">${row.score}</td>
-                    </tr>`;
+                        <td style="color:#1dd1a1; font-weight:900; text-align: center;">${escapeHTML(row.score)}</td>
+                    </tr>`);
                 pos++;
             });
 
@@ -4402,21 +4403,21 @@ async function loadDesktopRanking(type) {
 
             scores.forEach((row, index) => {
                 let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
-                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
-                let rawNick = escapeHTML(row.nick || t('defaultPlayer'));
-                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${row.nickEffect}">${rawNick}</span>` : rawNick;
+                let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : escapeHTML(winsAmount)}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
+                let rawNick = renderNick(row.nick || t('defaultPlayer'));
+                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (rawNick === playerNickname) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
+                let bgClass = safeClass(row.bg);
+                let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
-                tbody.innerHTML += `
-                    <tr class="${bgClass}" ${isMeStyle} onclick="openPublicProfile('${row.uid}')">
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="${bgClass}" ${isMeStyle} data-uid="${escapeHTML(row.uid)}">
                         <td style="color:var(--accent); font-weight:900;">${index + 1}</td>
                         <td style="text-align:left;">${safeNick}</td>
                         <td>${wonText}</td>
-                        <td style="color:var(--text-dim);">${row.guesses}</td>
-                    </tr>`;
+                        <td style="color:var(--text-dim);">${escapeHTML(row.guesses)}</td>
+                    </tr>`);
             });
         }
     } catch (e) { 
@@ -4483,8 +4484,8 @@ async function loadRanking(type) {
             let currentRankPosition = 1;
 
             scores.forEach((row) => {
-                let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
-                if (safeRenderNick === playerNickname) myScoreFound = true; 
+                let safeRenderNick = typeof escapeHTML === 'function' ? renderNick(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+                if (sameNick(row.nick)) myScoreFound = true; 
 
                 let rankClass = ""; 
                 if (currentRankPosition === 1) rankClass = "rank-1"; 
@@ -4493,15 +4494,15 @@ async function loadRanking(type) {
                 
                 safeRenderNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = row.bg ? row.bg : '';
-                let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+                let bgClass = safeClass(row.bg);
+                let isMeStyle = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 let rangaColorClass = getRankClass(row.elo, row.matchesPlayed);
                 let rangaImg = getLeagueImageTag(row.elo, row.matchesPlayed, 18);
                 
                 if (tbody) { 
-                    tbody.innerHTML += `<tr class="${bgClass}" ${isMeStyle}>
+                    tbody.insertAdjacentHTML('beforeend', `<tr class="${bgClass}" ${isMeStyle}>
                         <td class="${rankClass}">${currentRankPosition}</td>
                         <td class="rank-nick ${rankClass}" style="text-align:left;">${safeRenderNick}</td>
                         <td style="font-size:10px; font-weight:900;" class="${rangaColorClass}">
@@ -4509,9 +4510,9 @@ async function loadRanking(type) {
                                 ${rangaImg} <span>${rangaText}</span>
                             </div>
                         </td>
-                        <td style="color:var(--text-dim); font-size:11px;">${row.matchesPlayed}</td>
-                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${row.elo}</td>
-                    </tr>`; 
+                        <td style="color:var(--text-dim); font-size:11px;">${escapeHTML(row.matchesPlayed)}</td>
+                        <td style="font-weight:900; color:var(--accent); font-size:14px;">${escapeHTML(row.elo)}</td>
+                    </tr>`); 
                 }
                 currentRankPosition++;
             });
@@ -4520,12 +4521,12 @@ async function loadRanking(type) {
                 let myRank = getLeagueRankName(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let myRankClass = getRankClass(myPersonalScore.elo, myPersonalScore.matchesPlayed);
                 let myRankImg = getLeagueImageTag(myPersonalScore.elo, myPersonalScore.matchesPlayed, 18);
-                let mySafeNick = typeof escapeHTML === 'function' ? escapeHTML(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
+                let mySafeNick = typeof escapeHTML === 'function' ? renderNick(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
-                let myBgClass = myPersonalScore.bg ? myPersonalScore.bg : '';
+                let myBgClass = safeClass(myPersonalScore.bg);
                 
-                tbody.innerHTML += `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`;
-                tbody.innerHTML += `
+                tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`);
+                tbody.insertAdjacentHTML('beforeend', `
                     <tr class="${myBgClass}" style="background: rgba(51, 153, 255, 0.1); border: 1px solid #3399ff;">
                         <td style="color:var(--accent); font-weight:900;">--</td>
                         <td class="rank-nick" style="text-align:left;">${mySafeNick} <span style="font-size: 8px; color: #3399ff;">(TY)</span></td>
@@ -4536,7 +4537,7 @@ async function loadRanking(type) {
                         </td>
                         <td style="color:var(--text-dim); font-size:11px;">${myPersonalScore.matchesPlayed}</td>
                         <td style="font-weight:900; color:var(--accent); font-size:14px;">${myPersonalScore.elo}</td>
-                    </tr>`;
+                    </tr>`);
             }
 
         } catch (e) { 
@@ -4589,21 +4590,21 @@ async function loadRanking(type) {
             else if (index === 2) rankClass = "rank-3";
             
             let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
-            let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? t('yes') : winsAmount}</span>` : `<span class="rank-lost">${type === 'daily' ? t('no') : '0'}</span>`;
+            let wonText = winsAmount > 0 ? `<span class="rank-won">${type === 'daily' ? t('yes') : escapeHTML(winsAmount)}</span>` : `<span class="rank-lost">${type === 'daily' ? t('no') : '0'}</span>`;
             
-            let safeRenderNick = typeof escapeHTML === 'function' ? escapeHTML(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
+            let safeRenderNick = typeof escapeHTML === 'function' ? renderNick(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
             safeRenderNick += getMiniClubBadge(row.club); 
             
-            let bgClass = row.bg ? row.bg : '';
-            let isMeStyle = (row.nick || t('defaultPlayer')) === playerNickname ? 'style="background: rgba(255,255,255,0.05);"' : '';
+            let bgClass = safeClass(row.bg);
+            let isMeStyle = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             if (tbody) { 
-                tbody.innerHTML += `<tr class="${bgClass}" ${isMeStyle}>
+                tbody.insertAdjacentHTML('beforeend', `<tr class="${bgClass}" ${isMeStyle}>
                     <td class="${rankClass}">${index + 1}</td>
                     <td class="rank-nick ${rankClass}" style="text-align:left;">${safeRenderNick}</td>
                     <td>${wonText}</td>
-                    <td>${row.guesses}</td>
-                </tr>`; 
+                    <td>${escapeHTML(row.guesses)}</td>
+                </tr>`); 
             }
         });
     } catch (e) { 
@@ -4650,6 +4651,8 @@ window.hasUpdatedLeague = false;
 // ==============================================
 
 function getLeagueRankName(elo, matchesPlayed) {
+    elo = Number.isFinite(Number(elo)) ? Number(elo) : 1000;
+    matchesPlayed = Number.isFinite(Number(matchesPlayed)) ? Number(matchesPlayed) : 5;
     if (matchesPlayed < 5) return `KALIBRACJA (${matchesPlayed}/5)`;
     if (elo <= 175) return 'BRĄZ 1';
     if (elo <= 250) return 'BRĄZ 2';
@@ -4783,115 +4786,6 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // --- POPRAWIONE WYŚWIETLANIE PLANSZY ---
-function updateClashBoardUI(data) {
-    const clashContainer = document.getElementById('clashContainer');
-    if (!clashContainer) return;
-
-    if (clashStatus !== 'viewing') {
-        setElementDisplay('mainMenuContainer', 'none');
-        setElementDisplay('gameContainer', 'none');
-        setElementDisplay('clashModeSelectContainer', 'none');
-        setElementDisplay('clashLobbyContainer', 'none');
-        setElementDisplay('clashLocalLobbyContainer', 'none');
-        setElementDisplay('clashContainer', 'block');
-    }
-    
-    closeClashSearch();
-    
-    // Bezpieczne sprawdzanie rozmiaru
-    let bSize = 3;
-    if (data.board && data.board.length) {
-        bSize = Math.sqrt(data.board.length);
-    } else if (data.boardSize) {
-        bSize = data.boardSize;
-    }
-    if (!Number.isInteger(bSize)) bSize = 3;
-
-    // Najpierw wymuszamy budowę gridu (zwraca true jeśli grid istnieje w DOM)
-    let isGridBuilt = buildDynamicClashGridHTML(bSize);
-    
-    if (!isGridBuilt) {
-        console.error("Critical error: Could not build Clash Grid HTML.");
-        return;
-    }
-
-    // Bezpieczne wstawianie klas (timeout chroni przed rozjechaniem się ramy z DOM rendererem)
-    setTimeout(() => {
-        for(let r = 0; r < bSize; r++) {
-            for(let c = 0; c < bSize; c++) {
-                let idx = r * bSize + c; 
-                let cell = document.getElementById(`cell-${r}-${c}`); 
-                
-                if (!cell) {
-                    console.warn(`Skrypt nie znalazł cell-${r}-${c}. Powtórne logowanie.`);
-                    continue; 
-                }
-                
-                let val = data.board[idx];
-                
-                if(val === 'red' || val === 'blue') { 
-                    cell.className = `clash-cell clash-playable claimed-${val}`; 
-                    let playerName = data.guessedPlayers[idx] || "Gracz";
-                    cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
-                } else { 
-                    cell.className = 'clash-cell clash-playable'; 
-                    cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>'; 
-                }
-            }
-        }
-
-        updateClashTurnUI();
-        
-        // Zaktualizuj nagłówki
-        for (let i = 0; i < bSize; i++) {
-            const colHeader = document.getElementById(`col${i}`);
-            if (colHeader && clashCols[i]) {
-                let headerHTML = `${getClubAbbr(clashCols[i])}`;
-                const consCountry = getConstraintCountry(data.constraints, i);
-                if (consCountry) {
-                    headerHTML += `<br><span style="color:var(--green-neon); font-size:9px;">[${consCountry}]</span>`;
-                }
-                colHeader.innerHTML = headerHTML;
-            }
-            const rowHeader = document.getElementById(`row${i}`);
-            if (rowHeader && clashRows[i]) {
-                rowHeader.innerHTML = `${getClubAbbr(clashRows[i])}`;
-            }
-        }
-
-        if (clashStatus === 'viewing' || clashStatus === 'summary') {
-            document.getElementById('clashTimerDisplay').innerText = "KONIEC MECZU";
-            document.getElementById('clashTimerDisplay').style.color = "var(--text-dim)";
-            if(clashTimerInterval) clearInterval(clashTimerInterval);
-            return; 
-        }
-
-        if(clashTurn === myClashColor || isLocalClash) { 
-            document.getElementById('clashTimerDisplay').style.color = '#00ff66'; 
-            if (isLocalClash || (window.lastTurnColor !== clashTurn)) {
-                playSound('flip');
-                window.lastTurnColor = clashTurn;
-            }
-        } else { 
-            document.getElementById('clashTimerDisplay').style.color = '#fff'; 
-        }
-
-        if(data.lastAction && data.lastAction !== '' && (data.turn === myClashColor || isLocalClash)) {
-            setTimeout(() => showToast(`Błąd rywala: ${data.lastAction}! Twoja kolej!`, "success"), 200);
-            if (isLocalClash) {
-                localClashData.lastAction = '';
-            } else {
-                db.collection("clash_rooms").doc(currentClashRoom).update({ lastAction: '' });
-            }
-        } else if (data.turn === myClashColor && clashStatus === 'playing' && window.lastTurnColor !== clashTurn) {
-            showToast("TWÓJ RUCH!", "normal");
-        }
-
-        startClashTimer(data.deadline);
-
-    }, 10); // Bardzo krótki timeout pozwala przeglądarce załadować nowo wygenerowany HTML do DOM.
-}
-
 function setElementDisplay(id, value) {
     const el = document.getElementById(id);
     if (el) el.style.display = value;
@@ -4958,16 +4852,16 @@ async function loadClashRankingOnly() {
         scores.forEach((row) => {
             if (row.provisional || row.matchesPlayed < 5) return; 
             let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
-            let safeNick = escapeHTML(row.nick || "Gracz");
-            let isMe = safeNick === playerNickname ? 'style="color: var(--accent);"' : '';
+            let safeNick = renderNick(row.nick || "Gracz");
+            let isMe = sameNick(row.nick) ? 'style="color: var(--accent);"' : '';
             
-            tbody.innerHTML += `
+            tbody.insertAdjacentHTML('beforeend', `
                 <tr ${isMe}>
                     <td style="color:var(--accent); font-weight:900;">${pos}</td>
                     <td>${safeNick}</td>
                     <td style="font-size:10px;">${rangaText}</td>
-                    <td style="color:#3399ff;">${row.elo}</td>
-                </tr>`;
+                    <td style="color:#3399ff;">${escapeHTML(row.elo)}</td>
+                </tr>`);
             pos++;
         });
     } catch (e) { 
@@ -5006,36 +4900,6 @@ let isSearchingLeague = false;
 let currentQueueId = null;
 
 // NOWA FUNKCJA: Anulowanie wyszukiwania przez gracza
-async function cancelLeagueMatchmaking() {
-    // Chowamy okienka wyszukiwania (mobilne i desktopowe jeśli istnieją)
-    ['clashMatchmakingOverlay', 'clashMatchmakingOverlayDesktop'].forEach(id => {
-        const overlay = document.getElementById(id);
-        if(overlay) {
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 300);
-        }
-    });
-    
-    // JEŚLI GRA JUŻ TRWA (isSearchingLeague == false) TO NIE WYŁĄCZAJ POKOJU
-    if (!isSearchingLeague) {
-        return; 
-    }
-
-    isSearchingLeague = false;
-    
-    if (currentQueueId) {
-        await db.collection("clash_queue").doc(currentQueueId).delete().catch(()=>{});
-        currentQueueId = null;
-    }
-    if (currentClashRoom) {
-        await db.collection("clash_rooms").doc(currentClashRoom).delete().catch(()=>{});
-        currentClashRoom = null;
-    }
-    if(clashUnsubscribe) { clashUnsubscribe(); clashUnsubscribe = null; }
-    
-    showToast("Wyszukiwanie przerwane.", "normal");
-}
-
 async function startLeagueMatchmaking() {
     ensureLeagueStats(userStats);
     if (Date.now() < userStats.clashLeague.banUntil) {
@@ -5176,7 +5040,7 @@ async function updateLeagueStats(gameData) {
     if (typeof league.winStreak !== 'number') league.winStreak = 0; 
     
     const opponent = myClashColor === 'red' ? gameData.p2 : gameData.p1;
-    const opponentElo = opponent ? (opponent.elo || 1000) : 1000;
+    const opponentElo = (opponent && Number.isFinite(Number(opponent.elo))) ? Math.min(5000, Math.max(0, Number(opponent.elo))) : 1000;
     const finishedBySurrender = gameData.finishReason === 'surrender';
 
      league.tabSwitches = 0; 
@@ -5223,7 +5087,7 @@ async function updateLeagueStats(gameData) {
         }
     }
 
-    league.elo += eloChange;
+    league.elo = Math.max(0, league.elo + eloChange);
     league.matchesPlayed++;
 
     if(!userStats.clashHistory) userStats.clashHistory = [];
@@ -5239,33 +5103,16 @@ async function updateLeagueStats(gameData) {
     
     appAlert(`Mecz ligowy zakończony!\nWynik: ${resultText}\nZmiana ELO: ${eloChange >= 0 ? '+' : ''}${eloChange}`, "Mecz ligowy");
  
-    try {
-        if (!auth.currentUser) return; // Jeśli jakimś cudem wylogowało gracza w trakcie meczu
-        
-        // WYMUSZAMY POBRANIE ŚWIEŻEGO TOKENA
-        auth.currentUser.getIdToken(true).then(idToken => {
-            console.log("Wysyłam sygnał do bota Discorda z tokenem...", { elo: league.elo, matchesPlayed: league.matchesPlayed });
-            
-            const updateDiscord = functions.httpsCallable('updateDiscordRank');
-            
-            updateDiscord({ 
-                elo: league.elo, 
-                matchesPlayed: league.matchesPlayed,
-                firebaseToken: idToken // PRZESYŁAMY NASZ CERTYFIKAT TOŻSAMOŚCI!
-            }).then(res => {
-                console.log("Odpowiedź od bota Discorda:", res.data);
-                if(res.data && res.data.message) {
-                    showToast(`Discord: ${res.data.message}`, "success");
-                } else if (res.data && res.data.error) {
-                    console.error("Discord Auth Error:", res.data.error);
-                }
-            }).catch(e => {
-                console.error("Błąd sieciowy aktualizacji Discorda:", e);
-            });
-        });
-        
-    } catch(e) {
-        console.error("Nie udało się zainicjować funkcji Discorda", e);
+    // Ranga na Discordzie - serwer sam odczytuje ELO z bazy (nie ufa wartościom od klienta)
+    if (auth.currentUser && userStats.discordLinked) {
+        try {
+            await syncLeagueScoreToFirebase();
+            const res = await functions.httpsCallable('updateDiscordRank')({});
+            if (res.data && res.data.message) showToast(`Discord: ${res.data.message}`, "success");
+            else if (res.data && res.data.error) console.warn("Discord:", res.data.error);
+        } catch (e) {
+            console.warn("Nie udało się zaktualizować rangi na Discordzie:", e && e.message);
+        }
     }
 }
 
@@ -5490,44 +5337,6 @@ async function toggleClashRematch() {
 let lastProcessedEmoteP1 = 0;
 let lastProcessedEmoteP2 = 0;
 
-function sendClashEmote(emoji) {
-    if (!currentClashRoom || isLocalClash) return;
-    
-    // Anty-Spam (max 1 emotka na sekundę)
-    if (window.lastEmoteSentTime && Date.now() - window.lastEmoteSentTime < 1000) return;
-    window.lastEmoteSentTime = Date.now();
-
-    const emoteData = { emoji: emoji, ts: Date.now() };
-    const fieldToUpdate = myClashColor === 'red' ? 'emoteP1' : 'emoteP2';
-
-    db.collection("clash_rooms").doc(currentClashRoom).update({
-        [fieldToUpdate]: emoteData
-    }).catch(e => console.log("Błąd wysyłania emotki:", e));
-}
-
-function showFloatingEmote(emoji, playerColor) {
-    const parentId = playerColor === 'red' ? 'clashPlayer1' : 'clashPlayer2';
-    const parent = document.getElementById(parentId);
-    if (!parent) return;
-
-    const emoteEl = document.createElement('div');
-    emoteEl.className = 'floating-emote';
-    emoteEl.innerText = emoji;
-    
-    // Centrowanie nad nickiem gracza
-    emoteEl.style.left = '50%';
-    emoteEl.style.top = '-20px';
-
-    parent.appendChild(emoteEl);
-
-    // Dźwięk powiadomienia
-    playSound('flip');
-
-    setTimeout(() => {
-        if (emoteEl.parentNode) emoteEl.parentNode.removeChild(emoteEl);
-    }, 2500);
-}
-
 // --- SILNIK SIECIOWY GRY ---
 function listenToClashRoom() {
     if(!currentClashRoom) return;
@@ -5748,11 +5557,11 @@ function showVsScreen(data) {
     const defaultIconBlue = `<div class="vs-icon drop-shadow-blue">🔵</div>`;
     
     const p1AvatarHTML = data.p1.avatarUrl 
-        ? `<img src="${data.p1.avatarUrl}" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #ff3333; object-fit: cover; filter: drop-shadow(0 0 20px #ff3333);">`
+        ? `<img src="${escapeHTML(data.p1.avatarUrl)}" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #ff3333; object-fit: cover; filter: drop-shadow(0 0 20px #ff3333);">`
         : defaultIconRed;
 
     const p2AvatarHTML = data.p2.avatarUrl 
-        ? `<img src="${data.p2.avatarUrl}" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #3399ff; object-fit: cover; filter: drop-shadow(0 0 20px #3399ff);">`
+        ? `<img src="${escapeHTML(data.p2.avatarUrl)}" style="width: 100px; height: 100px; border-radius: 50%; border: 4px solid #3399ff; object-fit: cover; filter: drop-shadow(0 0 20px #3399ff);">`
         : defaultIconBlue;
 
     document.querySelector('.vs-player.p1').innerHTML = `${p1AvatarHTML}<h2 id="vsP1Name" class="vs-name">Gracz 1</h2>`;
@@ -5785,13 +5594,13 @@ function showVsScreen(data) {
     const coinFront = document.getElementById('coinFaceRed');
     const coinBack = document.getElementById('coinFaceBlue');
     if (coinFront && coinBack) {
-        coinFront.innerHTML = data.p1.avatarUrl ? `<img src="${data.p1.avatarUrl}" style="width:100%; height:100%; object-fit:cover;">` : `🔴`;
-        coinBack.innerHTML = data.p2.avatarUrl ? `<img src="${data.p2.avatarUrl}" style="width:100%; height:100%; object-fit:cover;">` : `🔵`;
+        coinFront.innerHTML = data.p1.avatarUrl ? `<img src="${escapeHTML(data.p1.avatarUrl)}" style="width:100%; height:100%; object-fit:cover;">` : `🔴`;
+        coinBack.innerHTML = data.p2.avatarUrl ? `<img src="${escapeHTML(data.p2.avatarUrl)}" style="width:100%; height:100%; object-fit:cover;">` : `🔵`;
     }
 
     // --- Rysowanie Nicków i Lig ---
-    let p1NickHTML = data.p1.nick + getMiniClubBadge(data.p1.club); 
-    let p2NickHTML = data.p2.nick + getMiniClubBadge(data.p2.club);
+    let p1NickHTML = escapeHTML(data.p1.nick) + getMiniClubBadge(data.p1.club); 
+    let p2NickHTML = escapeHTML(data.p2.nick) + getMiniClubBadge(data.p2.club);
     
     if (data.type === 'league') {
         const p1RankImg = getLeagueImageTag(data.p1.elo, data.p1.matchesPlayed || 5, 24);
@@ -5945,7 +5754,7 @@ function updateClashBoardUI(data) {
             if (val === 'red' || val === 'blue') {
                 cell.className = `clash-cell clash-playable claimed-${val}`;
                 let playerName = (data.guessedPlayers && data.guessedPlayers[idx]) || "Gracz";
-                cell.innerHTML = `<span class="clash-player-name">${playerName}</span>`;
+                cell.innerHTML = `<span class="clash-player-name">${escapeHTML(playerName)}</span>`;
             } else {
                 cell.className = 'clash-cell clash-playable';
                 cell.innerHTML = '<span style="opacity: 0.1; font-size: 24px;">+</span>';
@@ -6959,6 +6768,19 @@ function ensureProgressionStats() {
     
     if (!userStats.ownedHelmets) { userStats.ownedHelmets = ['default']; needsSave = true; }
     if (!userStats.equippedHelmet) { userStats.equippedHelmet = 'default'; needsSave = true; }
+
+    // Ramki awatara są osobno od skórek kasków (wcześniej dzieliły jeden ekwipunek)
+    if (!Array.isArray(userStats.ownedFrames)) { userStats.ownedFrames = ['default']; needsSave = true; }
+    if (!userStats.equippedFrame) { userStats.equippedFrame = 'default'; needsSave = true; }
+    if (!userStats.framesSplitV1) {
+        const frameMap = { 'helmet-swieta': 'frame-swieta', 'helmet-halloween': 'frame-halloween', 'helmet-retro': 'frame-retro', 'helmet-zloty': 'frame-zloty' };
+        userStats.ownedHelmets.forEach(id => { const f = frameMap[id]; if (f && !userStats.ownedFrames.includes(f)) userStats.ownedFrames.push(f); });
+        if (frameMap[userStats.equippedHelmet]) userStats.equippedFrame = frameMap[userStats.equippedHelmet];
+        // 'helmet-halloween' była wyłącznie ramką - nie jest kaskiem
+        userStats.ownedHelmets = userStats.ownedHelmets.filter(id => id !== 'helmet-halloween');
+        if (userStats.equippedHelmet === 'helmet-halloween') userStats.equippedHelmet = 'default';
+        userStats.framesSplitV1 = true; needsSave = true;
+    }
     
     if (!userStats.ownedEmotes) { userStats.ownedEmotes = ['default']; needsSave = true; }
     if (!userStats.equippedEmote) { userStats.equippedEmote = 'default'; needsSave = true; }
@@ -7096,7 +6918,7 @@ window.openProfile = function() {
     ensureClubStat(userStats);
     const clubText = userStats.favoriteClub ? `KLUB: <b>${userStats.favoriteClub}</b>` : "WYBIERZ KLUB 🛡️";
     document.getElementById('currentClubDisplay').innerHTML = clubText;
-    document.getElementById('profileClubOverview').innerHTML = userStats.favoriteClub ? userStats.favoriteClub : "Brak klubu";
+    document.getElementById('profileClubOverview').innerHTML = userStats.favoriteClub ? escapeHTML(userStats.favoriteClub) : "Brak klubu";
 
     // Awatar (Domyślny placeholder w Base64 jeśli brak zdjęcia)
     const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
@@ -7104,25 +6926,13 @@ window.openProfile = function() {
     document.getElementById('profileAvatarEdit').src = userStats.avatarUrl || defAvatar;
     const avOver = document.getElementById('profileAvatarOverview');
     const avEdit = document.getElementById('profileAvatarEdit');
-    const resolveAvatarFrameClass = (helmetId) => {
-        if (helmetId === 'helmet-swieta') return 'avatar-frame-swieta';
-        if (helmetId === 'helmet-halloween') return 'avatar-frame-halloween';
-        if (helmetId === 'helmet-retro') return 'avatar-frame-retro';
-        if (helmetId === 'helmet-zloty') return 'avatar-frame-zloty';
-        return null;
-    };
-
-    [avOver, avEdit].forEach((avatar) => {
-        if (!avatar) return;
-        avatar.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween', 'avatar-frame-retro', 'avatar-frame-zloty');
-        const frameClass = resolveAvatarFrameClass(userStats.equippedHelmet);
-        if (frameClass) avatar.classList.add(frameClass);
-    });
+    setAvatarFrame(avOver, userStats.equippedFrame);
+    setAvatarFrame(avEdit, userStats.equippedFrame);
 
     // Nick + Poziom z efektami ze sklepu
-    const pNick = playerNickname || "GRACZ";
+    const pNick = escapeHTML(playerNickname || "GRACZ");
     document.getElementById('profileNickOverview').innerHTML = userStats.equippedNick && userStats.equippedNick !== 'default' 
-        ? `<span class="${userStats.equippedNick}">${pNick}</span>` 
+        ? `<span class="${safeClass(userStats.equippedNick)}">${pNick}</span>` 
         : pNick;
 
     const reqExp = getRequiredExp(userStats.level);
@@ -7344,7 +7154,8 @@ const SHOP_DB = {
         { id: 'rank-bg-hearts', nameKey: 'shop_bg_hearts_name', descKey: 'shop_bg_hearts_desc', price: 15000 },
         { id: 'rank-bg-lightning', nameKey: 'shop_bg_lightning_name', descKey: 'shop_bg_lightning_desc', price: 25000 },
         { id: 'rank-bg-fire', nameKey: 'shop_bg_fire_name', descKey: 'shop_bg_fire_desc', price: 50000 },
-        { id: 'rank-bg-sadurski', nameKey: 'shop_bg_sadurski_name', descKey: 'shop_bg_sadurski_desc', price: 75900 }
+        { id: 'rank-bg-sadurski', nameKey: 'shop_bg_sadurski_name', descKey: 'shop_bg_sadurski_desc', price: 1000 },
+        { id: 'rank-bg-parnitskyi', nameKey: 'shop_bg_parnitskyi_name', descKey: 'shop_bg_parnitskyi_desc', price: 1000, adminOnly: true }
     ],
     nicks: [
         { id: 'nick-effect-ice', nameKey: 'shop_nick_ice_name', descKey: 'shop_nick_ice_desc', price: 2000 },
@@ -7353,15 +7164,17 @@ const SHOP_DB = {
         { id: 'nick-effect-glitch', nameKey: 'shop_nick_glitch_name', descKey: 'shop_nick_glitch_desc', price: 12000 }
     ],
     helmets: [
-        { id: 'helmet-swieta', name: 'Świąteczna Ramka & Kask 🎄', desc: 'Szmaragdowo-złota świąteczna ramka i lodowy kask (Event Świąt)!', price: 0, isEvent: true },
+        { id: 'helmet-swieta', name: 'Świąteczny Kask 🎄', desc: 'Lodowy kask z eventu świątecznego (Event Świąt)!', price: 0, isEvent: true },
         { id: 'helmet-retro', nameKey: 'shop_helmet_retro_name', descKey: 'shop_helmet_retro_desc', price: 2000 },
         { id: 'helmet-zloty', nameKey: 'shop_helmet_gold_name', descKey: 'shop_helmet_gold_desc', price: 3000 },
     ],
     frames: [
-        { id: 'helmet-halloween', name: 'Halloween Ramka 🎃', desc: 'Mroczna profilowa ramka z ciepłym pomarańczowym blaskiem i lekkim klimatem upiora.', price: 0, isEvent: true },
-        { id: 'helmet-swieta', name: 'Świąteczna Ramka 🎄', desc: 'Lodowo-złota ramka awatara na święta i zimowy klimat.', price: 0, isEvent: true },
-        { id: 'helmet-retro', nameKey: 'shop_helmet_retro_name', descKey: 'shop_helmet_retro_desc', price: 2000 },
-        { id: 'helmet-zloty', nameKey: 'shop_helmet_gold_name', descKey: 'shop_helmet_gold_desc', price: 3000 },
+        { id: 'frame-halloween', name: 'Halloweenowa Dynia 🎃', desc: 'Dynia-lampion, pajęczyna z pająkiem i nietoperz (Event Halloween)!', price: 0, isEvent: true },
+        { id: 'frame-swieta', name: 'Świąteczny Wieniec 🎄', desc: 'Wieniec jak na drzwiach: gałązki, bombki, jagody i kokarda (Event Świąt)!', price: 0, isEvent: true },
+        { id: 'frame-retro', nameKey: 'shop_frame_retro_name', descKey: 'shop_frame_retro_desc', price: 2000 },
+        { id: 'frame-zloty', nameKey: 'shop_frame_gold_name', descKey: 'shop_frame_gold_desc', price: 3000 },
+        { id: 'frame-tire', nameKey: 'shop_frame_tire_name', descKey: 'shop_frame_tire_desc', price: 2500 },
+        { id: 'frame-chain', nameKey: 'shop_frame_chain_name', descKey: 'shop_frame_chain_desc', price: 3500 },
     ],
     emotes: [
         { id: 'emote-swieta', name: 'Świąteczny Pakiet Clash 🎁', desc: 'Świąteczny zestaw emotek: 🎅 🎄 ⛄ 🎁 ❄️ 🦌 (Event Świąt)!', price: 0, isEvent: true },
@@ -7411,11 +7224,12 @@ window.switchShopTab = function(tab) {
     let ownedArray = []; let equipVar = ''; let equipVal = null;
     if (tab === 'backgrounds') { ownedArray = userStats.ownedBgs; equipVar = 'equippedBg'; equipVal = userStats[equipVar]; }
     else if (tab === 'nicks') { ownedArray = userStats.ownedNicks; equipVar = 'equippedNick'; equipVal = userStats[equipVar]; }
-    else if (tab === 'frames' || tab === 'helmets') { ownedArray = userStats.ownedHelmets; equipVar = 'equippedHelmet'; equipVal = userStats[equipVar]; }
+    else if (tab === 'frames') { ownedArray = userStats.ownedFrames; equipVar = 'equippedFrame'; equipVal = userStats[equipVar]; }
+    else if (tab === 'helmets') { ownedArray = userStats.ownedHelmets; equipVar = 'equippedHelmet'; equipVal = userStats[equipVar]; }
     else if (tab === 'emotes') { ownedArray = userStats.ownedEmotes; equipVar = 'equippedEmote'; equipVal = userStats[equipVar]; }
     else if (tab === 'wins') { ownedArray = userStats.ownedWins; equipVar = 'equippedWin'; equipVal = userStats[equipVar]; }
 
-    const visibleItems = (SHOP_DB[tab] || []).filter(item => !item.isEvent || ownedArray.includes(item.id));
+    const visibleItems = (SHOP_DB[tab] || []).filter(item => (!item.isEvent || ownedArray.includes(item.id)) && (!item.adminOnly || window.isAdmin || ownedArray.includes(item.id)));
     if (!visibleItems.length) {
         container.innerHTML = `<div class="text-dim text-center mt-20">${t('shopComingSoon')}</div>`;
         return;
@@ -7455,20 +7269,19 @@ window.switchShopTab = function(tab) {
         let customBgClass = tab === 'backgrounds' ? item.id : '';
         let itemName = item.nameKey ? t(item.nameKey) : item.name;
         let itemDesc = item.descKey ? t(item.descKey) : item.desc;
-        const isFrameTab = tab === 'frames' || tab === 'helmets';
+        const isFrameTab = tab === 'frames';
+        const isHelmetTab = tab === 'helmets';
 
-        let framePreviewClass = '';
-        if (item.id === 'helmet-swieta') framePreviewClass = 'avatar-frame-swieta';
-        else if (item.id === 'helmet-halloween') framePreviewClass = 'avatar-frame-halloween';
-        else if (item.id === 'helmet-retro') framePreviewClass = 'avatar-frame-retro';
-        else if (item.id === 'helmet-zloty') framePreviewClass = 'avatar-frame-zloty';
-
-        const framePreviewHtml = isFrameTab
-            ? `<div class="shop-frame-preview"><div class="shop-frame-preview-avatar ${framePreviewClass}">👤</div></div>`
-            : '';
+        let framePreviewHtml = '';
+        if (isFrameTab) {
+            framePreviewHtml = frameShopPreviewHTML(item.id);
+        } else if (isHelmetTab) {
+            const helmetImg = item.id === 'helmet-zloty' ? 'images/helmets/kask-zloty.png' : (item.id === 'helmet-retro' ? 'images/helmets/kask-retro.png' : null);
+            framePreviewHtml = `<div class="shop-frame-preview">${helmetImg ? `<img class="shop-helmet-preview" src="${helmetImg}" alt="Kask">` : '<span style="font-size:30px;">❄️</span>'}</div>`;
+        }
 
         container.innerHTML += `
-            <div class="shop-item-card ${customBgClass} ${isFrameTab ? 'shop-frame-card' : ''}" style="border-left: none !important;">
+            <div class="shop-item-card ${customBgClass} ${(isFrameTab || isHelmetTab) ? 'shop-frame-card' : ''}" style="border-left: none !important;">
                 <div class="shop-item-info-wrap" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">
                     ${framePreviewHtml}
                     <div class="shop-item-title ${customStyleClass}" style="color: #fff;">${itemName}</div>
@@ -7486,12 +7299,17 @@ window.buyShopItem = function(category, id, price) {
         showToast('To przedmiot jest dostępny tylko z eventu sezonowego.', 'info');
         return;
     }
+    if (item && item.adminOnly && !window.isAdmin) {
+        showToast('Ten przedmiot nie jest jeszcze dostępny.', 'info');
+        return;
+    }
 
     if (userStats.coins >= price) {
         userStats.coins -= price;
         if (category === 'backgrounds') { userStats.ownedBgs.push(id); userStats.equippedBg = id; }
         else if (category === 'nicks') { userStats.ownedNicks.push(id); userStats.equippedNick = id; }
-        else if (category === 'frames' || category === 'helmets') { userStats.ownedHelmets.push(id); userStats.equippedHelmet = id; updateCounterDisplay(); }
+        else if (category === 'frames') { userStats.ownedFrames.push(id); userStats.equippedFrame = id; }
+        else if (category === 'helmets') { userStats.ownedHelmets.push(id); userStats.equippedHelmet = id; updateCounterDisplay(); }
         else if (category === 'emotes') { userStats.ownedEmotes.push(id); userStats.equippedEmote = id; renderClashEmotePanel(); }
         else if (category === 'wins') { userStats.ownedWins.push(id); userStats.equippedWin = id; }
         
@@ -7509,7 +7327,8 @@ window.buyShopItem = function(category, id, price) {
 window.equipShopItem = function(category, id) {
     if (category === 'backgrounds') userStats.equippedBg = id;
     else if (category === 'nicks') userStats.equippedNick = id;
-    else if (category === 'frames' || category === 'helmets') { userStats.equippedHelmet = id; updateCounterDisplay(); }
+    else if (category === 'frames') { userStats.equippedFrame = id; }
+    else if (category === 'helmets') { userStats.equippedHelmet = id; updateCounterDisplay(); }
     else if (category === 'emotes') { userStats.equippedEmote = id; renderClashEmotePanel(); }
     else if (category === 'wins') userStats.equippedWin = id;
     
@@ -7555,20 +7374,15 @@ async function openPublicProfile(uid, clickedNick = "Gracz") {
             document.getElementById('pubAvatar').src = data.avatarUrl || parsedStats.avatarUrl || defAvatar;
 
             const pubAvatar = document.getElementById('pubAvatar');
-            if (pubAvatar) {
-                pubAvatar.classList.remove('avatar-frame-swieta', 'avatar-frame-halloween', 'avatar-frame-retro', 'avatar-frame-zloty');
-                if (parsedStats.equippedHelmet === 'helmet-swieta') pubAvatar.classList.add('avatar-frame-swieta');
-                else if (parsedStats.equippedHelmet === 'helmet-halloween') pubAvatar.classList.add('avatar-frame-halloween');
-                else if (parsedStats.equippedHelmet === 'helmet-retro') pubAvatar.classList.add('avatar-frame-retro');
-                else if (parsedStats.equippedHelmet === 'helmet-zloty') pubAvatar.classList.add('avatar-frame-zloty');
-            }
+            // starsze zapisy miały tylko equippedHelmet (normalizeFrameId zna stare ID)
+            setAvatarFrame(pubAvatar, parsedStats.equippedFrame !== undefined ? parsedStats.equippedFrame : parsedStats.equippedHelmet);
             
             // Szukamy najlepszego nicku (Z roota, ze statsów, a jak nie ma, to ten z tabeli)
-            let pNick = data.displayName || parsedStats.nickname || clickedNick;
+            let pNick = renderNick(data.displayName || parsedStats.nickname || clickedNick);
             
             // Nakładamy ewentualny efekt z ulepszonego sklepu
             document.getElementById('pubNick').innerHTML = parsedStats.equippedNick && parsedStats.equippedNick !== 'default' 
-                ? `<span class="${parsedStats.equippedNick}">${pNick}</span>` 
+                ? `<span class="${safeClass(parsedStats.equippedNick)}">${pNick}</span>` 
                 : pNick;
             
             document.getElementById('pubClub').innerText = parsedStats.favoriteClub ? `Kibicuje: ${parsedStats.favoriteClub}` : "Brak ulubionego klubu";

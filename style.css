@@ -2713,6 +2713,50 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
 .shop-btn-equip { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
 .shop-btn-equipped { background: var(--accent); color: #000; cursor: default; }
 
+.shop-item-info-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.shop-frame-card {
+    background: linear-gradient(135deg, rgba(8, 10, 16, 0.92), rgba(18, 22, 34, 0.9)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.04), 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.shop-frame-card:hover {
+    border-color: rgba(241, 196, 15, 0.45) !important;
+    box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.06), 0 10px 24px rgba(0, 0, 0, 0.45), 0 0 20px rgba(241, 196, 15, 0.16);
+}
+
+.shop-frame-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 76px;
+    border-radius: 14px;
+    background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.02));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 2px;
+}
+
+.shop-frame-preview-avatar {
+    width: 46px;
+    height: 46px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: #fff;
+    background: linear-gradient(160deg, #2a2f3f, #1a1d27);
+    border: 2px solid rgba(255, 255, 255, 0.22);
+}
+
 .title-badge {
     font-size: 10px;
     padding: 2px 6px;
@@ -2843,6 +2887,19 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
     background-size: 100% 100%, contain !important;
     border-left: 4px solid #f1c40f !important;
     box-shadow: inset 0 0 20px rgba(241, 196, 15, 0.2) !important;
+}
+
+/* 10. SPECJALNE: NAZAR PARNITSKYI 785 */
+.rank-bg-parnitskyi {
+    background-color: #0c2a7a !important;
+    background-image:
+        linear-gradient(90deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.9) 100%),
+        url('images/np785.png') !important;
+    background-position: center, center center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100%, contain !important;
+    border-left: 4px solid #ffcc00 !important;
+    box-shadow: inset 0 0 20px rgba(255, 204, 0, 0.2) !important;
 }
 
 /* ============================================== */
@@ -4652,26 +4709,26 @@ body.seasonal-easter .desktop-leaderboard-panel {
     text-shadow: 0 0 8px rgba(0, 210, 211, 0.5) !important;
 }
 
-/* Świąteczna Ramka Awatara */
-.avatar-frame-swieta {
-    outline: 3.5px solid #2ecc71 !important;
-    outline-offset: 2px !important;
-    box-shadow: 0 0 15px rgba(46, 204, 113, 0.8), 0 0 25px rgba(241, 196, 15, 0.5) !important;
-    border: 2px solid #ffd700 !important;
-    border-radius: 18px !important;
-    padding: 2px !important;
-    background: rgba(0, 0, 0, 0.12) !important;
+/* ============================================== */
+/* ====== RAMKI AWATARA (SVG z avatar_frames.js) = */
+/* ============================================== */
+.avatar-frame-host { position: relative; display: inline-block; line-height: 0; flex: 0 0 auto; vertical-align: top; }
+.avatar-frame-host > img, .avatar-frame-host > .shop-frame-preview-avatar { position: relative; z-index: 1; }
+.avatar-frame-overlay { position: absolute; inset: -20%; z-index: 2; pointer-events: none; }
+.avatar-frame-overlay svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.avatar-frame-host.frame-round > img, .avatar-frame-host.frame-round > .shop-frame-preview-avatar { border-radius: 50% !important; }
+.avatar-frame-halloween .avatar-frame-overlay { animation: frameHalloweenGlow 2.8s ease-in-out infinite; }
+.avatar-frame-zloty .avatar-frame-overlay { filter: drop-shadow(0 0 4px rgba(241, 196, 15, 0.65)); }
+.avatar-frame-swieta .avatar-frame-overlay { filter: drop-shadow(0 0 3px rgba(46, 204, 113, 0.5)); }
+.avatar-frame-tire .avatar-frame-overlay, .avatar-frame-chain .avatar-frame-overlay, .avatar-frame-retro .avatar-frame-overlay { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55)); }
+@keyframes frameHalloweenGlow {
+    0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 120, 0, 0.55)); }
+    50% { filter: drop-shadow(0 0 9px rgba(255, 160, 20, 0.95)); }
 }
-
-.avatar-frame-halloween {
-    outline: 3.5px solid #ff7700 !important;
-    outline-offset: 2px !important;
-    box-shadow: 0 0 20px rgba(255, 119, 0, 0.85), 0 0 30px rgba(140, 0, 255, 0.5) !important;
-    border: 2px solid #ffb84d !important;
-    border-radius: 18px !important;
-    padding: 2px !important;
-    background: rgba(20, 10, 5, 0.25) !important;
+@media (prefers-reduced-motion: reduce) {
+    .avatar-frame-halloween .avatar-frame-overlay { animation: none; filter: drop-shadow(0 0 5px rgba(255, 140, 0, 0.8)); }
 }
+.shop-helmet-preview { width: 52px; height: 52px; object-fit: contain; }
 
 /* ============================================== */
 /* ====== WIELKANOC: UKRYTE PISANKI ============= */

@@ -11,6 +11,8 @@
 (function () {
     'use strict';
 
+    const ADMIN_PREVIEW_STORAGE_KEY = 'speedwaySeasonalEventAdminPreview';
+
     // Konfiguracja nagród Kalendarza Adwentowego (1 - 24 Grudnia) - z unikalnymi nagrodami świątecznymi!
     const ADVENT_REWARDS = {
         1:  { type: 'coins', amount: 100, label: '100 Monet 🪙' },
@@ -39,7 +41,7 @@
             coins: 300, 
             exp: 250, 
             label: 'Świąteczna Ramka ❄️', 
-            frameId: 'helmet-swieta', 
+            frameId: 'frame-swieta', helmetId: 'helmet-swieta', 
             isHighlight: true,
             highlightTag: '❄️ RAMKA',
             badge: '🖼️ RAMKA AWATARA'
@@ -173,11 +175,11 @@
 
             if (userStats.seasonalRewards.halloweenRewarded) return;
 
-            if (!userStats.ownedHelmets) userStats.ownedHelmets = ['default'];
-            if (!userStats.ownedHelmets.includes('helmet-halloween')) {
-                userStats.ownedHelmets.push('helmet-halloween');
+            if (!userStats.ownedFrames) userStats.ownedFrames = ['default'];
+            if (!userStats.ownedFrames.includes('frame-halloween')) {
+                userStats.ownedFrames.push('frame-halloween');
             }
-            userStats.equippedHelmet = 'helmet-halloween';
+            userStats.equippedFrame = 'frame-halloween';
 
             if (typeof userStats.coins === 'undefined') userStats.coins = 0;
             userStats.coins += 666;
@@ -197,14 +199,40 @@
         },
 
         setEvent: function (eventName, save = true) {
+            if (!window.isAdmin) {
+                if (typeof showToast === 'function') {
+                    showToast('🔒 Tylko administrator może zmieniać wydarzenie sezonowe.', 'error');
+                }
+
+                const sel = document.getElementById('seasonalEventSelector');
+                if (sel) {
+                    sel.value = localStorage.getItem('speedwaySeasonalEvent') || 'auto';
+                }
+                return;
+            }
+
             if (save) {
                 localStorage.setItem('speedwaySeasonalEvent', eventName);
+                localStorage.setItem(ADMIN_PREVIEW_STORAGE_KEY, eventName);
             }
             let targetEvent = eventName;
             if (eventName === 'auto') {
                 targetEvent = detectCurrentEvent();
             }
             this.applyEvent(targetEvent, true);
+        },
+
+        applyAdminPreviewSetting: function () {
+            if (!window.isAdmin) return;
+
+            const savedSetting = localStorage.getItem(ADMIN_PREVIEW_STORAGE_KEY) || 'auto';
+            let targetEvent = savedSetting;
+            if (savedSetting === 'auto') {
+                targetEvent = detectCurrentEvent();
+            }
+
+            localStorage.setItem('speedwaySeasonalEvent', savedSetting);
+            this.applyEvent(targetEvent, false);
         },
 
         updateBodyBackground: function(event) {
@@ -658,10 +686,15 @@
 
                     // Odblokowanie Świątecznej Ramki / Kasku
                     if (reward.frameId) {
-                        if (!userStats.ownedHelmets) userStats.ownedHelmets = ['default'];
-                        if (!userStats.ownedHelmets.includes(reward.frameId)) userStats.ownedHelmets.push(reward.frameId);
-                        userStats.equippedHelmet = reward.frameId;
-                        if (typeof updateCounterDisplay === 'function') updateCounterDisplay();
+                        if (!userStats.ownedFrames) userStats.ownedFrames = ['default'];
+                        if (!userStats.ownedFrames.includes(reward.frameId)) userStats.ownedFrames.push(reward.frameId);
+                        userStats.equippedFrame = reward.frameId;
+                        if (reward.helmetId) {
+                            if (!userStats.ownedHelmets) userStats.ownedHelmets = ['default'];
+                            if (!userStats.ownedHelmets.includes(reward.helmetId)) userStats.ownedHelmets.push(reward.helmetId);
+                            userStats.equippedHelmet = reward.helmetId;
+                            if (typeof updateCounterDisplay === 'function') updateCounterDisplay();
+                        }
                     }
 
                     // Odblokowanie Świątecznego Tła Rankingu
