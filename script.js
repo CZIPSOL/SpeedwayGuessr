@@ -1920,6 +1920,33 @@ function closeSettings() {
 // ====== LOGIKA GRY (DAILY / ENDLESS) ==========
 // ==============================================
 
+
+// Po zmianie tła / efektu nicku od razu aktualizujemy wpisy gracza we wszystkich rankingach
+// (wcześniej wygląd odświeżał się dopiero po kolejnym zapisanym wyniku).
+var _cosmeticsSyncTimer = null;
+function syncCosmeticsToLeaderboards() {
+    clearTimeout(_cosmeticsSyncTimer);
+    _cosmeticsSyncTimer = setTimeout(async () => {
+        if (!playerId) return;
+        const data = {
+            bg: userStats.equippedBg || null,
+            nickEffect: (userStats.equippedNick && userStats.equippedNick !== 'default') ? userStats.equippedNick : null
+        };
+        const refs = [
+            db.collection("rankings").doc(currentDailyDay.toString()).collection("scores").doc(playerId),
+            db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").doc(playerId),
+            db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").doc(playerId),
+            db.collection("leaderboard_alltime").doc("global").collection("scores").doc(playerId),
+            db.collection("leaderboard_clash_beta").doc(playerId),
+            db.collection("leaderboard_timeattack").doc(playerId)
+        ];
+        // update() działa tylko na istniejących wpisach - gracz bez wyniku w danym rankingu po prostu go pomija
+        const results = await Promise.allSettled(refs.map(r => r.update(data)));
+        results.forEach(r => {
+            if (r.status === 'rejected' && r.reason && r.reason.code !== 'not-found') console.warn('Aktualizacja wyglądu w rankingu nieudana:', r.reason.code || r.reason.message);
+        });
+    }, 600);
+}
 async function sendScoreToDatabase(isWin, attempts) {
     if (selectedDailyDay !== currentDailyDay) return;
     if (!playerNickname) return;
@@ -7314,6 +7341,7 @@ window.buyShopItem = function(category, id, price) {
         else if (category === 'wins') { userStats.ownedWins.push(id); userStats.equippedWin = id; }
         
         saveStats();
+        if (category === 'backgrounds' || category === 'nicks') syncCosmeticsToLeaderboards();
         switchShopTab(category);
         document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
         showToast(t('shopBought'), "success");
@@ -7333,6 +7361,7 @@ window.equipShopItem = function(category, id) {
     else if (category === 'wins') userStats.equippedWin = id;
     
     saveStats();
+    if (category === 'backgrounds' || category === 'nicks') syncCosmeticsToLeaderboards();
     switchShopTab(category);
     showToast(t('shopEquippedChanged'), "normal");
 }
