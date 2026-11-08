@@ -588,6 +588,7 @@ async function claimGiveawayCoins() {
 
 async function syncStatsFromFirebase() {
     if (!auth.currentUser) return;
+    let localNewer = false;
     try {
         const docRef = await db.collection('users').doc(auth.currentUser.uid).get();
         if (docRef.exists) {
@@ -596,11 +597,13 @@ async function syncStatsFromFirebase() {
             // Scalenie statystyk
             if (data.stats) {
                 let cloudStats = JSON.parse(data.stats);
-                const merged = { ...userStats, ...cloudStats };
-                // postęp zagnieżdżony scalamy, żeby chmura nie kasowała lokalnych dni
+                // Jeśli lokalny zapis jest nowszy niż ten w chmurze (np. świeży zakup), nie dajemy się nadpisać starym stanem
+                localNewer = (Number(userStats.lastSavedAt) || 0) > (Number(cloudStats.lastSavedAt) || 0);
+                const merged = localNewer ? { ...cloudStats, ...userStats } : { ...userStats, ...cloudStats };
+                // postęp zagnieżdżony scalamy, żeby żadna strona nie kasowała dni drugiej
                 ['dailyResults', 'dailyGuesses', 'moreLessDaily'].forEach(k => {
                     const a = userStats[k], b = cloudStats[k];
-                    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) merged[k] = { ...a, ...b };
+                    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) merged[k] = localNewer ? { ...b, ...a } : { ...a, ...b };
                 });
                 userStats = merged;
             }
@@ -620,6 +623,7 @@ async function syncStatsFromFirebase() {
             localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats));
             updateLeagueUI();
             updateDiscordButtonUI();
+            if (localNewer) syncStatsToFirebase(true); // wypchnij nowszy stan lokalny do chmury
         }
         syncLeagueScoreToFirebase();
     } catch (e) { console.error("Cloud Sync Load Error:", e); }
@@ -1134,6 +1138,18 @@ function sanitizeNickInput(str) {
     return String(str).replace(/\s+/g, ' ').replace(/[\u0000-\u001f\u007f]/g, '').trim();
 }
 // Klasy CSS pochodzące z bazy wpuszczamy tylko jeśli wyglądają jak zwykła nazwa klasy
+// Własny wiersz w rankingu pokazujemy z aktualnie założonym wyglądem (nie czekamy na zapis w bazie)
+function isMyRankingRow(row) {
+    if (!row) return false;
+    return row.uid ? row.uid === playerId : sameNick(row.nick);
+}
+function rowBg(row) { return isMyRankingRow(row) ? safeClass(userStats.equippedBg) : safeClass(row.bg); }
+function rowNickEffect(row) {
+    const v = isMyRankingRow(row)
+        ? ((userStats.equippedNick && userStats.equippedNick !== 'default') ? userStats.equippedNick : '')
+        : row.nickEffect;
+    return (v && v !== 'default') ? safeClass(v) : '';
+}
 function safeClass(v) { return (typeof v === 'string' && /^[A-Za-z0-9_-]{1,60}$/.test(v)) ? v : ''; }
 
 const nativeAlert = window.alert ? window.alert.bind(window) : null;
@@ -1676,6 +1692,7 @@ function saveStats() {
     if (playerNickname) {
         userStats.nickname = playerNickname;
     }
+    userStats.lastSavedAt = Date.now(); // pozwala odróżnić nowszy zapis lokalny od starszego w chmurze
     localStorage.setItem('speedwayStatsV2', JSON.stringify(userStats)); 
     updateLeagueUI();
     syncStatsToFirebase(); 
@@ -2786,9 +2803,9 @@ async function loadGuessrSubRanking(type) {
                 : `<span style="color:var(--red-neon);">${type === 'daily' ? 'NIE' : '0'}</span>`;
             
             let rawNick = renderNick(row.nick || "Gracz");
-            let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
+            let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
             safeNick += getMiniClubBadge(row.club); 
-            let bgClass = safeClass(row.bg);
+            let bgClass = rowBg(row);
             let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
 
             tbody.insertAdjacentHTML('beforeend', `
@@ -3410,27 +3427,7 @@ function saveMoreLessScore(score, total = ML_DAILY_TOTAL_ROUNDS, dayNumber = sel
     saveStats();
 
     // Firestore Leaderboard update
-    if (isDaily && playerId) {
-        const payload = {
-            nick: playerNickname || 'Gracz',
-            club: userStats.favoriteClub || null,
-            score: score,
-            total: total,
-            day: dayNumber,
-            mode: 'daily',
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        db.collection("rankings_moreless").doc(dayNumber.toString()).collection("scores").doc(playerId)
-            .set(payload, { merge: true }).catch(e => console.warn('Zapis rankingu More/Less nieudany:', e && (e.code || e.message)));
-
-        db.collection('leaderboard_moreless').doc(playerId)
-            .set({
-                ...payload,
-                mode: 'daily',
-                bestScoreRatio: `${score}/${total}`
-            }, { merge: true }).catch(e => console.warn('Zapis rankingu More/Less nieudany:', e && (e.code || e.message)));
-    }
+    if (isDaily && playerId) pushMoreLessToFirestore(score, total, dayNumber, true);
 }
 
 function restartMoreLess() {
@@ -3529,71 +3526,106 @@ function closeMoreLessInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLessDay) {
+// Zapis wyniku More/Less do rankingów. Przy błędzie pokazujemy komunikat (wcześniej błąd był ciągle ukrywany).
+let _mlSyncToastShown = false;
+function pushMoreLessToFirestore(score, total, dayNumber, notifyOnError = false) {
+    if (!playerId) return Promise.resolve(false);
+    const payload = {
+        nick: playerNickname || 'Gracz',
+        club: userStats.favoriteClub || null,
+        score: score,
+        total: total,
+        day: dayNumber,
+        mode: 'daily',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    const onErr = (e) => {
+        console.warn('Zapis rankingu More/Less nieudany:', e && (e.code || e.message));
+        if (notifyOnError && !_mlSyncToastShown) {
+            _mlSyncToastShown = true;
+            showToast('Nie udało się zapisać wyniku More/Less w rankingu (' + ((e && e.code) || 'błąd') + ').', 'error');
+        }
+        return false;
+    };
+    const p1 = db.collection("rankings_moreless").doc(dayNumber.toString()).collection("scores").doc(playerId)
+        .set(payload, { merge: true }).then(() => true).catch(onErr);
+    const p2 = db.collection('leaderboard_moreless').doc(playerId)
+        .set({ ...payload, bestScoreRatio: `${score}/${total}` }, { merge: true }).then(() => true).catch(onErr);
+    return Promise.all([p1, p2]).then(r => r.every(Boolean));
+}
+
+async function fetchMoreLessRows(dayNum) {
+    let snapshot = await db.collection("rankings_moreless").doc(dayNum.toString()).collection("scores")
+        .orderBy("score", "desc").limit(30).get();
+    if (snapshot.empty) {
+        try {
+            snapshot = await db.collection("leaderboard_moreless")
+                .where("day", "==", dayNum).where("mode", "==", "daily")
+                .orderBy("score", "desc").limit(30).get();
+        } catch (e) { snapshot = { empty: true, forEach() {} }; }   // np. brak indeksu złożonego
+    }
+    const rows = [];
+    snapshot.forEach(doc => { const d = doc.data(); d.uid = doc.id; rows.push(d); });
+    return rows;
+}
+
+function moreLessRowsHtml(rows) {
+    return rows.map((row, i) => {
+        const nickHtml = renderNick(row.nick || "Gracz") + getMiniClubBadge(row.club);
+        const isMe = (row.uid === playerId) ? ' style="background: rgba(255,255,255,0.05);"' : '';
+        const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
+        const totalVal = row.total || ML_DAILY_TOTAL_ROUNDS;
+        return `<tr${isMe}><td style="color:var(--accent); font-weight:900;">${i + 1}</td><td style="text-align:left;">${nickHtml}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${escapeHTML(scoreVal)}/${escapeHTML(totalVal)}</td></tr>`;
+    }).join('');
+}
+
+// Jeśli mamy wynik lokalnie, a w rankingu go nie ma (np. zapis się nie udał) - ponawiamy zapis (raz na dzień/sesję)
+var _mlHealTried = {};
+function healMoreLessCloud(dayNum, rows) {
+    const my = userStats.moreLessDaily && userStats.moreLessDaily[dayNum];
+    if (!my || !playerId || _mlHealTried[dayNum]) return;
+    if (rows.some(r => r.uid === playerId)) return;
+    _mlHealTried[dayNum] = true;
+    pushMoreLessToFirestore(my.score, my.total || ML_DAILY_TOTAL_ROUNDS, dayNum, false);
+}
+
+async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLessDay, silent = false) {
     const tbody = document.getElementById('desktopRankingBodyML');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
+    if (!silent) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
+
+    const localFallback = () => {
+        const myD = userStats.moreLessDaily && userStats.moreLessDaily[dayNum];
+        if (!myD) return false;
+        const nickHtml = escapeHTML(playerNickname || "Gracz") + getMiniClubBadge(userStats.favoriteClub);
+        tbody.innerHTML = `<tr style="background: rgba(255,255,255,0.05);"><td style="color:var(--accent); font-weight:900;">1</td><td style="text-align:left;">${nickHtml}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || ML_DAILY_TOTAL_ROUNDS}</td></tr>`;
+        return true;
+    };
 
     try {
-        let snapshot = await db.collection("rankings_moreless").doc(dayNum.toString()).collection("scores")
-            .orderBy("score", "desc").limit(30).get();
-
-        if (snapshot.empty) {
-            snapshot = await db.collection("leaderboard_moreless")
-                .where("day", "==", dayNum)
-                .where("mode", "==", "daily")
-                .orderBy("score", "desc")
-                .limit(30)
-                .get().catch(() => ({ empty: true }));
-        }
-
-        if (!snapshot || snapshot.empty) {
-            if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
-                const myD = userStats.moreLessDaily[dayNum];
-                const safeNick = escapeHTML(playerNickname || "Gracz") + getMiniClubBadge(userStats.favoriteClub);
-                tbody.innerHTML = `
-                    <tr style="background: rgba(255,255,255,0.05);">
-                        <td style="color:var(--accent); font-weight:900;">1</td>
-                        <td style="text-align:left;">${safeNick}</td>
-                        <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || ML_DAILY_TOTAL_ROUNDS}</td>
-                    </tr>`;
-                return;
-            }
+        const rows = await fetchMoreLessRows(dayNum);
+        healMoreLessCloud(dayNum, rows);
+        if (!rows.length) {
+            if (localFallback()) return;
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników na ten dzień. Zagraj jako pierwszy!</td></tr>';
             return;
         }
-
-        tbody.innerHTML = '';
-        let pos = 1;
-        snapshot.forEach(doc => {
-            const row = doc.data();
-            const safeNick = renderNick(row.nick || "Gracz") + getMiniClubBadge(row.club);
-            const isMe = (sameNick(row.nick) || doc.id === playerId) ? 'style="background: rgba(255,255,255,0.05);"' : '';
-            const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
-            const totalVal = row.total || ML_DAILY_TOTAL_ROUNDS;
-            tbody.insertAdjacentHTML('beforeend', `
-                <tr ${isMe}>
-                    <td style="color:var(--accent); font-weight:900;">${pos}</td>
-                    <td style="text-align:left;">${safeNick}</td>
-                    <td style="color:#00ff66; font-weight:900; text-align:center;">${scoreVal}/${totalVal}</td>
-                </tr>`);
-            pos++;
-        });
-    } catch(e) {
-        if (userStats.moreLessDaily && userStats.moreLessDaily[dayNum]) {
-            const myD = userStats.moreLessDaily[dayNum];
-            const safeNick = escapeHTML(playerNickname || "Gracz") + getMiniClubBadge(userStats.favoriteClub);
-            tbody.innerHTML = `
-                <tr style="background: rgba(255,255,255,0.05);">
-                    <td style="color:var(--accent); font-weight:900;">1</td>
-                    <td style="text-align:left;">${safeNick}</td>
-                    <td style="color:#00ff66; font-weight:900; text-align:center;">${myD.score}/${myD.total || ML_DAILY_TOTAL_ROUNDS}</td>
-                </tr>`;
-            return;
-        }
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników w chmurze. Zagraj jako pierwszy!</td></tr>';
+        tbody.innerHTML = moreLessRowsHtml(rows);
+    } catch (e) {
+        console.warn('Odczyt rankingu More/Less nieudany:', e && (e.code || e.message));
+        if (localFallback()) return;
+        const denied = e && e.code === 'permission-denied';
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">${denied ? 'Brak dostępu do rankingu (reguły Firestore).' : 'Brak wyników w chmurze. Zagraj jako pierwszy!'}</td></tr>`;
     }
 }
+
+// Odświeżanie rankingu More/Less co 45 s, gdy menu jest otwarte (żeby było widać, że ktoś inny zagrał)
+setInterval(() => {
+    const menu = document.getElementById('moreLessMenuContainer');
+    if (menu && menu.style.display !== 'none' && menu.style.display !== '' && document.visibilityState === 'visible') {
+        loadMoreLessRanking(selectedMoreLessDay || currentMoreLessDay, true);
+    }
+}, 45000);
 
 // ====== OBSŁUGA MENU TIME ATTACK ======
 
@@ -4328,6 +4360,10 @@ async function loadDesktopRanking(type) {
         title.innerHTML = `<i>${t('desktopRankClash')} - SEZON BETA</i>`;
         title.style.color = '#3399ff';
         if (tabs) tabs.style.display = 'none';
+    } else if (type === 'moreless') {
+        title.innerHTML = `<i>MORE / LESS - DZIEŃ #${currentMoreLessDay}</i>`;
+        title.style.color = '#f39c12';
+        if (tabs) tabs.style.display = 'none';
     } else if (type === 'timeattack') {
         title.innerHTML = `<i>${t('desktopRankTA')}</i>`;
         title.style.color = '#1dd1a1';
@@ -4349,6 +4385,13 @@ async function loadDesktopRanking(type) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">${t('loadingData')}</td></tr>`;
 
     try {
+        if (type === 'moreless') {
+            thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:60%;">${t('colNick')}</th><th style="color:#f39c12; width:25%; text-align:center;">WYNIK</th></tr>`;
+            const mlRows = await fetchMoreLessRows(currentMoreLessDay);
+            healMoreLessCloud(currentMoreLessDay, mlRows);
+            tbody.innerHTML = mlRows.length ? moreLessRowsHtml(mlRows) : `<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników na ten dzień. Zagraj jako pierwszy!</td></tr>`;
+            return;
+        }
         if (type === 'league') {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:50%;">${t('colNick')}</th><th style="width:20%;">${t('colRank')}</th><th style="width:15%;">${t('colElo')}</th></tr>`;
             
@@ -4362,11 +4405,11 @@ async function loadDesktopRanking(type) {
             let pos = 1;
             scores.forEach((row) => {
                 let rawNick = renderNick(row.nick || t('defaultPlayer'));
-                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
+                let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = safeClass(row.bg);
+                let bgClass = rowBg(row);
                 let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
                 tbody.insertAdjacentHTML('beforeend', `
@@ -4390,10 +4433,10 @@ async function loadDesktopRanking(type) {
             let pos = 1;
             scores.forEach((row) => {
                 let rawNick = renderNick(row.nick || t('defaultPlayer'));
-                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
+                let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = safeClass(row.bg);
+                let bgClass = rowBg(row);
                 let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="background: rgba(255,255,255,0.05); cursor: pointer;"' : 'style="cursor: pointer;"';
                 let rankClass = pos === 1 ? "rank-1" : pos === 2 ? "rank-2" : pos === 3 ? "rank-3" : "";
                 
@@ -4432,10 +4475,10 @@ async function loadDesktopRanking(type) {
                 let winsAmount = row.won !== undefined ? row.won : (row.wins || 0); 
                 let wonText = winsAmount > 0 ? `<span style="color:var(--green-neon);">${type === 'daily' ? t('yes') : escapeHTML(winsAmount)}</span>` : `<span style="color:var(--red-neon);">${type === 'daily' ? t('no') : '0'}</span>`;
                 let rawNick = renderNick(row.nick || t('defaultPlayer'));
-                let safeNick = row.nickEffect && row.nickEffect !== 'default' ? `<span class="${safeClass(row.nickEffect)}">${rawNick}</span>` : rawNick;
+                let safeNick = rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick;
                 safeNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = safeClass(row.bg);
+                let bgClass = rowBg(row);
                 let isMeStyle = (row.uid === playerId || sameNick(row.nick)) ? 'style="color: var(--accent); cursor: pointer;"' : 'style="cursor: pointer;"';
                 
                 tbody.insertAdjacentHTML('beforeend', `
@@ -4521,7 +4564,7 @@ async function loadRanking(type) {
                 
                 safeRenderNick += getMiniClubBadge(row.club); 
                 
-                let bgClass = safeClass(row.bg);
+                let bgClass = rowBg(row);
                 let isMeStyle = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
                 
                 let rangaText = getLeagueRankName(row.elo, row.matchesPlayed);
@@ -4550,7 +4593,7 @@ async function loadRanking(type) {
                 let myRankImg = getLeagueImageTag(myPersonalScore.elo, myPersonalScore.matchesPlayed, 18);
                 let mySafeNick = typeof escapeHTML === 'function' ? renderNick(myPersonalScore.nick || t('defaultPlayer')) : (myPersonalScore.nick || t('defaultPlayer'));
                 mySafeNick += getMiniClubBadge(myPersonalScore.club);
-                let myBgClass = safeClass(myPersonalScore.bg);
+                let myBgClass = rowBg(myPersonalScore);
                 
                 tbody.insertAdjacentHTML('beforeend', `<tr><td colspan="5" style="border-bottom:none; height: 5px; padding:0; background:transparent;"></td></tr>`);
                 tbody.insertAdjacentHTML('beforeend', `
@@ -4622,7 +4665,7 @@ async function loadRanking(type) {
             let safeRenderNick = typeof escapeHTML === 'function' ? renderNick(row.nick || t('defaultPlayer')) : (row.nick || t('defaultPlayer'));
             safeRenderNick += getMiniClubBadge(row.club); 
             
-            let bgClass = safeClass(row.bg);
+            let bgClass = rowBg(row);
             let isMeStyle = sameNick(row.nick) ? 'style="background: rgba(255,255,255,0.05);"' : '';
             
             if (tbody) { 
@@ -7341,6 +7384,7 @@ window.buyShopItem = function(category, id, price) {
         else if (category === 'wins') { userStats.ownedWins.push(id); userStats.equippedWin = id; }
         
         saveStats();
+        syncStatsToFirebase(true); // zakup od razu do chmury
         if (category === 'backgrounds' || category === 'nicks') syncCosmeticsToLeaderboards();
         switchShopTab(category);
         document.getElementById('shopCoinsDisplay').innerText = userStats.coins;
@@ -7361,6 +7405,7 @@ window.equipShopItem = function(category, id) {
     else if (category === 'wins') userStats.equippedWin = id;
     
     saveStats();
+    syncStatsToFirebase(true);
     if (category === 'backgrounds' || category === 'nicks') syncCosmeticsToLeaderboards();
     switchShopTab(category);
     showToast(t('shopEquippedChanged'), "normal");
