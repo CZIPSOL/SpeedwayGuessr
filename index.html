@@ -19,7 +19,7 @@
 
     <link rel="canonical" href="https://speedwayguessr.pl/">
     <link rel="icon" type="image/png" href="images/speedwayguessr-icon.png">
-    <link rel="stylesheet" href="style.css?v=4.3">
+    <link rel="stylesheet" href="style.css?v=4.4">
     <meta property="og:image" content="https://speedwayguessr.pl/miniatura_speedwayguessr.png">
     <script>
         let savedTheme = localStorage.getItem('theme') || 'dark';
@@ -1162,7 +1162,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
         <!-- PRAWA STRONA: Leaderboard More / Less -->
         <div class="desktop-right">
             <div class="desktop-leaderboard-panel">
-                <h2 style="color: #f39c12;"><i>LEADERBOARD (MORE / LESS DAILY)</i></h2>
+                <h2 id="mlRankTitle" style="color: #f39c12;"><i>LEADERBOARD (MORE / LESS DAILY)</i></h2>
                 <div class="desktop-table-wrapper">
                     <table class="ranking-table desktop-table">
                         <thead>
@@ -1176,6 +1176,12 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
                             <tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>
                         </tbody>
                     </table>
+                </div>
+                <div class="desktop-rank-tabs" id="mlRankTabs">
+                    <span class="d-tab active" onclick="setMoreLessRankPeriod('daily')">DAILY</span> |
+                    <span class="d-tab" onclick="setMoreLessRankPeriod('weekly')">TYDZIEN</span> |
+                    <span class="d-tab" onclick="setMoreLessRankPeriod('monthly')">MIESIAC</span> |
+                    <span class="d-tab" onclick="setMoreLessRankPeriod('alltime')">OGOLNY</span>
                 </div>
             </div>
         </div>
@@ -2201,11 +2207,12 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
     <script src="i18n.js?v1.0"></script>
     <script src="db.js?v2.5"></script>
     <script src="events.js?v2.3"></script>
-    <script src="changelog.js?v1.0"></script>
+    <script src="changelog.js?v=2.2.0"></script>
     <script src="moreless_db.js?v1.01"></script>
+    <script src="daily_pool.js?v1.0"></script>
     <script src="avatar_frames.js?v1.0"></script>
     <script src="seasonal_events.js?v=4.15"></script>
-    <script src="script.js?v=4.18"></script>
+    <script src="script.js?v=4.20"></script>
 
     
 </body>

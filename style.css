@@ -2906,9 +2906,9 @@ button:not(.icon-btn):not(.icon-btn-small):not(.ml-calendar-btn):not(.footer-btn
 .ranking-table tbody tr.rank-bg-parnitskyi {
     background-image:
         linear-gradient(90deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 32%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 85%, rgba(0,0,0,0.88) 100%),
-        url('images/np785.png') !important;
-    background-size: 100% 100%, auto 90% !important;
-    background-position: center, 46% center !important;
+        url('images/np785_row.png') !important;
+    background-size: 100% 100%, auto 92% !important;
+    background-position: center, 43% center !important;
 }
 .ranking-table tbody tr.rank-bg-parnitskyi td { padding-top: 11px !important; padding-bottom: 11px !important; }
 @media (max-width: 768px) {
@@ -5058,3 +5058,13 @@ body.seasonal-advent .menu-discord-btn {
 
 
 
+
+/* Seria dni w Daily i odznaki */
+.daily-streak-info { display: none; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 0 2px; }
+.daily-streak-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(255, 140, 0, 0.15); border: 1px solid rgba(255, 140, 0, 0.5); color: #ffb347; }
+.daily-streak-pill .streak-best { font-weight: 600; opacity: 0.75; }
+.daily-streak-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(241, 196, 15, 0.14); border: 1px solid rgba(241, 196, 15, 0.5); color: var(--accent); }
+
+/* Licznik końca okresu w rankingach */
+.rank-reset-info { font-size: 12px; font-weight: 700; color: var(--text-dim); margin: -6px 0 12px; line-height: 1.5; }
+.rank-reset-info b { color: #fff; }

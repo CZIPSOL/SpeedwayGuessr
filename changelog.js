@@ -1,6 +1,19 @@
 window.changelog = {
     pl: [
         {
+            version: "Beta v2.2.0", date: "10.11.2026",
+            changes: [
+                "🎖️ <b>Nagrody tygodnia!</b> TOP 3 w tygodniowych rankingach Guessr i More / Less dostaje monety: 🥇 1000, 🥈 750, 🥉 500. W rankingach tygodniowych i miesięcznych widać teraz, ile czasu zostało do końca okresu.",
+                "⚖️ <b>More / Less: nowe rankingi</b> – tygodniowy, miesięczny i ogólny (liczą się tylko gry Daily z dnia bieżącego, np. 23/28 i liczba gier). Ranking More / Less jest też widoczny po najechaniu na tryb w menu głównym i odświeża się na bieżąco.",
+                "🔥 <b>Seria dni w Daily</b> – licznik wygranych z rzędu w profilu i w menu Guessra oraz odznaki za serie: 3, 7, 14, 30, 60 i 100 dni.",
+                "🖼️ <b>Nowe ramki awatara:</b> Halloweenowa Dynia, Świąteczny Wieniec, Retro Skóra i Złota Korona w nowych grafikach oraz dwie nowe – Opona Speedway i Łańcuch Napędowy. Ramki i skórki kasków są teraz osobnymi przedmiotami.",
+                "🛒 <b>Sklep:</b> tło K. Sadurski kosztuje teraz 1000 monet, a zmiana tła lub efektu nicku od razu widać w rankingach.",
+                "🏁 <b>Rankingi:</b> klub gracza jest pod nickiem, a ranga w Clashu pod ELO. Tła i efekty nicku widać też w rankingach wewnątrz trybów, a ranking Guessra poprawnie sortuje graczy także przy większej liczbie uczestników.",
+                "🎯 <b>Daily:</b> lista zawodników do trybu Daily jest teraz stała – dodawanie nowych zawodników do gry nie zmienia już zawodników w archiwum.",
+                "🐛 <b>Poprawki:</b> naprawiono zapisywanie zakupów (przedmiot trzeba było kupować ponownie), zaliczanie misji z podpowiedziami, wyświetlanie nicków ze znakami specjalnymi oraz kilka błędów bezpieczeństwa."
+            ]
+        },
+        {
             version: "Beta v2.1.0", date: "30.10.2026",
             changes: [
                 "⚖️ <b>Nowy tryb: More / Less Daily!</b> Sprawdź swoją wiedzę o statystykach ligowych – punkty zawodników, średnie biegowe i frekwencje stadionów w pełnym 12-rundowym starciu każdego dnia!",
@@ -132,6 +145,19 @@ window.changelog = {
         }
     ],
     en: [
+        {
+            version: "Beta v2.2.0", date: "10.11.2026",
+            changes: [
+                "🎖️ <b>Weekly rewards!</b> The TOP 3 players on the weekly Guessr and More / Less leaderboards get coins: 🥇 1000, 🥈 750, 🥉 500. Weekly and monthly leaderboards now show how much time is left.",
+                "⚖️ <b>More / Less: new leaderboards</b> – weekly, monthly and all-time (only Daily games played on the current day count, e.g. 23/28 plus games played). The More / Less leaderboard also shows when you hover the mode in the main menu and refreshes automatically.",
+                "🔥 <b>Daily streak</b> – a win-streak counter in your profile and the Guessr menu, plus badges for streaks of 3, 7, 14, 30, 60 and 100 days.",
+                "🖼️ <b>New avatar frames:</b> Halloween Pumpkin, Christmas Wreath, Retro Leather and Golden Crown with new artwork, plus two new ones – Speedway Tyre and Drive Chain. Frames and helmet skins are now separate items.",
+                "🛒 <b>Shop:</b> the K. Sadurski background now costs 1000 coins, and a changed background or nick effect shows up on leaderboards right away.",
+                "🏁 <b>Leaderboards:</b> the player's club is shown under the nick and the Clash rank under ELO. Backgrounds and nick effects are also visible on in-mode leaderboards, and the Guessr leaderboard now sorts players correctly even with many participants.",
+                "🎯 <b>Daily:</b> the player pool for Daily mode is now fixed – adding new players to the game no longer changes the players in the archive.",
+                "🐛 <b>Fixes:</b> purchases are saved correctly (items had to be bought again), the hint mission now counts, nicknames with special characters display properly, and several security issues were fixed."
+            ]
+        },
         {
             version: "Beta v2.1.0", date: "30.10.2026",
             changes: [

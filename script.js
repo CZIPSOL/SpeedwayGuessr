@@ -16,42 +16,52 @@ function _unlockTarget() {
 
 
 
+// Pula zawodników obowiązująca w danym dniu (patrz daily_pool.js)
+function _dailyPoolForDay(d) {
+    const epochs = (typeof DAILY_POOL_EPOCHS !== 'undefined' && DAILY_POOL_EPOCHS.length)
+        ? DAILY_POOL_EPOCHS
+        : [{ fromDay: 1, ids: playersDB.map(p => p.id) }];
+    let pool = epochs[0].ids;
+    for (const e of epochs) { if (d >= e.fromDay) pool = e.ids; }
+    return pool;
+}
+
 function _generateDailyTarget(dayNumber) {
     let targetDay = Number(dayNumber) || 1;
     
     // Rdzeń losowania - zawsze ten sam dla tego samego dnia
-    function getRaw(d) {
+    function getRaw(d, size) {
         let x = d * 73891247;
         for (let i = 0; i < 12; i++) {
             x = Math.imul(x ^ (x >>> 30), 0x6D2B79F5);
             x = x ^ (x >>> 27);
             x = Math.imul(x, 0xA2E8D4C3);
         }
-        return Math.abs(x) % playersDB.length;
+        return Math.abs(x) % size;
     }
 
-    let history = []; 
+    let history = [];   // ID zawodników z ostatnich 5 dni
+    let lastId = null;
     
     // Obliczamy "w pamięci" historię od 1 dnia aż do dzisiaj
     for (let i = 1; i <= targetDay; i++) {
-        let rawIdx = getRaw(i);
-        let finalIdx = rawIdx;
+        const pool = _dailyPoolForDay(i);
+        const rawIdx = getRaw(i, pool.length);
         let offset = 0;
+        let id = pool[rawIdx];
         
-        // ZABEZPIECZENIE: Jeśli zawodnik był w ciągu ostatnich 5 dni, bierzemy następnego
-        while (history.includes(finalIdx)) {
+        // ZABEZPIECZENIE: Jeśli zawodnik był w ciągu ostatnich 5 dni, bierzemy następnego z puli
+        while (history.includes(id)) {
             offset++;
-            finalIdx = (rawIdx + offset) % playersDB.length;
+            id = pool[(rawIdx + offset) % pool.length];
         }
         
-        history.push(finalIdx);
-        // Trzymamy tylko 5 ostatnich dni, żeby nie obciążać pamięci
-        if (history.length > 5) history.shift(); 
+        history.push(id);
+        if (history.length > 5) history.shift();
+        lastId = id;
     }
 
-    // Wybieramy zawodnika przypisanego na konkretnie ten (dzisiejszy) dzień
-    let finalTargetIndex = history[history.length - 1];
-    return playersDB[finalTargetIndex];
+    return playersDB.find(p => p.id === lastId) || playersDB[0];
 }
 
 function _getSafeHint(name, currentGuessCount) {
@@ -414,7 +424,7 @@ function setRandomBackground() {
 // ====== SYSTEM AKTUALIZACJI (CHANGELOG) =======
 // ==============================================
 
-const CURRENT_GAME_VERSION = "Beta v2.1.0";
+const CURRENT_GAME_VERSION = "Beta v2.2.0";
 const changelog = window.changelog || { pl: [], en: [] };
 
 function checkUnseenUpdates() {
@@ -576,14 +586,16 @@ async function claimGiveawayCoins() {
     try {
         const res = await functions.httpsCallable('getGiveawayCoins')({});
         const total = Number(res && res.data && res.data.total) || 0;
+        const notes = (res && res.data && res.data.notes) || [];
         const claimed = Number(userStats.giveawayCoinsClaimed) || 0;
         if (total > claimed) {
             const gained = total - claimed;
             userStats.coins = (Number(userStats.coins) || 0) + gained;
             userStats.giveawayCoinsClaimed = total;
-            showToast(`Nagroda z Discorda: +${gained} 🪙`, "success");
+            const last = notes.length ? notes[notes.length - 1] : null;
+            showToast(`Nagroda: +${gained} 🪙` + (last && last.text ? ` (${last.text})` : ''), "success");
         }
-    } catch (e) { console.warn('Giveaway coins:', e && e.message); }
+    } catch (e) { console.warn('Nagrody:', e && e.message); }
 }
 
 async function syncStatsFromFirebase() {
@@ -1710,9 +1722,9 @@ function getDailyDateString(dayNumber) {
     return d.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
 }
 
-function getCurrentMonthStr() { const d = new Date(); return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0'); }
-function getCurrentWeekStr() {
-    let date = new Date(); let dayNum = date.getUTCDay() || 7; date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+function getCurrentMonthStr(dateArg) { const d = dateArg ? new Date(dateArg) : new Date(); return d.getFullYear() + "_" + (d.getMonth() + 1).toString().padStart(2, '0'); }
+function getCurrentWeekStr(dateArg) {
+    let date = dateArg ? new Date(dateArg) : new Date(); let dayNum = date.getUTCDay() || 7; date.setUTCDate(date.getUTCDate() + 4 - dayNum);
     let yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
     let weekNo = Math.ceil((((date - yearStart) / 86400000) + 1)/7);
     return date.getUTCFullYear() + "_W" + weekNo.toString().padStart(2, '0');
@@ -2040,6 +2052,101 @@ async function syncLeagueScoreToFirebase() {
     } catch (e) { console.warn('Ostrzeżenie synchronizacji Ligi Clash:', e.message); }
 }
 
+// ==============================================
+// SERIA DNI W DAILY (liczą się tylko wygrane Daily z dnia bieżącego, archiwum nie)
+// ==============================================
+const DAILY_STREAK_BADGES = [
+    { days: 3, icon: '🔥', name: 'Rozgrzewka' },
+    { days: 7, icon: '⚡', name: 'Tydzień z rzędu' },
+    { days: 14, icon: '💎', name: 'Dwa tygodnie' },
+    { days: 30, icon: '👑', name: 'Miesiąc w formie' },
+    { days: 60, icon: '🏆', name: 'Dwa miesiące' },
+    { days: 100, icon: '🌟', name: 'Legenda Daily' }
+];
+function dailyStreakBadgeFor(best) {
+    let badge = null;
+    DAILY_STREAK_BADGES.forEach(b => { if (best >= b.days) badge = b; });
+    return badge;
+}
+function computeDailyStreakView(st, today) {
+    st = st || {};
+    const last = Number(st.lastDay) || 0;
+    const alive = last > 0 && last >= today - 1;   // seria żyje, jeśli ostatni dzień to dziś lub wczoraj
+    const best = Number(st.best) || 0;
+    return { current: alive ? (Number(st.current) || 0) : 0, best: best, doneToday: last === today, badge: dailyStreakBadgeFor(best) };
+}
+function registerDailyStreakWin() {
+    const today = getDayNumberFromStart(DAILY_START_DATE);
+    if (selectedDailyDay !== today) return;   // archiwum się nie liczy
+    if (!userStats.dailyStreak) userStats.dailyStreak = { current: 0, best: 0, lastDay: 0 };
+    const st = userStats.dailyStreak;
+    if (st.lastDay === today) return;
+    st.current = (st.lastDay === today - 1) ? (Number(st.current) || 0) + 1 : 1;
+    st.lastDay = today;
+    if (st.current > (Number(st.best) || 0)) st.best = st.current;
+    const reached = DAILY_STREAK_BADGES.find(b => b.days === st.current);
+    if (reached) showToast(`${reached.icon} Seria Daily: ${st.current} dni! Odznaka: ${reached.name}`, "success");
+    else if (st.current > 1) showToast(`🔥 Seria Daily: ${st.current} dni z rzędu!`, "success");
+}
+function dailyStreakHtml(view) {
+    if (!view || (!view.current && !view.best)) return '';
+    const word = view.current === 1 ? 'dzień' : 'dni';
+    let html = `<span class="daily-streak-pill">🔥 Seria: <b>${view.current}</b> ${word}`;
+    if (view.best > view.current) html += ` <span class="streak-best">(rekord ${view.best})</span>`;
+    if (view.doneToday) html += ' ✔';
+    html += '</span>';
+    if (view.badge) html += `<span class="daily-streak-badge" title="${escapeHTML(view.badge.name)}">${view.badge.icon} ${escapeHTML(view.badge.name)}</span>`;
+    return html;
+}
+// wstawia/aktualizuje blok z serią tuż za wskazanym elementem
+function setStreakInfo(afterEl, id, stats) {
+    if (!afterEl) return;
+    let el = document.getElementById(id);
+    if (!el) {
+        el = document.createElement('div');
+        el.id = id;
+        el.className = 'daily-streak-info';
+        afterEl.insertAdjacentElement('afterend', el);
+    }
+    const html = dailyStreakHtml(computeDailyStreakView(stats, getDayNumberFromStart(DAILY_START_DATE)));
+    el.innerHTML = html;
+    el.style.display = html ? 'flex' : 'none';
+}
+
+// ==============================================
+// KOŃCZY SIĘ ZA... + NAGRODY TYGODNIA (nagrody wypłaca funkcja weeklyRewards na serwerze)
+// ==============================================
+const WEEKLY_REWARDS = [1000, 750, 500];   // musi zgadzać się z functions/index.js
+function rankResetHtml(kind) {
+    const now = new Date();
+    let endMs;
+    if (kind === 'weekly') {
+        const dow = now.getUTCDay() || 7;   // tydzień rankingu kończy się w poniedziałek o 00:00 UTC
+        endMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + (8 - dow));
+    } else if (kind === 'monthly') {
+        endMs = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+    } else return '';
+    const diff = Math.max(0, endMs - now.getTime());
+    const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000);
+    const left = d > 0 ? `${d} d ${h} h` : (h > 0 ? `${h} h ${m} min` : `${m} min`);
+    let html = `⏳ Kończy się za <b>${left}</b>`;
+    if (kind === 'weekly') html += ` &nbsp;·&nbsp; Nagrody: 🥇 ${WEEKLY_REWARDS[0]} &nbsp;🥈 ${WEEKLY_REWARDS[1]} &nbsp;🥉 ${WEEKLY_REWARDS[2]} 🪙`;
+    return html;
+}
+function setRankResetInfo(afterEl, id, kind) {
+    if (!afterEl) return;
+    let el = document.getElementById(id);
+    if (!el) {
+        el = document.createElement('div');
+        el.id = id;
+        el.className = 'rank-reset-info';
+        afterEl.insertAdjacentElement('afterend', el);
+    }
+    const html = rankResetHtml(kind);
+    el.innerHTML = html;
+    el.style.display = html ? 'block' : 'none';
+}
+
 function updateStatsOnWin() {
     if(hasWon || hasLost) return; hasWon = true;
     userStats.played++; userStats.won++; userStats.currentStreak++;
@@ -2061,6 +2168,7 @@ function updateStatsOnWin() {
     if(userStats.currentStreak > userStats.maxStreak) userStats.maxStreak = userStats.currentStreak;
     if (gameMode === 'daily') {
         userStats.dailyResults[selectedDailyDay] = 'win'; userStats.dailyHistory.push(true);
+        registerDailyStreakWin();
         if (userStats.dailyHistory.length > 5) userStats.dailyHistory.shift(); 
         sendScoreToDatabase(true, guessCount);
     }
@@ -2698,6 +2806,7 @@ function openGuessrMenu() {
         const menu = document.getElementById('guessrMenuContainer');
         menu.style.display = 'grid';
 
+        setStreakInfo((document.getElementById('guessrMenuNick') || {}).parentElement, 'guessrDailyStreakInfo', userStats.dailyStreak);
         const nickEl = document.getElementById('guessrMenuNick');
         if (nickEl) nickEl.innerHTML = (playerNickname || "GRACZ") + getMiniClubBadge(userStats.favoriteClub);
 
@@ -2769,13 +2878,13 @@ async function loadGuessrSubRanking(type) {
     try {
         let snapshot;
         if (type === 'daily') {
-            snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
+            snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").orderBy("won", "desc").limit(100).get();
         } else if (type === 'weekly') {
-            snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(20).get();
+            snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").orderBy("wins", "desc").limit(100).get();
         } else if (type === 'monthly') {
-            snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
+            snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").orderBy("wins", "desc").limit(100).get();
         } else if (type === 'alltime') {
-            snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
+            snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").orderBy("wins", "desc").limit(100).get();
         }
 
         let scores = [];
@@ -2792,6 +2901,7 @@ async function loadGuessrSubRanking(type) {
             if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
             return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
         });
+        scores = scores.slice(0, 20);
 
         let headerText = (type === 'daily') ? 'Rozwiązane' : 'Suma Wygranych';
         thead.innerHTML = `<tr><th style="width:15%;">Poz.</th><th style="text-align:left; width:45%;">Nick</th><th style="width:20%;">${headerText}</th><th style="width:20%;">Próby</th></tr>`;
@@ -3433,7 +3543,11 @@ function saveMoreLessScore(score, total = ML_DAILY_TOTAL_ROUNDS, dayNumber = sel
     saveStats();
 
     // Firestore Leaderboard update
-    if (isDaily && playerId) pushMoreLessToFirestore(score, total, dayNumber, true);
+    const bestToday = userStats.moreLessDaily[dayNumber];
+    if (isDaily && playerId && bestToday) {
+        pushMoreLessToFirestore(bestToday.score, bestToday.total || total, dayNumber, true);
+        pushMoreLessPeriods(dayNumber);
+    }
 }
 
 function restartMoreLess() {
@@ -3532,49 +3646,124 @@ function closeMoreLessInfo() {
     setTimeout(() => overlay.style.display = 'none', 300);
 }
 
-// Zapis wyniku More/Less do rankingów. Przy błędzie pokazujemy komunikat (wcześniej błąd był ciągle ukrywany).
+// ==============================================
+// MORE / LESS - rankingi w chmurze
+// Dzienny: rankings_moreless/{dzień}/scores/{gracz}
+// Tygodniowy / miesięczny / ogólny: leaderboard_moreless_(weekly|monthly|alltime)/{okres}/scores/{gracz}
+// Do rankingów okresowych liczą się TYLKO gry Daily z dnia bieżącego (archiwum się nie liczy).
+// ==============================================
+const ML_PERIODS = ['daily', 'weekly', 'monthly', 'alltime'];
+const ML_PERIOD_TITLES = { daily: 'DAILY', weekly: 'TYGODNIOWY', monthly: 'MIESIĘCZNY', alltime: 'OGÓLNY' };
+var mlRankPeriod = 'daily';
 let _mlSyncToastShown = false;
+
+function mlCosmetics() {
+    return {
+        club: userStats.favoriteClub || null,
+        bg: userStats.equippedBg || null,
+        nickEffect: (userStats.equippedNick && userStats.equippedNick !== 'default') ? userStats.equippedNick : null
+    };
+}
+
+// Błędy zapisu są widoczne w konsoli (z nazwą kolekcji), a gracz dostaje jeden komunikat na sesję
+function mlReportError(collectionName, e, notify) {
+    console.warn('Zapis rankingu More/Less nieudany [' + collectionName + ']:', e && (e.code || e.message));
+    if (notify && !_mlSyncToastShown) {
+        _mlSyncToastShown = true;
+        showToast('Nie udało się zapisać wyniku More/Less w rankingu (' + collectionName + ': ' + ((e && e.code) || 'błąd') + ').', 'error');
+    }
+    return false;
+}
+
+// Dzienny wpis gracza (najlepszy wynik z danego dnia)
 function pushMoreLessToFirestore(score, total, dayNumber, notifyOnError = false) {
     if (!playerId) return Promise.resolve(false);
     const payload = {
         nick: playerNickname || 'Gracz',
-        club: userStats.favoriteClub || null,
+        ...mlCosmetics(),
         score: score,
         total: total,
         day: dayNumber,
         mode: 'daily',
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    const onErr = (e) => {
-        console.warn('Zapis rankingu More/Less nieudany:', e && (e.code || e.message));
-        if (notifyOnError && !_mlSyncToastShown) {
-            _mlSyncToastShown = true;
-            showToast('Nie udało się zapisać wyniku More/Less w rankingu (' + ((e && e.code) || 'błąd') + ').', 'error');
-        }
-        return false;
-    };
-    const p1 = db.collection("rankings_moreless").doc(dayNumber.toString()).collection("scores").doc(playerId)
-        .set(payload, { merge: true }).then(() => true).catch(onErr);
-    const p2 = db.collection('leaderboard_moreless').doc(playerId)
-        .set({ ...payload, bestScoreRatio: `${score}/${total}` }, { merge: true }).then(() => true).catch(onErr);
-    return Promise.all([p1, p2]).then(r => r.every(Boolean));
+    return db.collection("rankings_moreless").doc(dayNumber.toString()).collection("scores").doc(playerId)
+        .set(payload, { merge: true }).then(() => true)
+        .catch(e => mlReportError('rankings_moreless', e, notifyOnError));
+}
+
+function mlPeriodCollection(period) {
+    if (period === 'weekly') return db.collection('leaderboard_moreless_weekly').doc(getCurrentWeekStr()).collection('scores');
+    if (period === 'monthly') return db.collection('leaderboard_moreless_monthly').doc(getCurrentMonthStr()).collection('scores');
+    return db.collection('leaderboard_moreless_alltime').doc('global').collection('scores');
+}
+
+// Dni Daily zagrane w dniu, którego dotyczą (nie z archiwum), które mieszczą się w danym okresie
+function localMoreLessDaysForPeriod(period) {
+    const out = {};
+    const curWeek = getCurrentWeekStr(), curMonth = getCurrentMonthStr();
+    Object.entries(userStats.moreLessDaily || {}).forEach(([day, entry]) => {
+        const d = Number(day);
+        if (!entry || !entry.date || !Number.isFinite(d)) return;
+        if (getDayNumberFromStart(MORE_LESS_START_DATE, new Date(entry.date)) !== d) return; // zagrane później = archiwum
+        const dayDate = new Date(MORE_LESS_START_DATE.getFullYear(), MORE_LESS_START_DATE.getMonth(), MORE_LESS_START_DATE.getDate() + d - 1, 12);
+        if (period === 'weekly' && getCurrentWeekStr(dayDate) !== curWeek) return;
+        if (period === 'monthly' && getCurrentMonthStr(dayDate) !== curMonth) return;
+        out[String(d)] = { s: Number(entry.score) || 0, t: Number(entry.total) || ML_DAILY_TOTAL_ROUNDS };
+    });
+    return out;
+}
+
+// Wpis okresowy trzyma mapę dni, a sumy liczy z niej - ponowny zapis tego samego dnia niczego nie dubluje
+async function updateMoreLessPeriodDoc(period) {
+    if (!playerId) return false;
+    const ref = mlPeriodCollection(period).doc(playerId);
+    const snap = await ref.get();
+    const cloudData = snap.exists ? (snap.data() || {}) : {};
+    const days = {};
+    Object.entries(cloudData.days || {}).forEach(([d, v]) => { if (v) days[d] = { s: Number(v.s) || 0, t: Number(v.t) || 0 }; });
+    Object.entries(localMoreLessDaysForPeriod(period)).forEach(([d, v]) => { if (!days[d] || v.s > days[d].s) days[d] = v; });
+    let score = 0, total = 0, games = 0;
+    Object.values(days).forEach(v => { score += v.s; total += v.t; games++; });
+    if (!games) return false;
+    await ref.set({
+        nick: playerNickname || 'Gracz',
+        ...mlCosmetics(),
+        score: score, total: total, games: games, days: days,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    return true;
+}
+
+function pushMoreLessPeriods(dayNumber) {
+    if (!playerId) return Promise.resolve();
+    // tylko Daily z dnia bieżącego
+    if (Number(dayNumber) !== getDayNumberFromStart(MORE_LESS_START_DATE)) return Promise.resolve();
+    return Promise.all(['weekly', 'monthly', 'alltime'].map(period =>
+        updateMoreLessPeriodDoc(period).catch(e => mlReportError('leaderboard_moreless_' + period, e, period === 'weekly'))
+    ));
 }
 
 async function fetchMoreLessRows(dayNum) {
-    let snapshot = await db.collection("rankings_moreless").doc(dayNum.toString()).collection("scores")
+    const snapshot = await db.collection("rankings_moreless").doc(dayNum.toString()).collection("scores")
         .orderBy("score", "desc").limit(30).get();
-    if (snapshot.empty) {
-        try {
-            snapshot = await db.collection("leaderboard_moreless")
-                .where("day", "==", dayNum).where("mode", "==", "daily")
-                .orderBy("score", "desc").limit(30).get();
-        } catch (e) { snapshot = { empty: true, forEach() {} }; }   // np. brak indeksu złożonego
-    }
     const rows = [];
     snapshot.forEach(doc => { const d = doc.data(); d.uid = doc.id; rows.push(d); });
-    // wpisy More/Less nie niosą tła/efektu nicku - dociągamy je z rankingu ogólnego (jedno zapytanie na 10 graczy)
-    const cos = await fetchCosmeticsForUids(rows.map(r => r.uid));
-    rows.forEach(r => { if (cos[r.uid]) { r.bg = cos[r.uid].bg; r.nickEffect = cos[r.uid].nickEffect; } });
+    // starsze wpisy nie niosą tła/efektu nicku - dociągamy je z rankingu ogólnego (jedno zapytanie na 10 graczy)
+    const missing = rows.filter(r => r.bg === undefined && r.nickEffect === undefined).map(r => r.uid);
+    if (missing.length) {
+        const cos = await fetchCosmeticsForUids(missing);
+        rows.forEach(r => { if (cos[r.uid]) { r.bg = cos[r.uid].bg; r.nickEffect = cos[r.uid].nickEffect; } });
+    }
+    return rows;
+}
+
+async function fetchMoreLessPeriodRows(period) {
+    const snapshot = await mlPeriodCollection(period).orderBy("score", "desc").limit(30).get();
+    const rows = [];
+    snapshot.forEach(doc => { const d = doc.data(); d.uid = doc.id; rows.push(d); });
+    // przy remisie wyżej ten, kto zdobył tyle samo punktów w mniejszej liczbie możliwych (lepszy stosunek)
+    rows.sort((a, b) => (b.score - a.score) || ((a.total || 0) - (b.total || 0)));
     return rows;
 }
 
@@ -3593,31 +3782,64 @@ async function fetchCosmeticsForUids(uids) {
     return map;
 }
 
+function mlNickCell(row) {
+    const rawNick = renderNick(row.nick || "Gracz");
+    return (rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick) + getClubSubline(row.club);
+}
+
 function moreLessRowsHtml(rows) {
     return rows.map((row, i) => {
-        const rawNick = renderNick(row.nick || "Gracz");
-        const nickHtml = (rowNickEffect(row) ? `<span class="${rowNickEffect(row)}">${rawNick}</span>` : rawNick) + getClubSubline(row.club);
         const isMe = (row.uid === playerId) ? ' style="background: rgba(255,255,255,0.05); cursor: pointer;"' : ' style="cursor: pointer;"';
         const scoreVal = (row.score !== undefined) ? row.score : (row.bestStreak || 0);
         const totalVal = row.total || ML_DAILY_TOTAL_ROUNDS;
-        return `<tr class="${rowBg(row)}"${isMe} data-uid="${escapeHTML(row.uid)}" data-nick="${rawNick}"><td style="color:var(--accent); font-weight:900;">${i + 1}</td><td style="text-align:left;">${nickHtml}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${escapeHTML(scoreVal)}/${escapeHTML(totalVal)}</td></tr>`;
+        return `<tr class="${rowBg(row)}"${isMe} data-uid="${escapeHTML(row.uid)}" data-nick="${renderNick(row.nick || "Gracz")}"><td style="color:var(--accent); font-weight:900;">${i + 1}</td><td style="text-align:left;">${mlNickCell(row)}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${escapeHTML(scoreVal)}/${escapeHTML(totalVal)}</td></tr>`;
     }).join('');
 }
 
-// Jeśli mamy wynik lokalnie, a w rankingu go nie ma (np. zapis się nie udał) - ponawiamy zapis (raz na dzień/sesję)
+// Ranking okresowy: "23/28" + pod spodem "Gry: 2"
+function moreLessPeriodRowsHtml(rows) {
+    return rows.map((row, i) => {
+        const isMe = (row.uid === playerId) ? ' style="background: rgba(255,255,255,0.05); cursor: pointer;"' : ' style="cursor: pointer;"';
+        return `<tr class="${rowBg(row)}"${isMe} data-uid="${escapeHTML(row.uid)}" data-nick="${renderNick(row.nick || "Gracz")}"><td style="color:var(--accent); font-weight:900;">${i + 1}</td><td style="text-align:left;">${mlNickCell(row)}</td><td style="color:#00ff66; font-weight:900; text-align:center;">${escapeHTML(row.score)}/${escapeHTML(row.total)}<span class="rank-sub">Gry: ${escapeHTML(row.games || 1)}</span></td></tr>`;
+    }).join('');
+}
+
+// Jeśli mamy wynik lokalnie, a w rankingu go nie ma (np. zapis się nie udał) - ponawiamy zapis (raz na dzień/okres/sesję)
 var _mlHealTried = {};
 function healMoreLessCloud(dayNum, rows) {
     const my = userStats.moreLessDaily && userStats.moreLessDaily[dayNum];
-    if (!my || !playerId || _mlHealTried[dayNum]) return;
+    if (!my || !playerId || _mlHealTried['d' + dayNum]) return;
     if (rows.some(r => r.uid === playerId)) return;
-    _mlHealTried[dayNum] = true;
+    _mlHealTried['d' + dayNum] = true;
     pushMoreLessToFirestore(my.score, my.total || ML_DAILY_TOTAL_ROUNDS, dayNum, false);
 }
+function healMoreLessPeriod(period, rows) {
+    const key = period + '_' + (period === 'weekly' ? getCurrentWeekStr() : period === 'monthly' ? getCurrentMonthStr() : 'all');
+    if (!playerId || _mlHealTried[key] || rows.some(r => r.uid === playerId)) return;
+    if (!Object.keys(localMoreLessDaysForPeriod(period)).length) return;
+    _mlHealTried[key] = true;
+    updateMoreLessPeriodDoc(period).catch(e => mlReportError('leaderboard_moreless_' + period, e, false));
+}
 
-async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLessDay, silent = false) {
+async function loadMoreLessPeriodInto(tbody, period) {
+    try {
+        const rows = await fetchMoreLessPeriodRows(period);
+        healMoreLessPeriod(period, rows);
+        tbody.innerHTML = rows.length
+            ? moreLessPeriodRowsHtml(rows)
+            : '<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników w tym okresie. Zagraj Daily jako pierwszy!</td></tr>';
+    } catch (e) {
+        console.warn('Odczyt rankingu More/Less (' + period + ') nieudany:', e && (e.code || e.message));
+        const denied = e && e.code === 'permission-denied';
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">${denied ? 'Brak dostępu do rankingu (reguły Firestore).' : 'Nie udało się pobrać rankingu.'}</td></tr>`;
+    }
+}
+
+async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLessDay, silent = false, period = mlRankPeriod) {
     const tbody = document.getElementById('desktopRankingBodyML');
     if (!tbody) return;
     if (!silent) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Ładowanie danych...</td></tr>';
+    if (period !== 'daily') { await loadMoreLessPeriodInto(tbody, period); return; }
 
     const localFallback = () => {
         const myD = userStats.moreLessDaily && userStats.moreLessDaily[dayNum];
@@ -3642,6 +3864,17 @@ async function loadMoreLessRanking(dayNum = selectedMoreLessDay || currentMoreLe
         const denied = e && e.code === 'permission-denied';
         tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">${denied ? 'Brak dostępu do rankingu (reguły Firestore).' : 'Brak wyników w chmurze. Zagraj jako pierwszy!'}</td></tr>`;
     }
+}
+
+// Zakładki rankingu w ekranie More/Less
+function setMoreLessRankPeriod(period) {
+    mlRankPeriod = period;
+    const tabs = document.getElementById('mlRankTabs');
+    if (tabs) Array.from(tabs.children).forEach((el, i) => el.classList.toggle('active', ML_PERIODS[i] === period));
+    const h = document.getElementById('mlRankTitle');
+    if (h) h.innerHTML = `<i>LEADERBOARD (MORE / LESS ${ML_PERIOD_TITLES[period]})</i>`;
+    setRankResetInfo(h, 'mlRankResetInfo', period);
+    loadMoreLessRanking(selectedMoreLessDay || currentMoreLessDay, false, period);
 }
 
 // Odświeżanie rankingu More/Less co 45 s, gdy menu jest otwarte (żeby było widać, że ktoś inny zagrał)
@@ -4382,15 +4615,22 @@ async function loadDesktopRanking(type) {
     const tabs = document.getElementById('desktopRankTabs');
     
     if (!tbody || !thead || !title) return;
+    const isML = (type === 'moreless' || (typeof type === 'string' && type.startsWith('ml_')));
+    const mlPeriod = isML ? (type === 'moreless' ? 'daily' : type.slice(3)) : null;
+    const wireTabs = (prefix) => { if (tabs) ML_PERIODS.forEach((p, i) => { if (tabs.children[i]) tabs.children[i].setAttribute('onclick', `loadDesktopRanking('${prefix}${p}')`); }); };
 
     if (type === 'league') {
         title.innerHTML = `<i>${t('desktopRankClash')} - SEZON BETA</i>`;
         title.style.color = '#3399ff';
         if (tabs) tabs.style.display = 'none';
-    } else if (type === 'moreless') {
-        title.innerHTML = `<i>MORE / LESS - DZIEŃ #${currentMoreLessDay}</i>`;
+    } else if (isML) {
+        title.innerHTML = mlPeriod === 'daily' ? `<i>MORE / LESS - DZIEŃ #${currentMoreLessDay}</i>` : `<i>MORE / LESS - ${ML_PERIOD_TITLES[mlPeriod]}</i>`;
         title.style.color = '#f39c12';
-        if (tabs) tabs.style.display = 'none';
+        if (tabs) {
+            tabs.style.display = 'flex';
+            wireTabs('ml_');
+            tabs.querySelectorAll('.d-tab').forEach((tab, i) => tab.classList.toggle('active', ML_PERIODS[i] === mlPeriod));
+        }
     } else if (type === 'timeattack') {
         title.innerHTML = `<i>${t('desktopRankTA')}</i>`;
         title.style.color = '#1dd1a1';
@@ -4401,7 +4641,8 @@ async function loadDesktopRanking(type) {
         title.style.color = 'var(--accent)';
         if (tabs) {
             tabs.style.display = 'flex';
-            document.querySelectorAll('.d-tab').forEach(tab => tab.classList.remove('active'));
+            wireTabs('');
+            tabs.querySelectorAll('.d-tab').forEach(tab => tab.classList.remove('active'));
             if(type==='daily') tabs.children[0].classList.add('active');
             if(type==='weekly') tabs.children[1].classList.add('active');
             if(type==='monthly') tabs.children[2].classList.add('active');
@@ -4409,14 +4650,19 @@ async function loadDesktopRanking(type) {
         }
     }
 
+    setRankResetInfo(title, 'desktopRankResetInfo', isML ? mlPeriod : type);
     tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px;">${t('loadingData')}</td></tr>`;
 
     try {
-        if (type === 'moreless') {
+        if (isML) {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:60%;">${t('colNick')}</th><th style="color:#f39c12; width:25%; text-align:center;">WYNIK</th></tr>`;
-            const mlRows = await fetchMoreLessRows(currentMoreLessDay);
-            healMoreLessCloud(currentMoreLessDay, mlRows);
-            tbody.innerHTML = mlRows.length ? moreLessRowsHtml(mlRows) : `<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników na ten dzień. Zagraj jako pierwszy!</td></tr>`;
+            if (mlPeriod === 'daily') {
+                const mlRows = await fetchMoreLessRows(currentMoreLessDay);
+                healMoreLessCloud(currentMoreLessDay, mlRows);
+                tbody.innerHTML = mlRows.length ? moreLessRowsHtml(mlRows) : `<tr><td colspan="3" style="text-align:center; color: var(--text-dim);">Brak wyników na ten dzień. Zagraj jako pierwszy!</td></tr>`;
+            } else {
+                await loadMoreLessPeriodInto(tbody, mlPeriod);
+            }
             return;
         }
         if (type === 'league') {
@@ -4480,10 +4726,10 @@ async function loadDesktopRanking(type) {
             thead.innerHTML = `<tr><th style="width:15%;">${t('colPos')}</th><th style="text-align:left; width:45%;">${t('colNick')}</th><th style="width:20%;">${headerText}</th><th style="width:20%;">${t('colTries')}</th></tr>`;
             
             let snapshot;
-            if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(20).get();
-            else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(20).get();
-            else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(20).get();
-            else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(20).get();
+            if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").orderBy("won", "desc").limit(100).get();
+            else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").orderBy("wins", "desc").limit(100).get();
+            else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").orderBy("wins", "desc").limit(100).get();
+            else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").orderBy("wins", "desc").limit(100).get();
             
             let scores = []; snapshot.forEach(doc => { let d = doc.data(); d.uid = doc.id; scores.push(d); });
             scores.sort((a, b) => { 
@@ -4493,6 +4739,7 @@ async function loadDesktopRanking(type) {
                 if (a.guesses !== b.guesses) return a.guesses - b.guesses; 
                 return (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0); 
             });
+            scores = scores.slice(0, 20);
             
             tbody.innerHTML = '';
             if (scores.length === 0) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">${t('noResults')}</td></tr>`; return; }
@@ -4657,10 +4904,10 @@ async function loadRanking(type) {
 
     try {
         let snapshot;
-        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").limit(100).get();
-        else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").limit(100).get();
-        else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").limit(100).get();
-        else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").limit(100).get();
+        if (type === 'daily') snapshot = await db.collection("rankings").doc(selectedDailyDay.toString()).collection("scores").orderBy("won", "desc").limit(100).get();
+        else if (type === 'weekly') snapshot = await db.collection("leaderboard_weekly").doc(getCurrentWeekStr()).collection("scores").orderBy("wins", "desc").limit(100).get();
+        else if (type === 'monthly') snapshot = await db.collection("leaderboard_monthly").doc(getCurrentMonthStr()).collection("scores").orderBy("wins", "desc").limit(100).get();
+        else if (type === 'alltime') snapshot = await db.collection("leaderboard_alltime").doc("global").collection("scores").orderBy("wins", "desc").limit(100).get();
         
         let scores = []; snapshot.forEach(doc => { scores.push(doc.data()); });
         scores.sort((a, b) => { 
@@ -6867,6 +7114,7 @@ function ensureProgressionStats() {
     if (!userStats.equippedHelmet) { userStats.equippedHelmet = 'default'; needsSave = true; }
 
     // Ramki awatara są osobno od skórek kasków (wcześniej dzieliły jeden ekwipunek)
+    if (!userStats.dailyStreak) { userStats.dailyStreak = { current: 0, best: 0, lastDay: 0 }; needsSave = true; }
     if (!Array.isArray(userStats.ownedFrames)) { userStats.ownedFrames = ['default']; needsSave = true; }
     if (!userStats.equippedFrame) { userStats.equippedFrame = 'default'; needsSave = true; }
     if (!userStats.framesSplitV1) {
@@ -7016,6 +7264,7 @@ window.openProfile = function() {
     const clubText = userStats.favoriteClub ? `KLUB: <b>${userStats.favoriteClub}</b>` : "WYBIERZ KLUB 🛡️";
     document.getElementById('currentClubDisplay').innerHTML = clubText;
     document.getElementById('profileClubOverview').innerHTML = userStats.favoriteClub ? escapeHTML(userStats.favoriteClub) : "Brak klubu";
+    setStreakInfo(document.getElementById('profileClubOverview'), 'profileStreakInfo', userStats.dailyStreak);
 
     // Awatar (Domyślny placeholder w Base64 jeśli brak zdjęcia)
     const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
@@ -7474,6 +7723,7 @@ async function openPublicProfile(uid, clickedNick = "Gracz") {
             // Awatar (Bierze najpierw z roota, potem ze statystyk, na końcu domyślny)
             document.getElementById('pubAvatar').src = data.avatarUrl || parsedStats.avatarUrl || defAvatar;
 
+            setStreakInfo(document.getElementById('pubClub'), 'pubStreakInfo', parsedStats.dailyStreak);
             const pubAvatar = document.getElementById('pubAvatar');
             // starsze zapisy miały tylko equippedHelmet (normalizeFrameId zna stare ID)
             setAvatarFrame(pubAvatar, parsedStats.equippedFrame !== undefined ? parsedStats.equippedFrame : parsedStats.equippedHelmet);
