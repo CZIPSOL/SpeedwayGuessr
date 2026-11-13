@@ -9,7 +9,7 @@ window.changelog = {
                 "🖼️ <b>Nowe ramki awatara:</b> Halloweenowa Dynia, Świąteczny Wieniec, Retro Skóra i Złota Korona w nowych grafikach oraz dwie nowe – Opona Speedway i Łańcuch Napędowy. Ramki i skórki kasków są teraz osobnymi przedmiotami.",
                 "🛒 <b>Sklep:</b> tło K. Sadurski kosztuje teraz 1000 monet, a zmiana tła lub efektu nicku od razu widać w rankingach.",
                 "🏁 <b>Rankingi:</b> klub gracza jest pod nickiem, a ranga w Clashu pod ELO. Tła i efekty nicku widać też w rankingach wewnątrz trybów, a ranking Guessra poprawnie sortuje graczy także przy większej liczbie uczestników.",
-                "🎯 <b>Daily:</b> lista zawodników do trybu Daily jest teraz stała – dodawanie nowych zawodników do gry nie zmienia już zawodników w archiwum.",
+                "⭐ <b>Nowy system poziomów i prestiż:</b> poziomy 1–100 zdobywa się teraz znacznie realniej, a na poziomie 100 możesz awansować prestiżowo (do 5 gwiazdek ⭐). Każdy prestiż zwiększa wymagany EXP o 10%, ale też monety za awans o 10%. Twój dotychczasowy poziom nie spada.",
                 "🐛 <b>Poprawki:</b> naprawiono zapisywanie zakupów (przedmiot trzeba było kupować ponownie), zaliczanie misji z podpowiedziami, wyświetlanie nicków ze znakami specjalnymi oraz kilka błędów bezpieczeństwa."
             ]
         },
@@ -154,7 +154,7 @@ window.changelog = {
                 "🖼️ <b>New avatar frames:</b> Halloween Pumpkin, Christmas Wreath, Retro Leather and Golden Crown with new artwork, plus two new ones – Speedway Tyre and Drive Chain. Frames and helmet skins are now separate items.",
                 "🛒 <b>Shop:</b> the K. Sadurski background now costs 1000 coins, and a changed background or nick effect shows up on leaderboards right away.",
                 "🏁 <b>Leaderboards:</b> the player's club is shown under the nick and the Clash rank under ELO. Backgrounds and nick effects are also visible on in-mode leaderboards, and the Guessr leaderboard now sorts players correctly even with many participants.",
-                "🎯 <b>Daily:</b> the player pool for Daily mode is now fixed – adding new players to the game no longer changes the players in the archive.",
+                "⭐ <b>New level system and prestige:</b> levels 1–100 are now much more achievable, and at level 100 you can prestige (up to 5 stars ⭐). Each prestige raises the required EXP by 10% but also the coins you get per level-up by 10%. Your current level is not reduced.",
                 "🐛 <b>Fixes:</b> purchases are saved correctly (items had to be bought again), the hint mission now counts, nicknames with special characters display properly, and several security issues were fixed."
             ]
         },

@@ -5068,3 +5068,12 @@ body.seasonal-advent .menu-discord-btn {
 /* Licznik końca okresu w rankingach */
 .rank-reset-info { font-size: 12px; font-weight: 700; color: var(--text-dim); margin: -6px 0 12px; line-height: 1.5; }
 .rank-reset-info b { color: #fff; }
+
+/* Prestiż: gwiazdki pod paskiem EXP i przycisk awansu */
+.prestige-stars { display: inline-flex; gap: 3px; font-size: 18px; line-height: 1; }
+.prestige-stars .star { color: rgba(255, 255, 255, 0.16); }
+.prestige-stars--gold .star.on { color: #ffcc33; text-shadow: 0 0 8px rgba(255, 200, 40, 0.75); }
+.prestige-stars--diamond .star.on { color: #7fe8ff; text-shadow: 0 0 10px rgba(100, 220, 255, 0.95); }
+.prestige-btn { background: linear-gradient(135deg, #ffcc33, #ff9a1a); color: #1a1200; border: none; border-radius: 10px; padding: 7px 12px; font-size: 12px; font-weight: 900; cursor: pointer; letter-spacing: 0.3px; box-shadow: 0 0 14px rgba(255, 180, 40, 0.5); animation: prestigePulse 1.8s ease-in-out infinite; }
+@keyframes prestigePulse { 0%, 100% { box-shadow: 0 0 8px rgba(255, 180, 40, 0.35); } 50% { box-shadow: 0 0 18px rgba(255, 190, 60, 0.85); } }
+@media (prefers-reduced-motion: reduce) { .prestige-btn { animation: none; } }

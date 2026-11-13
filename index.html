@@ -19,7 +19,7 @@
 
     <link rel="canonical" href="https://speedwayguessr.pl/">
     <link rel="icon" type="image/png" href="images/speedwayguessr-icon.png">
-    <link rel="stylesheet" href="style.css?v=4.4">
+    <link rel="stylesheet" href="style.css?v=4.5">
     <meta property="og:image" content="https://speedwayguessr.pl/miniatura_speedwayguessr.png">
     <script>
         let savedTheme = localStorage.getItem('theme') || 'dark';
@@ -189,6 +189,10 @@
                             </div>
                             <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; position: relative;">
                                 <div id="profileExpBarOverview" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: 0.3s;"></div>
+                            </div>
+                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <span id="profilePrestigeStars"></span>
+                                <button id="profilePrestigeBtn" class="prestige-btn" style="display: none;" onclick="prestigeUp()">⭐ AWANS PRESTIŻOWY</button>
                             </div>
                         </div>
                     </div>
@@ -2212,7 +2216,7 @@ MORE / LESS <span style="font-size: 11px; font-weight: 700; color: #f39c12; marg
     <script src="daily_pool.js?v1.0"></script>
     <script src="avatar_frames.js?v1.0"></script>
     <script src="seasonal_events.js?v=4.15"></script>
-    <script src="script.js?v=4.20"></script>
+    <script src="script.js?v=4.21"></script>
 
     
 </body>

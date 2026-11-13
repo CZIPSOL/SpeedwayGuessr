@@ -7099,6 +7099,8 @@ function ensureProgressionStats() {
     let needsSave = false;
     if (typeof userStats.level === 'undefined') { userStats.level = 1; needsSave = true; }
     if (typeof userStats.exp === 'undefined') { userStats.exp = 0; needsSave = true; }
+    if (typeof userStats.prestige === 'undefined') { userStats.prestige = 0; needsSave = true; }
+    if (migrateLevelSystemV2()) needsSave = true;
     if (typeof userStats.coins === 'undefined') { userStats.coins = 0; needsSave = true; }
     
     if (!userStats.missions) { userStats.missions = { date: "", weeklyDate: "", monthlyDate: "", dailyTasks: [], weeklyTasks: [], monthlyTasks: [] }; needsSave = true; }
@@ -7172,28 +7174,139 @@ function ensureProgressionStats() {
     }
 }
 
-function getRequiredExp(level) {
-    return Math.floor(100 * Math.pow(1.2, level - 1)); // Eksponencjalny wzrost EXP
+// ==============================================
+// SYSTEM POZIOMÓW v2: poziomy 1-100 + prestiż (do 5 gwiazdek)
+// - wymagany EXP = 50 + 15 * poziom^1.3, a każdy prestiż dodaje +10% do wymaganego EXP
+// - monety za awans: 100, a każdy prestiż dodaje +10%
+// ==============================================
+const MAX_LEVEL = 100;
+const MAX_PRESTIGE = 5;
+const PRESTIGE_EXP_STEP = 0.10;    // każdy prestiż: +10% wymaganego EXP
+const PRESTIGE_COIN_STEP = 0.10;   // każdy prestiż: +10% monet za awans
+const BASE_LEVELUP_COINS = 100;
+const PRESTIGE_STAR_VARIANT = 'gold';   // później np. 'diamond' (styl .prestige-stars--diamond w style.css)
+
+function getRequiredExp(level, prestige) {
+    if (prestige === undefined) prestige = (typeof userStats !== 'undefined' && userStats && userStats.prestige) || 0;
+    const base = 50 + 15 * Math.pow(Math.max(1, level), 1.3);
+    return Math.round(base * (1 + PRESTIGE_EXP_STEP * prestige));
+}
+function getLevelUpCoins(prestige) {
+    return Math.round(BASE_LEVELUP_COINS * (1 + PRESTIGE_COIN_STEP * (prestige || 0)));
+}
+// "37" bez prestiżu, "2-037" z prestiżem
+function formatLevelLabel(level, prestige) {
+    return prestige > 0 ? `${prestige}-${String(level).padStart(3, '0')}` : String(level);
+}
+// 1850 -> "1 850", 12345 -> "12,3 tys.", 3200000 -> "3,2 mln"
+function fmtExp(n) {
+    n = Math.round(Number(n) || 0);
+    const trim = (x) => x.toFixed(1).replace('.', ',').replace(/,0$/, '');
+    if (n >= 1e6) return trim(n / 1e6) + ' mln';
+    if (n >= 1e4) return trim(n / 1e3) + ' tys.';
+    return n.toLocaleString('pl-PL');
+}
+function prestigeStarsHtml(prestige, showEmpty) {
+    prestige = Math.max(0, Math.min(MAX_PRESTIGE, prestige || 0));
+    if (!prestige && !showEmpty) return '';
+    let stars = '';
+    for (let i = 1; i <= MAX_PRESTIGE; i++) {
+        if (i > prestige && !showEmpty) break;
+        stars += `<span class="star${i <= prestige ? ' on' : ''}">★</span>`;
+    }
+    return `<span class="prestige-stars prestige-stars--${PRESTIGE_STAR_VARIANT}" title="Prestiż ${prestige}/${MAX_PRESTIGE}">${stars}</span>`;
+}
+
+// Jednorazowe przeliczenie starych poziomów (wykładniczy wzór 1.2^n) na nowy system.
+// Nikt nie traci poziomu: nowy poziom = większy z (stary poziom, poziom przeliczony z całkowitego EXP), maks. 100.
+function migrateLevelSystemV2() {
+    if (userStats.levelSystemV2) return false;
+    const oldReq = (L) => Math.floor(100 * Math.pow(1.2, L - 1));
+    const oldLevel = Math.max(1, Number(userStats.level) || 1);
+    let total = Number(userStats.exp) || 0;
+    for (let i = 1; i < Math.min(oldLevel, 300); i++) total += oldReq(i);
+    let lvl = 1, rem = total;
+    while (lvl < MAX_LEVEL && rem >= getRequiredExp(lvl, 0)) { rem -= getRequiredExp(lvl, 0); lvl++; }
+    if (lvl > oldLevel) {
+        userStats.level = lvl;
+        userStats.exp = lvl >= MAX_LEVEL ? 0 : Math.round(rem);
+    } else {
+        userStats.level = Math.min(oldLevel, MAX_LEVEL);
+        userStats.exp = userStats.level >= MAX_LEVEL ? 0 : Math.min(Number(userStats.exp) || 0, getRequiredExp(userStats.level, 0) - 1);
+    }
+    userStats.prestige = Number(userStats.prestige) || 0;
+    userStats.levelSystemV2 = true;
+    if (userStats.level !== oldLevel) {
+        setTimeout(() => { try { showToast(`⭐ Nowy system poziomów! Twój poziom: ${userStats.level}`, "success"); } catch (e) {} }, 2500);
+    }
+    return true;
 }
 
 function addExp(amount) {
     ensureProgressionStats();
+    if (userStats.level >= MAX_LEVEL) { userStats.exp = 0; saveStats(); return; }   // na poziomie 100 EXP się nie zbiera
+
     userStats.exp += amount;
     let reqExp = getRequiredExp(userStats.level);
-    
-    let leveledUp = false;
-    while (userStats.exp >= reqExp) {
+    const coinsPerLevel = getLevelUpCoins(userStats.prestige);
+    let levelsGained = 0;
+
+    while (userStats.level < MAX_LEVEL && userStats.exp >= reqExp) {
         userStats.exp -= reqExp;
         userStats.level++;
-        userStats.coins += 100; // Bonus 100 monet za wbicie poziomu!
+        userStats.coins += coinsPerLevel;
+        levelsGained++;
         reqExp = getRequiredExp(userStats.level);
-        leveledUp = true;
     }
-    
-    if (leveledUp) {
-        showToast(`🎉 AWANS NA POZIOM ${userStats.level}! (+100 🪙)`, "success");
+    if (userStats.level >= MAX_LEVEL) userStats.exp = 0;
+
+    if (levelsGained > 0) {
+        if (userStats.level >= MAX_LEVEL) {
+            const more = (userStats.prestige || 0) < MAX_PRESTIGE ? 'Możesz awansować prestiżowo w profilu ⭐' : 'Maksymalny prestiż!';
+            showToast(`🏆 POZIOM ${MAX_LEVEL}! ${more} (+${coinsPerLevel * levelsGained} 🪙)`, "success");
+        } else {
+            showToast(`🎉 AWANS NA POZIOM ${formatLevelLabel(userStats.level, userStats.prestige)}! (+${coinsPerLevel * levelsGained} 🪙)`, "success");
+        }
     }
     saveStats();
+}
+
+async function prestigeUp() {
+    ensureProgressionStats();
+    const current = userStats.prestige || 0;
+    if (userStats.level < MAX_LEVEL || current >= MAX_PRESTIGE) return;
+    const next = current + 1;
+    const ok = await appConfirm(
+        `Awans prestiżowy ${next}/${MAX_PRESTIGE}: poziom wróci do 1, a wymagany EXP wzrośnie o ${Math.round(PRESTIGE_EXP_STEP * 100)}%. W zamian dostaniesz gwiazdkę ⭐ i +${Math.round(PRESTIGE_COIN_STEP * 100)}% monet za każdy awans. Monety, przedmioty i statystyki zostają.`,
+        { title: "Awans prestiżowy ⭐", confirmText: "AWANSUJ" }
+    );
+    if (!ok) return;
+    userStats.prestige = next;
+    userStats.level = 1;
+    userStats.exp = 0;
+    saveStats();
+    syncStatsToFirebase(true);
+    showToast(`⭐ PRESTIŻ ${next}! Poziom ${formatLevelLabel(1, next)}`, "success");
+    renderProfileLevelBlock();
+    renderProfileExpBar();
+}
+window.prestigeUp = prestigeUp;
+
+// Blok poziomu w profilu: napis, pasek EXP, gwiazdki prestiżu i przycisk awansu
+function renderProfileLevelBlock() {
+    const lvlTop = document.getElementById('profileLevelTop');
+    if (!lvlTop) return;
+    const prestige = userStats.prestige || 0;
+    const maxed = userStats.level >= MAX_LEVEL;
+    const reqExp = getRequiredExp(userStats.level);
+    const pct = maxed ? 100 : Math.min(100, Math.floor((userStats.exp / reqExp) * 100));
+    lvlTop.innerText = formatLevelLabel(userStats.level, prestige);
+    document.getElementById('profileExpBarOverview').style.width = `${pct}%`;
+    document.getElementById('profileExpTextOverview').innerText = maxed ? 'MAX' : `${fmtExp(userStats.exp)} / ${fmtExp(reqExp)} EXP`;
+    const starsEl = document.getElementById('profilePrestigeStars');
+    if (starsEl) starsEl.innerHTML = prestigeStarsHtml(prestige, true);
+    const btn = document.getElementById('profilePrestigeBtn');
+    if (btn) btn.style.display = (maxed && prestige < MAX_PRESTIGE) ? 'inline-block' : 'none';
 }
 
 function updateMissionProgress(type, amount = 1, isMaxMode = false) {
@@ -7236,13 +7349,14 @@ function renderProfileExpBar() {
     
     if(!lvlEl || !coinsEl) return;
     
+    const maxed = userStats.level >= MAX_LEVEL;
     const reqExp = getRequiredExp(userStats.level);
-    const pct = Math.min(100, Math.floor((userStats.exp / reqExp) * 100));
+    const pct = maxed ? 100 : Math.min(100, Math.floor((userStats.exp / reqExp) * 100));
     
-    lvlEl.innerText = userStats.level;
+    lvlEl.innerText = formatLevelLabel(userStats.level, userStats.prestige || 0);
     coinsEl.innerText = userStats.coins;
     expBar.style.width = `${pct}%`;
-    expText.innerText = `${userStats.exp} / ${reqExp} EXP`;
+    expText.innerText = maxed ? 'MAX' : `${fmtExp(userStats.exp)} / ${fmtExp(reqExp)} EXP`;
 }
 
 // Nadpisanie domyślnej funkcji Profilu, by rysowała też EXP
@@ -7281,12 +7395,7 @@ window.openProfile = function() {
         ? `<span class="${safeClass(userStats.equippedNick)}">${pNick}</span>` 
         : pNick;
 
-    const reqExp = getRequiredExp(userStats.level);
-    const pct = Math.min(100, Math.floor((userStats.exp / reqExp) * 100));
-    
-    document.getElementById('profileLevelTop').innerText = userStats.level;
-    document.getElementById('profileExpBarOverview').style.width = `${pct}%`;
-    document.getElementById('profileExpTextOverview').innerText = `${userStats.exp} / ${reqExp} EXP`;
+    renderProfileLevelBlock();
 
     // Reset zakładki na 'Podsumowanie'
     switchProfileTab('overview');
@@ -7702,7 +7811,7 @@ async function openPublicProfile(uid, clickedNick = "Gracz") {
     const overlay = document.getElementById('publicProfileOverlay');
     document.getElementById('pubNick').innerText = "ŁADOWANIE...";
     document.getElementById('pubClub').innerText = "";
-    document.getElementById('pubLevel').innerText = "POZIOM --";
+    document.getElementById('pubLevel').innerHTML = "POZIOM --";
     document.getElementById('pubPlayed').innerText = "--";
     document.getElementById('pubWon').innerText = "--";
     const defAvatar = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23666'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/></svg>";
@@ -7737,7 +7846,8 @@ async function openPublicProfile(uid, clickedNick = "Gracz") {
                 : pNick;
             
             document.getElementById('pubClub').innerText = parsedStats.favoriteClub ? `Kibicuje: ${parsedStats.favoriteClub}` : "Brak ulubionego klubu";
-            document.getElementById('pubLevel').innerText = `POZIOM ${parsedStats.level || 1}`;
+            const pubPrestige = Math.max(0, Math.min(MAX_PRESTIGE, Number(parsedStats.prestige) || 0));
+            document.getElementById('pubLevel').innerHTML = `POZIOM ${formatLevelLabel(Math.min(parsedStats.level || 1, MAX_LEVEL), pubPrestige)} ${prestigeStarsHtml(pubPrestige, false)}`;
             document.getElementById('pubPlayed').innerText = parsedStats.played || 0;
             document.getElementById('pubWon').innerText = parsedStats.won || 0;
             
